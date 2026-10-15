@@ -6,47 +6,7 @@
 <title>M02 · 函数初步</title>
 <link rel="stylesheet" href="assets/m02_c_functions.css">
 <link rel="stylesheet" href="assets/series-theme.css">
-<style>
-/* ================= 自动注入：返回 home + 系列小目录 ================= */
-.home-fab{position:fixed;left:11px;bottom:11px;z-index:65;display:inline-flex;
-  align-items:center;gap:6px;padding:8px 14px;border-radius:999px;
-  background:#fff;border:1px solid var(--line-2);color:var(--fg-2);
-  text-decoration:none;font:600 13px/1 var(--sans);
-  box-shadow:0 4px 16px rgba(20,30,50,.16);transition:transform .14s,box-shadow .14s,color .14s}
-.home-fab:hover{transform:translateY(-2px);color:var(--blue);
-  box-shadow:0 8px 22px rgba(30,60,120,.24)}
-.home-fab::before{content:"⌂";font-size:15px}
-.series-nav{margin:34px 0 0;padding:14px 18px;border:1px solid var(--line-2);
-  border-radius:12px;background:var(--bg-soft);font-size:13.5px}
-.series-nav b{color:var(--fg)}
-.series-nav a{display:inline-block;margin:3px 8px 3px 0;padding:3px 11px;border-radius:999px;
-  background:#fff;border:1px solid var(--line-2);text-decoration:none;color:var(--fg-2);
-  transition:border-color .14s,color .14s}
-.series-nav a:hover{border-color:var(--blue);color:var(--blue)}
-.series-nav a.cur{background:var(--blue);border-color:var(--blue);color:#fff;font-weight:600}
-@media (max-width:560px){
-  .series-nav{font-size:12.5px;padding:12px 13px}
-  .series-nav a{font-size:12px;margin:2px 5px 2px 0;padding:2px 9px}
-  .home-fab{left:9px;bottom:9px;padding:7px 12px;font-size:12.5px}
-}
 
-/* ---------- 悬浮「返回 home」按钮的避让 ----------
-   窄屏下抽屉宽 min(86vw,300px)，而按钮固定在左下角、z-index 又高于抽屉，
-   会把抽屉底部的目录项压住导致点击无效。所以：
-     * 抽屉打开时直接藏起按钮
-     * 中等宽度把按钮移到底部右侧（320px 之外就不与抽屉重叠） */
-body.toc-open .home-fab{display:none}
-@media (min-width:561px) and (max-width:980px){
-  .home-fab{left:auto;right:12px}
-}
-
-/* ---------- 遮罩层不接收指针事件 ----------
-   body.toc-open::after 是「抽屉打开时的变暗遮罩」。
-   它曾经把抽屉里的点击全吃掉：实测 elementFromPoint 返回 body.toc-open，
-   连目录项都点不动（JS 直接 .click() 却正常，说明只是指针层被挡）。
-   遮罩只负责变暗，关闭逻辑由脚本按坐标判断。 */
-body.toc-open::after{pointer-events:none}
-</style>
 </head>
 <body class="mseries" data-series="M">
 <div id="shell">
@@ -573,7 +533,7 @@ f 里的 a = 100
 <div class="card warn">
   <div class="card-t">循环里定义的变量也一样</div>
   <p>你在M01见过的这种写法：</p>
-  <pre style="background:#f2f4f8;border:1px solid var(--line);border-radius:8px;padding:10px 12px;font-family:var(--mono);font-size:13px;color:var(--fg);overflow:auto"><span class="hl-k">for</span> (<span class="hl-k">int</span> i = <span class="hl-n">0</span>; i &lt; n; i++) {
+  <pre class="plain-pre"><span class="hl-k">for</span> (<span class="hl-k">int</span> i = <span class="hl-n">0</span>; i &lt; n; i++) {
     <span class="hl-k">int</span> t = i * <span class="hl-n">10</span>;    <span class="hl-c">/* t 只在这个 for 里活着 */</span>
 }</pre>
   <p>出了这个 <code>for</code>，<code>i</code> 和 <code>t</code> 就都不存在了，
@@ -741,7 +701,7 @@ avg = 83.17</pre></div>
 <div class="card tip">
   <div class="card-t">这个特性很有用</div>
   <p>比如写一个「把数组所有元素加 1」的函数，就不需要返回值了：</p>
-  <pre style="background:#f2f4f8;border:1px solid var(--line);border-radius:8px;padding:10px 12px;font-family:var(--mono);font-size:13px;color:var(--fg);overflow:auto"><span class="hl-k">void</span> <span class="hl-f">addOneToAll</span>(<span class="hl-k">int</span> a[], <span class="hl-k">int</span> n) {
+  <pre class="plain-pre"><span class="hl-k">void</span> <span class="hl-f">addOneToAll</span>(<span class="hl-k">int</span> a[], <span class="hl-k">int</span> n) {
     <span class="hl-k">for</span> (<span class="hl-k">int</span> i = <span class="hl-n">0</span>; i &lt; n; i++) {
         a[i]++;
     }
@@ -981,26 +941,9 @@ n = <span class="hl-f">doubled</span>(n);    <span class="hl-c">/* ✅ 把返回
 
 <!-- NAV-AUTO -->
 <a class="home-fab" href="../../index.html" title="返回教程总目录">返回 home</a>
-<div class="series-nav">
-<b>本系列</b>　<span class="series-tag">M 系列 · 课本内容速成与补充</span>　
-<a href="m01-c-arrays.html">M01 数组初步</a>
-<a href="m02-c-functions.html" class="cur">M02 函数初步</a>
-<a href="m03-c-types.html">M03 类型概论</a>
-<a href="m04-c-pointers.html">M04 指针初步</a>
-<a href="m05-memory.html">M05 静态、动态内存与内存安全初步</a>
-<a href="m06-class-struct.html">M06 类、结构体</a>
-<a href="m07-scope.html">M07 作用域、全局与局部变量</a>
-<a href="m08-c-strings.html">M08 C 风格字符串</a>
-<a href="m09-vector-and-array.html">M09 vector 和 array <span class="star" title="与本项目施行密切相关">*</span></a>
+
 </div>
-<div class="series-switch">
-<b>全部系列</b>　
-<a href="t01-mongolian-script-intro.html">理论 · T（3 篇）</a>
-<span class="ss-cur">课本 · M（9 篇）</span>
-<a href="q01-std-and-namespace.html">Qt · Q（1 篇）</a>
-<a href="e01-recursion.html">Extra · E（2 篇）</a>
-<a href="f01-command-prompt.html">File · F（3 篇）</a>
-<span class="ss-empty">相关 · R（0 篇，暂空）</span>
+
 </div>
 <!-- /NAV-AUTO -->
 <footer>

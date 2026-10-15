@@ -5,8 +5,16 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>前端 · 鼠标悬停与 transition</title>
 <link rel="stylesheet" href="assets/fe_07.css">
+<link rel="stylesheet" href="assets/series-theme.css">
+<link rel="stylesheet" href="assets/fe-dark.css">
 </head>
-<body>
+<body data-series="FE">
+<script>
+/* 极早执行：在样式生效前就按系统偏好声明配色方案，避免亮→暗闪一下 */
+(function(){var d=window.matchMedia&&window.matchMedia('(prefers-color-scheme: dark)').matches;
+var m=document.createElement('meta');m.name='color-scheme';
+m.content=d?'dark light':'light dark';document.head.appendChild(m);})();
+</script>
 <noscript>
   <div style="max-width:680px;margin:60px auto;padding:0 20px;font:16px/1.8 sans-serif">
     <h1>需要开启 JavaScript</h1>

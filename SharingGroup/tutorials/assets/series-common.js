@@ -27,10 +27,15 @@
     Q: { label: 'Qt · Q',   banner: 'Q 系列 · C++ 开发事项和 Qt 基础' },
     E: { label: 'Extra · E', banner: 'E 系列 · 补充练习与进阶' },
     F: { label: 'File · F', banner: 'F 系列 · 文件操作基础' },
-    R: { label: '相关 · R', banner: 'R 系列 · 相关资讯与理论' }
+    R: { label: '相关 · R', banner: 'R 系列 · 相关资讯与理论' },
+    FE: { label: '前端 · FE', banner: 'FE 系列 · 前端基础' }
   };
 
-  var ORDER = ['T', 'M', 'Q', 'E', 'F', 'R'];
+  /* 展示顺序由项目组长按组员进度手工排优先度 —— 会变，
+     必须与 tools/series_data.py 的 ORDER 保持一致 */
+  /* 末尾的 FE 也要列进来 —— 它的外观自成一系，
+     但同样是「一个系列」，『全部系列』里必须有它 */
+  var ORDER = ['T', 'F', 'M', 'R', 'Q', 'E', 'FE'];
 
   /* ---------- 篇目表 ---------- */
   var PAGES = [
@@ -55,7 +60,17 @@
 
     { f: 'f01-command-prompt.html', n: 'F01', t: '命令提示符（cmd）初步',       s: 'F' },
     { f: 'f02-paths-and-env.html',  n: 'F02', t: '相对文件路径与宏',            s: 'F' },
-    { f: 'f03-compile-and-link.html', n: 'F03', t: '编译与链接、头文件与库',     s: 'F' }
+    { f: 'f03-compile-and-link.html', n: 'F03', t: '编译与链接、头文件与库',     s: 'F' },
+
+    /* 前端 FE：外观自成一系，但也列进「全部系列」 */
+    { f: 'fe-01.html', n: 'FE-01', t: 'HTML 入门与标签语法', s: 'FE' },
+    { f: 'fe-02.html', n: 'FE-02', t: 'HTML 常用标签', s: 'FE' },
+    { f: 'fe-03-F01.html', n: 'FE-03-F01', t: '十六进制颜色模型、HSV 与 Alpha', s: 'FE' },
+    { f: 'fe-03.html', n: 'FE-03', t: 'CSS 入门', s: 'FE' },
+    { f: 'fe-04.html', n: 'FE-04', t: 'CSS 选择器语法', s: 'FE' },
+    { f: 'fe-05.html', n: 'FE-05', t: 'Display 与盒模型尺寸', s: 'FE' },
+    { f: 'fe-06.html', n: 'FE-06', t: 'Writing Mode 与溢出滚动', s: 'FE' },
+    { f: 'fe-07.html', n: 'FE-07', t: '鼠标悬停与 transition', s: 'FE' }
 
     /* R 系列暂空 —— 将来加篇目就写在下面，格式同上
        { f: 'r01-xxx.html', n: 'R01', t: '标题', s: 'R' }, */
@@ -113,32 +128,28 @@
       box.appendChild(empty);
     }
 
-    /* 其它系列：一行快捷入口 */
-    var others = ORDER.filter(function (k) { return k !== sk; });
-    if (others.length) {
-      var sw = el('div', 's-nav-switch');
-      sw.style.marginTop = '12px';
-      sw.style.paddingTop = '10px';
-      sw.style.borderTop = '1px dashed var(--s-line,#ccd5e3)';
-      sw.style.font = '500 12.5px/1.9 var(--sans,system-ui,sans-serif)';
-      sw.appendChild(el('span', null, '其它系列：　'));
-      others.forEach(function (k) {
-        var list = PAGES.filter(function (p) { return p.s === k; });
-        var lab = (SERIES[k] ? SERIES[k].label : k) +
-                  '（' + list.length + ' 篇' + (list.length ? '' : '，暂空') + '）';
-        if (!list.length) {
-          var sp = el('span', null, lab + '　');
-          sp.style.opacity = '.6';
-          sw.appendChild(sp);
-          return;
-        }
-        var a = el('a', null, lab);
-        a.href = list[0].f;
-        a.style.marginRight = '10px';
-        sw.appendChild(a);
-      });
-      box.appendChild(sw);
-    }
+    /* 「全部系列」：列出**所有**系列（含本系列与前端 FE），当前项就地标出。
+       原来排除了自己、也不含 FE —— 用户要求「全部系列」就得是全部。 */
+    var sw = el('div', 's-nav-switch');
+    sw.appendChild(el('b', null, '全部系列'));
+    sw.appendChild(el('span', null, '　'));
+    ORDER.forEach(function (k) {
+      var list = PAGES.filter(function (p) { return p.s === k; });
+      var lab = (SERIES[k] ? SERIES[k].label : k) +
+                '（' + list.length + ' 篇' + (list.length ? '' : '，暂空') + '）';
+      if (k === sk) {
+        sw.appendChild(el('span', 'ss-cur', lab + '　当前'));
+        return;
+      }
+      if (!list.length) {
+        sw.appendChild(el('span', 'ss-empty', lab));
+        return;
+      }
+      var a = el('a', 'ss-link', lab);
+      a.href = list[0].f;
+      sw.appendChild(a);
+    });
+    box.appendChild(sw);
 
     /* 当前页小目录 */
     var heads = main.querySelectorAll('h2[id]');
@@ -163,9 +174,16 @@
       box.appendChild(toc);
     }
 
+    /* 插到正文末尾。
+       注意：footer 与 h2[id] 都不是每篇都有 —— e01 与 m04 两个都没有，
+       原来只判断 footer，结果这两篇的跳转整块**没挂上**。
+       所以最后一个分支必须是无条件 appendChild。 */
     var foot = main.querySelector('footer');
     if (foot) main.insertBefore(box, foot);
     else main.appendChild(box);
+
+    /* 如果连 main 都没有，退回挂到 body 末尾 —— 有总比没有好 */
+    if (!box.parentNode) document.body.appendChild(box);
   }
 
   /* ---------- 2. 配色方案同步 ---------- */

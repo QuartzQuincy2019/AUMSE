@@ -43,17 +43,17 @@ SERIES = {
         "label": "课本 · M",
         "desc": "C / C++ 主线：从数组到 vector，贴合课本进度",
         "cls": "mseries",
-        "c1": "#dceaf7", "c2": "#eef6fd", "c3": "#1f6feb", "c4": "#14539f",
-        "ink": "#16283c",
-        "d1": "#0d1420", "d2": "#162130", "d3": "#5aa2f0", "d4": "#8cc0ff",
-        "dink": "#dae6f4",
+        "c1": "#dbe3ef", "c2": "#eef2f8", "c3": "#2c4a7c", "c4": "#1b3358",
+        "ink": "#141d2b",
+        "d1": "#0b1018", "d2": "#131b28", "d3": "#6e93c8", "d4": "#9db8dc",
+        "dink": "#d8e0ec",
     },
     "Q": {
         "name": "Qt",
         "num": "Q",
         "banner": "Q 系列 · C++ 开发事项和 Qt 基础",
         "label": "Qt · Q",
-        "desc": "进入 C++ 与 Qt：标准库、命名空间、界面开发的前置知识",
+        "desc": "",   # 不写死：该系列将来会大量补充
         "cls": "qseries",
         "c1": "#dff2ec", "c2": "#eefaf6", "c3": "#0f9d76", "c4": "#0a7157",
         "ink": "#10322a",
@@ -65,7 +65,7 @@ SERIES = {
         "num": "E",
         "banner": "E 系列 · 补充练习与进阶",
         "label": "Extra · E",
-        "desc": "主线之外的补充：递归、批处理与命令行自动化",
+        "desc": "",   # 不写死：该系列将来会大量补充
         "cls": "eseries",
         "c1": "#f3e4f7", "c2": "#faf1fd", "c3": "#8b3fbe", "c4": "#67289a",
         "ink": "#2e1638",
@@ -77,7 +77,7 @@ SERIES = {
         "num": "F",
         "banner": "F 系列 · 文件操作基础",
         "label": "File · F",
-        "desc": "命令行、路径与编译链接：动手时立刻要用的东西",
+        "desc": "",   # 不写死：该系列将来会大量补充
         "cls": "fseries",
         # F 保持原先的蓝色皮肤（用户要求「为 F 保留之前的样式」）。
         # keep_legacy 让 build_series_css.py 不生成整套主题，只改顶部条；
@@ -93,7 +93,7 @@ SERIES = {
         "num": "R",
         "banner": "R 系列 · 相关资讯与理论",
         "label": "相关 · R",
-        "desc": "Highly-Related Information and Theories（暂空，待补）",
+        "desc": "Highly-Related Information and Theories",
         "cls": "rseries",
         "c1": "#fbdfe0", "c2": "#fdf0f0", "c3": "#d1435b", "c4": "#a02b40",
         "ink": "#3a141b",
@@ -103,7 +103,8 @@ SERIES = {
 }
 
 # 首页分组顺序（FE 单独处理）
-ORDER = ["T", "M", "Q", "E", "F", "R"]
+# 展示顺序由项目组长按组员进度手工排优先度 —— 会变，改这一行即可
+ORDER = ["T", "F", "M", "R", "Q", "E"]
 
 # ---------------------------------------------------------------- 篇目表
 # (当前文件名, 新文件名, 系列, 新编号, 标题, 一句话说明, 星标)
@@ -126,7 +127,7 @@ PAGES = [
     ("08-c-strings.html",             "m08-c-strings.html",
      "M", "M08", "C 风格字符串", "一串文字怎么存、\\0 为什么重要", False),
     ("09-vector-and-array.html",      "m09-vector-and-array.html",
-     "M", "M09", "vector 和 array", "重点：vector", True),
+     "M", "M09", "C++ 标准库里的「数组」", "重点：vector", False),
 
     # ---- Q：C++ 与 Qt ----
     ("10-std-and-namespace.html",     "q01-std-and-namespace.html",
@@ -161,7 +162,7 @@ FE_PAGES = [
     ("fe-02.html",     "FE-02",     "HTML 常用标签",                 "p / i / strong / span / ul / div / form / table / a", "HTML", False),
     ("fe-03-F01.html", "FE-03-F01", "十六进制颜色模型、HSV 与 Alpha", "重点：十六进制颜色模型、Alpha 通道",         "CSS",  True),
     ("fe-03.html",     "FE-03",     "CSS 入门",                      "字体、背景色、字体色、装饰、阴影、cursor",   "CSS",  False),
-    ("fe-04.html",     "FE-04",     "CSS 选择器语法",                 "全篇重点：标签/类/id、后代、属性限定、伪类、伪元素", "CSS", True),
+    ("fe-04.html",     "FE-04",     "CSS 选择器语法",                 "标签/类/id、后代、属性限定、伪类、伪元素", "CSS", False),
     ("fe-05.html",     "FE-05",     "Display 与盒模型尺寸",           "block / inline-block / inline、边框、阴影、宽高", "CSS", False),
     ("fe-06.html",     "FE-06",     "Writing Mode 与溢出滚动",        "重点：writing-mode、word-break",             "CSS",  True),
     ("fe-07.html",     "FE-07",     "鼠标悬停与 transition",          "hover、过渡、缓动、常用动效",                "CSS",  False),

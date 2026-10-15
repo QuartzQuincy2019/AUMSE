@@ -1,0 +1,343 @@
+
+/* =====================================================================
+   表面变量（亮色）
+   ---------------------------------------------------------------------
+   样式表里原来到处写死 #fff / #f2f4f8 这类浅色，暗色模式只能一个个
+   选择器去补 —— 补不完。现在统一走这几个变量：暗色只改变量值，
+   所有引用处一起生效。
+
+   ⚠ 金色渐变的色标（#fffdf5 / #fdf3dc / #fbe9c4 …）**不在**这套变量里 ——
+     它们是主题色，不是中性表面。
+   ===================================================================== */
+:root{
+  --sfc:#ffffff;
+  --sfc-2:#f2f4f8;
+  --sfc-3:#fbfcfe;
+  --sfc-hover:#f4f8fd;
+  --sfc-glass:rgba(255,255,255,.74);
+}
+
+/* =====================================================================
+   fe-dark.css —— FE 系列暗色模式
+   ---------------------------------------------------------------------
+   为什么单独一个文件、并且放在每篇 css 的**最后一个** <link>：
+
+   前端系列每篇的样式表末尾有一条亮色规则
+     body{ background:radial-gradient(... #ffe4f1 ...) }
+   它与暗色块同特异度，但位置更靠后，会把暗色盖掉（实测踩过：
+   切到暗色后 body 背景仍是透明的，实际显示的是这条亮色渐变）。
+
+   放在独立文件里、最后一个加载，就能稳定压过它；
+   而且不必再去改动 fe_*.css 本体 —— 那几个文件是
+   tools/sync_fe_theme.py 的同步目标，手工改动容易在下次同步时丢失。
+
+   深色下的构成刻意保留 FE 的「多层渐变 + 135° 斜纹」，
+   只把色相压到深紫，这样暗色下仍是 FE 那套花样，而不是变成一片灰。
+   ===================================================================== */
+@media (prefers-color-scheme: dark){
+  body[data-series="FE"]{
+    --bg:#15101d;
+    --surface:rgba(38,30,52,.72);
+    --surface-solid:#221a30;
+    --line:rgba(167,139,250,.20);
+    --line-2:rgba(167,139,250,.36);
+    --fg:#efe9f8;
+    --fg-2:#c3b8d6;
+    --fg-3:#9d92b3;
+    --blue:#a78bfa;   --blue-soft:rgba(167,139,250,.16);
+    --green:#3fc9a0;  --green-soft:rgba(63,201,160,.14);
+    --red:#f2789a;    --red-soft:rgba(242,120,154,.14);
+    --amber:#e0a94a;  --amber-soft:rgba(224,169,74,.15);
+    --violet:#a78bfa; --violet-soft:rgba(167,139,250,.16);
+    --teal:#3fc4d4;   --teal-soft:rgba(63,196,212,.14);
+    --gold:#e0b23f;
+    --bg-code:#120d1b;
+    --bg-out:#0a1412;
+
+    background-color:#15101d !important;
+    background-image:
+      radial-gradient(1100px 620px at 8% -8%, rgba(167,139,250,.15) 0%, transparent 60%),
+      radial-gradient(980px 560px at 96% 4%,  rgba(219,39,119,.12) 0%, transparent 58%),
+      radial-gradient(circle at 70% 96%,      rgba(63,196,212,.10) 0, transparent 46%) !important;
+    background-attachment:fixed !important;
+    color:#efe9f8;
+  }
+  /* 斜纹层：亮色是极淡的紫纹，暗色下同样保留，只调淡 */
+  body[data-series="FE"]::before{
+    background-image:repeating-linear-gradient(
+      135deg, rgba(167,139,250,.055) 0 1px, transparent 1px 11px) !important;
+  }
+  body[data-series="FE"].toc-open::after{background:rgba(10,6,16,.62)}
+
+  /* 玻璃卡片、代码块、输出块 */
+  body[data-series="FE"] .card{
+    background:rgba(38,30,52,.72);border-color:rgba(167,139,250,.20);
+  }
+  body[data-series="FE"] .code-wrap{background:#120d1b;border-color:rgba(167,139,250,.20)}
+  body[data-series="FE"] .code-wrap .bar{
+    background:#0e0a16;border-bottom-color:rgba(167,139,250,.20);
+  }
+  body[data-series="FE"] .code-wrap .bar .name{color:#b9aee0}
+  body[data-series="FE"] .out-wrap{background:#0a1412}
+  body[data-series="FE"] .pv-wrap{border-color:rgba(167,139,250,.20)}
+
+  /* 侧栏目录 */
+  body[data-series="FE"] #toc{
+    background:rgba(28,21,40,.94);border-right-color:rgba(167,139,250,.20);
+  }
+  body[data-series="FE"] #toc a{color:#c3b8d6}
+  body[data-series="FE"] #toc a:hover{background:rgba(167,139,250,.12)}
+  body[data-series="FE"] #toc a.on{
+    background:linear-gradient(90deg,rgba(167,139,250,.30),rgba(167,139,250,.10));
+    color:#efe9f8;
+  }
+
+  /* 标题、重点块 */
+  body[data-series="FE"] h1{
+    background:linear-gradient(96deg,#f0e6ff,#c9b0ff 45%,#a78bfa);
+    -webkit-background-clip:text;background-clip:text;
+    -webkit-text-fill-color:transparent;color:#c9b0ff;
+  }
+  body[data-series="FE"] h2{border-bottom-color:rgba(167,139,250,.20);color:#e6dcf7}
+  body[data-series="FE"] h2 .n{background:#a78bfa;color:#160f22}
+  body[data-series="FE"] h3,
+  body[data-series="FE"] h4{color:#c9b0ff}
+  body[data-series="FE"] .sub-title{color:#9d92b3}
+  body[data-series="FE"] .key-h{
+    background:linear-gradient(96deg,rgba(167,139,250,.18),rgba(219,39,119,.10));
+    border-left-color:#a78bfa;
+  }
+  body[data-series="FE"] .key-mark{color:#e0b23f}
+
+  /* 表格 */
+  body[data-series="FE"] table th{
+    background:linear-gradient(180deg,rgba(167,139,250,.20),rgba(167,139,250,.10));
+    color:#e6dcf7;border-color:rgba(167,139,250,.20);
+  }
+  body[data-series="FE"] table td{border-color:rgba(167,139,250,.20)}
+  body[data-series="FE"] table tbody tr:nth-child(even){background:rgba(167,139,250,.06)}
+
+  /* 返回 home、页尾「本系列」与「全部系列」 */
+  body[data-series="FE"] .home-fab{
+    background:#221a30 !important;border-color:rgba(167,139,250,.36);
+    color:#efe9f8;box-shadow:0 4px 18px rgba(0,0,0,.55);
+  }
+  body[data-series="FE"] .home-fab:hover{color:#a78bfa}
+  body[data-series="FE"] .s-nav-switch{border-top-color:rgba(167,139,250,.36)}
+  body[data-series="FE"] .s-nav-switch>b{color:#c3b8d6}
+  body[data-series="FE"] .s-nav-switch a{
+    background:#221a30;border-color:rgba(167,139,250,.36);color:#c3b8d6;
+  }
+  body[data-series="FE"] .s-nav-switch a:hover{
+    border-color:#a78bfa;color:#a78bfa;background:rgba(167,139,250,.16);
+  }
+  body[data-series="FE"] .s-nav-switch .ss-cur{
+    background:#a78bfa;border-color:#a78bfa;color:#160f22;
+  }
+  body[data-series="FE"] .s-nav-switch .ss-empty{
+    border-color:rgba(167,139,250,.36);color:#9d92b3;
+  }
+
+  /* 插图：透明图的棋盘底纹在亮色下是浅灰白，暗色下必须换深紫 */
+  body[data-series="FE"] .fig img{
+    background:linear-gradient(45deg,#231b31 25%,transparent 25%,transparent 75%,#231b31 75%),
+      linear-gradient(45deg,#231b31 25%,#1a1425 25%,#1a1425 75%,#231b31 75%);
+    background-size:18px 18px;background-position:0 0,9px 9px;
+    border-color:rgba(167,139,250,.36);
+  }
+}
+
+  /* =====================================================================
+     示例区（.pv-body）与卡片标题：**不要**跟着暗色走
+     ---------------------------------------------------------------------
+     fe-03 是「CSS 入门」，示例里在演示具体颜色，例如
+         .b1{background:var(--sfc-2)}   .b2{background:#e8f1fe}   .b3{background:#1a1f28;color:#fff}
+     这些背景是**故意写死的浅色**（被讲的就是它们）。
+     而 .pv-body 的文字色是 var(--fg) —— 暗色下变成近白，
+     于是「近白字 + 示例自带的浅底」对比度掉到 1.0，等于看不见，
+     而且把要演示的配色也给带偏了。
+
+     所以示例区固定用深色墨字（浅底示例本来就该配深字），
+     暗色下只是外面那层框变深，里面演示的内容保持原样。
+     ===================================================================== */
+  /* 示例区（.pv-body）：文字固定用深墨色。
+     ---------------------------------------------------------------------
+     示例演示的是「CSS 规则的效果」，里面大量自带**浅色底**
+     （.b1{background:var(--sfc-2)}、.hi{background:#ffe9a8}、:first-child{background:#c9f0d8} …）。
+     这些浅底是**被讲解的对象**，不能改。
+
+     而示例区的文字色继承自 var(--fg)，暗色下变成近白 ——
+     于是「近白字 + 浅底」对比度掉到 1.0，什么都看不见
+     （fe-04 因此从 12 涨到 21 个失败，比亮色还差）。
+
+     既然底色不动，文字就必须跟着底色走：示例区一律用深墨字。
+     用 :where() 把 .pv-body 本身算作零特异度，
+     这样示例自己的规则（.hi{color:...} 之类）仍然优先。
+     --------------------------------------------------------------------- */
+  body[data-series="FE"] :where(.pv-body),
+  body[data-series="FE"] :where(.pv-body) :where(p, li, td, th, span, div, strong, em, code, a){
+    color:#1a1f28;
+  }
+  body[data-series="FE"] :where(.pv-body) :where(a){color:#5b21b6}
+  body[data-series="FE"] :where(.pv-body) :where(code){
+    background:#eef2f8;border-color:#ccd5e3;color:#3a2f5a;
+  }
+  /* 示例区里的表格与框：跟着浅底走，不跟暗色 */
+  body[data-series="FE"] :where(.pv-body) .box,
+  body[data-series="FE"] :where(.pv-body) .fx{
+    background:var(--sfc-glass);border-color:#ccd5e3;
+  }
+  body[data-series="FE"] :where(.pv-body) .zt th,
+  body[data-series="FE"] :where(.pv-body) .zt td{border-color:#ccd5e3}
+  body[data-series="FE"] :where(.pv-body) .zt th{background:rgba(124,58,237,.09)}
+  body[data-series="FE"] .pv-body .box,
+  body[data-series="FE"] .pv-body .fx{
+    background:var(--sfc-glass);border-color:#ccd5e3;
+  }
+  body[data-series="FE"] .pv-body .zt th{background:rgba(124,58,237,.09)}
+  body[data-series="FE"] .pv-body .zt th,
+  body[data-series="FE"] .pv-body .zt td{border-color:#ccd5e3}
+
+  /* 卡片标题：用的是一组饱和品牌色（#5b21b6 / #0f766e / #be123c / #6d28d9），
+     压在深紫卡片上只有 1.9~3.1:1。暗色下换成同色系的亮调。 */
+  body[data-series="FE"] .card.note .card-t{color:#c4b5fd}
+  body[data-series="FE"] .card.tip  .card-t{color:#5eead4}
+  body[data-series="FE"] .card.warn .card-t{color:#fda4af}
+  body[data-series="FE"] .card.key  .card-t{color:#d8b4fe}
+  body[data-series="FE"] .card-t{color:#c4b5fd}
+
+  /* 正文里的行内 code：写死的深紫在深底上只有 1.8:1 */
+  body[data-series="FE"] code{
+    background:#2a2140;border-color:rgba(167,139,250,.34);color:#d8b4fe;
+  }
+
+/* =====================================================================
+   第 12 轮修正：几个写死浅色的块 + .mnemonic / .key-h 的区分与辨识度
+   ===================================================================== */
+
+/* ---------- ① 写死浅色的块：暗色下必须换深底 ---------- */
+@media (prefers-color-scheme: dark){
+  .stack .fr{
+    background:#161d26 !important;border-color:#374556 !important;color:#e6ecf4;
+  }
+  .stack .fr:hover{border-color:var(--blue,#6aa6f5) !important;
+    box-shadow:0 5px 16px rgba(0,0,0,.42) !important}
+  .capfig{
+    background:#161d26 !important;border-color:#374556 !important;color:#e6ecf4;
+  }
+  .capfig .t,.capfig .lg{color:#939fb0}
+  .capfig .cellb.free{background:#1e2836;color:#939fb0;border-color:#374556}
+  .capfig .lg .sq.f{background:#1e2836;border-color:#374556}
+  .capfig .cellb{color:#e6ecf4}
+  /* .mnemonic 用的是 --amber-soft，暗色块里没覆盖过 —— 顺手补上安全值 */
+  .mnemonic{background:#10262b;border-left-color:#3fc4d4}
+}
+
+/* ---------- ② .mnemonic 与 .key-h 拉开区分 ----------
+   原来两者都是「琥珀底 + 左侧竖条」，暗色下几乎一样。
+   现在分工明确：
+     .mnemonic  助记 / 口诀 / 小提示 —— **青蓝**（信息色）
+     .key-h     重点小节标题        —— **金色**（强调色）
+   色相拉开之后，扫一眼就知道是「提示」还是「重点」。 */
+.mnemonic{
+  border-left:5px solid #0d8f9e;
+  background:linear-gradient(96deg,#eefafb,#e2f6f8);
+  color:var(--fg,#1a1f28);
+}
+.mnemonic b{color:#0a6b78}
+.mnemonic::before{
+  content:"助记";
+  display:inline-block;margin-right:9px;padding:1px 8px;border-radius:999px;
+  font-size:11px;font-weight:700;letter-spacing:.06em;
+  background:#0d8f9e;color:#fff;vertical-align:2px;
+}
+@media (prefers-color-scheme: dark){
+  .mnemonic{
+    border-left-color:#3fc4d4 !important;
+    background:linear-gradient(96deg,#10262b,#0d2024) !important;
+    color:#d6f0ee !important;
+  }
+  .mnemonic b{color:#7fd8e0 !important}
+  .mnemonic::before{background:#3fc4d4;color:#062024}
+}
+
+/* ---------- ④ 暗色下 .key-h 的辨识度 ----------
+   原来的暗色 key-h 只是把亮色反相成深棕，跟普通卡片几乎分不出来。
+   这里提高对比：更亮的金色左条 + 带金调的渐变 + 金色外发光，
+   让「重点小节」在暗色下也是第一眼能看到的东西。 */
+@media (prefers-color-scheme: dark){
+  h2.key-h,h3.key-h,h4.key-h{
+    background:linear-gradient(96deg,#3a2d10 0%,#4a3a15 52%,#2e2409 100%) !important;
+    border-color:#8a6d1e !important;
+    border-left:7px solid #f0cc72 !important;
+    color:#ffe9b0 !important;
+    box-shadow:0 0 0 1px rgba(240,204,114,.16),
+               0 3px 14px rgba(0,0,0,.42);
+  }
+  h2.key-h .n,h3.key-h .n,h4.key-h .n{
+    background:#f0cc72 !important;color:#2b1d02 !important;
+  }
+  .key-hint{
+    background:#4a3a15 !important;border-color:#8a6d1e !important;
+    color:#f4e3b4 !important;
+  }
+  .key-mark{color:#ffd970 !important}
+}
+
+
+@media (prefers-color-scheme: dark){
+  :root:root{
+    --sfc:#1b1e25;
+    --sfc-2:#161d26;
+    --sfc-3:#1e242e;
+    --sfc-hover:#1e2836;
+    --sfc-glass:rgba(38,44,54,.72);
+  }
+}
+
+/* =====================================================================
+   第 14 轮：剩余浅底的暗色覆盖
+   ---------------------------------------------------------------------
+   这些是 audit_dark2 穷举出来的（不再靠人工回忆）：
+     code / .hd / .k / .mnemonic / .cpp-note / .lv.* / .ch.end /
+     .encs .c / .ptr-demo / .box / 无名 div
+
+   为什么上一轮没盖住：这些颜色（#eef2f8 / #f2ecfd）在同一份文件里
+   也出现在别处的渐变色标中，被我的「渐变色标不动」规则连带排除了。
+   这里逐个选择器直接给暗色，不再依赖那套判断。
+   ===================================================================== */
+@media (prefers-color-scheme: dark){
+  /* 行内代码 —— 全站 15 篇都有，是这次最大的一块 */
+  code{
+    background:#252a33 !important;color:#9fc4ff !important;
+    border-color:#3a414c !important;
+  }
+  /* 小标题条 */
+  .hd{background:#252a33 !important;color:#c3cfdd !important}
+  /* 紫色小标记 */
+  .k{background:#241d38 !important;color:#c9b0ff !important;border-color:#3d3160 !important}
+  /* 助记块（e02 那份漏了暗色） */
+  .mnemonic{
+    background:linear-gradient(96deg,#10262b,#0d2024) !important;
+    border-left-color:#3fc4d4 !important;color:#d6f0ee !important;
+  }
+  .mnemonic b{color:#7fd8e0 !important}
+  /* C++ 备注 */
+  .cpp-note{
+    background:#241d38 !important;border-color:#3d3160 !important;
+    border-left-color:#b28cff !important;color:#e6dcf7 !important;
+  }
+  /* 作用域层级 */
+  .lv.l0{background:#16243a !important;border-color:#2b3f5e !important}
+  .lv.l1{background:#241d38 !important;border-color:#3d3160 !important}
+  .lv.l2{background:#13291f !important;border-color:#25452f !important}
+  /* 字符串内存图的结尾格 */
+  .ch.end{background:#2e1a18 !important;border-bottom-color:#f07a6c !important}
+  .ch.end:hover{background:#3a201d !important}
+  /* 指针演示区 */
+  .ptr-demo{background:#161d26 !important;border-color:#374556 !important}
+  .ptr-demo .box,.ptr-demo .p{background:#1b1e25 !important;border-color:#374556 !important}
+  .box{background:#1b1e25 !important;border-color:#374556 !important}
+}
+
+/* 补齐：上一轮加了 --sfc 变量，但个别地方仍写着旧色值 */

@@ -6,53 +6,7 @@
 <title>F03 · 编译与链接、头文件与库</title>
 <link rel="stylesheet" href="assets/f03_compile_and_link.css">
 <link rel="stylesheet" href="assets/series-theme.css">
-<style>
-/* ================= 自动注入：返回 home + 系列小目录 ================= */
-.home-fab{position:fixed;left:11px;bottom:11px;z-index:65;display:inline-flex;
-  align-items:center;gap:6px;padding:8px 14px;border-radius:999px;
-  background:#fff;border:1px solid var(--line-2);color:var(--fg-2);
-  text-decoration:none;font:600 13px/1 var(--sans);
-  box-shadow:0 4px 16px rgba(20,30,50,.16);transition:transform .14s,box-shadow .14s,color .14s}
-.home-fab:hover{transform:translateY(-2px);color:var(--blue);
-  box-shadow:0 8px 22px rgba(30,60,120,.24)}
-.home-fab::before{content:"⌂";font-size:15px}
-.series-nav{margin:34px 0 0;padding:14px 18px;border:1px solid var(--line-2);
-  border-radius:12px;background:var(--bg-soft);font-size:13.5px}
-.series-nav b{color:var(--fg)}
-.series-nav a{display:inline-block;margin:3px 8px 3px 0;padding:3px 11px;border-radius:999px;
-  background:#fff;border:1px solid var(--line-2);text-decoration:none;color:var(--fg-2);
-  transition:border-color .14s,color .14s}
-.series-nav a:hover{border-color:var(--blue);color:var(--blue)}
-.series-nav a.cur{background:var(--blue);border-color:var(--blue);color:#fff;font-weight:600}
-@media (max-width:560px){
-  .series-nav{font-size:12.5px;padding:12px 13px}
-  .series-nav a{font-size:12px;margin:2px 5px 2px 0;padding:2px 9px}
-  .home-fab{left:9px;bottom:9px;padding:7px 12px;font-size:12.5px}
-}
 
-.key-mark{display:inline-block;margin-right:8px;color:#c8901a;font-size:15px;
-  vertical-align:1px;cursor:help}
-.key-hint{display:inline-block;margin-left:8px;padding:1px 8px;border-radius:999px;
-  font-size:11px;font-weight:600;background:#eef2f8;border:1px solid var(--line-2);
-  color:var(--fg-3);vertical-align:2px;font-family:var(--sans)}
-
-/* ---------- 悬浮「返回 home」按钮的避让 ----------
-   窄屏下抽屉宽 min(86vw,300px)，而按钮固定在左下角、z-index 又高于抽屉，
-   会把抽屉底部的目录项压住导致点击无效。所以：
-     * 抽屉打开时直接藏起按钮
-     * 中等宽度把按钮移到底部右侧（320px 之外就不与抽屉重叠） */
-body.toc-open .home-fab{display:none}
-@media (min-width:561px) and (max-width:980px){
-  .home-fab{left:auto;right:12px}
-}
-
-/* ---------- 遮罩层不接收指针事件 ----------
-   body.toc-open::after 是「抽屉打开时的变暗遮罩」。
-   它曾经把抽屉里的点击全吃掉：实测 elementFromPoint 返回 body.toc-open，
-   连目录项都点不动（JS 直接 .click() 却正常，说明只是指针层被挡）。
-   遮罩只负责变暗，关闭逻辑由脚本按坐标判断。 */
-body.toc-open::after{pointer-events:none}
-</style>
 </head>
 <body class="fseries" data-series="F">
 <div id="shell">
@@ -478,14 +432,14 @@ collect2.exe: error: ld returned 1 exit status</pre></div>
 <p>打开 VS → <b>创建新项目</b>。在搜索框里输入 <code>静态库</code>，
 选这一项（注意平台要选 <b>C++</b>、<b>Windows</b>）：</p>
 
-<pre style="background:#f2f4f8;border:1px solid var(--line);border-radius:8px;padding:11px 14px;font-family:var(--mono);font-size:12.5px;color:var(--fg);overflow:auto">静态库 (C++ · Windows · 库)
+<pre class="plain-pre">静态库 (C++ · Windows · 库)
    项目名称: UmeMath
    位置:     D:\Path\To\UME
    ☑ 将解决方案和项目放在同一目录中   ← 不要勾，见下方说明</pre>
 
 <p>点「创建」。VS 会生成这样一个结构：</p>
 
-<div class="tree">
+<pre class="tree">
 <span class="d">D:\Path\To\UME\</span>
 ├─ <span class="f">UME.sln</span>                  <span class="c">← 解决方案</span>
 └─ <span class="d">UmeMath\</span>                  <span class="c">← 项目</span>
@@ -493,7 +447,7 @@ collect2.exe: error: ld returned 1 exit status</pre></div>
     ├─ <span class="f">UmeMath.vcxproj.filters</span>  <span class="c">← 只影响 VS 里怎么分组显示</span>
     ├─ <span class="f">pch.h</span> / <span class="f">pch.cpp</span>       <span class="c">← 预编译头（后面处理）</span>
     └─ <span class="f">UmeMath.cpp</span>           <span class="c">← 待会儿删掉</span>
-</div>
+</pre>
 
 <div class="card tip">
   <div class="card-t">「将解决方案和项目放在同一目录中」为什么建议不勾</div>
@@ -599,7 +553,7 @@ ume_math.h(10,5): error C2059: 语法错误:"return"</pre></div>
 <p>这是你问的那个操作。在<b>解决方案资源管理器</b>里，
 <b>右键点项目名 <code>UmeMath</code></b>，菜单里能看到这一组：</p>
 
-<pre style="background:#f2f4f8;border:1px solid var(--line);border-radius:8px;padding:11px 14px;font-family:var(--mono);font-size:12.5px;color:var(--fg);overflow:auto">右键 UmeMath 项目
+<pre class="plain-pre">右键 UmeMath 项目
  ├─ 生成            (Build)          ← 只编「改过的」，快
  ├─ 重新生成        (Rebuild)        ← 先清理再全编，慢但干净
  ├─ 清理            (Clean)          ← 只删中间产物与输出
@@ -690,7 +644,7 @@ TargetPath        = [D:\Path\To\UME\x64\Debug\UmeMath.lib]</pre></div>
 </div>
 
 <p>现在的结构：</p>
-<div class="tree">
+<pre class="tree">
 <span class="d">D:\Path\To\UME\</span>
 ├─ <span class="f">UME.sln</span>
 ├─ <span class="d">UmeMath\</span>              <span class="c">← 静态库</span>
@@ -698,7 +652,7 @@ TargetPath        = [D:\Path\To\UME\x64\Debug\UmeMath.lib]</pre></div>
 │   └─ <span class="f">ume_math.cpp</span>
 └─ <span class="d">App\</span>                   <span class="c">← 控制台程序</span>
     └─ <span class="f">App.cpp</span>
-</div>
+</pre>
 
 <h4>② 写 App 的代码</h4>
 <p>把 <code>App.cpp</code> 换成：</p>
@@ -750,7 +704,7 @@ fatal error LNK1120: 2 个无法解析的外部命令</pre></div>
 建议都选<b>「所有配置」+「所有平台」</b>，这样改一次四个组合都生效。</p>
 
 <h4>① 附加包含目录 —— 解决 C1083</h4>
-<pre style="background:#f2f4f8;border:1px solid var(--line);border-radius:8px;padding:11px 14px;font-family:var(--mono);font-size:12.5px;color:var(--fg);overflow:auto">配置属性 → C/C++ → 常规 → 附加包含目录
+<pre class="plain-pre">配置属性 → C/C++ → 常规 → 附加包含目录
 
   填入:  $(SolutionDir)UmeMath</pre>
 
@@ -762,7 +716,7 @@ fatal error LNK1120: 2 个无法解析的外部命令</pre></div>
 <code>ume_math.h</code> 就在它下面的 <code>UmeMath\</code> 里。</p>
 
 <h4>② 附加依赖项 —— 告诉链接器「要用哪个库」</h4>
-<pre style="background:#f2f4f8;border:1px solid var(--line);border-radius:8px;padding:11px 14px;font-family:var(--mono);font-size:12.5px;color:var(--fg);overflow:auto">配置属性 → 链接器 → 输入 → 附加依赖项
+<pre class="plain-pre">配置属性 → 链接器 → 输入 → 附加依赖项
 
   填入:  UmeMath.lib</pre>
 
@@ -775,7 +729,7 @@ fatal error LNK1120: 2 个无法解析的外部命令</pre></div>
 </div>
 
 <h4>③ 附加库目录 —— 告诉链接器「库在哪」</h4>
-<pre style="background:#f2f4f8;border:1px solid var(--line);border-radius:8px;padding:11px 14px;font-family:var(--mono);font-size:12.5px;color:var(--fg);overflow:auto">配置属性 → 链接器 → 常规 → 附加库目录
+<pre class="plain-pre">配置属性 → 链接器 → 常规 → 附加库目录
 
   填入:  $(SolutionDir)$(Platform)\$(Configuration)</pre>
 
@@ -795,7 +749,7 @@ fatal error LNK1120: 2 个无法解析的外部命令</pre></div>
 <p>上面 ②③ 是「手动告诉链接器」。
 VS 还提供了一条<b>自动化</b>的路：</p>
 
-<pre style="background:#f2f4f8;border:1px solid var(--line);border-radius:8px;padding:11px 14px;font-family:var(--mono);font-size:12.5px;color:var(--fg);overflow:auto">右键 App 项目 → 添加 → 引用...  →  勾选 UmeMath  →  确定</pre>
+<pre class="plain-pre">右键 App 项目 → 添加 → 引用...  →  勾选 UmeMath  →  确定</pre>
 
 <p>它的作用是两件：</p>
 <table>
@@ -1135,20 +1089,9 @@ UmeMath.lib;%(AdditionalDependencies)</pre></div>
 
 <!-- NAV-AUTO -->
 <a class="home-fab" href="../../index.html" title="返回教程总目录">返回 home</a>
-<div class="series-nav">
-<b>本系列</b>　<span class="series-tag">F 系列 · 文件操作基础</span>　
-<a href="f01-command-prompt.html">F01 命令提示符（cmd）初步 <span class="star" title="与本项目施行密切相关">*</span></a>
-<a href="f02-paths-and-env.html">F02 相对文件路径与宏 <span class="star" title="与本项目施行密切相关">*</span></a>
-<a href="f03-compile-and-link.html" class="cur">F03 编译与链接、头文件与库 <span class="star" title="与本项目施行密切相关">*</span></a>
+
 </div>
-<div class="series-switch">
-<b>全部系列</b>　
-<a href="t01-mongolian-script-intro.html">理论 · T（3 篇）</a>
-<a href="m01-c-arrays.html">课本 · M（9 篇）</a>
-<a href="q01-std-and-namespace.html">Qt · Q（1 篇）</a>
-<a href="e01-recursion.html">Extra · E（2 篇）</a>
-<span class="ss-cur">File · F（3 篇）</span>
-<span class="ss-empty">相关 · R（0 篇，暂空）</span>
+
 </div>
 <!-- /NAV-AUTO -->
 <footer>

@@ -18,15 +18,20 @@
 <div class="lead">
   <p><b>怎么用这套教程</b>：按系列走。每个系列内部的编号就是建议顺序，
     每篇里的代码建议<b>亲手敲一遍</b>。</p>
-  <p>目前有六个并列系列（外加外观自成一系的前端 FE）：
-    <b>M</b> 是课本主线，<b>T</b> 是必须先懂的理论，
-    <b>Q</b> 通往 C++ 与 Qt，<b>E</b> 是补充练习，<b>F</b> 是动手时的文件操作，
-    <b>R</b> 收相关资讯与理论。系列之间<b>可以横向跳</b>，不必按顺序看完。</p>
+  <p>目前有六个并列系列（外加外观自成一系的前端 FE）。
+    系列之间<b>可以横向跳</b>，不必按顺序看完；
+    <b>排列顺序按组员进度随时调整</b>，不代表难度或重要性。</p>
   <p>每张卡片左上角是<b>系列内编号</b>（如 <code>M03</code>），旁边是系列标记。
     其中 <b>@@NSTAR@@ 篇</b>标着 <span class="star-badge">★ 重点</span> ——
     它们<b>与本项目施行密切相关</b>，卡片底色也不同。</p>
   <p>卡片列表由脚本按数据生成，<b>加篇目只改 <code>tools/series_data.py</code> 一处</b>。</p>
 </div>
+
+<aside class="lead-msg" role="note" aria-label="项目组长留言">
+  <p class="lead-msg-t">项目组长留言</p>
+  <p class="lead-msg-b">@@LEAD_MSG@@</p>
+  <p class="lead-msg-d">@@LEAD_DATE@@</p>
+</aside>
 
 @@SERIES_INDEX@@
 
@@ -35,27 +40,24 @@
 <div class="note">
   <h3>编号怎么看</h3>
   <table>
-    <tr><td style="width:34%"><code>T01</code> ~ <code>T03</code></td>
+    <tr><td style="width:32%"><code>T01</code> ~</td>
         <td><b>T 系列 · 核心理论和底层逻辑</b><br>
           文字、编码与字体文件 —— 做回鹘蒙文必须先弄懂的东西</td></tr>
     <tr><td><code>M01</code> ~ <code>M09</code></td>
         <td><b>M 系列 · 课本内容速成与补充</b><br>
           C / C++ 主线，从数组到 vector，贴合课本进度</td></tr>
     <tr><td><code>Q01</code> ~</td>
-        <td><b>Q 系列 · C++ 开发事项和 Qt 基础</b><br>
-          进入 C++ 与 Qt：标准库、命名空间、界面开发的前置知识</td></tr>
-    <tr><td><code>E01</code> ~ <code>E02</code></td>
-        <td><b>E 系列 · 补充练习与进阶</b><br>
-          主线之外的补充：递归、批处理与命令行自动化</td></tr>
-    <tr><td><code>F01</code> ~ <code>F03</code></td>
-        <td><b>F 系列 · 文件操作基础</b><br>
-          命令行、路径与编译链接 —— 动手时立刻要用的东西</td></tr>
+        <td><b>Q 系列 · C++ 开发事项和 Qt 基础</b></td></tr>
+    <tr><td><code>E01</code> ~</td>
+        <td><b>E 系列 · 补充练习与进阶</b></td></tr>
+    <tr><td><code>F01</code> ~</td>
+        <td><b>F 系列 · 文件操作基础</b></td></tr>
     <tr><td><code>R01</code> ~</td>
         <td><b>R 系列 · 相关资讯与理论</b><br>
-          Highly-Related Information and Theories（暂空，待补）</td></tr>
+          Highly-Related Information and Theories</td></tr>
     <tr><td><code>FE-01</code> ~</td>
         <td><b>FE 系列 · 前端基础</b><br>
-          HTML 与 CSS，界面长什么样、怎么让它好看（外观自成一系）</td></tr>
+          HTML 与 CSS（外观自成一系）</td></tr>
   </table>
   <p style="margin:12px 0 0;font-size:13.5px;color:var(--fg-3)">
     字母是<b>系列</b>，数字是<b>系列内的顺序</b>。

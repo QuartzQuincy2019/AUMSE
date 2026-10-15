@@ -6,47 +6,7 @@
 <title>M04 · 指针初步</title>
 <link rel="stylesheet" href="assets/tutorial.css">
 <link rel="stylesheet" href="assets/series-theme.css">
-<style>
-/* ================= 自动注入：返回 home + 系列小目录 ================= */
-.home-fab{position:fixed;left:11px;bottom:11px;z-index:65;display:inline-flex;
-  align-items:center;gap:6px;padding:8px 14px;border-radius:999px;
-  background:#fff;border:1px solid var(--line-2);color:var(--fg-2);
-  text-decoration:none;font:600 13px/1 var(--sans);
-  box-shadow:0 4px 16px rgba(20,30,50,.16);transition:transform .14s,box-shadow .14s,color .14s}
-.home-fab:hover{transform:translateY(-2px);color:var(--blue);
-  box-shadow:0 8px 22px rgba(30,60,120,.24)}
-.home-fab::before{content:"⌂";font-size:15px}
-.series-nav{margin:34px 0 0;padding:14px 18px;border:1px solid var(--line-2);
-  border-radius:12px;background:var(--bg-soft);font-size:13.5px}
-.series-nav b{color:var(--fg)}
-.series-nav a{display:inline-block;margin:3px 8px 3px 0;padding:3px 11px;border-radius:999px;
-  background:#fff;border:1px solid var(--line-2);text-decoration:none;color:var(--fg-2);
-  transition:border-color .14s,color .14s}
-.series-nav a:hover{border-color:var(--blue);color:var(--blue)}
-.series-nav a.cur{background:var(--blue);border-color:var(--blue);color:#fff;font-weight:600}
-@media (max-width:560px){
-  .series-nav{font-size:12.5px;padding:12px 13px}
-  .series-nav a{font-size:12px;margin:2px 5px 2px 0;padding:2px 9px}
-  .home-fab{left:9px;bottom:9px;padding:7px 12px;font-size:12.5px}
-}
 
-/* ---------- 悬浮「返回 home」按钮的避让 ----------
-   窄屏下抽屉宽 min(86vw,300px)，而按钮固定在左下角、z-index 又高于抽屉，
-   会把抽屉底部的目录项压住导致点击无效。所以：
-     * 抽屉打开时直接藏起按钮
-     * 中等宽度把按钮移到底部右侧（320px 之外就不与抽屉重叠） */
-body.toc-open .home-fab{display:none}
-@media (min-width:561px) and (max-width:980px){
-  .home-fab{left:auto;right:12px}
-}
-
-/* ---------- 遮罩层不接收指针事件 ----------
-   body.toc-open::after 是「抽屉打开时的变暗遮罩」。
-   它曾经把抽屉里的点击全吃掉：实测 elementFromPoint 返回 body.toc-open，
-   连目录项都点不动（JS 直接 .click() 却正常，说明只是指针层被挡）。
-   遮罩只负责变暗，关闭逻辑由脚本按坐标判断。 */
-body.toc-open::after{pointer-events:none}
-</style>
 </head>
 <body class="mseries" data-series="M">
 <div id="shell">
@@ -222,10 +182,10 @@ p     = 000000000060FD74   （p 里装的就是 &x）
 <div class="card warn">
   <div class="card-t">重要：<code>*</code> 是跟着「变量名」的，不是跟着类型</div>
   <p>下面两种写法<b>完全等价</b>，只是排版习惯不同：</p>
-  <pre style="background:#f2f4f8;border:1px solid var(--line);border-radius:8px;padding:10px 12px;font-family:var(--mono);font-size:13px;color:var(--fg);overflow:auto"><span class="hl-k">int</span> *p;      <span class="hl-c">/* 常见写法 */</span>
+  <pre class="plain-pre"><span class="hl-k">int</span> *p;      <span class="hl-c">/* 常见写法 */</span>
 <span class="hl-k">int</span>* p;      <span class="hl-c">/* 也合法，但容易误解 */</span></pre>
   <p>之所以提醒这点，是因为这一行有<b>陷阱</b>：</p>
-  <pre style="background:#fdeceb;border:1px solid #f0c8c2;border-radius:8px;padding:10px 12px;font-family:var(--mono);font-size:13px;color:var(--fg);overflow:auto"><span class="hl-k">int</span> *a, b;   <span class="hl-c">/* 只有 a 是指针！b 是普通 int！ */</span></pre>
+  <pre class="plain-pre"><span class="hl-k">int</span> *a, b;   <span class="hl-c">/* 只有 a 是指针！b 是普通 int！ */</span></pre>
   <p>因为 <code>*</code> 只管它后面那一个变量。<br>
   想声明两个指针，要写 <code>int *a, *b;</code>，
   或者干脆分行写清楚。</p>
@@ -234,7 +194,7 @@ p     = 000000000060FD74   （p 里装的就是 &x）
 <div class="card tip">
   <div class="card-t">推荐的写法</div>
   <p>把 <code>*</code> 紧贴变量名，并且<b>一行只声明一个</b>：</p>
-  <pre style="background:#f2f4f8;border:1px solid var(--line);border-radius:8px;padding:10px 12px;font-family:var(--mono);font-size:13px;color:var(--fg);overflow:auto"><span class="hl-k">int</span> *p;      <span class="hl-c">/* 清晰 */</span>
+  <pre class="plain-pre"><span class="hl-k">int</span> *p;      <span class="hl-c">/* 清晰 */</span>
 <span class="hl-k">int</span> *q;</pre>
   <p>这样不会看错，也符合「<code>*p</code> 是一个 int」的读法。</p>
 </div>
@@ -530,7 +490,7 @@ p 没指向任何地方，不能解引用</pre></div>
     <li><code>nullptr</code> 有自己<b>专门的类型</b>，只表示空指针，
       <b>不会退化成整数</b>，因此不会出现「本来想传指针，结果传了个 0」这类意外。</li>
   </ul>
-  <pre style="background:#f2f4f8;border:1px solid var(--line);border-radius:8px;padding:10px 12px;font-family:var(--mono);font-size:13px;color:var(--fg);overflow:auto"><span class="hl-c">/* C   里这样写 */</span>
+  <pre class="plain-pre"><span class="hl-c">/* C   里这样写 */</span>
 <span class="hl-k">int</span> *p = <span class="hl-n">NULL</span>;
 
 <span class="hl-c">/* C++ 里推荐这样写 */</span>
@@ -757,7 +717,7 @@ double* 加 1 前进 8 字节</pre></div>
     <div class="card teal" style="margin-top:12px">
       <div class="card-t">顺带一个常用技巧</div>
       <p>两个指针相减，得到的是<b>相隔几个元素</b>（不是几字节）：</p>
-      <pre style="background:#f2f4f8;border:1px solid var(--line);border-radius:8px;padding:10px 12px;font-family:var(--mono);font-size:13px;color:var(--fg);overflow:auto"><span class="hl-k">int</span> *q = <span class="arw">&amp;</span>arr[<span class="hl-n">3</span>];
+      <pre class="plain-pre"><span class="hl-k">int</span> *q = <span class="arw">&amp;</span>arr[<span class="hl-n">3</span>];
 <span class="hl-k">int</span> idx = (<span class="hl-k">int</span>)(q - arr);   <span class="hl-c">/* 3 —— 正好是下标 */</span></pre>
     </div>
   </div>
@@ -1175,26 +1135,9 @@ first = 7   （取到的是第 0 个）
 
 <!-- NAV-AUTO -->
 <a class="home-fab" href="../../index.html" title="返回教程总目录">返回 home</a>
-<div class="series-nav">
-<b>本系列</b>　<span class="series-tag">M 系列 · 课本内容速成与补充</span>　
-<a href="m01-c-arrays.html">M01 数组初步</a>
-<a href="m02-c-functions.html">M02 函数初步</a>
-<a href="m03-c-types.html">M03 类型概论</a>
-<a href="m04-c-pointers.html" class="cur">M04 指针初步</a>
-<a href="m05-memory.html">M05 静态、动态内存与内存安全初步</a>
-<a href="m06-class-struct.html">M06 类、结构体</a>
-<a href="m07-scope.html">M07 作用域、全局与局部变量</a>
-<a href="m08-c-strings.html">M08 C 风格字符串</a>
-<a href="m09-vector-and-array.html">M09 vector 和 array <span class="star" title="与本项目施行密切相关">*</span></a>
+
 </div>
-<div class="series-switch">
-<b>全部系列</b>　
-<a href="t01-mongolian-script-intro.html">理论 · T（3 篇）</a>
-<span class="ss-cur">课本 · M（9 篇）</span>
-<a href="q01-std-and-namespace.html">Qt · Q（1 篇）</a>
-<a href="e01-recursion.html">Extra · E（2 篇）</a>
-<a href="f01-command-prompt.html">File · F（3 篇）</a>
-<span class="ss-empty">相关 · R（0 篇，暂空）</span>
+
 </div>
 <!-- /NAV-AUTO -->
 <footer>

@@ -38,6 +38,15 @@ _HOME_JS = os.path.join(REPO, "tools", "home-cards.js")
 META = [(p[1], p[3], p[4], p[5], p[2], bool(p[6])) for p in PAGES]
 FE = [(a, b, c, d, e, f) for a, b, c, d, e, f in FE_PAGES]
 
+
+# ---------------------------------------------------------------- 组长留言
+# 原文一字不动。日期单独一行，右对齐。
+LEAD_MSG = ("回鹘蒙文输入法 (UME) 的技术难点是【利用Qt进行回鹘文字排版】，"
+            "除了 Qt 之外，还涉及回鹘文字书写系统、字体文件等领域知识。"
+            "后者将是项目组内部交流时最频繁使用的术语，"
+            "请大家务必认真考察这方面的理论。")
+LEAD_DATE = "2026年10月16日"
+
 STYLE = """<style>
 :root{
   --bg:#ffffff; --bg-soft:#f7f9fc; --line:#e3e8f0; --line-2:#ccd5e3;
@@ -136,7 +145,7 @@ a.card .sb{display:inline-block;margin-top:8px;font:700 10.5px/1.8 var(--sans);
   background:linear-gradient(135deg,#c8901a,#8a6208);
   box-shadow:0 2px 7px rgba(138,98,8,.35);
 }
-.lead-msg-t::before{content:"\1F4CC "}
+.lead-msg-t::before{content:"📌 "}
 .lead-msg-b{
   margin:0;
   font-family:SimSun,"Songti SC","Noto Serif CJK SC","Source Han Serif SC",serif;
@@ -207,6 +216,54 @@ a.card .sb{display:inline-block;margin-top:8px;font:700 10.5px/1.8 var(--sans);
     -webkit-text-stroke:.55px #f6ecd2;
     text-shadow:0 0 .35px #f6ecd2,0 .5px 0 rgba(0,0,0,.5);
   }
+}
+
+/* 留言的日期：单独一行，右对齐 */
+.lead-msg-d{
+  margin:14px 0 0;
+  text-align:right;
+  font-family:SimSun,"Songti SC","Noto Serif CJK SC",serif;
+  font-weight:700;
+  font-size:clamp(14px,1.7vw,16px);
+  letter-spacing:.06em;
+  color:#7a5a12;
+  -webkit-text-stroke:.3px #7a5a12;
+}
+
+/* ================= 页尾「全部系列」跳转 =================
+   这一块原来完全没有样式 —— 它只继承了 <a> 的默认外观，
+   在一排胶囊按钮旁边显得像「裸链接」，用户反馈「样式丢失」。
+   现在给它和「本系列」一致的胶囊样式。 */
+.series-switch{
+  margin-top:14px;padding-top:12px;
+  border-top:1px dashed var(--line-2,#ccd5e3);
+  font:500 12.5px/2 var(--sans,system-ui,sans-serif);
+  color:var(--fg-3,#8b95a5);
+}
+.series-switch b{color:var(--fg-2,#4b5563);margin-right:2px}
+.series-switch a{
+  display:inline-block;margin:3px 7px 3px 0;padding:2px 11px;
+  border-radius:999px;background:#fff;
+  border:1px solid var(--line-2,#ccd5e3);
+  color:var(--fg-2,#4b5563);text-decoration:none;
+  transition:border-color .14s,color .14s,background .14s;
+}
+.series-switch a:hover{border-color:var(--blue,#1f6feb);color:var(--blue,#1f6feb);
+  background:var(--blue-soft,#e8f1fe)}
+.series-switch .ss-cur{
+  display:inline-block;margin:3px 7px 3px 0;padding:2px 11px;
+  border-radius:999px;font-weight:700;
+  background:var(--fg-2,#4b5563);border:1px solid var(--fg-2,#4b5563);color:#fff;
+}
+.series-switch .ss-empty{
+  display:inline-block;margin:3px 7px 3px 0;padding:2px 11px;
+  border-radius:999px;opacity:.62;
+  border:1px dashed var(--line-2,#ccd5e3);
+}
+@media (max-width:560px){
+  .series-switch{font-size:12px}
+  .series-switch a,.series-switch .ss-cur,.series-switch .ss-empty{
+    margin:2px 5px 2px 0;padding:1px 9px}
 }
 </style>"""
 
@@ -287,10 +344,14 @@ def build_html():
     # 顶部系列索引（一行说明各系列是什么）
     idx = ['<div class="note"><h3>系列一览</h3><table>']
     for g in groups:
+        # 介绍为空的系列就只显示名字与篇数 ——
+        # 这几个系列将来会大量补充，写死的介绍很快会过时。
+        desc = g["desc"]
+        body = ("%s<br>" % desc) if desc else ""
         idx.append("<tr><td style='width:30%%'><b>%s</b></td>"
-                   "<td>%s<br><span style='color:var(--fg-3);font-size:12.5px'>%s"
-                   "　共 %d 篇%s</span></td></tr>"
-                   % (g["banner"], g["desc"], "",
+                   "<td>%s<span style='color:var(--fg-3);font-size:12.5px'>"
+                   "共 %d 篇%s</span></td></tr>"
+                   % (g["banner"], body,
                       g["count"], "，暂空" if g["count"] == 0 else ""))
     idx.append("</table></div>")
     index_html = "".join(idx)
@@ -301,6 +362,8 @@ def build_html():
               .replace("@@NSTAR@@", str(n_star))
               .replace("@@NOSCRIPT@@", noscript)
               .replace("@@SERIES_INDEX@@", index_html)
+              .replace("@@LEAD_MSG@@", LEAD_MSG)
+              .replace("@@LEAD_DATE@@", LEAD_DATE)
               .replace("@@CARDS_JS@@", cardjs))
     # 自检：占位符必须全部替换干净。
     # 曾经漏过 —— home-cards.js 的注释里写了 @@NSTAR@@，

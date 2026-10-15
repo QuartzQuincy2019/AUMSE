@@ -73,6 +73,43 @@
     return box;
   }
 
+
+  /* 「全部系列」：与其它系列页尾一致。
+     前端的外观自成一系（不走 series_data 生成的主题），
+     但它是「一个系列」，所以『全部系列』里必须有它。 */
+  var ALL_SERIES = [
+    { lab: '理论 · T',  f: 't01-mongolian-script-intro.html', n: 3 },
+    { lab: 'File · F',  f: 'f01-command-prompt.html',         n: 3 },
+    { lab: '课本 · M',  f: 'm01-c-arrays.html',               n: 9 },
+    { lab: '相关 · R',  f: null,                              n: 0 },
+    { lab: 'Qt · Q',    f: 'q01-std-and-namespace.html',      n: 1 },
+    { lab: 'Extra · E', f: 'e01-recursion.html',              n: 2 },
+    { lab: '前端 · FE', f: 'fe-01.html',                      n: 8, cur: true }
+  ];
+
+  function buildSeriesSwitch() {
+    var box = el('div', 's-nav-switch');
+    box.appendChild(el('b', null, '全部系列'));
+    box.appendChild(document.createTextNode('\u3000'));
+    ALL_SERIES.forEach(function (s) {
+      var lab = s.lab + '（' + s.n + ' 篇' + (s.n ? '' : '，暂空') + '）';
+      if (s.cur) {
+        box.appendChild(el('span', 'ss-cur', lab + '\u3000当前'));
+        return;
+      }
+      if (!s.f) {
+        box.appendChild(el('span', 'ss-empty', lab));
+        return;
+      }
+      var a = document.createElement('a');
+      a.className = 'ss-link';
+      a.href = s.f;
+      a.textContent = lab;
+      box.appendChild(a);
+    });
+    return box;
+  }
+
   function build() {
     var btn = el('button', null, '目录');
     btn.id = 'tocToggle';
@@ -101,6 +138,7 @@
     while (body.firstChild) main.appendChild(body.firstChild);
 
     main.appendChild(buildSeriesNav());
+    main.appendChild(buildSeriesSwitch());
     var f = el('footer');
     f.innerHTML = 'UME 项目组内部教程 · 前端系列 ' + P.num + '《' + P.title + '》<br>'
       + '示例均以 <b>Consolas</b> 等宽字体呈现；'
@@ -108,6 +146,7 @@
     main.appendChild(f);
 
     shell.appendChild(main);
+    document.body.setAttribute('data-series', 'FE');
     document.body.appendChild(shell);
 
     var fab = el('a', 'home-fab', '返回 home');

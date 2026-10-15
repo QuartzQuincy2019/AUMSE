@@ -6,6 +6,7 @@
 <title>T02 · Unicode 和编码</title>
 <link rel="stylesheet" href="assets/t02_unicode_and_encoding.css">
 <link rel="stylesheet" href="assets/t-theme.css">
+<link rel="stylesheet" href="assets/series-theme.css">
 </head>
 <body class="tseries" data-series="T">
 <script>
@@ -413,7 +414,7 @@ e 带音标 (2 字节): C3 A9
 
 <div class="card warn">
   <div class="card-t">这是处理多语言文本最容易踩的坑</div>
-  <pre style="background:#fdeceb;border:1px solid #f0c8c2;border-radius:8px;padding:10px 12px;font-family:var(--mono);font-size:13px;color:var(--fg);overflow:auto"><span class="hl-c">/* ❌ 想「取第 2 个蒙文字母」，实际取到的是第 2 个字节 */</span>
+  <pre class="plain-pre"><span class="hl-c">/* ❌ 想「取第 2 个蒙文字母」，实际取到的是第 2 个字节 */</span>
 <span class="hl-k">char</span> second = mongol[<span class="hl-n">1</span>];      <span class="hl-c">/* = 0xA0，半个字符，没意义 */</span>
 
 <span class="hl-c">/* ✅ 要按「字符」处理，必须用能理解编码的类型 */</span>
@@ -540,7 +541,7 @@ QChar c = text[<span class="hl-n">0</span>];                     <span class="hl
   <div class="card-t">Qt 里最该记住的一条</div>
   <p><b><code>QByteArray</code> 是字节，<code>QString</code> 是文字。
   两者之间必须显式「解码 / 编码」，不能直接混用。</b></p>
-  <pre style="background:#f2f4f8;border:1px solid var(--line);border-radius:8px;padding:10px 12px;font-family:var(--mono);font-size:13px;color:var(--fg);overflow:auto">QString  s = QString::fromUtf8(bytes);   <span class="hl-c">/* 字节 → 文字（解码） */</span>
+  <pre class="plain-pre">QString  s = QString::fromUtf8(bytes);   <span class="hl-c">/* 字节 → 文字（解码） */</span>
 QByteArray b = s.toUtf8();                <span class="hl-c">/* 文字 → 字节（编码） */</span></pre>
 </div>
 
@@ -708,20 +709,9 @@ QByteArray b = s.toUtf8();                <span class="hl-c">/* 文字 → 字�
 
 <!-- NAV-AUTO -->
 <a class="home-fab" href="../../index.html" title="返回教程总目录">返回 home</a>
-<div class="series-nav">
-<b>本系列</b>　<span class="series-tag">T 系列 · 核心理论和底层逻辑</span>　
-<a href="t01-mongolian-script-intro.html">T01 初识回鹘蒙文 <span class="star" title="与本项目施行密切相关">*</span></a>
-<a href="t02-unicode-and-encoding.html" class="cur">T02 Unicode 和编码 <span class="star" title="与本项目施行密切相关">*</span></a>
-<a href="t03-font-file-anatomy.html">T03 字体文件结构大揭秘 <span class="star" title="与本项目施行密切相关">*</span></a>
+
 </div>
-<div class="series-switch">
-<b>全部系列</b>　
-<span class="ss-cur">理论 · T（3 篇）</span>
-<a href="m01-c-arrays.html">课本 · M（9 篇）</a>
-<a href="q01-std-and-namespace.html">Qt · Q（1 篇）</a>
-<a href="e01-recursion.html">Extra · E（2 篇）</a>
-<a href="f01-command-prompt.html">File · F（3 篇）</a>
-<span class="ss-empty">相关 · R（0 篇，暂空）</span>
+
 </div>
 <!-- /NAV-AUTO -->
 
