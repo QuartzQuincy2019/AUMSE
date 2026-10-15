@@ -13,13 +13,14 @@
   --violet:#6b46c1; --violet-soft:#f2ecfd;
   --amber:#a4690d; --amber-soft:#fdf4e3;
   --teal:#0d7d7d; --teal-soft:#e4f5f5;
+  --gold:#c8901a; --gold-line:#e8c877;
   --mono:"Consolas","Cascadia Mono","Courier New",monospace;
   --sans:"Microsoft YaHei","PingFang SC","Hiragino Sans GB",system-ui,sans-serif;
 }
 *{box-sizing:border-box}
 body{margin:0;background:var(--bg);color:var(--fg);
   font:16px/1.8 var(--sans);-webkit-font-smoothing:antialiased}
-.wrap{max-width:1080px;margin:0 auto;padding:48px 24px 80px}
+.wrap{max-width:1120px;margin:0 auto;padding:48px 24px 80px}
 
 header{border-bottom:1px solid var(--line);padding-bottom:26px;margin-bottom:8px}
 h1{margin:0 0 8px;font-size:30px;letter-spacing:-.01em}
@@ -34,30 +35,49 @@ h2{font-size:15px;letter-spacing:.14em;text-transform:uppercase;color:var(--fg-3
   font-weight:600;margin:38px 0 14px;display:flex;align-items:center;gap:10px}
 h2::after{content:"";flex:1;height:1px;background:var(--line)}
 
-.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(310px,1fr));gap:14px}
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(324px,1fr));gap:14px}
 .card{display:block;text-decoration:none;color:inherit;background:#fff;
-  border:1px solid var(--line-2);border-radius:12px;padding:16px 18px;
-  transition:box-shadow .16s,transform .16s,border-color .16s}
+  border:1px solid var(--line-2);border-radius:12px;padding:15px 18px;
+  position:relative;transition:box-shadow .16s,transform .16s,border-color .16s}
 .card:hover{box-shadow:0 8px 24px rgba(30,45,70,.13);transform:translateY(-2px);
   border-color:var(--blue)}
-.card .top{display:flex;align-items:center;gap:8px;margin-bottom:7px}
+.card .top{display:flex;align-items:center;gap:9px;margin-bottom:8px;flex-wrap:wrap}
+.card .no{font-family:var(--mono);font-size:12.5px;font-weight:700;
+  letter-spacing:.02em;padding:2px 9px;border-radius:6px;
+  background:#eef2f8;border:1px solid var(--line-2);color:var(--fg-2)}
 .card .tt{font-weight:700;font-size:16.5px;margin-bottom:4px}
 .card .ds{font-size:13px;color:var(--fg-3);line-height:1.6}
+
 .k{font-family:var(--mono);font-size:10.5px;font-weight:700;letter-spacing:.04em;
   padding:1px 7px;border-radius:999px}
 .k-c{background:var(--green-soft);color:var(--green);border:1px solid #bfe2cd}
 .k-cpp{background:var(--violet-soft);color:var(--violet);border:1px solid #ded0f7}
 .k-file{background:var(--blue-soft);color:var(--blue);border:1px solid #cfe1fb}
 .k-extra{background:var(--amber-soft);color:var(--amber);border:1px solid #efd9a8}
-.st{color:#e0a800;font-size:.8em;font-weight:700;vertical-align:super;cursor:help}
-.card.star{background:linear-gradient(#fbfdff,#f4f9ff);border-color:#c9dcf3}
+
+/* ---------- 星标篇目：显著加强 ---------- */
+.card.star{
+  background:linear-gradient(135deg,#fffdf5 0%,#fdf3dc 100%);
+  border:1px solid var(--gold-line);
+  border-left:6px solid var(--gold);
+  box-shadow:0 2px 8px rgba(200,144,26,.10);
+}
+.card.star:hover{border-color:var(--gold);border-left-color:var(--gold);
+  box-shadow:0 10px 28px rgba(200,144,26,.22)}
+.card.star .tt{color:#7a5307}
+.card.star .no{background:#fbeecb;border-color:var(--gold-line);color:#8a5e0c}
+.star-badge{display:inline-flex;align-items:center;gap:4px;
+  font-size:11px;font-weight:700;letter-spacing:.02em;
+  padding:2px 9px;border-radius:999px;
+  background:var(--gold);color:#fff;box-shadow:0 1px 3px rgba(200,144,26,.35)}
+.star-flag{margin-top:9px;font-size:11.5px;font-weight:600;color:#8a5e0c}
 
 .note{margin-top:38px;border:1px solid var(--line-2);border-radius:12px;
   padding:16px 20px;background:var(--bg-soft);font-size:13.5px;color:var(--fg-2)}
 .note h3{margin:0 0 8px;font-size:14px;color:var(--fg)}
 .note table{border-collapse:collapse;margin-top:8px;font-size:13px}
 .note td{padding:3px 14px 3px 0;vertical-align:top}
-.note code{font-family:var(--mono);font-size:12.5px;background:#eef2f8;
+.note code,.lead code{font-family:var(--mono);font-size:12.5px;background:#eef2f8;
   border:1px solid var(--line);border-radius:4px;padding:1px 5px}
 
 footer{margin-top:44px;padding-top:18px;border-top:1px solid var(--line);
@@ -67,6 +87,7 @@ footer{margin-top:44px;padding-top:18px;border-top:1px solid var(--line);
   .wrap{padding:28px 16px 56px}
   h1{font-size:23px}
   .grid{grid-template-columns:1fr}
+  .card.star{border-left-width:5px}
 }
 </style>
 </head>
@@ -75,115 +96,127 @@ footer{margin-top:44px;padding-top:18px;border-top:1px solid var(--line);
 
 <header>
   <h1>UME 项目组内部教程</h1>
-  <p class="sub">回鹘蒙文编辑器（Uyghur-Mongolian Script Editor）· 面向零编程基础的成员</p>
+  <p class="sub">回鹘蒙文编辑器（Uyghur-Mongolian Script Editor）· 面向零编程基础的成员 ·
+     共 16 篇</p>
 </header>
 
 <div class="lead">
   <p><b>怎么用这套教程</b>：从 01 开始按顺序看，每篇里的代码建议<b>亲手敲一遍</b>。</p>
-  <p>带 <span class="st">*</span> 的篇目<b>与本项目施行密切相关</b>，页面底色也不同；
-  带 <span class="k k-extra">Extra</span> 的是通用补充技巧，
-  带 <span class="k k-file">File</span> 的是动手时立刻会用到的实用内容。</p>
+  <p><b>01~08 讲 C 语言，09 起进入 C++</b>（因为项目实际用的 Qt 是 C++ 框架）。</p>
+  <p>每张卡片左上角是<b>讲次编号</b>（如 <code>08-E02</code>），旁边是语言标记。
+     其中 <b>5 篇</b>标着 <span class="star-badge">★ 重点</span> ——
+     它们<b>与本项目施行密切相关</b>，卡片底色也不同。</p>
 </div>
 
-<h2>正文 · 01 ~ 09</h2>
+<h2>正文 · 01 ~ 10</h2>
 <div class="grid">
       <a class="card" href="SharingGroup/tutorials/01-c-arrays.html">
-        <div class="top"><span class="k k-c">C</span></div>
+        <div class="top"><span class="no">01</span><span class="k k-c">C</span></div>
         <div class="tt">数组初步</div>
         <div class="ds">一排数据怎么存、怎么遍历</div>
       </a>
       <a class="card" href="SharingGroup/tutorials/02-c-functions.html">
-        <div class="top"><span class="k k-c">C</span></div>
+        <div class="top"><span class="no">02</span><span class="k k-c">C</span></div>
         <div class="tt">函数初步</div>
         <div class="ds">重复的代码怎么打包复用</div>
       </a>
       <a class="card" href="SharingGroup/tutorials/03-c-types.html">
-        <div class="top"><span class="k k-c">C</span></div>
+        <div class="top"><span class="no">03</span><span class="k k-c">C</span></div>
         <div class="tt">类型概论</div>
         <div class="ds">数据在内存里占多宽、怎么解释</div>
       </a>
       <a class="card" href="SharingGroup/tutorials/04-c-pointers.html">
-        <div class="top"><span class="k k-c">C</span></div>
+        <div class="top"><span class="no">04</span><span class="k k-c">C</span></div>
         <div class="tt">指针初步</div>
         <div class="ds">地址是什么、怎么顺着地址改数据</div>
       </a>
       <a class="card" href="SharingGroup/tutorials/05-memory.html">
-        <div class="top"><span class="k k-c">C</span></div>
+        <div class="top"><span class="no">05</span><span class="k k-c">C</span></div>
         <div class="tt">静态、动态内存与内存安全初步</div>
         <div class="ds">内存从哪来、怎么还、怎么不崩</div>
       </a>
       <a class="card" href="SharingGroup/tutorials/06-class-struct.html">
-        <div class="top"><span class="k k-cpp">C++</span></div>
+        <div class="top"><span class="no">06</span><span class="k k-cpp">C++</span></div>
         <div class="tt">类、结构体</div>
         <div class="ds">数据和行为怎么打包、怎么保护</div>
       </a>
       <a class="card" href="SharingGroup/tutorials/07-scope.html">
-        <div class="top"><span class="k k-c">C</span></div>
+        <div class="top"><span class="no">07</span><span class="k k-c">C</span></div>
         <div class="tt">作用域、全局与局部变量</div>
         <div class="ds">一个名字能被谁看见、活多久</div>
       </a>
       <a class="card" href="SharingGroup/tutorials/08-c-strings.html">
-        <div class="top"><span class="k k-c">C</span></div>
+        <div class="top"><span class="no">08</span><span class="k k-c">C</span></div>
         <div class="tt">C 风格字符串</div>
-        <div class="ds">一串文字怎么存、<code>\0</code> 为什么重要</div>
+        <div class="ds">一串文字怎么存、\0 为什么重要</div>
       </a>
       <a class="card star" href="SharingGroup/tutorials/09-vector-and-array.html">
-        <div class="top"><span class="k k-cpp">C++</span><span class="st" title="与本项目施行密切相关">*</span></div>
+        <div class="top"><span class="star-badge">★ 重点</span><span class="no">09</span><span class="k k-cpp">C++</span></div>
         <div class="tt">vector 和 array</div>
         <div class="ds">更安全的数组、自动管内存</div>
+        <div class="star-flag">★ 与本项目施行密切相关</div>
+      </a>
+      <a class="card" href="SharingGroup/tutorials/10-std-and-namespace.html">
+        <div class="top"><span class="no">10</span><span class="k k-cpp">C++</span></div>
+        <div class="tt">std 与命名空间初步</div>
+        <div class="ds">从这里进入 C++：std:: 是什么、using 该不该用</div>
       </a>
 </div>
 
 <h2>Extra · File · 补充与实用</h2>
 <div class="grid">
       <a class="card" href="SharingGroup/tutorials/08-e01-recursion.html">
-        <div class="top"><span class="k k-extra">Extra</span></div>
+        <div class="top"><span class="no">08-E01</span><span class="k k-extra">Extra</span></div>
         <div class="tt">递归</div>
         <div class="ds">函数自己调用自己</div>
       </a>
       <a class="card" href="SharingGroup/tutorials/08-e02-batch-and-cmd.html">
-        <div class="top"><span class="k k-extra">Extra</span></div>
+        <div class="top"><span class="no">08-E02</span><span class="k k-extra">Extra</span></div>
         <div class="tt">批处理与命令提示符进阶</div>
         <div class="ds">把命令写成 .bat 一键重跑，接上 node / npm / python</div>
       </a>
-      <a class="card star" href="SharingGroup/tutorials/08-f01-command-prompt.html">
-        <div class="top"><span class="k k-file">File</span><span class="st" title="与本项目施行密切相关">*</span></div>
-        <div class="tt">命令提示符（cmd）初步</div>
-        <div class="ds">怎么打开、最该先会的几条命令</div>
-      </a>
-      <a class="card star" href="SharingGroup/tutorials/08-f02-paths-and-env.html">
-        <div class="top"><span class="k k-file">File</span><span class="st" title="与本项目施行密切相关">*</span></div>
-        <div class="tt">相对文件路径与宏</div>
-        <div class="ds">文件在哪、环境变量是什么、VS 属性宏</div>
-      </a>
-      <a class="card star" href="SharingGroup/tutorials/08-f03-compile-and-link.html">
-        <div class="top"><span class="k k-file">File</span><span class="st" title="与本项目施行密切相关">*</span></div>
-        <div class="tt">编译与链接、头文件与库</div>
-        <div class="ds">三步原理 + VS 2026 静态库手把手</div>
-      </a>
-      <a class="card star" href="SharingGroup/tutorials/09-f04-unicode-and-encoding.html">
-        <div class="top"><span class="k k-file">File</span><span class="st" title="与本项目施行密切相关">*</span></div>
+      <a class="card star" href="SharingGroup/tutorials/09-e03-unicode-and-encoding.html">
+        <div class="top"><span class="star-badge">★ 重点</span><span class="no">09-E03</span><span class="k k-extra">Extra</span></div>
         <div class="tt">Unicode 和编码</div>
         <div class="ds">文字怎么变成字节、变长编码的设计思路</div>
+        <div class="star-flag">★ 与本项目施行密切相关</div>
+      </a>
+      <a class="card star" href="SharingGroup/tutorials/08-f01-command-prompt.html">
+        <div class="top"><span class="star-badge">★ 重点</span><span class="no">08-F01</span><span class="k k-file">File</span></div>
+        <div class="tt">命令提示符（cmd）初步</div>
+        <div class="ds">怎么打开、最该先会的几条命令</div>
+        <div class="star-flag">★ 与本项目施行密切相关</div>
+      </a>
+      <a class="card star" href="SharingGroup/tutorials/08-f02-paths-and-env.html">
+        <div class="top"><span class="star-badge">★ 重点</span><span class="no">08-F02</span><span class="k k-file">File</span></div>
+        <div class="tt">相对文件路径与宏</div>
+        <div class="ds">文件在哪、环境变量是什么、VS 属性宏</div>
+        <div class="star-flag">★ 与本项目施行密切相关</div>
+      </a>
+      <a class="card star" href="SharingGroup/tutorials/08-f03-compile-and-link.html">
+        <div class="top"><span class="star-badge">★ 重点</span><span class="no">08-F03</span><span class="k k-file">File</span></div>
+        <div class="tt">编译与链接、头文件与库</div>
+        <div class="ds">三步原理 + VS 2026 静态库手把手</div>
+        <div class="star-flag">★ 与本项目施行密切相关</div>
       </a>
 </div>
 
 <div class="note">
-  <h3>关于这套教程</h3>
-  <p>09 之前的篇目以 <b>C 语言</b>为主。凡是不可避免地用到 C++ 的地方，
-  代码块标题栏上都会挂一个紫色的 <span class="k k-cpp">C++</span> 徽标。</p>
+  <h3>编号怎么看</h3>
   <table>
-    <tr><td><b>C</b></td><td>用 <code>gcc</code>（或 VS 里的 <code>.c</code> 文件）编译</td></tr>
-    <tr><td><b>C++</b></td><td>用 <code>g++</code>（或 VS 里的 <code>.cpp</code> 文件）编译</td></tr>
-    <tr><td><b>Extra</b></td><td>不属于某一讲，但到处会用到的通用技巧</td></tr>
-    <tr><td><b>File</b></td><td>命令行、路径、编译链接、编码等动手内容</td></tr>
+    <tr><td><code>01</code> ~ <code>10</code></td><td>正文讲次，按顺序看</td></tr>
+    <tr><td><code>08-E01</code></td><td>第 08 讲之后的 <b>E</b>xtra（通用补充技巧）</td></tr>
+    <tr><td><code>08-F02</code></td><td>第 08 讲之后的 <b>F</b>ile（动手实用内容）</td></tr>
+    <tr><td><span class="k k-c">C</span></td><td>用 <code>gcc</code>（或 VS 里的 <code>.c</code>）编译</td></tr>
+    <tr><td><span class="k k-cpp">C++</span></td><td>用 <code>g++</code>（或 VS 里的 <code>.cpp</code>）编译</td></tr>
   </table>
-  <p style="margin-top:10px">文中所有「运行结果」与实际报错，都是在真实环境里跑出来的，
-  不是凭记忆写的。</p>
+  <p style="margin-top:10px">09 之前的篇目以 C 为主。凡是不可避免地用到 C++ 的地方，
+  代码块标题栏上都会挂一个紫色的 <span class="k k-cpp">C++</span> 徽标。</p>
+  <p>文中所有「运行结果」与实际报错，都是在真实环境里跑出来的，不是凭记忆写的。</p>
 </div>
 
 <footer>
-  UME 项目组内部教程 · 共 15 篇 · 样式表位于
+  UME 项目组内部教程 · 共 16 篇 · 样式表位于
   <code>SharingGroup/tutorials/assets/</code>
 </footer>
 
