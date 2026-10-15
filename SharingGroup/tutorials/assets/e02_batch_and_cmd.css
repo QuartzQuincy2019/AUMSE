@@ -1,3 +1,18 @@
+/* =====================================================================
+   表面变量（亮色）
+   ---------------------------------------------------------------------
+   本文件当初因为花括号不配平被自动检查跳过，所以一直没有这套变量，
+   背景仍写死 #fff —— 暗色下就是一块白。
+   （不配平的根因是一条未闭合的 `max-width:980px` 媒体查询，已修。）
+   ===================================================================== */
+:root{
+  --sfc:#ffffff;
+  --sfc-2:#f2f4f8;
+  --sfc-3:#fbfcfe;
+  --sfc-hover:#f4f8fd;
+  --sfc-glass:rgba(255,255,255,.74);
+}
+
 /* ==== e02-batch-and-cmd.html
        本篇样式表 = 通用（tutorial.css）+ 本篇专属，已合并并按「媒体查询在后」重排 ==== */
 
@@ -188,7 +203,7 @@ code{font-family:var(--mono);font-size:.9em;background:#eef2f8;color:#0d3a7a;
   font-family:var(--mono);font-size:13.5px;line-height:1.7;color:#c9e6d5}
 
 .card{border:1px solid var(--line);border-radius:12px;padding:16px 20px;margin:18px 0;
-  background:#fff;transition:box-shadow .18s,transform .18s,border-color .18s}
+  background:var(--sfc);transition:box-shadow .18s,transform .18s,border-color .18s}
 
 .mnemonic{border-left:4px solid var(--amber);background:var(--amber-soft);
   border-radius:0 9px 9px 0;padding:12px 18px;margin:16px 0;font-size:15px}
@@ -240,7 +255,7 @@ footer{border-top:1px solid var(--line);margin-top:70px;padding-top:18px;font-si
 .ptr-demo .n{width:100%;font-size:12.5px;color:var(--fg-3);margin-bottom:10px}
 
 .box{
-  border:1px solid var(--line-2);border-radius:10px;padding:10px 14px;background:#fff;
+  border:1px solid var(--line-2);border-radius:10px;padding:10px 14px;background:var(--sfc);
   min-width:120px;transition:box-shadow .16s,transform .16s,border-color .16s;cursor:default;
 }
 
@@ -278,11 +293,11 @@ footer{border-top:1px solid var(--line);margin-top:70px;padding-top:18px;font-si
 
 .addr>div:nth-child(4n+1){background:var(--bg-soft);color:var(--fg-3)}
 
-.addr>div:nth-child(4n+2){background:#fff;color:var(--fg-2)}
+.addr>div:nth-child(4n+2){background:var(--sfc);color:var(--fg-2)}
 
-.addr>div:nth-child(4n+3){background:#fff}
+.addr>div:nth-child(4n+3){background:var(--sfc)}
 
-.addr>div:nth-child(4n){background:#fff}
+.addr>div:nth-child(4n){background:var(--sfc)}
 
 .addr>div:last-child,.addr>div:nth-last-child(2),
 .addr>div:nth-last-child(3),.addr>div:nth-last-child(4){border-bottom:0}
@@ -290,7 +305,7 @@ footer{border-top:1px solid var(--line);margin-top:70px;padding-top:18px;font-si
 .addr .hd{font-weight:700;color:var(--fg-2);background:#eef2f8 !important}
 
 .flow .s{flex:1 1 126px;border:1px solid var(--line);border-radius:9px;padding:10px 12px;
-  background:#fff;position:relative;transition:box-shadow .15s,transform .15s,border-color .15s}
+  background:var(--sfc);position:relative;transition:box-shadow .15s,transform .15s,border-color .15s}
 
 /* 问答式疑难块 */
 .qa{border:1px solid var(--line);border-radius:12px;margin:16px 0;overflow:hidden;
@@ -303,7 +318,7 @@ footer{border-top:1px solid var(--line);margin-top:70px;padding-top:18px;font-si
   font-weight:700;font-size:14.5px;color:var(--violet);
 }
 
-.qa .a{padding:12px 18px;background:#fff}
+.qa .a{padding:12px 18px;background:var(--sfc)}
 
 .qa .a p:first-child{margin-top:0}
 
@@ -392,7 +407,7 @@ h2.key-h{border-top:1px solid #e8c877;padding-top:10px}
     display:block !important;
     position:fixed;top:0;left:0;bottom:0;z-index:60;
     width:min(80vw,308px);height:100vh;max-height:100vh;
-    background:#fff;border-right:1px solid var(--line);
+    background:var(--sfc);border-right:1px solid var(--line);
     box-shadow:0 0 44px rgba(15,25,45,.20);
     padding:66px 12px 40px 16px;
     transform:translateX(-102%);
@@ -417,7 +432,7 @@ h2.key-h{border-top:1px solid #e8c877;padding-top:10px}
   #tocToggle{
     position:fixed;top:11px;left:11px;z-index:70;
     padding:7px 14px;border-radius:999px;cursor:pointer;
-    background:#fff;color:var(--fg);border:1px solid var(--line-2);
+    background:var(--sfc);color:var(--fg);border:1px solid var(--line-2);
     font:600 13px/1 var(--sans);box-shadow:0 2px 10px rgba(20,30,50,.14);
     -webkit-tap-highlight-color:transparent;
     opacity:.72;transition:opacity .18s,background .18s,color .18s,transform .12s
@@ -474,7 +489,7 @@ h2.key-h{border-top:1px solid #e8c877;padding-top:10px}
 }
 
 /* ===== 移动端：长路径字符串断行 =====
-/* 长且无空格的串（路径、命令、变量名）在窄屏上必须允许内部断行，
+   长且无空格的串（路径、命令、变量名）在窄屏上必须允许内部断行，
    否则会把表格和终端块撑得比视口还宽。 */
 @media (max-width:980px){
   main table th,
@@ -550,6 +565,13 @@ main p code,
     overflow-wrap:anywhere;
     word-break:break-word;
   }
+}
+/* ← 上面这个 `}` 补的是第 521 行那条 `max-width:980px` 的媒体查询。
+   它原来没有闭合，于是**一路开到文件末尾**：后面所有规则
+   （含各段 `prefers-color-scheme: dark` 的暗色覆盖）都被当成窄屏专用。
+   实测后果：e02 的 .mnemonic 暗色下仍是琥珀浅底 rgb(253,244,227)
+   配近白字 rgb(232,216,242)，对比度 1.24。
+   （本文件原有 { 305 } 304 的不配平，就是缺这一个。） */
 
 /* ===== 星标：标记与本项目施行密切相关的篇目 ===== */h1 .star{color:#e0a800;font-size:.62em;vertical-align:super;margin-left:6px;
   font-weight:700;cursor:help}
@@ -589,7 +611,7 @@ main p code,
 
 /* 三件套工具卡 */.tools3{display:grid;grid-template-columns:repeat(auto-fit,minmax(226px,1fr));gap:13px;margin:18px 0}
 
-.tools3 .c{border:1px solid var(--line-2);border-radius:11px;padding:13px 15px;background:#fff;
+.tools3 .c{border:1px solid var(--line-2);border-radius:11px;padding:13px 15px;background:var(--sfc);
   transition:box-shadow .16s,transform .16s,border-color .16s}
 
 .tools3 .c:hover{box-shadow:0 6px 18px rgba(30,45,70,.12);transform:translateY(-2px);
@@ -607,7 +629,7 @@ main p code,
 
 .tools3 .c .note b{color:var(--fg-2)}
 
-/* 批处理执行流程 */.bflow{margin:16px 0;border:1px solid var(--line-2);border-radius:11px;overflow:hidden;background:#fff}
+/* 批处理执行流程 */.bflow{margin:16px 0;border:1px solid var(--line-2);border-radius:11px;overflow:hidden;background:var(--sfc)}
 
 .bflow .r{display:flex;align-items:baseline;gap:11px;padding:9px 14px;border-bottom:1px solid var(--line);
   transition:background .14s}
@@ -706,7 +728,7 @@ main p code,
 /* =====================================================================
    第 13 轮：问答 / 流程图 / 编码图示 的暗色
    ---------------------------------------------------------------------
-   这几个块原来都写死 background:#fff：
+   这几个块原来都写死 background:var(--sfc)：
      .qa .a     问答的「答」块
      .flow .s   流程图节点
      .codefig   t02 的编码图示
@@ -876,4 +898,22 @@ main p code,
   .code-wrap pre code,.out-wrap pre code{white-space:pre-wrap !important}
   /* 行内 code 不要被长串撑破 */
   code,td.c,th.c{overflow-wrap:anywhere;word-break:break-word}
+}
+
+/* 说明：上面那段末尾原有的 `}` 缺一个，已在第 553 行附近补齐 ——
+   第 521 行那条 `max-width:980px` 的媒体查询原先没有闭合，
+   会一路开到文件末尾，把后面所有规则（含暗色覆盖）都变成窄屏专用。
+   本文件原有 `{ 305 } 304` 的不配平，指的就是缺这一个。 */
+
+
+
+/* 暗色：只改变量，所有引用处一起变 */
+@media (prefers-color-scheme: dark){
+  :root:root{
+    --sfc:#1b1e25;
+    --sfc-2:#161d26;
+    --sfc-3:#1e242e;
+    --sfc-hover:#1e2836;
+    --sfc-glass:rgba(38,44,54,.72);
+  }
 }

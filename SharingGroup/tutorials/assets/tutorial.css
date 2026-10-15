@@ -452,7 +452,7 @@ footer{border-top:1px solid var(--line);margin-top:70px;padding-top:18px;font-si
 }
 
 /* ===== 移动端：长路径字符串断行 =====
-/* 长且无空格的串（路径、命令、变量名）在窄屏上必须允许内部断行，
+   长且无空格的串（路径、命令、变量名）在窄屏上必须允许内部断行，
    否则会把表格和终端块撑得比视口还宽。 */@media (max-width:980px){
   main table th,
   main table td,

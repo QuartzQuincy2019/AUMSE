@@ -1,22 +1,3 @@
-
-/* =====================================================================
-   表面变量（亮色）
-   ---------------------------------------------------------------------
-   样式表里原来到处写死 #fff / #f2f4f8 这类浅色，暗色模式只能一个个
-   选择器去补 —— 补不完。现在统一走这几个变量：暗色只改变量值，
-   所有引用处一起生效。
-
-   ⚠ 金色渐变的色标（#fffdf5 / #fdf3dc / #fbe9c4 …）**不在**这套变量里 ——
-     它们是主题色，不是中性表面。
-   ===================================================================== */
-:root{
-  --sfc:#ffffff;
-  --sfc-2:#f2f4f8;
-  --sfc-3:#fbfcfe;
-  --sfc-hover:#f4f8fd;
-  --sfc-glass:rgba(255,255,255,.74);
-}
-
 /* =====================================================================
    series-theme.css —— 并列系列（M / Q / E / R）的统一主题
    ---------------------------------------------------------------------
@@ -67,7 +48,7 @@ body.toc-open::after{pointer-events:none}
   padding:9px 15px;border-radius:999px;
   font:650 13.5px/1 var(--sans,system-ui,"Microsoft YaHei",sans-serif);
   text-decoration:none;
-  background:linear-gradient(140deg,var(--sfc),#eef3f9);
+  background:linear-gradient(140deg,#ffffff,#eef3f9);
   border:1px solid var(--line-2,#ccd5e3);
   color:var(--fg-2,#4b5563);
   box-shadow:0 3px 12px rgba(20,40,80,.16);
@@ -136,7 +117,7 @@ body[data-series] .s-nav-switch>b{
 }
 body[data-series] .s-nav-switch a{
   display:inline-block;margin:3px 7px 3px 0;padding:2px 11px;
-  border-radius:999px;background:var(--sfc);
+  border-radius:999px;background:#fff;
   border:1px solid var(--s-line,#ccd5e3);
   color:var(--s-fg2,#4b5563);text-decoration:none;
   transition:border-color .14s,color .14s,background .14s;
@@ -172,9 +153,15 @@ body[data-series] .s-nav-switch .ss-cur{
     background:#2b313b;border-color:var(--s-main,#5aa2f0);color:#eef2f8;
   }
   body[data-series] .s-nav-switch .ss-empty{border-color:#3a414c;color:#95a0b0}
+  /* 「当前系列」标记：暗色下必须是**亮字压深底**。
+     原来沿用亮色的做法（深字 #0d1420 压主题色底），
+     而暗色的主题色是中深色（M=#2c4a7c、E=#8b3fbe），
+     深字压上去实测只有 2.2~2.4:1 —— 读不出来。
+     兜底色也一并加深（FE 页没有 data-series 实色，走兜底）。 */
   body[data-series] .s-nav-switch .ss-cur{
-    background:var(--s-main,#5aa2f0);border-color:var(--s-main,#5aa2f0);
-    color:#0d1420;
+    background:color-mix(in srgb,var(--s-main,#5aa2f0) 78%,#000);
+    border-color:color-mix(in srgb,var(--s-main,#5aa2f0) 78%,#000);
+    color:#f2f6ff;
   }
 }
 
@@ -272,7 +259,7 @@ body[data-series="M"][data-series="M"] main > .s-nav{
   backdrop-filter:blur(4px);
 }
 body[data-series="M"][data-series="M"] table th{
-  background:color-mix(in srgb, #2c4a7c 14%, var(--sfc));
+  background:color-mix(in srgb, #2c4a7c 14%, #fff);
   color:#1b3358;border-color:var(--s-line);
 }
 body[data-series="M"][data-series="M"] table td{border-color:var(--s-line)}
@@ -280,7 +267,7 @@ body[data-series="M"][data-series="M"] table tbody tr:nth-child(even){
   background:color-mix(in srgb, #2c4a7c 5%, transparent);
 }
 /* 代码块与输出块：底色必须不透明，而且要压过各篇自带样式表。
-   08_f03 里有 body.fseries main>.code-wrap{background-color:var(--sfc)}（0,2,2），
+   08_f03 里有 body.fseries main>.code-wrap{background-color:#fff}（0,2,2），
    只写 body[data-series] 是压不过的 —— 代码块会被刷成白底而文字仍是浅色，
    对比度掉到 1.2:1，等于看不见。所以这里写两遍属性提权重，再兜一个 !important。 */
 body[data-series="M"][data-series="M"] main>.code-wrap,
@@ -308,7 +295,7 @@ body[data-series="M"][data-series="M"] .out-wrap>pre{
 }
 body[data-series="M"][data-series="M"] .out-wrap .cap{color:#7fc7bb}
 body[data-series="M"][data-series="M"] .card.key{
-  background:linear-gradient(96deg,#eef2f8,var(--sfc) 55%,#eef2f8);
+  background:linear-gradient(96deg,#eef2f8,#fff 55%,#eef2f8);
   border-left:6px solid #2c4a7c;
 }
 body[data-series="M"][data-series="M"] .key-mark{color:#2c4a7c}
@@ -318,13 +305,13 @@ body[data-series="M"][data-series="M"] .card.tip>.card-t{color:#0f6b3a}
 body[data-series="M"][data-series="M"] .card.warn>.card-t{color:#a82a1c}
 body[data-series="M"][data-series="M"] .card.teal>.card-t{color:#0a6666}
 body[data-series="M"][data-series="M"] .tag{
-  background:color-mix(in srgb, #2c4a7c 12%, var(--sfc));
+  background:color-mix(in srgb, #2c4a7c 12%, #fff);
   border-color:var(--s-line);color:#1b3358;
 }
 
 /* 「返回 home」：与顶条同色系 */
 body[data-series="M"][data-series="M"] .home-fab{
-  background:linear-gradient(140deg,var(--sfc),#eef2f8);
+  background:linear-gradient(140deg,#fff,#eef2f8);
   border-color:var(--s-line);color:#1b3358;
   box-shadow:0 3px 12px color-mix(in srgb, #2c4a7c 26%, transparent);
 }
@@ -334,11 +321,12 @@ body[data-series="M"][data-series="M"] .home-fab:hover{
 
 /* 文末系列内跳转 */
 body[data-series="M"][data-series="M"] .s-nav{
-  background:linear-gradient(135deg,#eef2f8,var(--sfc));
+  background:linear-gradient(135deg,#eef2f8,#fff);
 }
 body[data-series="M"][data-series="M"] .s-nav > .s-nav-h{color:#1b3358}
+body[data-series="M"][data-series="M"] .s-nav-cur{background:color-mix(in srgb,#2c4a7c 20%,transparent);color:#1b3358}
 body[data-series="M"][data-series="M"] .s-nav-grid a{
-  background:var(--sfc);border-color:var(--s-line);color:#1b3358;
+  background:#fff;border-color:var(--s-line);color:#1b3358;
 }
 body[data-series="M"][data-series="M"] .s-nav-grid a:hover{
   background:#eef2f8;border-color:#2c4a7c;
@@ -546,7 +534,7 @@ body[data-series="R"][data-series="R"] main > .s-nav{
   backdrop-filter:blur(4px);
 }
 body[data-series="R"][data-series="R"] table th{
-  background:color-mix(in srgb, #d1435b 14%, var(--sfc));
+  background:color-mix(in srgb, #d1435b 14%, #fff);
   color:#a02b40;border-color:var(--s-line);
 }
 body[data-series="R"][data-series="R"] table td{border-color:var(--s-line)}
@@ -554,7 +542,7 @@ body[data-series="R"][data-series="R"] table tbody tr:nth-child(even){
   background:color-mix(in srgb, #d1435b 5%, transparent);
 }
 /* 代码块与输出块：底色必须不透明，而且要压过各篇自带样式表。
-   08_f03 里有 body.fseries main>.code-wrap{background-color:var(--sfc)}（0,2,2），
+   08_f03 里有 body.fseries main>.code-wrap{background-color:#fff}（0,2,2），
    只写 body[data-series] 是压不过的 —— 代码块会被刷成白底而文字仍是浅色，
    对比度掉到 1.2:1，等于看不见。所以这里写两遍属性提权重，再兜一个 !important。 */
 body[data-series="R"][data-series="R"] main>.code-wrap,
@@ -582,7 +570,7 @@ body[data-series="R"][data-series="R"] .out-wrap>pre{
 }
 body[data-series="R"][data-series="R"] .out-wrap .cap{color:#7fc7bb}
 body[data-series="R"][data-series="R"] .card.key{
-  background:linear-gradient(96deg,#fdf0f0,var(--sfc) 55%,#fdf0f0);
+  background:linear-gradient(96deg,#fdf0f0,#fff 55%,#fdf0f0);
   border-left:6px solid #d1435b;
 }
 body[data-series="R"][data-series="R"] .key-mark{color:#d1435b}
@@ -592,13 +580,13 @@ body[data-series="R"][data-series="R"] .card.tip>.card-t{color:#0f6b3a}
 body[data-series="R"][data-series="R"] .card.warn>.card-t{color:#a82a1c}
 body[data-series="R"][data-series="R"] .card.teal>.card-t{color:#0a6666}
 body[data-series="R"][data-series="R"] .tag{
-  background:color-mix(in srgb, #d1435b 12%, var(--sfc));
+  background:color-mix(in srgb, #d1435b 12%, #fff);
   border-color:var(--s-line);color:#a02b40;
 }
 
 /* 「返回 home」：与顶条同色系 */
 body[data-series="R"][data-series="R"] .home-fab{
-  background:linear-gradient(140deg,var(--sfc),#fdf0f0);
+  background:linear-gradient(140deg,#fff,#fdf0f0);
   border-color:var(--s-line);color:#a02b40;
   box-shadow:0 3px 12px color-mix(in srgb, #d1435b 26%, transparent);
 }
@@ -608,11 +596,12 @@ body[data-series="R"][data-series="R"] .home-fab:hover{
 
 /* 文末系列内跳转 */
 body[data-series="R"][data-series="R"] .s-nav{
-  background:linear-gradient(135deg,#fdf0f0,var(--sfc));
+  background:linear-gradient(135deg,#fdf0f0,#fff);
 }
 body[data-series="R"][data-series="R"] .s-nav > .s-nav-h{color:#a02b40}
+body[data-series="R"][data-series="R"] .s-nav-cur{background:color-mix(in srgb,#d1435b 20%,transparent);color:#a02b40}
 body[data-series="R"][data-series="R"] .s-nav-grid a{
-  background:var(--sfc);border-color:var(--s-line);color:#a02b40;
+  background:#fff;border-color:var(--s-line);color:#a02b40;
 }
 body[data-series="R"][data-series="R"] .s-nav-grid a:hover{
   background:#fdf0f0;border-color:#d1435b;
@@ -820,7 +809,7 @@ body[data-series="Q"][data-series="Q"] main > .s-nav{
   backdrop-filter:blur(4px);
 }
 body[data-series="Q"][data-series="Q"] table th{
-  background:color-mix(in srgb, #0f9d76 14%, var(--sfc));
+  background:color-mix(in srgb, #0f9d76 14%, #fff);
   color:#0a7157;border-color:var(--s-line);
 }
 body[data-series="Q"][data-series="Q"] table td{border-color:var(--s-line)}
@@ -828,7 +817,7 @@ body[data-series="Q"][data-series="Q"] table tbody tr:nth-child(even){
   background:color-mix(in srgb, #0f9d76 5%, transparent);
 }
 /* 代码块与输出块：底色必须不透明，而且要压过各篇自带样式表。
-   08_f03 里有 body.fseries main>.code-wrap{background-color:var(--sfc)}（0,2,2），
+   08_f03 里有 body.fseries main>.code-wrap{background-color:#fff}（0,2,2），
    只写 body[data-series] 是压不过的 —— 代码块会被刷成白底而文字仍是浅色，
    对比度掉到 1.2:1，等于看不见。所以这里写两遍属性提权重，再兜一个 !important。 */
 body[data-series="Q"][data-series="Q"] main>.code-wrap,
@@ -856,7 +845,7 @@ body[data-series="Q"][data-series="Q"] .out-wrap>pre{
 }
 body[data-series="Q"][data-series="Q"] .out-wrap .cap{color:#7fc7bb}
 body[data-series="Q"][data-series="Q"] .card.key{
-  background:linear-gradient(96deg,#eefaf6,var(--sfc) 55%,#eefaf6);
+  background:linear-gradient(96deg,#eefaf6,#fff 55%,#eefaf6);
   border-left:6px solid #0f9d76;
 }
 body[data-series="Q"][data-series="Q"] .key-mark{color:#0f9d76}
@@ -866,13 +855,13 @@ body[data-series="Q"][data-series="Q"] .card.tip>.card-t{color:#0f6b3a}
 body[data-series="Q"][data-series="Q"] .card.warn>.card-t{color:#a82a1c}
 body[data-series="Q"][data-series="Q"] .card.teal>.card-t{color:#0a6666}
 body[data-series="Q"][data-series="Q"] .tag{
-  background:color-mix(in srgb, #0f9d76 12%, var(--sfc));
+  background:color-mix(in srgb, #0f9d76 12%, #fff);
   border-color:var(--s-line);color:#0a7157;
 }
 
 /* 「返回 home」：与顶条同色系 */
 body[data-series="Q"][data-series="Q"] .home-fab{
-  background:linear-gradient(140deg,var(--sfc),#eefaf6);
+  background:linear-gradient(140deg,#fff,#eefaf6);
   border-color:var(--s-line);color:#0a7157;
   box-shadow:0 3px 12px color-mix(in srgb, #0f9d76 26%, transparent);
 }
@@ -882,11 +871,12 @@ body[data-series="Q"][data-series="Q"] .home-fab:hover{
 
 /* 文末系列内跳转 */
 body[data-series="Q"][data-series="Q"] .s-nav{
-  background:linear-gradient(135deg,#eefaf6,var(--sfc));
+  background:linear-gradient(135deg,#eefaf6,#fff);
 }
 body[data-series="Q"][data-series="Q"] .s-nav > .s-nav-h{color:#0a7157}
+body[data-series="Q"][data-series="Q"] .s-nav-cur{background:color-mix(in srgb,#0f9d76 20%,transparent);color:#0a7157}
 body[data-series="Q"][data-series="Q"] .s-nav-grid a{
-  background:var(--sfc);border-color:var(--s-line);color:#0a7157;
+  background:#fff;border-color:var(--s-line);color:#0a7157;
 }
 body[data-series="Q"][data-series="Q"] .s-nav-grid a:hover{
   background:#eefaf6;border-color:#0f9d76;
@@ -1094,7 +1084,7 @@ body[data-series="E"][data-series="E"] main > .s-nav{
   backdrop-filter:blur(4px);
 }
 body[data-series="E"][data-series="E"] table th{
-  background:color-mix(in srgb, #8b3fbe 14%, var(--sfc));
+  background:color-mix(in srgb, #8b3fbe 14%, #fff);
   color:#67289a;border-color:var(--s-line);
 }
 body[data-series="E"][data-series="E"] table td{border-color:var(--s-line)}
@@ -1102,7 +1092,7 @@ body[data-series="E"][data-series="E"] table tbody tr:nth-child(even){
   background:color-mix(in srgb, #8b3fbe 5%, transparent);
 }
 /* 代码块与输出块：底色必须不透明，而且要压过各篇自带样式表。
-   08_f03 里有 body.fseries main>.code-wrap{background-color:var(--sfc)}（0,2,2），
+   08_f03 里有 body.fseries main>.code-wrap{background-color:#fff}（0,2,2），
    只写 body[data-series] 是压不过的 —— 代码块会被刷成白底而文字仍是浅色，
    对比度掉到 1.2:1，等于看不见。所以这里写两遍属性提权重，再兜一个 !important。 */
 body[data-series="E"][data-series="E"] main>.code-wrap,
@@ -1130,7 +1120,7 @@ body[data-series="E"][data-series="E"] .out-wrap>pre{
 }
 body[data-series="E"][data-series="E"] .out-wrap .cap{color:#7fc7bb}
 body[data-series="E"][data-series="E"] .card.key{
-  background:linear-gradient(96deg,#faf1fd,var(--sfc) 55%,#faf1fd);
+  background:linear-gradient(96deg,#faf1fd,#fff 55%,#faf1fd);
   border-left:6px solid #8b3fbe;
 }
 body[data-series="E"][data-series="E"] .key-mark{color:#8b3fbe}
@@ -1140,13 +1130,13 @@ body[data-series="E"][data-series="E"] .card.tip>.card-t{color:#0f6b3a}
 body[data-series="E"][data-series="E"] .card.warn>.card-t{color:#a82a1c}
 body[data-series="E"][data-series="E"] .card.teal>.card-t{color:#0a6666}
 body[data-series="E"][data-series="E"] .tag{
-  background:color-mix(in srgb, #8b3fbe 12%, var(--sfc));
+  background:color-mix(in srgb, #8b3fbe 12%, #fff);
   border-color:var(--s-line);color:#67289a;
 }
 
 /* 「返回 home」：与顶条同色系 */
 body[data-series="E"][data-series="E"] .home-fab{
-  background:linear-gradient(140deg,var(--sfc),#faf1fd);
+  background:linear-gradient(140deg,#fff,#faf1fd);
   border-color:var(--s-line);color:#67289a;
   box-shadow:0 3px 12px color-mix(in srgb, #8b3fbe 26%, transparent);
 }
@@ -1156,11 +1146,12 @@ body[data-series="E"][data-series="E"] .home-fab:hover{
 
 /* 文末系列内跳转 */
 body[data-series="E"][data-series="E"] .s-nav{
-  background:linear-gradient(135deg,#faf1fd,var(--sfc));
+  background:linear-gradient(135deg,#faf1fd,#fff);
 }
 body[data-series="E"][data-series="E"] .s-nav > .s-nav-h{color:#67289a}
+body[data-series="E"][data-series="E"] .s-nav-cur{background:color-mix(in srgb,#8b3fbe 20%,transparent);color:#67289a}
 body[data-series="E"][data-series="E"] .s-nav-grid a{
-  background:var(--sfc);border-color:var(--s-line);color:#67289a;
+  background:#fff;border-color:var(--s-line);color:#67289a;
 }
 body[data-series="E"][data-series="E"] .s-nav-grid a:hover{
   background:#faf1fd;border-color:#8b3fbe;
@@ -1314,10 +1305,10 @@ h2.key-h,h3.key-h,h4.key-h{
 }
 
 /* ---------- 纯文本 <pre>（.plain-pre） ----------
-   F03 第 8 节原本给 <pre> 写了内联样式 background:var(--sfc-2)，
+   F03 第 8 节原本给 <pre> 写了内联样式 background:#f2f4f8，
    内联优先级最高，暗色下就是一块白。改成类名后由这里统一控制。 */
 .plain-pre{
-  background:var(--sfc-2);border:1px solid var(--line,#e3e8f0);border-radius:8px;
+  background:#f2f4f8;border:1px solid var(--line,#e3e8f0);border-radius:8px;
   padding:11px 14px;font-family:var(--mono,Consolas,monospace);
   font-size:12.5px;line-height:1.7;color:var(--fg,#1a1f28);overflow:auto;
 }
@@ -1357,6 +1348,12 @@ body[data-series="M"][data-series="M"]::before{background-color:#2c4a7c !importa
   body[data-series="M"][data-series="M"] .series-nav b{color:#9fb0c6}
   body[data-series="M"][data-series="M"] .series-nav a{color:#9fb0c6}
   body[data-series="M"][data-series="M"] .s-nav-h{color:#8cc0ff}
+  /* 特异度补齐：亮色写的是 `body[data-series] .s-nav>.s-nav-h`（0,3,0），
+     上面这条只有 (0,2,0)，会被亮色压住 —— 实测暗色下标题对比度仅 1.33。
+     这里补一条带 `.s-nav>` 的（0,4,0），稳赢。 */
+  body[data-series="M"][data-series="M"] .s-nav>.s-nav-h{color:#8cc0ff}
+  body[data-series="M"][data-series="M"] .s-nav-cur{background:color-mix(in srgb,#6e93c8 30%,transparent);
+    color:#8cc0ff}
   body[data-series="M"][data-series="M"] .s-nav-grid a{color:#9fb0c6}
   body[data-series="M"][data-series="M"] .s-nav-toc a{color:#8cc0ff}
   body[data-series="M"][data-series="M"] .home-fab{background-color:#6e93c8;
@@ -1397,6 +1394,12 @@ body[data-series="R"][data-series="R"]::before{background-color:#d1435b !importa
   body[data-series="R"][data-series="R"] .series-nav b{color:#c9a6ad}
   body[data-series="R"][data-series="R"] .series-nav a{color:#c9a6ad}
   body[data-series="R"][data-series="R"] .s-nav-h{color:#f7a8b6}
+  /* 特异度补齐：亮色写的是 `body[data-series] .s-nav>.s-nav-h`（0,3,0），
+     上面这条只有 (0,2,0)，会被亮色压住 —— 实测暗色下标题对比度仅 1.33。
+     这里补一条带 `.s-nav>` 的（0,4,0），稳赢。 */
+  body[data-series="R"][data-series="R"] .s-nav>.s-nav-h{color:#f7a8b6}
+  body[data-series="R"][data-series="R"] .s-nav-cur{background:color-mix(in srgb,#ef7288 30%,transparent);
+    color:#f7a8b6}
   body[data-series="R"][data-series="R"] .s-nav-grid a{color:#c9a6ad}
   body[data-series="R"][data-series="R"] .s-nav-toc a{color:#f7a8b6}
   body[data-series="R"][data-series="R"] .home-fab{background-color:#ef7288;
@@ -1437,6 +1440,12 @@ body[data-series="Q"][data-series="Q"]::before{background-color:#0f9d76 !importa
   body[data-series="Q"][data-series="Q"] .series-nav b{color:#9db8ae}
   body[data-series="Q"][data-series="Q"] .series-nav a{color:#9db8ae}
   body[data-series="Q"][data-series="Q"] .s-nav-h{color:#7adfc4}
+  /* 特异度补齐：亮色写的是 `body[data-series] .s-nav>.s-nav-h`（0,3,0），
+     上面这条只有 (0,2,0)，会被亮色压住 —— 实测暗色下标题对比度仅 1.33。
+     这里补一条带 `.s-nav>` 的（0,4,0），稳赢。 */
+  body[data-series="Q"][data-series="Q"] .s-nav>.s-nav-h{color:#7adfc4}
+  body[data-series="Q"][data-series="Q"] .s-nav-cur{background:color-mix(in srgb,#3fc4a0 30%,transparent);
+    color:#7adfc4}
   body[data-series="Q"][data-series="Q"] .s-nav-grid a{color:#9db8ae}
   body[data-series="Q"][data-series="Q"] .s-nav-toc a{color:#7adfc4}
   body[data-series="Q"][data-series="Q"] .home-fab{background-color:#3fc4a0;
@@ -1477,6 +1486,12 @@ body[data-series="E"][data-series="E"]::before{background-color:#8b3fbe !importa
   body[data-series="E"][data-series="E"] .series-nav b{color:#b9a6c8}
   body[data-series="E"][data-series="E"] .series-nav a{color:#b9a6c8}
   body[data-series="E"][data-series="E"] .s-nav-h{color:#d6a6f2}
+  /* 特异度补齐：亮色写的是 `body[data-series] .s-nav>.s-nav-h`（0,3,0），
+     上面这条只有 (0,2,0)，会被亮色压住 —— 实测暗色下标题对比度仅 1.33。
+     这里补一条带 `.s-nav>` 的（0,4,0），稳赢。 */
+  body[data-series="E"][data-series="E"] .s-nav>.s-nav-h{color:#d6a6f2}
+  body[data-series="E"][data-series="E"] .s-nav-cur{background:color-mix(in srgb,#b877e0 30%,transparent);
+    color:#d6a6f2}
   body[data-series="E"][data-series="E"] .s-nav-grid a{color:#b9a6c8}
   body[data-series="E"][data-series="E"] .s-nav-toc a{color:#d6a6f2}
   body[data-series="E"][data-series="E"] .home-fab{background-color:#b877e0;
@@ -1485,134 +1500,4 @@ body[data-series="E"][data-series="E"]::before{background-color:#8b3fbe !importa
   body[data-series="E"][data-series="E"] .home-fab:hover{background-color:#d6a6f2 !important;
     color:#150d1c !important}
   body[data-series="E"][data-series="E"]::before{background-color:#b877e0 !important;color:#150d1c !important}
-}
-
-
-@media (prefers-color-scheme: dark){
-  :root:root{
-    --sfc:#1b1e25;
-    --sfc-2:#161d26;
-    --sfc-3:#1e242e;
-    --sfc-hover:#1e2836;
-    --sfc-glass:rgba(38,44,54,.72);
-  }
-}
-
-/* =====================================================================
-   第 14 轮：剩余浅底的暗色覆盖
-   ---------------------------------------------------------------------
-   这些是 audit_dark2 穷举出来的（不再靠人工回忆）：
-     code / .hd / .k / .mnemonic / .cpp-note / .lv.* / .ch.end /
-     .encs .c / .ptr-demo / .box / 无名 div
-
-   为什么上一轮没盖住：这些颜色（#eef2f8 / #f2ecfd）在同一份文件里
-   也出现在别处的渐变色标中，被我的「渐变色标不动」规则连带排除了。
-   这里逐个选择器直接给暗色，不再依赖那套判断。
-   ===================================================================== */
-@media (prefers-color-scheme: dark){
-  /* 行内代码 —— 全站 15 篇都有，是这次最大的一块 */
-  code{
-    background:#252a33 !important;color:#9fc4ff !important;
-    border-color:#3a414c !important;
-  }
-  /* 小标题条 */
-  .hd{background:#252a33 !important;color:#c3cfdd !important}
-  /* 紫色小标记 */
-  .k{background:#241d38 !important;color:#c9b0ff !important;border-color:#3d3160 !important}
-  /* 助记块（e02 那份漏了暗色） */
-  .mnemonic{
-    background:linear-gradient(96deg,#10262b,#0d2024) !important;
-    border-left-color:#3fc4d4 !important;color:#d6f0ee !important;
-  }
-  .mnemonic b{color:#7fd8e0 !important}
-  /* C++ 备注 */
-  .cpp-note{
-    background:#241d38 !important;border-color:#3d3160 !important;
-    border-left-color:#b28cff !important;color:#e6dcf7 !important;
-  }
-  /* 作用域层级 */
-  .lv.l0{background:#16243a !important;border-color:#2b3f5e !important}
-  .lv.l1{background:#241d38 !important;border-color:#3d3160 !important}
-  .lv.l2{background:#13291f !important;border-color:#25452f !important}
-  /* 字符串内存图的结尾格 */
-  .ch.end{background:#2e1a18 !important;border-bottom-color:#f07a6c !important}
-  .ch.end:hover{background:#3a201d !important}
-  /* 指针演示区 */
-  .ptr-demo{background:#161d26 !important;border-color:#374556 !important}
-  .ptr-demo .box,.ptr-demo .p{background:#1b1e25 !important;border-color:#374556 !important}
-  .box{background:#1b1e25 !important;border-color:#374556 !important}
-}
-
-/* 补齐：上一轮加了 --sfc 变量，但个别地方仍写着旧色值 */
-
-/* =====================================================================
-   暗色表面变量（根因修复）
-   ---------------------------------------------------------------------
-   上面这些 --xxx-soft 与 --bg-soft / --surface 是「浅色表面」，
-   在 :root 里只有亮色值、从来没有暗色覆盖，而它们被当作背景用了
-   55~108 次 —— 于是任何用到它们的块在暗色下都是浅底。
-   这里一次性补齐：改的是变量，所有引用处一起生效，
-   不再需要逐个选择器打补丁。
-   ===================================================================== */
-@media (prefers-color-scheme: dark){
-  :root:root{
-    /* 中性表面 */
-    --bg:#0f141b;
-    --bg-soft:#161d26;
-    --surface:rgba(38,44,54,.72);
-    --surface-solid:#1b1e25;
-
-    /* 语义色底（浅色 → 深色） */
-    --blue-soft:#16243a;
-    --violet-soft:#241d38;
-    --green-soft:#13291f;
-    --red-soft:#2e1a18;
-    --amber-soft:#2b2314;
-    --teal-soft:#122a2a;
-
-    /* 对应的前景色也要提亮，否则深底深字 */
-    --blue:#6aa6f5;
-    --violet:#b28cff;
-    --green:#4fc98d;
-    --red:#f07a6c;
-    --amber:#e0b45f;
-    --teal:#4cc4c4;
-
-    /* 文字与描边 */
-    --fg:#e6ecf4;
-    --fg-2:#b9c4d2;
-    --fg-3:#939fb0;
-    --line:#26303c;
-    --line-2:#374556;
-
-    /* 代码/输出底（本来就是深色，再压一档） */
-    --bg-code:#0b0f16;
-    --bg-out:#070a0f;
-  }
-}
-
-/* =====================================================================
-   窄屏：代码块自动换行（不再需要左右拖动）
-   ---------------------------------------------------------------------
-   宽屏保留 `white-space:pre` 的原样 —— 空间够，换行反而打乱代码结构。
-   窄屏（≤720px）改成 pre-wrap + anywhere：
-     · pre-wrap     保留缩进与换行，但超长行折行
-     · anywhere     长标识符（aVeryLongFunctionName）也能断开
-   折行的那一行左侧加一条细引导线，提示「这是折过来的」。
-   ===================================================================== */
-@media (max-width:720px){
-  .code-wrap pre,
-  .out-wrap pre,
-  .term pre,
-  .plain-pre,
-  pre.tree,
-  .pv-wrap pre{
-    white-space:pre-wrap !important;
-    overflow-wrap:anywhere !important;
-    word-break:break-word !important;
-  }
-  /* 输入框 / 终端区同理 */
-  .code-wrap pre code,.out-wrap pre code{white-space:pre-wrap !important}
-  /* 行内 code 不要被长串撑破 */
-  code,td.c,th.c{overflow-wrap:anywhere;word-break:break-word}
 }

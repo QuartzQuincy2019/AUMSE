@@ -173,6 +173,7 @@ body[data-series="{SK}"][data-series="{SK}"] .s-nav{{
   background:linear-gradient(135deg,{c2},#fff);
 }}
 body[data-series="{SK}"][data-series="{SK}"] .s-nav > .s-nav-h{{color:{c4}}}
+body[data-series="{SK}"][data-series="{SK}"] .s-nav-cur{{background:color-mix(in srgb,{c3} 20%,transparent);color:{c4}}}
 body[data-series="{SK}"][data-series="{SK}"] .s-nav-grid a{{
   background:#fff;border-color:var(--s-line);color:{c4};
 }}
@@ -460,9 +461,15 @@ body[data-series] .s-nav-switch .ss-cur{
     background:#2b313b;border-color:var(--s-main,#5aa2f0);color:#eef2f8;
   }
   body[data-series] .s-nav-switch .ss-empty{border-color:#3a414c;color:#95a0b0}
+  /* 「当前系列」标记：暗色下必须是**亮字压深底**。
+     原来沿用亮色的做法（深字 #0d1420 压主题色底），
+     而暗色的主题色是中深色（M=#2c4a7c、E=#8b3fbe），
+     深字压上去实测只有 2.2~2.4:1 —— 读不出来。
+     兜底色也一并加深（FE 页没有 data-series 实色，走兜底）。 */
   body[data-series] .s-nav-switch .ss-cur{
-    background:var(--s-main,#5aa2f0);border-color:var(--s-main,#5aa2f0);
-    color:#0d1420;
+    background:color-mix(in srgb,var(--s-main,#5aa2f0) 78%,#000);
+    border-color:color-mix(in srgb,var(--s-main,#5aa2f0) 78%,#000);
+    color:#f2f6ff;
   }
 }
 """
@@ -535,6 +542,12 @@ def _solid_block():
   {q} .series-nav b{{color:{dsub}}}
   {q} .series-nav a{{color:{dsub}}}
   {q} .s-nav-h{{color:{dlink}}}
+  /* 特异度补齐：亮色写的是 `body[data-series] .s-nav>.s-nav-h`（0,3,0），
+     上面这条只有 (0,2,0)，会被亮色压住 —— 实测暗色下标题对比度仅 1.33。
+     这里补一条带 `.s-nav>` 的（0,4,0），稳赢。 */
+  {q} .s-nav>.s-nav-h{{color:{dlink}}}
+  {q} .s-nav-cur{{background:color-mix(in srgb,{s['d3']} 30%,transparent);
+    color:{dlink}}}
   {q} .s-nav-grid a{{color:{dsub}}}
   {q} .s-nav-toc a{{color:{dlink}}}
   {q} .home-fab{{background-color:{s['d3']};
