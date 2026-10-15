@@ -1,26 +1,3 @@
-
-/* =====================================================================
-   表面变量（亮色）
-   ---------------------------------------------------------------------
-   样式表里原来到处写死 #fff / #f2f4f8 这类浅色，暗色模式只能一个个
-   选择器去补 —— 补不完。现在统一走这几个变量：暗色只改变量值，
-   所有引用处一起生效。
-
-   ⚠ 金色渐变的色标（#fffdf5 / #fdf3dc / #fbe9c4 …）**不在**这套变量里 ——
-     它们是主题色，不是中性表面。
-   ===================================================================== */
-:root{
-  --sfc:#ffffff;
-  --sfc-2:#f2f4f8;
-  --sfc-3:#fbfcfe;
-  --sfc-hover:#f4f8fd;
-  --sfc-glass:rgba(255,255,255,.74);
-}
-
-/* ==== fe-02.html
-       前端系列样式：共用设计系统 + 示例展示 + 颜色拾取器
-       （每篇自带一份，保证层叠顺序与内嵌时完全一致）==== */
-
 /* @@FE-THEME-START@@ */
 /* ===================================================================
    UME 项目组内部教程 · 前端系列（FE）专属主题
@@ -71,7 +48,8 @@ html{scroll-behavior:smooth}
 body{
   margin:0;color:var(--fg);font:16px/1.8 var(--sans);
   -webkit-font-smoothing:antialiased;
-  background:radial-gradient(1100px 620px at 8% -8%, #ffe4f1 0%, transparent 60%),
+  background:
+    radial-gradient(1100px 620px at 8% -8%, #ffe4f1 0%, transparent 60%),
     radial-gradient(980px 560px at 96% 4%, #e6e2ff 0%, transparent 58%),
     radial-gradient(880px 700px at 50% 108%, #d9f6ef 0%, transparent 62%),
     linear-gradient(168deg, #fdf7fb 0%, #f6f2ff 46%, #eef9f6 100%);
@@ -103,12 +81,12 @@ body::before{
   color:rgba(255,255,255,.82);text-decoration:none;line-height:1.5;
   border-left:2px solid transparent;
   transition:background .14s,color .14s,border-color .14s}
-#toc a:hover{background:var(--sfc-glass);color:#fff;border-left-color:rgba(255,255,255,.55)}
+#toc a:hover{background:rgba(255,255,255,.14);color:#fff;border-left-color:rgba(255,255,255,.55)}
 #toc a.sub{padding-left:24px;font-size:12.5px;color:rgba(255,255,255,.62)}
-#toc a.on{background:var(--sfc-glass);color:#fff;font-weight:600;
+#toc a.on{background:rgba(255,255,255,.22);color:#fff;font-weight:600;
   border-left-color:#fde68a}
 #toc::-webkit-scrollbar{width:8px}
-#toc::-webkit-scrollbar-thumb{background:var(--sfc-glass);border-radius:999px}
+#toc::-webkit-scrollbar-thumb{background:rgba(255,255,255,.28);border-radius:999px}
 #toc{scrollbar-width:thin;scrollbar-color:rgba(255,255,255,.35) transparent}
 
 /* ---------- 正文 ----------
@@ -233,11 +211,23 @@ h2.key-h .key-mark,h3.key-h .key-mark,h4.key-h .key-mark{color:#c8901a}
   font-family:var(--sans)}
 
 /* ---------- 页内导航条（前后互跳） ---------- */
+.page-nav,.series-nav{margin:32px 0 0;padding:15px 18px;border:1px solid var(--line-2);
+  border-radius:16px;background:var(--surface);font-size:13.5px;
+  -webkit-backdrop-filter:blur(10px);backdrop-filter:blur(10px);
+  box-shadow:0 3px 14px rgba(76,29,149,.08)}
+.page-nav b,.series-nav b{color:#5b21b6}
+.page-nav a,.series-nav a{display:inline-block;margin:3px 8px 3px 0;padding:4px 12px;
+  border-radius:999px;background:rgba(255,255,255,.82);border:1px solid var(--line-2);
+  text-decoration:none;color:var(--fg-2);transition:all .14s}
+.page-nav a:hover,.series-nav a:hover{border-color:var(--blue);color:var(--blue);
+  box-shadow:0 3px 10px rgba(124,58,237,.18);transform:translateY(-1px)}
+.page-nav a.cur,.series-nav a.cur{background:linear-gradient(135deg,#7c3aed,#db2777);
+  border-color:transparent;color:#fff;font-weight:600}
 
 /* ---------- 返回首页 ---------- */
 .home-fab{position:fixed;left:11px;bottom:11px;z-index:65;display:inline-flex;
   align-items:center;gap:6px;padding:8px 14px;border-radius:999px;
-  background:var(--sfc-glass);border:1px solid var(--line-2);
+  background:rgba(255,255,255,.9);border:1px solid var(--line-2);
   color:var(--fg-2);text-decoration:none;font:600 13px/1 var(--sans);
   box-shadow:0 4px 16px rgba(76,29,149,.18);
   -webkit-backdrop-filter:blur(10px);backdrop-filter:blur(10px);
@@ -259,6 +249,30 @@ body.toc-open .home-fab{display:none}
   .home-fab{left:auto;right:12px}
 }
 /* @@FE-THEME-END@@ */
+
+/* =====================================================================
+   表面变量（亮色）
+   ---------------------------------------------------------------------
+   样式表里原来到处写死 #fff / #f2f4f8 这类浅色，暗色模式只能一个个
+   选择器去补 —— 补不完。现在统一走这几个变量：暗色只改变量值，
+   所有引用处一起生效。
+
+   ⚠ 金色渐变的色标（#fffdf5 / #fdf3dc / #fbe9c4 …）**不在**这套变量里 ——
+     它们是主题色，不是中性表面。
+   ===================================================================== */
+:root{
+  --sfc:#ffffff;
+  --sfc-2:#f2f4f8;
+  --sfc-3:#fbfcfe;
+  --sfc-hover:#f4f8fd;
+  --sfc-glass:rgba(255,255,255,.74);
+}
+
+/* ==== fe-02.html
+       前端系列样式：共用设计系统 + 示例展示 + 颜色拾取器
+       （每篇自带一份，保证层叠顺序与内嵌时完全一致）==== */
+
+
 
 /* ---------- 页内导航条（前后互跳） ---------- */
 .page-nav{margin:30px 0 0;padding:14px 18px;border:1px solid var(--line-2);
