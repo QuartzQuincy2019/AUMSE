@@ -1,0 +1,53 @@
+/* ==== _ds_05_静态、动态内存与内存安全初步.html
+       本篇专属样式（通用部分见 tutorial.css）==== */
+
+/* 栈 / 堆 对照示意图 */.memmap{
+  display:grid;grid-template-columns:1fr 1fr;gap:16px;margin:18px 0;
+}
+
+.memmap .col{
+  border:1px solid var(--line-2);border-radius:12px;overflow:hidden;background:#fff;
+  transition:box-shadow .18s,transform .18s,border-color .18s;
+}
+
+.memmap .col:hover{box-shadow:0 6px 20px rgba(30,45,70,.12);transform:translateY(-2px)}
+
+.memmap .col .hd{
+  padding:9px 14px;font-weight:700;font-size:14px;border-bottom:1px solid var(--line-2);
+}
+
+.memmap .col.stack .hd{background:var(--blue-soft);color:var(--blue)}
+
+.memmap .col.heap  .hd{background:var(--violet-soft);color:var(--violet)}
+
+.memmap .col .bd{padding:12px 14px;font-size:13.5px;color:var(--fg-2);line-height:1.7}
+
+.memmap .col .bd b{color:var(--fg)}
+
+@media(max-width:700px){.memmap{grid-template-columns:1fr}}
+
+/* 流程：申请 -> 使用 -> 释放 */.lifecycle{display:flex;flex-wrap:wrap;margin:16px 0;align-items:stretch}
+
+.lifecycle .st{
+  flex:1 1 120px;border:1px solid var(--line);border-radius:9px;padding:10px 12px;
+  background:#fff;position:relative;transition:box-shadow .15s,transform .15s;
+}
+
+.lifecycle .st:hover{box-shadow:0 5px 16px rgba(30,45,70,.1);transform:translateY(-2px)}
+
+.lifecycle .st+.st{margin-left:24px}
+
+.lifecycle .st+.st::before{
+  content:"→";position:absolute;left:-19px;top:50%;transform:translateY(-50%);
+  color:var(--fg-3);font-size:15px;font-family:var(--mono);
+}
+
+.lifecycle .st .t{font-weight:650;font-size:13.5px;margin-bottom:2px;font-family:var(--mono)}
+
+.lifecycle .st .d{font-size:12px;color:var(--fg-3);line-height:1.55}
+
+@media(max-width:560px){
+  .lifecycle{display:block}
+  .lifecycle .st+.st{margin:20px 0 0}
+  .lifecycle .st+.st::before{content:"↓";left:50%;top:-19px;transform:translateX(-50%)}
+}

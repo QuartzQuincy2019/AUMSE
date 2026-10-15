@@ -1,0 +1,61 @@
+/* ==== _ds_08_C风格字符串.html
+       本篇专属样式（通用部分见 tutorial.css）==== */
+
+/* 字符串内存布局示意 */.strmem{display:flex;gap:0;flex-wrap:wrap;margin:16px 0;align-items:flex-end}
+
+.strmem .ch{
+  border:1px solid var(--line-2);border-bottom:3px solid var(--blue);
+  min-width:44px;padding:8px 4px 6px;text-align:center;background:#fff;
+  transition:background .14s,transform .14s,box-shadow .14s;cursor:default;
+}
+
+.strmem .ch:first-child{border-radius:7px 0 0 7px}
+
+.strmem .ch:last-child{border-radius:0 7px 7px 0}
+
+.strmem .ch:hover{background:var(--blue-soft);transform:translateY(-3px);
+  box-shadow:0 5px 14px rgba(31,111,235,.2)}
+
+.strmem .ch .v{font-family:var(--mono);font-size:16px;font-weight:600}
+
+.strmem .ch .i{font-family:var(--mono);font-size:11px;color:var(--fg-3);margin-top:3px}
+
+.strmem .ch.end{border-bottom-color:var(--red);background:var(--red-soft)}
+
+.strmem .ch.end:hover{background:#fbdcd8;box-shadow:0 5px 14px rgba(192,57,43,.2)}
+
+.strmem .ch.end .v{color:var(--red)}
+
+/* sizeof 与 strlen 对照 */.vs{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin:18px 0}
+
+.vs .c{border:1px solid var(--line-2);border-radius:11px;padding:13px 15px;background:#fff;
+  transition:box-shadow .16s,transform .16s}
+
+.vs .c:hover{box-shadow:0 6px 18px rgba(30,45,70,.12);transform:translateY(-2px)}
+
+.vs .c .h{font-weight:700;font-size:14px;margin-bottom:6px;font-family:var(--mono)}
+
+.vs .c.a .h{color:var(--blue)}
+
+.vs .c.b .h{color:var(--green)}
+
+.vs .c .note{font-size:13px;color:var(--fg-3);line-height:1.65}
+
+@media(max-width:700px){.vs{grid-template-columns:1fr}}
+
+/* ===== C++ 内容标识 ===== */.cpp-badge{
+  display:inline-block;margin-left:8px;padding:1px 8px;border-radius:999px;
+  font-family:var(--mono);font-size:10.5px;font-weight:700;letter-spacing:.04em;
+  background:#7c3aed;color:#fff;vertical-align:1px;
+}
+
+.cpp-note{
+  border:1px solid #ded0f7;border-left:4px solid #7c3aed;background:var(--violet-soft);
+  border-radius:0 9px 9px 0;padding:11px 16px;margin:14px 0;font-size:14px;
+}
+
+.cpp-note b{color:#7c3aed}
+
+.cpp-note .t2{font-weight:700;color:#7c3aed;margin-bottom:4px}
+
+.cpp-note p:last-child{margin-bottom:0}

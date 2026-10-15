@@ -1,0 +1,30 @@
+/* ==== _ds_08_E01_递归.html
+       本篇专属样式（通用部分见 tutorial.css）==== */
+
+/* 递归调用栈示意 */.stack{margin:18px 0}
+
+.stack .fr{
+  border:1px solid var(--line-2);border-radius:9px;padding:9px 13px;background:#fff;
+  font-family:var(--mono);font-size:13px;margin-top:8px;
+  transition:box-shadow .15s,transform .15s,border-color .15s;
+}
+
+.stack .fr:hover{box-shadow:0 5px 16px rgba(30,45,70,.12);transform:translateX(3px);
+  border-color:var(--blue)}
+
+.stack .fr .tag2{font-family:var(--sans);font-size:11.5px;color:var(--fg-3);
+  margin-left:8px}
+
+.stack .fr.d0{margin-left:0}
+
+.stack .fr.d1{margin-left:22px}
+
+.stack .fr.d2{margin-left:44px}
+
+.stack .fr.d3{margin-left:66px}
+
+.stack .cap2{font-size:12.5px;color:var(--fg-3);margin-top:10px}
+
+@media(max-width:560px){
+  .stack .fr.d1,.stack .fr.d2,.stack .fr.d3{margin-left:10px}
+}

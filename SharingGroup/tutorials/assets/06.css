@@ -1,0 +1,74 @@
+/* ==== _ds_06_类、结构体.html
+       本篇专属样式（通用部分见 tutorial.css）==== */
+
+/* 权限标记 */.tag.pub{background:var(--green-soft);border-color:#bfe2cd;color:var(--green)}
+
+.tag.pri{background:var(--red-soft);border-color:#f0c8c2;color:var(--red)}
+
+.tag.pro{background:var(--amber-soft);border-color:#efd9a8;color:var(--amber)}
+
+/* 「值/引用/指针」三列对照 */.trio{display:grid;grid-template-columns:repeat(auto-fit,minmax(210px,1fr));gap:14px;margin:18px 0}
+
+.trio .c{
+  border:1px solid var(--line-2);border-radius:11px;padding:13px 15px;background:#fff;
+  transition:box-shadow .16s,transform .16s,border-color .16s;
+}
+
+.trio .c:hover{box-shadow:0 6px 18px rgba(30,45,70,.12);transform:translateY(-2px)}
+
+.trio .c .h{font-weight:700;font-size:14px;margin-bottom:6px;display:flex;align-items:center;gap:7px}
+
+.trio .c.v .h{color:var(--fg)}
+
+.trio .c.r .h{color:var(--green)}
+
+.trio .c.p .h{color:var(--blue)}
+
+.trio .c .code{font-family:var(--mono);font-size:12.5px;background:#f2f4f8;
+  border:1px solid var(--line);border-radius:6px;padding:6px 9px;margin:8px 0;
+  color:var(--fg);overflow:auto;white-space:pre}
+
+.trio .c .note{font-size:12.5px;color:var(--fg-3);line-height:1.6}
+
+/* 生命周期条 */.lifecycle{display:flex;flex-wrap:wrap;margin:16px 0;align-items:stretch}
+
+.lifecycle .st{
+  flex:1 1 120px;border:1px solid var(--line);border-radius:9px;padding:10px 12px;
+  background:#fff;position:relative;transition:box-shadow .15s,transform .15s;
+}
+
+.lifecycle .st:hover{box-shadow:0 5px 16px rgba(30,45,70,.1);transform:translateY(-2px)}
+
+.lifecycle .st+.st{margin-left:24px}
+
+.lifecycle .st+.st::before{
+  content:"→";position:absolute;left:-19px;top:50%;transform:translateY(-50%);
+  color:var(--fg-3);font-size:15px;font-family:var(--mono);
+}
+
+.lifecycle .st .t{font-weight:650;font-size:13.5px;margin-bottom:2px;font-family:var(--mono)}
+
+.lifecycle .st .d{font-size:12px;color:var(--fg-3);line-height:1.55}
+
+@media(max-width:560px){
+  .lifecycle{display:block}
+  .lifecycle .st+.st{margin:20px 0 0}
+  .lifecycle .st+.st::before{content:"↓";left:50%;top:-19px;transform:translateX(-50%)}
+}
+
+/* ===== C++ 内容标识：09 之前尽量用 C，不得已用 C++ 时必须显眼 ===== */.cpp-badge{
+  display:inline-block;margin-left:8px;padding:1px 8px;border-radius:999px;
+  font-family:var(--mono);font-size:10.5px;font-weight:700;letter-spacing:.04em;
+  background:#7c3aed;color:#fff;vertical-align:1px;
+}
+
+.cpp-note{
+  border:1px solid #ded0f7;border-left:4px solid #7c3aed;background:var(--violet-soft);
+  border-radius:0 9px 9px 0;padding:11px 16px;margin:14px 0;font-size:14px;
+}
+
+.cpp-note b{color:#7c3aed}
+
+.cpp-note .t2{font-weight:700;color:#7c3aed;margin-bottom:4px}
+
+.cpp-note p:last-child{margin-bottom:0}
