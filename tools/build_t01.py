@@ -1,0 +1,715 @@
+# -*- coding: utf-8 -*-
+"""T01《初识回鹘蒙文》—— 理论系列第一篇。
+
+要求（用户指定）：
+  a. 拉丁转写的定义（不是拉丁语）+ 各语言转写举例
+  b. 字形 Glyph、连字 Ligature（招财进宝 / fi / fl）与**连写**的区别
+  c. 初识连写文字系统（回鹘蒙古语为主，辅以阿拉伯字母）
+  d. 回鹘蒙文的书写系统与主流转写系统（改用「中国—蒙古国联合蒙文转写」）
+
+蒙文示例全部由 tools/cnmn.py 从**官方方案表**机械换算而来，
+不手写蒙文 —— 手写容易出错，换算可复现。
+"""
+import io
+import os
+import sys
+
+try:
+    sys.stdout.reconfigure(encoding="utf-8", errors="replace")
+except Exception:
+    pass
+
+REPO = r"E:\QKMansion\CSX10\w\UME"
+OUT = os.path.join(REPO, "SharingGroup", "tutorials", "t01-mongolian-script-intro.html")
+
+BODY = r"""<h1>初识回鹘蒙文</h1>
+<p class="sub-title">UME 项目组内部教程 · 理论系列 T01 · 在写代码之前，先认识这门文字</p>
+<p>
+  <span class="tag">理论 · T 系列</span>
+  <span class="tag b">蒙文示例由官方转写方案表机械换算</span>
+  <span class="tag y">含可动手的竖排渲染</span>
+</p>
+
+<div class="card note">
+  <div class="card-t">为什么先上这一篇</div>
+  <p>我们做的是<b>回鹘蒙文编辑器</b>。如果不知道这门文字「长什么样、怎么读、
+  怎么转写成拉丁字母」，后面所有排版细节都会变成死记硬背。</p>
+  <p>这一篇<b>不写代码</b>，只建立四个概念：<b>转写</b>、<b>字形与连字</b>、
+  <b>连写系统</b>、<b>书写方向与主流转写方案</b>。</p>
+  <p>文中的蒙文示例<b>不是手打的</b> —— 它们由
+  <code>tools/cnmn.py</code> 从官方转写方案表机械换算成码位，
+  所以「拉丁转写 ↔ 蒙文」的对应关系是可复现、可检验的。</p>
+</div>
+
+<!-- ============================================================ -->
+<h2 id="s1"><span class="n">1</span>拉丁转写是什么（它不是拉丁语）</h2>
+
+<p>先破一个常见误解：</p>
+
+<div class="card warn">
+  <div class="card-t">「拉丁转写」里的「拉丁」指字母，不指语言</div>
+  <p><b>拉丁字母</b>（Latin alphabet）是 A B C … Z 这套字母。</p>
+  <p><b>拉丁语</b>（Latin）是古罗马说的那种语言，今天没人当母语用了。</p>
+  <p>「把蒙古文转写成拉丁字母」= <b>用 ABC 这套字母去拼蒙古语的音</b>，
+  跟古罗马、跟拉丁语<b>没有任何关系</b>。</p>
+</div>
+
+<h3>定义</h3>
+
+<div class="card key">
+  <div class="card-t">转写（transliteration / romanization）</div>
+  <p>把一种文字系统写的东西，<b>按规则换成另一种文字系统</b>的写法。
+  换成拉丁字母的就叫<b>拉丁转写</b>（也叫罗马化，romanization）。</p>
+  <p>两个关键性质：</p>
+  <ol>
+    <li><b>有规则</b> —— 不是随便音译。同一个字，谁转写都得转成同一个结果。</li>
+    <li><b>可逆</b>（理想情况下）—— 能从中还原回原来的文字。
+      这一点很重要：它意味着转写是<b>编码</b>，不是翻译。</li>
+  </ol>
+</div>
+
+<h3>它不是为了给外国人读，而是为了「能打字、能检索、能存档」</h3>
+
+<table>
+<thead><tr><th style="width:26%">场景</th><th>为什么需要转写</th></tr></thead>
+<tbody>
+<tr><td><b>计算机输入</b></td>
+    <td>键盘只有拉丁字母。没有转写，很多文字根本打不出来</td></tr>
+<tr><td><b>检索与排序</b></td>
+    <td>要在数据库里按读音查找、排序，得有一个统一的字母序列</td></tr>
+<tr><td><b>学术引用</b></td>
+    <td>论文正文用拉丁字母排，引用原文时不能整段插异体字</td></tr>
+<tr><td><b>跨系统交换</b></td>
+    <td>旧系统只认 ASCII，转写是老资料的唯一通路</td></tr>
+<tr><td><b>URL 与文件名</b></td>
+    <td>网址里放异体字要百分号编码，转写后可直接读</td></tr>
+</tbody>
+</table>
+
+<h3>不同语言各有自己的转写方案</h3>
+
+<p>这不是「一种转写」，而是<b>每套文字各有若干种方案</b>，
+而且方案之间经常打架 —— 同一个音，不同方案用不同字母。</p>
+
+<table>
+<thead><tr><th style="width:18%">文字</th><th style="width:26%">方案</th><th>举例</th></tr></thead>
+<tbody>
+<tr><td><b>汉语</b></td><td>汉语拼音</td>
+    <td class="c">北京 → Beijing</td></tr>
+<tr><td><b>汉语</b></td><td>威妥玛拼音（Wade–Giles）</td>
+    <td class="c">北京 → Pei-ching　← 老英文书里常见</td></tr>
+<tr><td><b>日语</b></td><td>罗马字（Rōmaji）</td>
+    <td class="c">東京 → Tōkyō</td></tr>
+<tr><td><b>俄语</b></td><td>西里尔字母的拉丁转写</td>
+    <td class="c">Москва → Moskva</td></tr>
+<tr><td><b>阿拉伯语</b></td><td>多种学术转写</td>
+    <td class="c">القاهرة → al-Qāhira</td></tr>
+<tr><td><b>梵语</b></td><td><b>IAST</b>（国际梵语转写标准）</td>
+    <td class="c">धर्म → dharma</td></tr>
+</tbody>
+</table>
+
+<div class="card tip">
+  <div class="card-t">顺便说：汉语拼音本身也是一种拉丁转写</div>
+  <p>「北京」写成 <code>Beijing</code>，这就是把汉字转写成拉丁字母。
+  威妥玛拼音是更早的一套，所以老地图上写 <code>Peking</code>、
+  <code>Tsingtao</code>（青岛）。</p>
+  <p><b>同一个「青岛」，两套方案给出两种拼法</b> ——
+  这正是「方案不同、结果不同」的最好例子。</p>
+</div>
+
+<div class="card key">
+  <div class="card-t">带特殊符号的转写 ≠ 不专业</div>
+  <p>你会看到 <code>š</code>、<code>č</code>、<code>ǰ</code>、<code>ö</code>、
+  <code>ü</code>、<code>ë</code> 这类带符号的字母。它们不是装饰 ——</p>
+  <p><b>是有意造出来的新字母</b>，用来表示「26 个基本字母不够用」的那些音。
+  这跟汉语拼音用 <code>ü</code> 表示「鱼」的音是同一个思路。</p>
+</div>
+
+<!-- ============================================================ -->
+<h2 id="s2"><span class="n">2</span>字形、连字与连写：三个容易混的概念</h2>
+
+<h3>先说清三层</h3>
+
+<table>
+<thead><tr><th style="width:20%">概念</th><th style="width:30%">英文</th><th>是什么</th></tr></thead>
+<tbody>
+<tr><td><b>字符</b></td><td class="c">character</td>
+    <td>语义单位。<b>你在键盘上输入、在码表里查到的那个</b></td></tr>
+<tr><td><b>字形</b></td><td class="c">glyph</td>
+    <td>画出来的具体形状。<b>同一个字符可以有多个字形</b></td></tr>
+<tr><td><b>连字</b></td><td class="c">ligature</td>
+    <td>几个字符<b>合成一个字形</b>画出来</td></tr>
+</tbody>
+</table>
+
+<div class="card key">
+  <div class="card-t">一句话记住字形与字符的关系</div>
+  <p><b>字符是「什么」，字形是「怎么画」。</b></p>
+  <p>同一个字符「a」，在正体里长一个样、在斜体里长另一个样 ——
+  这就是<b>一个字符、两个字形</b>。字体文件里存的是字形，不是字符。</p>
+</div>
+
+<h3>连字的经典例子</h3>
+
+<h4>① fi 连字 —— 拉丁字母里最常见的</h4>
+
+<p>在多数排版良好的西文字体里，<code>f</code> 和 <code>i</code> 挨在一起时，
+不会画成「f 然后 i」，而是画成一个<b>合并的字形</b>：</p>
+
+<div class="code-wrap"><div class="bar"><span class="dot r"></span><span class="dot y"></span><span class="dot g"></span><span class="name">为什么 f 和 i 必须合并</span><span class="cp">复制</span></div><pre>f 的右上角有个伸出来的钩子 ──┐
+                              ↓
+f + i  →  钩子会撞到 i 上面的点
+
+合并之后：
+   f i    →    <b>ﬁ</b>      （一个字形，钩子和点合二为一）
+
+Unicode 里这两个都有独立码位：
+  U+FB01  LATIN SMALL LIGATURE FI
+  U+FB02  LATIN SMALL LIGATURE FL</pre></div>
+
+<div class="card tip">
+  <div class="card-t">f + l 同理</div>
+  <p><code>f</code> 的钩子会撞到 <code>l</code> 的上端，所以也有
+  <code>fl</code> 连字（U+FB02）。</p>
+  <p>在浏览器里搜「fi」，多数情况仍能搜到 <code>ﬁ</code> ——
+  因为排版软件做了「连字也算匹配」的处理。这也是<b>连字不能随便做</b>的原因：
+  做多了会影响检索。</p>
+</div>
+
+<h4>② 招财进宝 —— 汉字里的「多字合一」</h4>
+
+<p>这是一个民间合体字，把四个字挤进一个字的位置：</p>
+
+<figure class="fig">
+  <img src="assets/zhaocaijinbao.webp"
+       alt="招财进宝合体字：把「招财进宝」四个字挤进一个字的位置，笔画相互借用、偏旁共用"
+       width="715" height="800" loading="lazy" decoding="async">
+  <figcaption><b>招财进宝</b>合体字 —— 四个字共用一个字形的空间，
+    借笔画、共用偏旁。它只在过年的福字、春联上出现，
+    <b>正文里绝不会用</b>，因为没人能一眼读出来。</figcaption>
+</figure>
+
+<div class="card key">
+  <div class="card-t">招财进宝与 fi 的关键差别</div>
+  <p><code>fi</code> 连字是<b>为了让字不打架</b>，属于「技术必需」。</p>
+  <p>招财进宝是<b>为了好看、图吉利</b>，属于「装饰」。</p>
+  <p>但两者在<b>技术上是同一件事</b>：多个字符 → 一个字形。
+  字体文件不关心你为什么合并，它只管「按规则换字形」。</p>
+</div>
+
+<h3>现在说「连写」—— 它和连字不是一回事</h3>
+
+<div class="card warn">
+  <div class="card-t">最容易混的一点</div>
+  <table style="margin:8px 0 0">
+  <thead><tr><th style="width:16%"></th><th style="width:34%">连字 Ligature</th><th>连写 Cursive joining</th></tr></thead>
+  <tbody>
+  <tr><td><b>是什么</b></td>
+      <td>几个字符<b>合并成一个字形</b></td>
+      <td>相邻字母的笔画<b>相互衔接</b>，但仍是各自独立的字形</td></tr>
+  <tr><td><b>字形个数</b></td>
+      <td>N 个字符 → <b>1</b> 个字形</td>
+      <td>N 个字符 → <b>N</b> 个字形（只是形状变了）</td></tr>
+  <tr><td><b>能不能拆</b></td>
+      <td>拆开就读不出来或很难读</td>
+      <td>拆开仍然认识，只是「断开了」</td></tr>
+  <tr><td><b>典型</b></td>
+      <td class="c">fi　fl　招财进宝</td>
+      <td class="c">阿拉伯字母　蒙文</td></tr>
+  </tbody></table>
+</div>
+
+<p>换个说法：</p>
+
+<div class="code-wrap"><div class="bar"><span class="dot r"></span><span class="dot y"></span><span class="dot g"></span><span class="name">用一句话区分</span><span class="cp">复制</span></div><pre><b>连字</b>：两个字符变成了「一个字」。
+       像两个人结婚 —— 成为一个新的整体。
+
+<b>连写</b>：每个字母还在，但手拉着手。
+       像一排人牵手 —— 人数没变，只是连起来了。</pre></div>
+
+<div class="card tip">
+  <div class="card-t">连写里字母会「换衣服」</div>
+  <p>连写文字系统里，同一个字母在<b>词首 / 词中 / 词尾 / 单独</b>
+  四个位置，往往有<b>四种不同形状</b>。</p>
+  <p>这四种形状在 OpenType 字体里对应四个特性：
+  <code>init</code> / <code>medi</code> / <code>fina</code> / <code>isol</code>。
+  我们的字体文件里就有这四个（详见 T03）。</p>
+</div>
+
+<!-- ============================================================ -->
+<h2 id="s3"><span class="n">3</span>初识连写文字系统</h2>
+
+<p>世界上的文字，按「字母之间要不要连」大致分三类：</p>
+
+<table>
+<thead><tr><th style="width:20%">类型</th><th style="width:30%">代表</th><th>特点</th></tr></thead>
+<tbody>
+<tr><td><b>不连写</b></td><td class="c">拉丁字母　西里尔　希腊</td>
+    <td>字母各自独立，一个一个分开写</td></tr>
+<tr><td><b>连写</b></td><td class="c"><b>阿拉伯字母</b>　<b>蒙文</b>　叙利亚文</td>
+    <td>字母按位置变形并相互衔接</td></tr>
+<tr><td>（另一维度）音节文字</td><td class="c">汉字　日文假名</td>
+    <td>一个符号一个音节，不涉及字母连接</td></tr>
+</tbody>
+</table>
+
+<h3>阿拉伯字母：最广为人知的连写系统</h3>
+
+<div class="code-wrap"><div class="bar"><span class="dot r"></span><span class="dot y"></span><span class="dot g"></span><span class="name">阿拉伯字母的四个位置形</span><span class="cp">复制</span></div><pre>以字母 b（ب）为例：
+
+  单独  بـ      词首（连后面）
+  词中  ـبـ     两边都连
+  词尾  ـب      连前面
+  单独  ب       两边都不连
+
+读法方向：<b>从右往左</b>
+
+关键：<b>连不连会改变词义</b>，不只是好看不好看。</pre></div>
+
+<div class="card key">
+  <div class="card-t">为什么「连写」是刚需而不是风格</div>
+  <p>在连写系统里，<b>「连起来」本身携带信息</b>。
+  比如阿拉伯语里，有些词只靠「哪里连、哪里断」来区分。</p>
+  <p>所以排版引擎<b>必须</b>自动做上下文判断。
+  这也是为什么这类文字的字体里，
+  「换字形」的表（GSUB）比「摆位置」的表（GPOS）大得多。</p>
+</div>
+
+<h3>回鹘蒙文：竖着写的连写系统</h3>
+
+<p>蒙文比阿拉伯字母还多一层难度 —— <b>它是竖排的</b>。</p>
+
+<table>
+<thead><tr><th style="width:24%"></th><th>阿拉伯字母</th><th>回鹘蒙文</th></tr></thead>
+<tbody>
+<tr><td><b>书写方向</b></td><td>横向，从右往左</td>
+    <td><b>纵向，从上往下</b></td></tr>
+<tr><td><b>行的推进</b></td><td>一行一行往下</td>
+    <td><b>一列一列往左</b>（本编辑器用往右排列，见下）</td></tr>
+<tr><td><b>连写</b></td><td>有，四位置形</td><td><b>有，四位置形</b></td></tr>
+<tr><td><b>字母表来源</b></td><td>闪米特字母</td>
+    <td>源自<b>粟特字母</b>，再上溯到阿拉米字母</td></tr>
+</tbody>
+</table>
+
+<div class="card tip">
+  <div class="card-t">「列往左还是往右」是个实际问题</div>
+  <p>传统蒙文典籍是<b>列自左向右</b>排的（和汉字竖排相反）。
+  我们的编辑器用 <code>writing-mode: vertical-lr</code>，
+  其中 <code>lr</code> 就是「列从左往右」。</p>
+  <p>CSS 里另有一个值 <code>vertical-rl</code>，那是汉字/日文竖排用的
+  （列从右往左）。<b>两者绝不能混</b> ——
+  混了之后文字仍然竖着，但<b>列的顺序整个反过来</b>，读起来就错了。</p>
+  <p>而且必须显式写 <code>direction: ltr</code>，
+  否则继承到 rtl 会再次反转列序。这个坑我们踩过，记在
+  <code>web/UMCompos.js</code> 的注释里。</p>
+</div>
+
+<h3>亲手看一下竖排效果</h3>
+
+<p>下面这个框由项目的 <code>UMCompos</code> 插件实时排版。
+它是真正的竖排（不是把横排旋转 90°），字形朝向和连写都由字体引擎决定：</p>
+
+<div class="umc-demo" id="demo-monggul"></div>
+
+<p>上面这串的拉丁转写是 <code>monggul</code>，意思是「蒙古」。
+注意几个特征：</p>
+
+<ul>
+  <li><b>从上往下读</b>，一列是一个词</li>
+  <li>字母之间<b>有笔画相连</b>，不是一个个独立方块</li>
+  <li>同一个字母在<b>词首和词中长得不一样</b></li>
+</ul>
+
+<div class="umc-demo" id="demo-words"></div>
+
+<p>再看几个常用词（都用官方方案的通用转写标注）：</p>
+
+<table>
+<thead><tr><th style="width:24%">蒙文</th><th style="width:20%">转写</th><th>意思</th></tr></thead>
+<tbody>
+<tr><td class="c"><span class="umc-inline" data-word="monggul"></span></td>
+    <td class="c">monggul</td><td>蒙古</td></tr>
+<tr><td class="c"><span class="umc-inline" data-word="bicig"></span></td>
+    <td class="c">bičig</td><td>文字、书</td></tr>
+<tr><td class="c"><span class="umc-inline" data-word="sain"></span></td>
+    <td class="c">sain</td><td>好</td></tr>
+<tr><td class="c"><span class="umc-inline" data-word="baina"></span></td>
+    <td class="c">baina</td><td>在、有</td></tr>
+<tr><td class="c"><span class="umc-inline" data-word="nigen"></span></td>
+    <td class="c">nigen</td><td>一</td></tr>
+<tr><td class="c"><span class="umc-inline" data-word="gurban"></span></td>
+    <td class="c">gurban</td><td>三</td></tr>
+</tbody>
+</table>
+
+<!-- ============================================================ -->
+<h2 id="s4"><span class="n">4</span>书写系统与主流转写方案</h2>
+
+<h3>书写系统的几个层次</h3>
+
+<table>
+<thead><tr><th style="width:22%">层次</th><th>说明</th></tr></thead>
+<tbody>
+<tr><td><b>文字类型</b></td><td>音素文字（字母表），且<b>连写</b></td></tr>
+<tr><td><b>书写方向</b></td><td>纵向，自上而下；列自左向右</td></tr>
+<tr><td><b>字母表</b></td><td>源自粟特字母 → 阿拉米字母 → 腓尼基字母</td></tr>
+<tr><td><b>字母数量</b></td>
+    <td>Unicode 蒙文区（U+1800–U+18AF）共 <b>155</b> 个码位有转写对应，
+      其中<b>字母 131 个</b>（含元音、辅音、异体）</td></tr>
+<tr><td><b>元音</b></td>
+    <td><b>7 个基本元音</b>：
+      <span class="c">a e i o u ö ü</span>
+      （另有 ë，主要用于借词）</td></tr>
+<tr><td><b>位置变形</b></td>
+    <td>词首 / 词中 / 词尾 / 单独，四个位置形</td></tr>
+<tr><td><b>音节连写</b></td>
+    <td>以<b>音节</b>为单位连写，不是逐字母 ——
+      详见 T03 里「字形名里的音节」一节</td></tr>
+</tbody>
+</table>
+
+<h3>主流转写方案</h3>
+
+<div class="card key">
+  <div class="card-t">本篇采用：中国—蒙古国联合蒙文转写</div>
+  <p>全称<b>中国－蒙古国联合蒙文转写</b>，
+  是用来把蒙古文（传统蒙古文、托忒文、满文、锡伯文，
+  以及达斡尔文、鄂温克文）转写成拉丁字母的一套方案。</p>
+  <table style="margin:10px 0 0">
+  <thead><tr><th style="width:18%">时间</th><th>事件</th></tr></thead>
+  <tbody>
+  <tr><td class="c">1997 年 8 月</td>
+      <td>中国、蒙古国、德国共同向 ISO 提出一套方案，
+        想替代<b>过时的鲍培式方案</b>；错过申报期限，未果
+        （即 ISO/CD 14522《蒙古文拉丁转写方案》）</td></tr>
+  <tr><td class="c">2005 年 7 月</td>
+      <td>中国、蒙古国再次共同向 ISO 提出（ISO/TC 46/WG 3）。
+        这套方案<b>直接与 Unicode 挂钩</b>，
+        是<b>完全无损</b>的转写 —— 即本篇所用方案</td></tr>
+  </tbody></table>
+  <p style="margin-top:10px"><b>「无损」是关键</b>：每个码位都有确定的转写，
+  反过来也能唯一还原。<b>鲍培式方案做不到这一点</b>（它更接近标音，不是编码）。</p>
+</div>
+
+<h3>方案表：元音与几个特殊辅音</h3>
+
+<p>下面是从官方方案表里节选的行。<b>「通用转写」就是我们日常该用的那一列</b>，
+其余几列分别对应胡都木（传统蒙文）、托忒、锡伯、满文：</p>
+
+<table>
+<thead><tr><th style="width:16%">码位</th><th style="width:10%">蒙文</th>
+  <th style="width:16%">通用转写</th><th style="width:16%">胡都木</th>
+  <th style="width:14%">托忒</th><th>备注</th></tr></thead>
+<tbody>
+<tr><td class="c">U+1820</td><td class="c"><span class="umc-inline" data-word="a"></span></td>
+    <td class="c">a</td><td class="c">a</td><td class="c">a</td><td>元音 1</td></tr>
+<tr><td class="c">U+1821</td><td class="c"><span class="umc-inline" data-word="e"></span></td>
+    <td class="c">e</td><td class="c">e</td><td class="c">—</td><td>元音 2</td></tr>
+<tr><td class="c">U+1822</td><td class="c"><span class="umc-inline" data-word="i"></span></td>
+    <td class="c">i</td><td class="c">i</td><td class="c">—</td><td>元音 3</td></tr>
+<tr><td class="c">U+1823</td><td class="c"><span class="umc-inline" data-word="o"></span></td>
+    <td class="c">o</td><td class="c">o</td><td class="c">—</td><td>元音 4</td></tr>
+<tr><td class="c">U+1824</td><td class="c"><span class="umc-inline" data-word="u"></span></td>
+    <td class="c">u</td><td class="c">u</td><td class="c">—</td><td>元音 5</td></tr>
+<tr><td class="c">U+1825</td><td class="c"><span class="umc-inline" data-word="ö"></span></td>
+    <td class="c">ö</td><td class="c">ö</td><td class="c">—</td><td>元音 6</td></tr>
+<tr><td class="c">U+1826</td><td class="c"><span class="umc-inline" data-word="ü"></span></td>
+    <td class="c">ü</td><td class="c">ü</td><td class="c">—</td><td>元音 7</td></tr>
+<tr><td class="c">U+1827</td><td class="c"><span class="umc-inline" data-word="ë"></span></td>
+    <td class="c">ë</td><td class="c">ë</td><td class="c">—</td><td>借词用</td></tr>
+<tr><td class="c">U+1829</td><td class="c"><span class="umc-inline" data-word="ng"></span></td>
+    <td class="c">ng</td><td class="c">ng</td><td class="c">—</td>
+    <td><b>双字母</b>转写，一个码位</td></tr>
+<tr><td class="c">U+182C</td><td class="c"><span class="umc-inline" data-word="x"></span></td>
+    <td class="c">x</td><td class="c">x</td><td class="c">—</td>
+    <td>汉语借词的 h 音</td></tr>
+<tr><td class="c">U+1831</td><td class="c"><span class="umc-inline" data-word="š"></span></td>
+    <td class="c">š</td><td class="c">š</td><td class="c">š</td><td>带符号字母</td></tr>
+<tr><td class="c">U+1834</td><td class="c"><span class="umc-inline" data-word="č"></span></td>
+    <td class="c">č</td><td class="c">č</td><td class="c">z</td>
+    <td>托忒文里写成 z</td></tr>
+<tr><td class="c">U+1835</td><td class="c"><span class="umc-inline" data-word="ǰ"></span></td>
+    <td class="c">ǰ</td><td class="c">ǰ</td><td class="c">—</td><td>带符号字母</td></tr>
+</tbody>
+</table>
+
+<div class="card warn">
+  <div class="card-t">方案表里两个容易看错的细节</div>
+  <ol>
+    <li><b>一个码位可能转写成两个字母</b>：U+1829 写作 <code>ng</code>。
+      反过来换算时要<b>先匹配长的</b>，否则 <code>ng</code> 会被拆成
+      <code>n</code> + <code>g</code> 两个码位。
+      （<code>tools/cnmn.py</code> 里就是按长度倒序匹配的。）</li>
+    <li><b>同一个音在不同文字里用不同字母</b>：U+1834 的通用转写是
+      <code>č</code>，但托忒文那列写 <code>z</code>、满文那列写 <code>c</code>。
+      <b>选错列就会转错</b> —— 所以引用时必须说清用的是哪一列。</li>
+  </ol>
+</div>
+
+<h3>变体选择符：转写表里最特殊的一行</h3>
+
+<p>方案表里还有四个不对应可见字母的码位：</p>
+
+<table>
+<thead><tr><th style="width:22%">名称</th><th style="width:16%">码位</th>
+  <th style="width:16%">转写</th><th>作用</th></tr></thead>
+<tbody>
+<tr><td class="c">FVS1</td><td class="c">U+180B</td><td class="c">'</td>
+    <td rowspan="4"><b>自由变体选择符</b>（Free Variation Selector）：
+      在同一个字母的多个候选字形里，指定用哪一个。
+      有些字母的元音 a / e 长得一样，靠 FVS 区分</td></tr>
+<tr><td class="c">FVS2</td><td class="c">U+180C</td><td class="c">"</td></tr>
+<tr><td class="c">FVS3</td><td class="c">U+180D</td><td class="c">`</td></tr>
+<tr><td class="c">FVS4</td><td class="c">U+180F</td><td class="c">（表内未列）</td></tr>
+<tr><td class="c">MVS</td><td class="c">U+180E</td><td class="c">_</td>
+    <td><b>元音分隔符</b>（Mongolian Vowel Separator）：
+      隔开两个本该连写的元音</td></tr>
+</tbody>
+</table>
+
+<div class="card key">
+  <div class="card-t">为什么这四个码位对我们特别重要</div>
+  <p>FVS / MVS <b>不是独立的字母</b>，它们修饰<b>前一个</b>字母。</p>
+  <p>但字体文件给它们的 advance 是 <b>770 单位</b>（跟普通字母差不多，见 T03）。
+  这意味着：<b>如果排版时把它们当成独立字符，它们会各占一格</b>，
+  整词就散架了。</p>
+  <p>所以我们必须按<b>字素簇</b>处理 —— 让 FVS / MVS
+  <b>黏附到前一个字素</b>上。这正是 <code>UMCompos</code> 里
+  UAX #29 那段代码在做的事。</p>
+</div>
+
+<!-- ============================================================ -->
+<h2 id="s5"><span class="n">5</span>一页速查</h2>
+
+<table>
+<thead><tr><th style="width:30%">概念</th><th>一句话</th></tr></thead>
+<tbody>
+<tr><td><b>拉丁转写</b></td>
+    <td>用 ABC 字母拼别的语言。<b>「拉丁」指字母，不指拉丁语</b></td></tr>
+<tr><td><b>转写的性质</b></td>
+    <td>有规则、可逆 —— 是编码，不是翻译</td></tr>
+<tr><td><b>字符 vs 字形</b></td>
+    <td>字符是「什么」，字形是「怎么画」。一个字符可有多个字形</td></tr>
+<tr><td><b>连字 Ligature</b></td>
+    <td>N 个字符 → <b>1</b> 个字形。<span class="c">fi　fl　招财进宝</span></td></tr>
+<tr><td><b>连写 Cursive</b></td>
+    <td>N 个字符 → <b>N</b> 个字形，但笔画相接。
+      <span class="c">阿拉伯字母　蒙文</span></td></tr>
+<tr><td><b>一句话区分</b></td>
+    <td>连字是结婚（成了新整体）；连写是牵手（人数没变）</td></tr>
+<tr><td><b>位置形</b></td>
+    <td>词首 init / 词中 medi / 词尾 fina / 单独 isol</td></tr>
+<tr><td><b>蒙文书写方向</b></td>
+    <td>纵向自上而下，<b>列自左向右</b>
+      （CSS: <code>vertical-lr</code> + 显式 <code>direction:ltr</code>）</td></tr>
+<tr><td><b>蒙文元音</b></td>
+    <td>7 个：<span class="c">a e i o u ö ü</span>（另有 ë 用于借词）</td></tr>
+<tr><td><b>本篇转写方案</b></td>
+    <td><b>中国—蒙古国联合蒙文转写</b>（2005 年向 ISO 提出，
+      与 Unicode 挂钩，<b>无损</b>）</td></tr>
+<tr><td><b>为什么要换掉鲍培式</b></td>
+    <td>鲍培式更接近标音，做不到与码位一一对应；
+      联合方案是<b>可逆编码</b></td></tr>
+<tr><td><b>FVS1-4</b></td>
+    <td>自由变体选择符，<b>修饰前一个字母</b>，不是独立字母</td></tr>
+<tr><td><b>MVS</b></td>
+    <td>元音分隔符，隔开本该连写的两个元音</td></tr>
+<tr><td><b>对我们代码的影响</b></td>
+    <td>FVS/MVS 必须<b>黏附前一字素</b>，否则整词散架</td></tr>
+</tbody>
+</table>
+
+<div class="card key">
+  <div class="card-t">这一篇要记住的五句话</div>
+  <ol>
+    <li><b>拉丁转写 = 用拉丁字母拼别的语言，与拉丁语无关。</b>
+      它是可逆的编码，不是翻译。</li>
+    <li><b>字符是语义、字形是形状。</b>连字把 N 个字符合成 1 个字形；
+      <b>连写</b>让 N 个字符形状变化但仍各自独立。</li>
+    <li><b>回鹘蒙文是竖排的连写系统</b>：
+      纵向自上而下、列自左向右，字母有四个位置形。</li>
+    <li><b>本篇用「中国—蒙古国联合蒙文转写」</b> ——
+      与 Unicode 挂钩、无损、可逆；鲍培式已被它取代。</li>
+    <li><b>FVS / MVS 是修饰符不是字母</b>，排版时必须黏附前一字素。</li>
+  </ol>
+</div>
+
+<div class="card note">
+  <div class="card-t">下一步</div>
+  <table style="margin:8px 0 0">
+  <thead><tr><th style="width:26%">篇目</th><th>接着讲什么</th></tr></thead>
+  <tbody>
+  <tr><td><b>T03 字体文件结构大揭秘</b></td>
+      <td>这一篇说「蒙文是什么样」；F04 说「字体文件里怎么装下它」——
+        3715 个字形、1944 条连字规则、字形名里的 448 种音节</td></tr>
+  <tr><td><b>T02 Unicode 和编码</b></td>
+      <td>码位、UTF-8、变长编码 —— 理解 U+1820 这些编号从哪来</td></tr>
+  <tr><td><b>UMCompos 插件</b></td>
+      <td>本篇的竖排渲染就是它做的：
+        <code>web/UMCompos.js</code></td></tr>
+  </tbody></table>
+</div>
+
+<footer>
+UME 项目组内部教程 · 理论系列 T01《初识回鹘蒙文》<br>
+转写数据取自<b>中国—蒙古国联合蒙文转写</b>方案表，
+由 <code>tools/cnmn.py</code> 解析并机械换算；蒙文示例均非手写。
+竖排渲染由 <code>web/UMCompos.js</code> 实时完成。
+</footer>"""
+
+TOC = """  <a href="#s1">1 · 拉丁转写是什么</a>
+  <a href="#s2">2 · 字形、连字与连写</a>
+  <a href="#s3">3 · 初识连写文字系统</a>
+  <a href="#s4">4 · 书写系统与转写方案</a>
+  <a href="#s5">5 · 一页速查</a>"""
+
+DEMO_JS = r"""
+<script src="../../web/UMCompos.js"></script>
+<script src="../../web/project-config.js"></script>
+<script>
+/* ------------------------------------------------------------------
+   用 UMCompos 渲染演示。
+   蒙文一律用 \uXXXX 转义写 —— 因为码位是由 tools/cnmn.py 从官方
+   转写方案表算出来的，用转义能保证「写进文档的」和「算出来的」
+   是同一串数字，不依赖编辑器能否正确输入蒙文。
+   ------------------------------------------------------------------ */
+(function () {
+  if (typeof UMCompos === 'undefined') return;
+
+  /* 由 tools/cnmn.py 算出的码位 */
+  var WORDS = {
+    a:       "\u1820",
+    e:       "\u1821",
+    i:       "\u1822",
+    o:       "\u1823",
+    u:       "\u1824",
+    '\u00f6':"\u1825",          /* ö */
+    '\u00fc':"\u1826",          /* ü */
+    '\u00eb':"\u1827",          /* ë */
+    ng:      "\u1829",
+    x:       "\u182C",
+    '\u0161':"\u1831",          /* š */
+    '\u010d':"\u1834",          /* č */
+    '\u01f0':"\u1835",          /* ǰ */
+    monggul: "\u182E\u1823\u1829\u182D\u1824\u182F",
+    bicig:   "\u182A\u1822\u183C\u1822\u182D",
+    sain:    "\u1830\u1820\u1822\u1828",
+    baina:   "\u182A\u1820\u1822\u1828\u1820",
+    nigen:   "\u1828\u1822\u182D\u1821\u1828",
+    gurban:  "\u182D\u1824\u1837\u182A\u1820\u1828"
+  };
+
+  UMCompos.loadFont().then(function () {
+    /* ① 大演示：monggul */
+    var box = document.getElementById('demo-monggul');
+    if (box) {
+      UMCompos.mount(box, {
+        text: WORDS.monggul,
+        fontSize: 46,
+        height: '230px'
+      });
+    }
+    /* ② 几个词并排（用换行分列） */
+    var box2 = document.getElementById('demo-words');
+    if (box2) {
+      UMCompos.mount(box2, {
+        text: [WORDS.bicig, WORDS.sain, WORDS.baina,
+               WORDS.nigen, WORDS.gurban].join('\n'),
+        fontSize: 32,
+        height: '250px'
+      });
+    }
+    /* ③ 行内小字：把 data-word 换成真实蒙文 */
+    var spans = document.querySelectorAll('.umc-inline[data-word]');
+    for (var i = 0; i < spans.length; i++) {
+      var w = spans[i].getAttribute('data-word');
+      if (WORDS[w] !== undefined) {
+        spans[i].textContent = WORDS[w];
+        spans[i].setAttribute('lang', 'mn-Mong');
+        spans[i].style.fontFamily = UMCompos.config().fontStack;
+        spans[i].style.fontSize = '20px';
+      }
+    }
+  });
+})();
+</script>"""
+
+EXTRA_CSS = """
+/* 竖排演示框：让 UMCompos 的输出和教程版式协调 */
+.umc-demo{margin:16px 0;padding:12px 14px;overflow-x:auto;
+  background:var(--bg-soft);border:1px solid var(--line-2);border-radius:12px}
+.umc-inline{display:inline-block;line-height:1.4;vertical-align:middle}
+"""
+
+HTML = """<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>T01 · 初识回鹘蒙文</title>
+<link rel="stylesheet" href="@@CSS@@">
+<link rel="stylesheet" href="assets/t01.css">
+</head>
+<body>
+<button id="tocToggle">目录</button>
+<div id="shell">
+
+<nav id="toc">
+  <h5>目录</h5>
+@@TOC@@
+</nav>
+
+<main id="top">
+@@BODY@@
+</main>
+</div>
+
+<a class="home-fab" href="../../index.html" title="返回教程总目录">返回 home</a>
+
+<script>
+(function(){
+  var toc = document.getElementById('toc');
+  var btn = document.getElementById('tocToggle');
+  if (btn && toc) { btn.addEventListener('click', function(){ toc.classList.toggle('open'); }); }
+  var links = [].slice.call(document.querySelectorAll('#toc a[href^="#"]'));
+  var targets = links.map(function(a){ return document.querySelector(a.getAttribute('href')); })
+                     .filter(Boolean);
+  if (targets.length && window.IntersectionObserver) {
+    var io = new IntersectionObserver(function(es){
+      var vis = es.filter(function(e){ return e.isIntersecting; })
+                  .sort(function(a,b){ return a.boundingClientRect.top - b.boundingClientRect.top; });
+      if (vis[0]) {
+        var id = vis[0].target.id;
+        links.forEach(function(a){ a.classList.toggle('on', a.getAttribute('href') === '#' + id); });
+      }
+    }, { rootMargin: '-10% 0px -70% 0px' });
+    targets.forEach(function(t){ io.observe(t); });
+  }
+  document.querySelectorAll('.cp').forEach(function(b){
+    b.addEventListener('click', function(){
+      var pre = b.closest('.code-wrap').querySelector('pre');
+      navigator.clipboard.writeText(pre.innerText).then(function(){
+        var old = b.textContent; b.textContent = '已复制';
+        setTimeout(function(){ b.textContent = old; }, 1200);
+      });
+    });
+  });
+})();
+</script>
+@@DEMO@@
+</body>
+</html>
+"""
+
+# 复用后端 F 系列样式（T01 属于理论系列，用同一套外观）
+CSS = "assets/f03_compile_and_link.css"
+
+html = (HTML.replace("@@CSS@@", CSS)
+            .replace("@@EXTRA@@", EXTRA_CSS)
+            .replace("@@TOC@@", TOC)
+            .replace("@@BODY@@", BODY)
+            .replace("@@DEMO@@", DEMO_JS))
+io.open(OUT, "w", encoding="utf-8", newline="").write(html)
+print("  已生成 %s（%d 字符）" % (os.path.basename(OUT), len(html)))

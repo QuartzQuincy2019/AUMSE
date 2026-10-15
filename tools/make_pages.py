@@ -1,19 +1,26 @@
 # -*- coding: utf-8 -*-
-"""重建导航页（index.html / home.html）
+"""重建导航页（index.html / home.html）。
 
-本次改动：
-  1. 每张卡显示完整讲次编号，如「08-E02」「01」「10」
-  2. 带 * 的篇目显著加强：
-     - 左侧金色粗条 + 淡金底色
-     - 实心 ★ 徽章（不再是小小的上标星号）
-     - 底部标注「与本项目施行密切相关」
-  3. 加入第十讲，共 16 篇
-  4. 09-F04《Unicode 和编码》改号 09-E03（E 系列更贴切，F 留给 File）
+**篇目数据不在这个文件里** —— 唯一数据源是 tools/series_data.py。
+改编号、加篇目、调系列说明，只改那一个文件，然后跑：
+
+    python tools/apply_series.py        # 改名 / 改正文编号（新篇目才需要）
+    python tools/build_series_css.py    # 重生成系列主题
+    python tools/rebuild_series_nav.py  # 重生成页尾小目录
+    python tools/make_pages.py          # 重生成首页
+
+首页卡片按「系列」分组，分组顺序与标题都取自 series_data.py。
+R 系列目前为空，会渲染成一个「暂空」的占位块，加篇目后自动出现。
 """
 import io
+import json
 import os
 import re
 import sys
+
+sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+from series_data import (SERIES, PAGES, ORDER, FE_PAGES,  # noqa: E402
+                         pages_of)
 
 try:
     sys.stdout.reconfigure(encoding="utf-8", errors="replace")
@@ -23,45 +30,25 @@ except Exception:
 REPO = r"E:\QKMansion\CSX10\w\UME"
 TUT = os.path.join(REPO, "SharingGroup", "tutorials")
 ASSETS = os.path.join(TUT, "assets")
+_HOME_TPL = os.path.join(REPO, "tools", "home_template.html")
+_HOME_JS = os.path.join(REPO, "tools", "home-cards.js")
 
-# 这一轮的重命名：旧名 → 新名
-RENAME = {
-    "09-f04-unicode-and-encoding.html": "09-e03-unicode-and-encoding.html",
-}
-CSS_RENAME = {
-    "09-f04.css": "09-e03.css",
-}
-
-# (文件名, 编号, 标题, 一句话说明, 类别, 是否星标)
-META = [
-    ("01-c-arrays.html",                 "01",      "数组初步",                 "一排数据怎么存、怎么遍历",                     "C",     False),
-    ("02-c-functions.html",              "02",      "函数初步",                 "重复的代码怎么打包复用",                       "C",     False),
-    ("03-c-types.html",                  "03",      "类型概论",                 "数据在内存里占多宽、怎么解释",                 "C",     False),
-    ("04-c-pointers.html",               "04",      "指针初步",                 "地址是什么、怎么顺着地址改数据",               "C",     False),
-    ("05-memory.html",                   "05",      "静态、动态内存与内存安全初步", "内存从哪来、怎么还、怎么不崩",                 "C",     False),
-    ("06-class-struct.html",             "06",      "类、结构体",               "数据和行为怎么打包、怎么保护",                 "C++",   False),
-    ("07-scope.html",                    "07",      "作用域、全局与局部变量",    "一个名字能被谁看见、活多久",                   "C",     False),
-    ("08-c-strings.html",                "08",      "C 风格字符串",             "一串文字怎么存、\\0 为什么重要",                "C",     False),
-    ("09-vector-and-array.html",         "09",      "vector 和 array",          "更安全的数组、自动管内存",                     "C++",   True),
-    ("10-std-and-namespace.html",        "10",      "std 与命名空间初步",        "从这里进入 C++：std:: 是什么、using 该不该用",  "C++",   False),
-    ("08-e01-recursion.html",            "08-E01",  "递归",                     "函数自己调用自己",                             "Extra", False),
-    ("08-e02-batch-and-cmd.html",        "08-E02",  "批处理与命令提示符进阶",    "把命令写成 .bat 一键重跑，接上 node / npm / python", "Extra", False),
-    ("09-e03-unicode-and-encoding.html", "09-E03",  "Unicode 和编码",           "文字怎么变成字节、变长编码的设计思路",         "Extra", True),
-    ("08-f01-command-prompt.html",       "08-F01",  "命令提示符（cmd）初步",     "怎么打开、最该先会的几条命令",                 "File",  True),
-    ("08-f02-paths-and-env.html",        "08-F02",  "相对文件路径与宏",          "文件在哪、环境变量是什么、VS 属性宏",          "File",  True),
-    ("08-f03-compile-and-link.html",     "08-F03",  "编译与链接、头文件与库",    "三步原理 + VS 2026 静态库手把手",              "File",  True),
-]
+# 首页卡片用 (文件, 编号, 标题, 说明, 类别, 星标)
+# 类别即系列 key，home-cards.js 据此上徽标颜色
+META = [(p[1], p[3], p[4], p[5], p[2], bool(p[6])) for p in PAGES]
+FE = [(a, b, c, d, e, f) for a, b, c, d, e, f in FE_PAGES]
 
 STYLE = """<style>
 :root{
   --bg:#ffffff; --bg-soft:#f7f9fc; --line:#e3e8f0; --line-2:#ccd5e3;
-  --fg:#1a1f28; --fg-2:#4b5563; --fg-3:#8b95a5;
+  --fg:#1a1f28; --fg-2:#4b5563; --fg-3:#6b7684;
   --blue:#1f6feb; --blue-soft:#e8f1fe;
   --green:#17864a; --green-soft:#e7f6ee;
   --violet:#6b46c1; --violet-soft:#f2ecfd;
   --amber:#a4690d; --amber-soft:#fdf4e3;
   --teal:#0d7d7d; --teal-soft:#e4f5f5;
   --gold:#c8901a; --gold-line:#e8c877;
+  --code-bg:#eef2f8;
   --mono:"Consolas","Cascadia Mono","Courier New",monospace;
   --sans:"Microsoft YaHei","PingFang SC","Hiragino Sans GB",system-ui,sans-serif;
 }
@@ -70,211 +57,283 @@ body{margin:0;background:var(--bg);color:var(--fg);
   font:16px/1.8 var(--sans);-webkit-font-smoothing:antialiased}
 .wrap{max-width:1120px;margin:0 auto;padding:48px 24px 80px}
 
-header{border-bottom:1px solid var(--line);padding-bottom:26px;margin-bottom:8px}
-h1{margin:0 0 8px;font-size:30px;letter-spacing:-.01em}
-.sub{color:var(--fg-3);font-size:14px;margin:0}
-.lead{background:var(--blue-soft);border:1px solid #cfe1fb;border-left:4px solid var(--blue);
-  border-radius:0 10px 10px 0;padding:14px 18px;margin:26px 0 34px;font-size:14.5px}
-.lead b{color:var(--blue)}
-.lead p{margin:0 0 6px}
-.lead p:last-child{margin-bottom:0}
+header h1{font-size:29px;margin:0 0 6px}
+header .sub{color:var(--fg-3);font-size:14px;margin:0 0 4px}
+header .meta{color:var(--fg-3);font-size:13px;margin:0}
 
-h2{font-size:15px;letter-spacing:.14em;text-transform:uppercase;color:var(--fg-3);
-  font-weight:600;margin:38px 0 14px;display:flex;align-items:center;gap:10px}
-h2::after{content:"";flex:1;height:1px;background:var(--line)}
+h2{font-size:15px;letter-spacing:.10em;text-transform:uppercase;
+  color:var(--fg-3);margin:42px 0 14px;padding-bottom:8px;
+  border-bottom:1px solid var(--line)}
+h2 .h2note{float:right;text-transform:none;letter-spacing:0;
+  font-size:12.5px;color:var(--fg-3);font-weight:400}
 
-.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(324px,1fr));gap:14px}
-.card{display:block;text-decoration:none;color:inherit;background:#fff;
-  border:1px solid var(--line-2);border-radius:12px;padding:15px 18px;
-  position:relative;transition:box-shadow .16s,transform .16s,border-color .16s}
-.card:hover{box-shadow:0 8px 24px rgba(30,45,70,.13);transform:translateY(-2px);
-  border-color:var(--blue)}
-.card .top{display:flex;align-items:center;gap:9px;margin-bottom:8px;flex-wrap:wrap}
-.card .no{font-family:var(--mono);font-size:12.5px;font-weight:700;
-  letter-spacing:.02em;padding:2px 9px;border-radius:6px;
-  background:#eef2f8;border:1px solid var(--line-2);color:var(--fg-2)}
-.card .tt{font-weight:700;font-size:16.5px;margin-bottom:4px}
-.card .ds{font-size:13px;color:var(--fg-3);line-height:1.6}
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));
+  gap:14px}
+a.card{display:block;padding:15px 17px 14px;border:1px solid var(--line);
+  border-left:4px solid var(--line-2);border-radius:12px;background:var(--bg-soft);
+  text-decoration:none;color:inherit;
+  transition:transform .14s,box-shadow .14s,border-color .14s,background .14s}
+a.card:hover{transform:translateY(-2px);border-color:var(--blue);
+  background:#fff;box-shadow:0 6px 20px rgba(20,40,80,.10)}
+a.card .no{display:inline-block;font:700 12px/1.6 var(--mono);
+  color:var(--fg-2);background:#fff;border:1px solid var(--line-2);
+  border-radius:6px;padding:1px 8px;margin-right:7px}
+a.card .k{display:inline-block;font:600 11px/1.7 var(--sans);
+  border-radius:999px;padding:0 9px;vertical-align:1px}
+a.card .tt{display:block;margin:9px 0 4px;font-weight:650;font-size:15.5px}
+a.card .ds{display:block;color:var(--fg-3);font-size:13px;line-height:1.65}
+a.card.star{border-left-color:var(--gold);
+  background:linear-gradient(96deg,#fffdf5,#fdf3dc)}
+a.card.star:hover{background:linear-gradient(96deg,#fffdf5,#fbe9c4)}
+a.card .sb{display:inline-block;margin-top:8px;font:700 10.5px/1.8 var(--sans);
+  letter-spacing:.04em;color:#fff;background:var(--gold);
+  border-radius:999px;padding:0 9px}
+.k-c{background:#e8f1fe;color:#14539f;border:1px solid #c9dcf7}
+.k-cpp{background:#f2ecfd;color:#5b21b6;border:1px solid #ddd0f7}
+.k-extra{background:#fdf4e3;color:#8a5a06;border:1px solid #f0dcb4}
+.k-file{background:#e7f6ee;color:#0f6b3a;border:1px solid #c3e6d3}
+.k-html{background:#fdeceb;color:#b74a1f;border:1px solid #f0c8c2}
+.k-css{background:#e4f5f5;color:#0a6666;border:1px solid #bfe6e6}
+.k-th{background:#eee9fd;color:#5b21b6;border:1px solid #d6cbf7}
+.k-M{background:#e8f1fe;color:#14539f;border:1px solid #c9dcf7}
+.k-Q{background:#dff2ec;color:#0a7157;border:1px solid #bde4d7}
+.k-E{background:#f3e4f7;color:#67289a;border:1px solid #e0c8ee}
+.k-F{background:#e7f6ee;color:#0f6b3a;border:1px solid #c3e6d3}
+.k-T{background:#fdf3dc;color:#8a6008;border:1px solid #f0dcb4}
+.k-R{background:#fbdfe0;color:#a02b40;border:1px solid #f2c6c9}
+.k-empty{background:#f1f3f6;color:#6b7684;border:1px dashed #ccd5e3}
 
-.k{font-family:var(--mono);font-size:10.5px;font-weight:700;letter-spacing:.04em;
-  padding:1px 7px;border-radius:999px}
-.k-c{background:var(--green-soft);color:var(--green);border:1px solid #bfe2cd}
-.k-cpp{background:var(--violet-soft);color:var(--violet);border:1px solid #ded0f7}
-.k-file{background:var(--blue-soft);color:var(--blue);border:1px solid #cfe1fb}
-.k-extra{background:var(--amber-soft);color:var(--amber);border:1px solid #efd9a8}
-
-/* ---------- 星标篇目：显著加强 ---------- */
-.card.star{
-  background:linear-gradient(135deg,#fffdf5 0%,#fdf3dc 100%);
-  border:1px solid var(--gold-line);
-  border-left:6px solid var(--gold);
-  box-shadow:0 2px 8px rgba(200,144,26,.10);
-}
-.card.star:hover{border-color:var(--gold);border-left-color:var(--gold);
-  box-shadow:0 10px 28px rgba(200,144,26,.22)}
-.card.star .tt{color:#7a5307}
-.card.star .no{background:#fbeecb;border-color:var(--gold-line);color:#8a5e0c}
-.star-badge{display:inline-flex;align-items:center;gap:4px;
-  font-size:11px;font-weight:700;letter-spacing:.02em;
-  padding:2px 9px;border-radius:999px;
-  background:var(--gold);color:#fff;box-shadow:0 1px 3px rgba(200,144,26,.35)}
-.star-flag{margin-top:9px;font-size:11.5px;font-weight:600;color:#8a5e0c}
-
-.note{margin-top:38px;border:1px solid var(--line-2);border-radius:12px;
-  padding:16px 20px;background:var(--bg-soft);font-size:13.5px;color:var(--fg-2)}
-.note h3{margin:0 0 8px;font-size:14px;color:var(--fg)}
-.note table{border-collapse:collapse;margin-top:8px;font-size:13px}
-.note td{padding:3px 14px 3px 0;vertical-align:top}
-.note code,.lead code{font-family:var(--mono);font-size:12.5px;background:#eef2f8;
+.note{margin-top:46px;padding:18px 20px;border:1px solid var(--line);
+  border-radius:12px;background:var(--bg-soft)}
+.note h3{margin:0 0 10px;font-size:14px}
+.note table{width:100%;border-collapse:collapse;font-size:13.5px}
+.note td{padding:5px 8px;border-bottom:1px solid var(--line)}
+.note code{font-family:var(--mono);font-size:12.5px;background:var(--code-bg);
   border:1px solid var(--line);border-radius:4px;padding:1px 5px}
+.empty-slot{padding:15px 17px;border:1px dashed var(--line-2);border-radius:12px;
+  color:var(--fg-3);font-size:13.5px;background:transparent}
 
-footer{margin-top:44px;padding-top:18px;border-top:1px solid var(--line);
-  color:var(--fg-3);font-size:12.5px}
-
+/* ================= 项目组长留言 =================
+   要足够醒目。用「最粗的宋体」：
+   SimSun 本身没有真正的粗体，所以靠三层叠出来 ——
+     ① font-weight:900 请求最粗
+     ② -webkit-text-stroke 描边加粗笔画
+     ③ text-shadow 极小的同色阴影再补一点厚度
+   text-rendering:optimizeLegibility 让笔画交接处更实。 */
+.lead-msg{
+  margin:22px 0 6px;padding:20px 22px 22px;
+  border:2px solid #b8860b;border-left:9px solid #a8760f;border-radius:14px;
+  background:linear-gradient(135deg,#fffdf3,#fdf3dc 52%,#fbe9c4);
+  box-shadow:0 5px 20px rgba(168,118,15,.20),
+             inset 0 1px 0 rgba(255,255,255,.9);
+  position:relative;
+}
+.lead-msg-t{
+  margin:0 0 12px;display:inline-block;
+  padding:4px 14px;border-radius:999px;
+  font:700 13px/1.6 var(--sans);
+  letter-spacing:.10em;color:#fffdf3;
+  background:linear-gradient(135deg,#c8901a,#8a6208);
+  box-shadow:0 2px 7px rgba(138,98,8,.35);
+}
+.lead-msg-t::before{content:"\1F4CC "}
+.lead-msg-b{
+  margin:0;
+  font-family:SimSun,"Songti SC","Noto Serif CJK SC","Source Han Serif SC",serif;
+  font-weight:900;
+  font-size:clamp(17px,2.1vw,21px);
+  line-height:2.0;
+  letter-spacing:.02em;
+  color:#2b1d02;
+  -webkit-text-stroke:.55px #2b1d02;
+  text-shadow:0 0 .35px #2b1d02,0 .5px 0 rgba(43,29,2,.20);
+  text-rendering:optimizeLegibility;
+}
 @media (max-width:560px){
-  .wrap{padding:28px 16px 56px}
-  h1{font-size:23px}
-  .grid{grid-template-columns:1fr}
-  .card.star{border-left-width:5px}
+  .lead-msg{padding:15px 16px 17px;border-left-width:7px}
+  .lead-msg-b{line-height:1.95;letter-spacing:0}
+}
+
+/* =====================================================================
+   整页暗色模式
+   ---------------------------------------------------------------------
+   首页的样式全部建立在上面的 CSS 变量上，所以暗色只需要换变量值，
+   规则一条都不用重写。
+
+   ⚠ 曾经只给「项目组长留言」那一块写了暗色规则 ——
+   结果是暗色模式下整页纯白，只有留言块变成深色，
+   里面的浅色文字压在深底上（对比度 1.18），而周围全是白的，非常突兀。
+   现在改成整页统一处理。
+   ===================================================================== */
+@media (prefers-color-scheme: dark){
+  :root{
+    --bg:#15171c;      --bg-soft:#1b1e25;
+    --line:#2b3038;    --line-2:#3a414c;
+    --fg:#e8ecf2;      --fg-2:#b6bfcc;   --fg-3:#95a0b0;
+    --blue:#63a2ff;    --blue-soft:#1b2740;
+    --green:#4fc98d;   --green-soft:#15291f;
+    --violet:#b18cff;  --violet-soft:#241d38;
+    --amber:#e0a94a;   --amber-soft:#2c2415;
+    --teal:#45c4c4;    --teal-soft:#132a2a;
+    --gold:#e0b23f;    --gold-line:#6b5518;
+    --code-bg:#252a33;
+  }
+  a.card{background:var(--bg-soft)}
+  a.card:hover{background:#22262e;box-shadow:0 6px 20px rgba(0,0,0,.40)}
+  a.card .no{background:#22262e;border-color:var(--line-2);color:var(--fg-2)}
+  a.card.star{border-left-color:var(--gold);
+    background:linear-gradient(96deg,#241d0c,#2b2210)}
+  a.card.star:hover{background:linear-gradient(96deg,#2b2210,#3a2d10)}
+  .k-c,.k-M{background:#1b2740;color:#a9c8f5;border-color:#2e4265}
+  .k-cpp{background:#241d38;color:#c9b0ff;border-color:#3d3160}
+  .k-extra{background:#2c2415;color:#e6c078;border-color:#4a3c1c}
+  .k-file,.k-F{background:#15291f;color:#7fd8a8;border-color:#25452f}
+  .k-html{background:#33201c;color:#f0a48b;border-color:#57332b}
+  .k-css{background:#132a2a;color:#7fd8d8;border-color:#234747}
+  .k-th,.k-T{background:#2b2210;color:#f0cc72;border-color:#4a3a15}
+  .k-Q{background:#12231f;color:#7adfc4;border-color:#1f4239}
+  .k-E{background:#22152c;color:#d6a6f2;border-color:#3d2a4d}
+  .k-R{background:#291619;color:#f7a8b6;border-color:#4a2830}
+  .k-empty{background:#1b1e25;color:#95a0b0;border-color:#3a414c}
+  .note table td{border-bottom-color:var(--line)}
+  .lead-msg{
+    border-color:var(--gold-line);border-left-color:var(--gold);
+    background:linear-gradient(135deg,#241d0c,#2b2210 52%,#1e1809);
+    box-shadow:0 5px 22px rgba(0,0,0,.50);
+  }
+  .lead-msg-t{background:linear-gradient(135deg,#e0b23f,#a8760f);color:#241a03}
+  .lead-msg-b{
+    color:#f6ecd2;
+    -webkit-text-stroke:.55px #f6ecd2;
+    text-shadow:0 0 .35px #f6ecd2,0 .5px 0 rgba(0,0,0,.5);
+  }
 }
 </style>"""
 
 
 def card(fn, num, title, desc, kind, star):
-    k = {"C": "k-c", "C++": "k-cpp", "File": "k-file", "Extra": "k-extra"}[kind]
-    parts = ['<span class="no">%s</span>' % num,
-             '<span class="k %s">%s</span>' % (k, kind)]
-    if star:
-        parts.insert(0, '<span class="star-badge">\u2605 重点</span>')
-    flag = ('\n        <div class="star-flag">\u2605 与本项目施行密切相关</div>'
-            if star else "")
-    return ('      <a class="card%s" href="SharingGroup/tutorials/%s">\n'
-            '        <div class="top">%s</div>\n'
-            '        <div class="tt">%s</div>\n'
-            '        <div class="ds">%s</div>%s\n'
-            '      </a>' % (" star" if star else "", fn, "".join(parts),
-                            title, desc, flag))
+    kcls = {"C": "k-c", "C++": "k-cpp", "Extra": "k-extra", "File": "k-file",
+            "HTML": "k-html", "CSS": "k-css", "Theory": "k-th",
+            "M": "k-M", "Q": "k-Q", "E": "k-E", "F": "k-F",
+            "T": "k-T", "R": "k-R"}.get(kind, "k-c")
+    return ('<a class="card%s" href="SharingGroup/tutorials/%s" '
+            'target="_blank" rel="noopener">'
+            '<span class="no">%s</span>'
+            '<span class="k %s">%s</span>'
+            '<span class="tt">%s</span>'
+            '<span class="ds">%s</span>%s</a>'
+            % (" star" if star else "", fn, num, kcls, kind, title, desc,
+               '<br><span class="sb">&#9733; 重点</span>' if star else ""))
+
+
+def pack(items):
+    return [{"file": a, "num": b, "title": c, "desc": d,
+             "kind": e, "star": bool(f)} for a, b, c, d, e, f in items]
 
 
 def build_html():
-    main_cards = [card(*m) for m in META if m[4] in ("C", "C++")]
-    more_cards = [card(*m) for m in META if m[4] in ("Extra", "File")]
-    n_star = sum(1 for m in META if m[5])
+    """首页数据驱动 —— 数据来自 series_data.py。
 
-    return '''<!DOCTYPE html>
-<html lang="zh-CN">
-<head>
-<meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
-<title>UME 项目组内部教程 · 总目录</title>
-''' + STYLE + '''
-</head>
-<body>
-<div class="wrap">
+    数据内联在页面里（不 fetch），所以本地双击也能看。
+    同时输出一份 noscript 静态列表兜底。
+    """
+    groups = []
+    for sk in ORDER:
+        s = SERIES[sk]
+        ps = pages_of(sk)
+        items = [(p[1], p[3], p[4], p[5], sk, bool(p[6])) for p in ps]
+        groups.append({"key": sk, "label": s["label"], "banner": s["banner"],
+                       "desc": s["desc"], "count": len(items),
+                       "items": items})
+    fe_items = [(a, b, c, d, e, f) for a, b, c, d, e, f in FE_PAGES]
+    groups.append({"key": "FE", "label": "前端 · FE",
+                   "banner": "FE 系列 · 前端基础",
+                   "desc": "HTML 与 CSS：界面长什么样、怎么让它好看",
+                   "count": len(fe_items), "items": fe_items})
 
-<header>
-  <h1>UME 项目组内部教程</h1>
-  <p class="sub">回鹘蒙文编辑器（Uyghur-Mongolian Script Editor）· 面向零编程基础的成员 ·
-     共 %(total)d 篇</p>
-</header>
+    total = sum(g["count"] for g in groups)
+    n_star = sum(1 for g in groups for it in g["items"] if it[5])
 
-<div class="lead">
-  <p><b>怎么用这套教程</b>：从 01 开始按顺序看，每篇里的代码建议<b>亲手敲一遍</b>。</p>
-  <p><b>01~08 讲 C 语言，09 起进入 C++</b>（因为项目实际用的 Qt 是 C++ 框架）。</p>
-  <p>每张卡片左上角是<b>讲次编号</b>（如 <code>08-E02</code>），旁边是语言标记。
-     其中 <b>%(nstar)d 篇</b>标着 <span class="star-badge">\u2605 重点</span> ——
-     它们<b>与本项目施行密切相关</b>，卡片底色也不同。</p>
-</div>
+    # count 必须一起序列化 —— 漏了它，前端 group.count 就是 undefined，
+    # 页面右上角会一律显示「暂空」（不管这个系列有几篇）。
+    data = {"groups": [{"key": g["key"], "label": g["label"],
+                        "banner": g["banner"], "desc": g["desc"],
+                        "count": g["count"],
+                        "cards": pack(g["items"])} for g in groups],
+            "total": total, "star": n_star}
+    js = json.dumps(data, ensure_ascii=False, separators=(",", ":"))
 
-<h2>正文 · 01 ~ 10</h2>
-<div class="grid">
-%(main)s
-</div>
+    def plain(items):
+        out = ["<ul>"]
+        for a, b, c, d, e, f in items:
+            s = " <b>&#9733;</b>" if f else ""
+            out.append('<li><a href="SharingGroup/tutorials/%s">%s %s</a>%s</li>'
+                       % (a, b, c, s))
+        out.append("</ul>")
+        return "".join(out)
 
-<h2>Extra · File · 补充与实用</h2>
-<div class="grid">
-%(more)s
-</div>
+    ns = ['<noscript><div class="note"><h3>请开启 JavaScript</h3>',
+          '<p>上面的卡片列表由脚本生成。你也可以用这份静态列表进入各篇：</p>']
+    for g in groups:
+        ns.append("<h3>%s</h3>" % g["banner"])
+        ns.append(plain(g["items"]) if g["items"]
+                  else "<p>（暂空，待补）</p>")
+    ns.append("</div></noscript>")
+    noscript = "".join(ns)
 
-<div class="note">
-  <h3>编号怎么看</h3>
-  <table>
-    <tr><td><code>01</code> ~ <code>10</code></td><td>正文讲次，按顺序看</td></tr>
-    <tr><td><code>08-E01</code></td><td>第 08 讲之后的 <b>E</b>xtra（通用补充技巧）</td></tr>
-    <tr><td><code>08-F02</code></td><td>第 08 讲之后的 <b>F</b>ile（动手实用内容）</td></tr>
-    <tr><td><span class="k k-c">C</span></td><td>用 <code>gcc</code>（或 VS 里的 <code>.c</code>）编译</td></tr>
-    <tr><td><span class="k k-cpp">C++</span></td><td>用 <code>g++</code>（或 VS 里的 <code>.cpp</code>）编译</td></tr>
-  </table>
-  <p style="margin-top:10px">09 之前的篇目以 C 为主。凡是不可避免地用到 C++ 的地方，
-  代码块标题栏上都会挂一个紫色的 <span class="k k-cpp">C++</span> 徽标。</p>
-  <p>文中所有「运行结果」与实际报错，都是在真实环境里跑出来的，不是凭记忆写的。</p>
-</div>
+    tpl = io.open(_HOME_TPL, encoding="utf-8").read()
+    cardjs = io.open(_HOME_JS, encoding="utf-8").read()
 
-<footer>
-  UME 项目组内部教程 · 共 %(total)d 篇 · 样式表位于
-  <code>SharingGroup/tutorials/assets/</code>
-</footer>
+    # 顶部系列索引（一行说明各系列是什么）
+    idx = ['<div class="note"><h3>系列一览</h3><table>']
+    for g in groups:
+        idx.append("<tr><td style='width:30%%'><b>%s</b></td>"
+                   "<td>%s<br><span style='color:var(--fg-3);font-size:12.5px'>%s"
+                   "　共 %d 篇%s</span></td></tr>"
+                   % (g["banner"], g["desc"], "",
+                      g["count"], "，暂空" if g["count"] == 0 else ""))
+    idx.append("</table></div>")
+    index_html = "".join(idx)
 
-</div>
-</body>
-</html>
-''' % {"total": len(META), "nstar": n_star,
-       "main": "\n".join(main_cards), "more": "\n".join(more_cards)}
+    out = (tpl.replace("@@STYLE@@", STYLE)
+              .replace("@@DATA@@", js)
+              .replace("@@TOTAL@@", str(total))
+              .replace("@@NSTAR@@", str(n_star))
+              .replace("@@NOSCRIPT@@", noscript)
+              .replace("@@SERIES_INDEX@@", index_html)
+              .replace("@@CARDS_JS@@", cardjs))
+    # 自检：占位符必须全部替换干净。
+    # 曾经漏过 —— home-cards.js 的注释里写了 @@NSTAR@@，
+    # 被内联进页面后替换成数字，反而把那段脚本弄成了意外语句。
+    left = re.findall(r"@@[A-Z_]+@@", out)
+    if left:
+        raise SystemExit("  !! 输出里还有未替换的占位符: %s" % sorted(set(left)))
+    return out
 
 
 def main():
-    # ---- 1. 重命名（幂等）----
-    for old, new in RENAME.items():
-        s, d = os.path.join(TUT, old), os.path.join(TUT, new)
-        if os.path.exists(d):
-            continue
-        if os.path.exists(s):
-            os.rename(s, d)
-            print("  改名：%s → %s" % (old, new))
-        else:
-            print("  !! 找不到 %s" % old)
-    for old, new in CSS_RENAME.items():
-        s, d = os.path.join(ASSETS, old), os.path.join(ASSETS, new)
-        if os.path.exists(d):
-            continue
-        if os.path.exists(s):
-            os.rename(s, d)
-            print("  改名：assets/%s → assets/%s" % (old, new))
-
-    for _, new in RENAME.items():
-        p = os.path.join(TUT, new)
-        if not os.path.exists(p):
-            continue
-        t = io.open(p, encoding="utf-8").read()
-        for o, n in CSS_RENAME.items():
-            t = t.replace('href="assets/%s"' % o, 'href="assets/%s"' % n)
-        io.open(p, "w", encoding="utf-8", newline="").write(t)
-
-    # ---- 2. 生成导航页 ----
     html = build_html()
-    for out in ("index.html", "home.html"):
-        io.open(os.path.join(REPO, out), "w", encoding="utf-8", newline="").write(html)
+    for name in ("index.html", "home.html"):
+        io.open(os.path.join(REPO, name), "w",
+                encoding="utf-8", newline="").write(html)
+    n_star = sum(1 for g in [pages_of(k) for k in ORDER] for p in g if p[6]) \
+        + sum(1 for f in FE_PAGES if f[5])
     print("  已生成 index.html / home.html（%d 字符）" % len(html))
-
-    # ---- 3. 自检 ----
-    bad = 0
-    for m in re.finditer(r'href="(SharingGroup/tutorials/[^"]+)"', html):
-        p = os.path.join(REPO, m.group(1).replace("/", os.sep))
-        if not os.path.exists(p):
-            print("  !! 链接失效: %s" % m.group(1))
-            bad += 1
-    for name in os.listdir(TUT):
-        if not name.endswith(".html"):
-            continue
-        t = io.open(os.path.join(TUT, name), encoding="utf-8").read()
-        for m in re.finditer(r'href="(assets/[^"]+)"', t):
-            p = os.path.join(TUT, m.group(1).replace("/", os.sep))
-            if not os.path.exists(p):
-                print("  !! %s 的 css 缺失: %s" % (name, m.group(1)))
-                bad += 1
-    print("  链接检查：%s" % ("全部有效" if bad == 0 else "%d 处失效" % bad))
-    print("  共 %d 篇，其中星标 %d 篇"
-          % (len(META), sum(1 for m in META if m[5])))
+    print("  共 %d 篇（%s），其中星标 %d 篇"
+          % (len(PAGES) + len(FE_PAGES),
+             " + ".join("%s %d" % (SERIES[k]["num"], len(pages_of(k)))
+                        for k in ORDER) + " + FE %d" % len(FE_PAGES),
+             n_star))
+    # 链接检查
+    bad = []
+    for p in PAGES + [(a, a, "", "", "", "", False) for a in [f[0] for f in FE_PAGES]]:
+        fp = os.path.join(TUT, p[1])
+        if not os.path.exists(fp):
+            bad.append(p[1])
+    if bad:
+        print("  !! 缺文件: %s" % bad)
+    else:
+        print("  链接检查：全部有效")
 
 
 if __name__ == "__main__":

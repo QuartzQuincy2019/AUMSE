@@ -161,6 +161,8 @@ main{flex:1;display:flex;min-height:0}
 ::-webkit-scrollbar-thumb{background:#333a47;border-radius:6px;border:2px solid #12151b}
 ::-webkit-scrollbar-thumb:hover{background:#434b5c}
 </style>
+<script src="UMCompos.js"></script>
+<script src="project-config.js"></script>
 </head>
 <body>
 <div id="app">
@@ -380,76 +382,18 @@ const raw = $("raw"), vtext = $("vtext");
 const cpHex = c => "U+" + c.toString(16).toUpperCase().padStart(4,"0");
 const isMong = c => (c >= 0x1800 && c <= 0x18AF) || (c >= 0x11660 && c <= 0x1167F);
 
-/* UCD 18.0.0 实测属性 */
-const PROPS = {
-  0x1800:{gc:"Po",lb:"AL"},0x1801:{gc:"Po",lb:"AL"},0x1802:{gc:"Po",lb:"EX"},
-  0x1803:{gc:"Po",lb:"EX"},0x1804:{gc:"Po",lb:"BA"},0x1805:{gc:"Po",lb:"BA"},
-  0x1806:{gc:"Pd",lb:"BB"},0x1807:{gc:"Po",lb:"AL"},0x1808:{gc:"Po",lb:"EX"},
-  0x1809:{gc:"Po",lb:"EX"},0x180A:{gc:"Po",lb:"AL"},
-  0x180B:{gc:"Mn",lb:"CM",ext:1,ign:1},0x180C:{gc:"Mn",lb:"CM",ext:1,ign:1},
-  0x180D:{gc:"Mn",lb:"CM",ext:1,ign:1},0x180F:{gc:"Mn",lb:"CM",ext:1,ign:1},
-  0x180E:{gc:"Cf",lb:"GL",ign:1},
-  0x1885:{gc:"Mn",lb:"CM",ext:1},0x1886:{gc:"Mn",lb:"CM",ext:1},
-  0x18A9:{gc:"Mn",lb:"CM",ext:1},
-  0x200C:{gc:"Cf",lb:"CM",ext:1,ign:1},0x200D:{gc:"Cf",lb:"ZWJ",zwj:1},
-};
-function prop(c){
-  if (PROPS[c]) return PROPS[c];
-  if (c >= 0x1810 && c <= 0x1819) return {gc:"Nd",lb:"NU"};
-  if (c === 0x20 || c === 0x09) return {gc:"Zs",lb:"SP"};
-  if (c === 0x0A || c === 0x0D) return {gc:"Cc",lb:"LF"};
-  if (c >= 0x1820 && c <= 0x18AA) return {gc:"Lo",lb:"AL"};
-  if (c >= 0x11660 && c <= 0x1167F) return {gc:"Po",lb:"AL"};
-  return {gc:"?",lb:"XX"};
-}
-/* 字素簇：UAX #29（GB9：Extend/ZWJ/ZWNJ 黏附前一字素） */
-function graphemes(cps){
-  const out = []; let cur = [];
-  for (const c of cps){
-    const p = prop(c);
-    const glue = p.ext || p.zwj || c === 0x200C;
-    if (cur.length && glue){ cur.push(c); continue; }
-    if (cur.length) out.push(cur);
-    cur = [c];
-  }
-  if (cur.length) out.push(cur);
-  return out;
-}
-/* 断行机会：UAX #14 精简版（含 LB9 归并） */
-function breakOpps(cps){
-  const cls = cps.map(c => c === 0x200C ? "CM" : prop(c).lb);
-  for (let i=1;i<cps.length;i++)
-    if (cls[i]==="CM"||cls[i]==="ZWJ")
-      cls[i] = (cls[i-1]==="SP"||cls[i-1]==="BK") ? "AL" : cls[i-1];
-  const opps = new Set();
-  let afterBB = (cls[0] === "BB");
-  for (let i=1;i<cps.length;i++){
-    const a = cls[i-1], b = cls[i];
-    let allow;
-    if (afterBB) allow = false;
-    else if (a==="LF") allow = true;
-    else if (b==="LF") allow = false;
-    else if (b==="SP") allow = false;
-    else if (b==="BB") allow = true;
-    else if (a==="WJ"||b==="WJ") allow = false;
-    else if (a==="GL"||b==="GL") allow = false;
-    else if (b==="CL"||b==="CP"||b==="EX"||b==="IS"||b==="SY") allow = false;
-    else if (a==="OP") allow = false;
-    else if (a==="SP") allow = true;
-    else if (a==="BA"||a==="HY"||a==="NS") allow = false;
-    else if (b==="OP" && (a==="AL"||a==="NU")) allow = false;
-    else if (a==="CP" && (b==="AL"||b==="NU")) allow = false;
-    else if (a==="CM"||b==="CM"||a==="ZWJ"||b==="ZWJ") allow = false;
-    else if (a==="NU"&&b==="AL" || a==="AL"&&b==="NU") allow = false;
-    else if (a==="IS" && b==="NU") allow = false;
-    else if (a==="NU" && (b==="NU"||b==="IS"||b==="SY")) allow = false;
-    else if (a==="AL"&&b==="AL") allow = false;
-    else allow = true;
-    if (allow) opps.add(i);
-    if (b === "BB") afterBB = true;
-  }
-  return opps;
-}
+
+/* ==================================================================
+   字符分类与断行：改用外部插件 UMCompos（web/UMCompos.js）
+   ------------------------------------------------------------------
+   原来这三块（字符属性表 / 字素簇切分 / 断行机会）在本文件里各有一份实现。
+   它们与界面完全无关、纯粹是 Unicode 规则，已抽成 UMCompos.js 组件化，
+   这里只留一层同名转发 —— 下方代码仍在调 prop / graphemes / breakOpps，
+   这样改动面最小，行为与重构前一致。
+   ================================================================== */
+function prop(c){ return UMCompos.properties(c); }
+function graphemes(cps){ return UMCompos.graphemes(cps); }
+function breakOpps(cps){ return UMCompos.breakOpportunities(cps); }
 
 /* ==================================================================
    3. 编辑器

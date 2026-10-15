@@ -470,3 +470,41 @@ footer{border-top:1px solid var(--line);margin-top:70px;padding-top:18px;font-si
 }
 
 @media print{#toc{display:none}main{padding:0}.code-wrap,.out-wrap{break-inside:avoid}body{font-size:12pt}}
+
+/* ================= 插图 =================
+   后端教程目前没有用到图片，但样式先放好 ——
+   之前 16 篇通用表里一条 img 规则都没有，图片会按原始尺寸撑破版面。 */
+.fig{margin:18px 0;padding:0}
+.fig img{display:block;width:100%;height:auto;max-width:620px;margin:0 auto;
+  border:1px solid var(--line);border-radius:12px;background:#fff;padding:6px;
+  transition:box-shadow .2s,transform .2s}
+.fig:hover img{box-shadow:0 10px 30px rgba(30,45,70,.14);transform:translateY(-2px)}
+.fig figcaption{margin:10px auto 0;max-width:620px;font-size:12.5px;color:var(--fg-3);
+  line-height:1.75;text-align:center}
+.fig figcaption b{color:var(--fg-2)}
+main img{max-width:100%;height:auto}
+
+/* ================= 重点小节：整块黄底 =================
+   与 home.html 重点卡片的配色一致（淡金底 + 金色左边框 + ★），
+   一眼就能看出「这一节是本项目的重点」。 */
+h2.key-h,
+h3.key-h,
+h4.key-h{
+  position:relative;
+  background:linear-gradient(96deg,#fffdf5 0%,#fdf3dc 58%,#fbe9c4 100%);
+  border:1px solid #e8c877;
+  border-left:6px solid #c8901a;
+  border-radius:0 10px 10px 0;
+  padding:10px 16px 10px 14px;
+  margin-left:-4px;
+  box-shadow:0 2px 10px rgba(200,144,26,.14);
+}
+h2.key-h{border-top:1px solid #e8c877;padding-top:10px}
+.key-mark{display:inline-block;margin-right:8px;color:#c8901a;font-size:15px;
+  vertical-align:1px;cursor:help}
+.key-hint{display:inline-block;margin-left:8px;padding:1px 9px;border-radius:999px;
+  font-size:11px;font-weight:600;background:#eef2f8;border:1px solid var(--line-2);
+  color:var(--fg-3);vertical-align:2px;font-family:var(--sans)}
+@media (max-width:980px){
+  h2.key-h,h3.key-h,h4.key-h{margin-left:0;border-radius:0 8px 8px 0}
+}

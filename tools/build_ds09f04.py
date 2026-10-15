@@ -63,7 +63,7 @@ TOC = """  <a href="#s1">1 · 一个字符，三种问法</a>
   <a href="#s8">8 · 一页速查</a>"""
 
 BODY = r"""<h1>Unicode 和编码</h1>
-<p class="sub-title">UME 项目组内部教程 · 09-F04（File）· 与本项目施行密切相关</p>
+<p class="sub-title">UME 项目组内部教程 · 理论系列 T02 · 承上启下：从文字到码位</p>
 <p>
   <span class="tag">已学：字符串 / 内存</span>
   <span class="tag">已学：编译与链接</span>

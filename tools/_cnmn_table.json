@@ -1,0 +1,1592 @@
+[
+ {
+  "char": "᠀",
+  "label": "",
+  "cp": "U+1800",
+  "generic": "&",
+  "khudum": "&",
+  "todo": "&",
+  "sibe": "",
+  "manchu": ""
+ },
+ {
+  "char": "᠁",
+  "label": "",
+  "cp": "U+1801",
+  "generic": "…",
+  "khudum": "…",
+  "todo": "…",
+  "sibe": "…",
+  "manchu": ""
+ },
+ {
+  "char": "᠂",
+  "label": "",
+  "cp": "U+1802",
+  "generic": ",",
+  "khudum": ",",
+  "todo": "",
+  "sibe": "",
+  "manchu": ""
+ },
+ {
+  "char": "᠃",
+  "label": "",
+  "cp": "U+1803",
+  "generic": ".",
+  "khudum": ".",
+  "todo": "",
+  "sibe": "",
+  "manchu": ""
+ },
+ {
+  "char": "᠄",
+  "label": "",
+  "cp": "U+1804",
+  "generic": ":",
+  "khudum": ":",
+  "todo": ":",
+  "sibe": ":",
+  "manchu": ""
+ },
+ {
+  "char": "᠅",
+  "label": "",
+  "cp": "U+1805",
+  "generic": "#",
+  "khudum": "#",
+  "todo": "#",
+  "sibe": "",
+  "manchu": ""
+ },
+ {
+  "char": "᠆",
+  "label": "",
+  "cp": "U+1806",
+  "generic": "–'",
+  "khudum": "",
+  "todo": "–",
+  "sibe": "",
+  "manchu": ""
+ },
+ {
+  "char": "᠇",
+  "label": "",
+  "cp": "U+1807",
+  "generic": "–\"",
+  "khudum": "",
+  "todo": "",
+  "sibe": "–",
+  "manchu": ""
+ },
+ {
+  "char": "᠈",
+  "label": "",
+  "cp": "U+1808",
+  "generic": ",'",
+  "khudum": "",
+  "todo": "",
+  "sibe": "",
+  "manchu": ","
+ },
+ {
+  "char": "᠉",
+  "label": "",
+  "cp": "U+1809",
+  "generic": ".'",
+  "khudum": "",
+  "todo": "",
+  "sibe": "",
+  "manchu": "."
+ },
+ {
+  "char": "᠊",
+  "label": "",
+  "cp": "U+180A",
+  "generic": "‐",
+  "khudum": "‐",
+  "todo": "‐",
+  "sibe": "‐",
+  "manchu": "‐"
+ },
+ {
+  "char": "",
+  "label": "(FVS1)",
+  "cp": "",
+  "generic": "'",
+  "khudum": "'",
+  "todo": "'",
+  "sibe": "'",
+  "manchu": "'"
+ },
+ {
+  "char": "",
+  "label": "(FVS2)",
+  "cp": "",
+  "generic": "\"",
+  "khudum": "\"",
+  "todo": "\"",
+  "sibe": "\"",
+  "manchu": "\""
+ },
+ {
+  "char": "",
+  "label": "(FVS3)",
+  "cp": "",
+  "generic": "`",
+  "khudum": "`",
+  "todo": "`",
+  "sibe": "`",
+  "manchu": "`"
+ },
+ {
+  "char": "",
+  "label": "(MVS)",
+  "cp": "",
+  "generic": "_",
+  "khudum": "_",
+  "todo": "",
+  "sibe": "",
+  "manchu": ""
+ },
+ {
+  "char": "᠐",
+  "label": "",
+  "cp": "U+1810",
+  "generic": "'0",
+  "khudum": "'0",
+  "todo": "'0",
+  "sibe": "",
+  "manchu": ""
+ },
+ {
+  "char": "᠑",
+  "label": "",
+  "cp": "U+1811",
+  "generic": "'1",
+  "khudum": "'1",
+  "todo": "'1",
+  "sibe": "",
+  "manchu": ""
+ },
+ {
+  "char": "᠒",
+  "label": "",
+  "cp": "U+1812",
+  "generic": "'2",
+  "khudum": "'2",
+  "todo": "'2",
+  "sibe": "",
+  "manchu": ""
+ },
+ {
+  "char": "᠓",
+  "label": "",
+  "cp": "U+1813",
+  "generic": "'3",
+  "khudum": "'3",
+  "todo": "'3",
+  "sibe": "",
+  "manchu": ""
+ },
+ {
+  "char": "᠔",
+  "label": "",
+  "cp": "U+1814",
+  "generic": "'4",
+  "khudum": "'4",
+  "todo": "'4",
+  "sibe": "",
+  "manchu": ""
+ },
+ {
+  "char": "᠕",
+  "label": "",
+  "cp": "U+1815",
+  "generic": "'5",
+  "khudum": "'5",
+  "todo": "'5",
+  "sibe": "",
+  "manchu": ""
+ },
+ {
+  "char": "᠖",
+  "label": "",
+  "cp": "U+1816",
+  "generic": "'6",
+  "khudum": "'6",
+  "todo": "'6",
+  "sibe": "",
+  "manchu": ""
+ },
+ {
+  "char": "᠗",
+  "label": "",
+  "cp": "U+1817",
+  "generic": "'7",
+  "khudum": "'7",
+  "todo": "'7",
+  "sibe": "",
+  "manchu": ""
+ },
+ {
+  "char": "᠘",
+  "label": "",
+  "cp": "U+1818",
+  "generic": "'8",
+  "khudum": "'8",
+  "todo": "'8",
+  "sibe": "",
+  "manchu": ""
+ },
+ {
+  "char": "᠙",
+  "label": "",
+  "cp": "U+1819",
+  "generic": "'9",
+  "khudum": "'9",
+  "todo": "'9",
+  "sibe": "",
+  "manchu": ""
+ },
+ {
+  "char": "︑",
+  "label": "",
+  "cp": "U+FE11",
+  "generic": ",\"",
+  "khudum": "",
+  "todo": ",",
+  "sibe": "",
+  "manchu": ""
+ },
+ {
+  "char": "︐",
+  "label": "",
+  "cp": "U+FE10",
+  "generic": ",`",
+  "khudum": "",
+  "todo": ",`",
+  "sibe": "",
+  "manchu": ""
+ },
+ {
+  "char": "︒",
+  "label": "",
+  "cp": "U+FE12",
+  "generic": ".\"",
+  "khudum": "",
+  "todo": ".",
+  "sibe": "",
+  "manchu": ""
+ },
+ {
+  "char": "ᠠ",
+  "label": "",
+  "cp": "U+1820",
+  "generic": "a",
+  "khudum": "a",
+  "todo": "a",
+  "sibe": "a",
+  "manchu": "a"
+ },
+ {
+  "char": "ᠡ",
+  "label": "",
+  "cp": "U+1821",
+  "generic": "e",
+  "khudum": "e",
+  "todo": "",
+  "sibe": "",
+  "manchu": ""
+ },
+ {
+  "char": "ᠢ",
+  "label": "",
+  "cp": "U+1822",
+  "generic": "i",
+  "khudum": "i",
+  "todo": "",
+  "sibe": "",
+  "manchu": ""
+ },
+ {
+  "char": "ᠣ",
+  "label": "",
+  "cp": "U+1823",
+  "generic": "o",
+  "khudum": "o",
+  "todo": "",
+  "sibe": "o",
+  "manchu": "o"
+ },
+ {
+  "char": "ᠤ",
+  "label": "",
+  "cp": "U+1824",
+  "generic": "u",
+  "khudum": "u",
+  "todo": "",
+  "sibe": "",
+  "manchu": ""
+ },
+ {
+  "char": "ᠥ",
+  "label": "",
+  "cp": "U+1825",
+  "generic": "ö",
+  "khudum": "ö",
+  "todo": "",
+  "sibe": "",
+  "manchu": ""
+ },
+ {
+  "char": "ᠦ",
+  "label": "",
+  "cp": "U+1826",
+  "generic": "ü",
+  "khudum": "ü",
+  "todo": "",
+  "sibe": "",
+  "manchu": ""
+ },
+ {
+  "char": "ᠧ",
+  "label": "",
+  "cp": "U+1827",
+  "generic": "ë",
+  "khudum": "ë",
+  "todo": "",
+  "sibe": "",
+  "manchu": ""
+ },
+ {
+  "char": "ᠨ",
+  "label": "",
+  "cp": "U+1828",
+  "generic": "n",
+  "khudum": "n",
+  "todo": "n",
+  "sibe": "n",
+  "manchu": "n"
+ },
+ {
+  "char": "ᠩ",
+  "label": "",
+  "cp": "U+1829",
+  "generic": "ng",
+  "khudum": "ng",
+  "todo": "",
+  "sibe": "",
+  "manchu": "ng"
+ },
+ {
+  "char": "ᠪ",
+  "label": "",
+  "cp": "U+182A",
+  "generic": "b",
+  "khudum": "b",
+  "todo": "",
+  "sibe": "b",
+  "manchu": "b"
+ },
+ {
+  "char": "ᠫ",
+  "label": "",
+  "cp": "U+182B",
+  "generic": "p",
+  "khudum": "p",
+  "todo": "",
+  "sibe": "",
+  "manchu": ""
+ },
+ {
+  "char": "ᠬ",
+  "label": "",
+  "cp": "U+182C",
+  "generic": "x",
+  "khudum": "x",
+  "todo": "",
+  "sibe": "",
+  "manchu": ""
+ },
+ {
+  "char": "ᠭ",
+  "label": "",
+  "cp": "U+182D",
+  "generic": "g",
+  "khudum": "g",
+  "todo": "",
+  "sibe": "",
+  "manchu": ""
+ },
+ {
+  "char": "ᠮ",
+  "label": "",
+  "cp": "U+182E",
+  "generic": "m",
+  "khudum": "m",
+  "todo": "",
+  "sibe": "m",
+  "manchu": "m"
+ },
+ {
+  "char": "ᠯ",
+  "label": "",
+  "cp": "U+182F",
+  "generic": "l",
+  "khudum": "l",
+  "todo": "l",
+  "sibe": "l",
+  "manchu": "l"
+ },
+ {
+  "char": "ᠰ",
+  "label": "",
+  "cp": "U+1830",
+  "generic": "s",
+  "khudum": "s",
+  "todo": "s",
+  "sibe": "s",
+  "manchu": "s"
+ },
+ {
+  "char": "ᠱ",
+  "label": "",
+  "cp": "U+1831",
+  "generic": "š",
+  "khudum": "š",
+  "todo": "š",
+  "sibe": "",
+  "manchu": ""
+ },
+ {
+  "char": "ᠲ",
+  "label": "",
+  "cp": "U+1832",
+  "generic": "t",
+  "khudum": "t",
+  "todo": "",
+  "sibe": "",
+  "manchu": ""
+ },
+ {
+  "char": "ᠳ",
+  "label": "",
+  "cp": "U+1833",
+  "generic": "d",
+  "khudum": "d",
+  "todo": "",
+  "sibe": "",
+  "manchu": ""
+ },
+ {
+  "char": "ᠴ",
+  "label": "",
+  "cp": "U+1834",
+  "generic": "č",
+  "khudum": "č",
+  "todo": "z",
+  "sibe": "c",
+  "manchu": "c"
+ },
+ {
+  "char": "ᠵ",
+  "label": "",
+  "cp": "U+1835",
+  "generic": "ǰ",
+  "khudum": "ǰ",
+  "todo": "",
+  "sibe": "",
+  "manchu": "j"
+ },
+ {
+  "char": "ᠶ",
+  "label": "",
+  "cp": "U+1836",
+  "generic": "y",
+  "khudum": "y",
+  "todo": "(y')",
+  "sibe": "y",
+  "manchu": "y"
+ },
+ {
+  "char": "ᠷ",
+  "label": "",
+  "cp": "U+1837",
+  "generic": "r",
+  "khudum": "r",
+  "todo": "r",
+  "sibe": "r",
+  "manchu": ""
+ },
+ {
+  "char": "ᠸ",
+  "label": "",
+  "cp": "U+1838",
+  "generic": "w",
+  "khudum": "w",
+  "todo": "f",
+  "sibe": "w",
+  "manchu": "w/f"
+ },
+ {
+  "char": "ᠹ",
+  "label": "",
+  "cp": "U+1839",
+  "generic": "f",
+  "khudum": "f",
+  "todo": "",
+  "sibe": "",
+  "manchu": ""
+ },
+ {
+  "char": "ᠺ",
+  "label": "",
+  "cp": "U+183A",
+  "generic": "k",
+  "khudum": "k",
+  "todo": "(k')",
+  "sibe": "ḱ",
+  "manchu": "ḱ"
+ },
+ {
+  "char": "ᠻ",
+  "label": "",
+  "cp": "U+183B",
+  "generic": "ḳ",
+  "khudum": "ḳ",
+  "todo": "ḳ",
+  "sibe": "",
+  "manchu": ""
+ },
+ {
+  "char": "ᠼ",
+  "label": "",
+  "cp": "U+183C",
+  "generic": "c",
+  "khudum": "c",
+  "todo": "",
+  "sibe": "",
+  "manchu": ""
+ },
+ {
+  "char": "ᠽ",
+  "label": "",
+  "cp": "U+183D",
+  "generic": "z",
+  "khudum": "z",
+  "todo": "",
+  "sibe": "",
+  "manchu": ""
+ },
+ {
+  "char": "ᠾ",
+  "label": "",
+  "cp": "U+183E",
+  "generic": "h",
+  "khudum": "h",
+  "todo": "",
+  "sibe": "",
+  "manchu": ""
+ },
+ {
+  "char": "ᠿ",
+  "label": "",
+  "cp": "U+183F",
+  "generic": "ž",
+  "khudum": "ž",
+  "todo": "",
+  "sibe": "",
+  "manchu": ""
+ },
+ {
+  "char": "ᡀ",
+  "label": "",
+  "cp": "U+1840",
+  "generic": "lh",
+  "khudum": "lh",
+  "todo": "",
+  "sibe": "",
+  "manchu": ""
+ },
+ {
+  "char": "ᡁ",
+  "label": "",
+  "cp": "U+1841",
+  "generic": "ẑ",
+  "khudum": "ẑ",
+  "todo": "",
+  "sibe": "",
+  "manchu": ""
+ },
+ {
+  "char": "ᡂ",
+  "label": "",
+  "cp": "U+1842",
+  "generic": "ĉ",
+  "khudum": "ĉ",
+  "todo": "",
+  "sibe": "",
+  "manchu": ""
+ },
+ {
+  "char": "ᡃ",
+  "label": "",
+  "cp": "U+1843",
+  "generic": "ː",
+  "khudum": "",
+  "todo": "ː",
+  "sibe": "",
+  "manchu": ""
+ },
+ {
+  "char": "ᡄ",
+  "label": "",
+  "cp": "U+1844",
+  "generic": "é",
+  "khudum": "",
+  "todo": "e",
+  "sibe": "",
+  "manchu": ""
+ },
+ {
+  "char": "ᡅ",
+  "label": "",
+  "cp": "U+1845",
+  "generic": "í",
+  "khudum": "",
+  "todo": "i",
+  "sibe": "",
+  "manchu": ""
+ },
+ {
+  "char": "ᡆ",
+  "label": "",
+  "cp": "U+1846",
+  "generic": "ó",
+  "khudum": "",
+  "todo": "o",
+  "sibe": "",
+  "manchu": ""
+ },
+ {
+  "char": "ᡇ",
+  "label": "",
+  "cp": "U+1847",
+  "generic": "ú",
+  "khudum": "",
+  "todo": "u",
+  "sibe": "",
+  "manchu": ""
+ },
+ {
+  "char": "ᡈ",
+  "label": "",
+  "cp": "U+1848",
+  "generic": "ő",
+  "khudum": "",
+  "todo": "ö",
+  "sibe": "",
+  "manchu": ""
+ },
+ {
+  "char": "ᡉ",
+  "label": "",
+  "cp": "U+1849",
+  "generic": "ű",
+  "khudum": "",
+  "todo": "ü",
+  "sibe": "",
+  "manchu": ""
+ },
+ {
+  "char": "ᡊ",
+  "label": "",
+  "cp": "U+184A",
+  "generic": "ṅ",
+  "khudum": "",
+  "todo": "ng",
+  "sibe": "",
+  "manchu": ""
+ },
+ {
+  "char": "ᡋ",
+  "label": "",
+  "cp": "U+184B",
+  "generic": "ḃ",
+  "khudum": "",
+  "todo": "b",
+  "sibe": "",
+  "manchu": ""
+ },
+ {
+  "char": "ᡌ",
+  "label": "",
+  "cp": "U+184C",
+  "generic": "ṗ",
+  "khudum": "",
+  "todo": "p",
+  "sibe": "",
+  "manchu": ""
+ },
+ {
+  "char": "ᡍ",
+  "label": "",
+  "cp": "U+184D",
+  "generic": "ẋ",
+  "khudum": "",
+  "todo": "x",
+  "sibe": "",
+  "manchu": ""
+ },
+ {
+  "char": "ᡎ",
+  "label": "",
+  "cp": "U+184E",
+  "generic": "ġ",
+  "khudum": "",
+  "todo": "g",
+  "sibe": "",
+  "manchu": ""
+ },
+ {
+  "char": "ᡏ",
+  "label": "",
+  "cp": "U+184F",
+  "generic": "ṁ",
+  "khudum": "",
+  "todo": "m",
+  "sibe": "",
+  "manchu": ""
+ },
+ {
+  "char": "ᡐ",
+  "label": "",
+  "cp": "U+1850",
+  "generic": "ṫ",
+  "khudum": "",
+  "todo": "t",
+  "sibe": "",
+  "manchu": ""
+ },
+ {
+  "char": "ᡑ",
+  "label": "",
+  "cp": "U+1851",
+  "generic": "ḋ",
+  "khudum": "",
+  "todo": "d",
+  "sibe": "",
+  "manchu": ""
+ },
+ {
+  "char": "ᡒ",
+  "label": "",
+  "cp": "U+1852",
+  "generic": "ċ",
+  "khudum": "",
+  "todo": "č",
+  "sibe": "",
+  "manchu": ""
+ },
+ {
+  "char": "ᡓ",
+  "label": "",
+  "cp": "U+1853",
+  "generic": "j",
+  "khudum": "",
+  "todo": "ǰ",
+  "sibe": "",
+  "manchu": ""
+ },
+ {
+  "char": "ᡔ",
+  "label": "",
+  "cp": "U+1854",
+  "generic": "ć",
+  "khudum": "",
+  "todo": "c",
+  "sibe": "",
+  "manchu": ""
+ },
+ {
+  "char": "ᡕ",
+  "label": "",
+  "cp": "U+1855",
+  "generic": "ẏ",
+  "khudum": "",
+  "todo": "y",
+  "sibe": "",
+  "manchu": ""
+ },
+ {
+  "char": "ᡖ",
+  "label": "",
+  "cp": "U+1856",
+  "generic": "ẇ",
+  "khudum": "",
+  "todo": "w",
+  "sibe": "",
+  "manchu": ""
+ },
+ {
+  "char": "ᡗ",
+  "label": "",
+  "cp": "U+1857",
+  "generic": "ḱ",
+  "khudum": "",
+  "todo": "k",
+  "sibe": "",
+  "manchu": ""
+ },
+ {
+  "char": "ᡘ",
+  "label": "",
+  "cp": "U+1858",
+  "generic": "ģ",
+  "khudum": "",
+  "todo": "ģ",
+  "sibe": "",
+  "manchu": ""
+ },
+ {
+  "char": "ᡙ",
+  "label": "",
+  "cp": "U+1859",
+  "generic": "ḣ",
+  "khudum": "",
+  "todo": "h",
+  "sibe": "",
+  "manchu": ""
+ },
+ {
+  "char": "ᡚ",
+  "label": "",
+  "cp": "U+185A",
+  "generic": "ĵ",
+  "khudum": "",
+  "todo": "ĵ",
+  "sibe": "",
+  "manchu": ""
+ },
+ {
+  "char": "ᡛ",
+  "label": "",
+  "cp": "U+185B",
+  "generic": "ń",
+  "khudum": "ń",
+  "todo": "ń",
+  "sibe": "",
+  "manchu": ""
+ },
+ {
+  "char": "ᡜ",
+  "label": "",
+  "cp": "U+185C",
+  "generic": "ź",
+  "khudum": "",
+  "todo": "ź",
+  "sibe": "",
+  "manchu": ""
+ },
+ {
+  "char": "ᡝ",
+  "label": "",
+  "cp": "U+185D",
+  "generic": "è",
+  "khudum": "",
+  "todo": "",
+  "sibe": "e",
+  "manchu": "e"
+ },
+ {
+  "char": "ᡞ",
+  "label": "",
+  "cp": "U+185E",
+  "generic": "ì",
+  "khudum": "",
+  "todo": "",
+  "sibe": "i",
+  "manchu": ""
+ },
+ {
+  "char": "ᡟ",
+  "label": "",
+  "cp": "U+185F",
+  "generic": "ï",
+  "khudum": "",
+  "todo": "",
+  "sibe": "ï",
+  "manchu": "ï"
+ },
+ {
+  "char": "ᡠ",
+  "label": "",
+  "cp": "U+1860",
+  "generic": "ȕ",
+  "khudum": "",
+  "todo": "",
+  "sibe": "u",
+  "manchu": "u"
+ },
+ {
+  "char": "ᡡ",
+  "label": "",
+  "cp": "U+1861",
+  "generic": "ū",
+  "khudum": "",
+  "todo": "",
+  "sibe": "ū",
+  "manchu": "ū"
+ },
+ {
+  "char": "ᡢ",
+  "label": "",
+  "cp": "U+1862",
+  "generic": "ň",
+  "khudum": "",
+  "todo": "",
+  "sibe": "ng",
+  "manchu": ""
+ },
+ {
+  "char": "ᡣ",
+  "label": "",
+  "cp": "U+1863",
+  "generic": "ǩ",
+  "khudum": "",
+  "todo": "",
+  "sibe": "k",
+  "manchu": ""
+ },
+ {
+  "char": "ᡤ",
+  "label": "",
+  "cp": "U+1864",
+  "generic": "ǧ",
+  "khudum": "",
+  "todo": "",
+  "sibe": "g",
+  "manchu": "g"
+ },
+ {
+  "char": "ᡥ",
+  "label": "",
+  "cp": "U+1865",
+  "generic": "ẍ",
+  "khudum": "",
+  "todo": "",
+  "sibe": "x",
+  "manchu": "x"
+ },
+ {
+  "char": "ᡦ",
+  "label": "",
+  "cp": "U+1866",
+  "generic": "ṕ",
+  "khudum": "",
+  "todo": "",
+  "sibe": "p",
+  "manchu": "p"
+ },
+ {
+  "char": "ᡧ",
+  "label": "",
+  "cp": "U+1867",
+  "generic": "ś",
+  "khudum": "",
+  "todo": "",
+  "sibe": "š",
+  "manchu": "š"
+ },
+ {
+  "char": "ᡨ",
+  "label": "",
+  "cp": "U+1868",
+  "generic": "ṭ",
+  "khudum": "",
+  "todo": "",
+  "sibe": "t",
+  "manchu": "t"
+ },
+ {
+  "char": "ᡩ",
+  "label": "",
+  "cp": "U+1869",
+  "generic": "ḍ",
+  "khudum": "",
+  "todo": "",
+  "sibe": "d",
+  "manchu": "d"
+ },
+ {
+  "char": "ᡪ",
+  "label": "",
+  "cp": "U+186A",
+  "generic": "ƶ",
+  "khudum": "",
+  "todo": "",
+  "sibe": "j",
+  "manchu": ""
+ },
+ {
+  "char": "ᡫ",
+  "label": "",
+  "cp": "U+186B",
+  "generic": "ƒ",
+  "khudum": "",
+  "todo": "",
+  "sibe": "f",
+  "manchu": ""
+ },
+ {
+  "char": "ᡬ",
+  "label": "",
+  "cp": "U+186C",
+  "generic": "ĝ",
+  "khudum": "",
+  "todo": "",
+  "sibe": "ġ",
+  "manchu": "ġ"
+ },
+ {
+  "char": "ᡭ",
+  "label": "",
+  "cp": "U+186D",
+  "generic": "x̊",
+  "khudum": "",
+  "todo": "",
+  "sibe": "x̊",
+  "manchu": "x̊"
+ },
+ {
+  "char": "ᡮ",
+  "label": "",
+  "cp": "U+186E",
+  "generic": "ts",
+  "khudum": "",
+  "todo": "",
+  "sibe": "ts",
+  "manchu": "ts"
+ },
+ {
+  "char": "ᡯ",
+  "label": "",
+  "cp": "U+186F",
+  "generic": "dz",
+  "khudum": "",
+  "todo": "",
+  "sibe": "dz",
+  "manchu": "dz"
+ },
+ {
+  "char": "ᡰ",
+  "label": "",
+  "cp": "U+1870",
+  "generic": "ẓ",
+  "khudum": "",
+  "todo": "",
+  "sibe": "ž",
+  "manchu": "ž"
+ },
+ {
+  "char": "ᡱ",
+  "label": "",
+  "cp": "U+1871",
+  "generic": "ḉ",
+  "khudum": "",
+  "todo": "",
+  "sibe": "ḉ",
+  "manchu": "ḉ"
+ },
+ {
+  "char": "ᡲ",
+  "label": "",
+  "cp": "U+1872",
+  "generic": "ʒ",
+  "khudum": "",
+  "todo": "",
+  "sibe": "ʒ",
+  "manchu": ""
+ },
+ {
+  "char": "ᡳ",
+  "label": "",
+  "cp": "U+1873",
+  "generic": "î",
+  "khudum": "",
+  "todo": "",
+  "sibe": "",
+  "manchu": "i"
+ },
+ {
+  "char": "ᡴ",
+  "label": "",
+  "cp": "U+1874",
+  "generic": "ķ",
+  "khudum": "",
+  "todo": "",
+  "sibe": "",
+  "manchu": "k"
+ },
+ {
+  "char": "ᡵ",
+  "label": "",
+  "cp": "U+1875",
+  "generic": "ṛ",
+  "khudum": "",
+  "todo": "",
+  "sibe": "",
+  "manchu": "r"
+ },
+ {
+  "char": "ᡶ",
+  "label": "",
+  "cp": "U+1876",
+  "generic": "ḟ",
+  "khudum": "",
+  "todo": "",
+  "sibe": "",
+  "manchu": "f"
+ },
+ {
+  "char": "ᡷ",
+  "label": "",
+  "cp": "U+1877",
+  "generic": "ď",
+  "khudum": "",
+  "todo": "",
+  "sibe": "",
+  "manchu": "ď"
+ },
+ {
+  "char": "ᢀ",
+  "label": "",
+  "cp": "U+1880",
+  "generic": "ṃ",
+  "khudum": "ṃ",
+  "todo": "ṃ",
+  "sibe": "",
+  "manchu": "ṃ"
+ },
+ {
+  "char": "ᢁ",
+  "label": "",
+  "cp": "U+1881",
+  "generic": "ḥ",
+  "khudum": "ḥ",
+  "todo": "ḥ",
+  "sibe": "",
+  "manchu": "ḥ"
+ },
+ {
+  "char": "ᢂ",
+  "label": "",
+  "cp": "U+1882",
+  "generic": "â",
+  "khudum": "â",
+  "todo": "â",
+  "sibe": "",
+  "manchu": "â"
+ },
+ {
+  "char": "ᢃ",
+  "label": "",
+  "cp": "U+1883",
+  "generic": "ŏ",
+  "khudum": "ŏ",
+  "todo": "ŏ",
+  "sibe": "",
+  "manchu": "ŏ"
+ },
+ {
+  "char": "ᢄ",
+  "label": "",
+  "cp": "U+1884",
+  "generic": "ȏ",
+  "khudum": "ȏ",
+  "todo": "ȏ",
+  "sibe": "",
+  "manchu": "ȏ"
+ },
+ {
+  "char": "ᢅ",
+  "label": "",
+  "cp": "U+1885",
+  "generic": "ˑ",
+  "khudum": "ˑ",
+  "todo": "ˑ",
+  "sibe": "",
+  "manchu": "ˑ"
+ },
+ {
+  "char": "ᢆ",
+  "label": "",
+  "cp": "U+1886",
+  "generic": "ːˑ",
+  "khudum": "ːˑ",
+  "todo": "ːˑ",
+  "sibe": "",
+  "manchu": "ːˑ"
+ },
+ {
+  "char": "ᢇ",
+  "label": "",
+  "cp": "U+1887",
+  "generic": "ā",
+  "khudum": "ā",
+  "todo": "",
+  "sibe": "",
+  "manchu": "ā"
+ },
+ {
+  "char": "ᢈ",
+  "label": "",
+  "cp": "U+1888",
+  "generic": "ī",
+  "khudum": "ī",
+  "todo": "",
+  "sibe": "",
+  "manchu": ""
+ },
+ {
+  "char": "ᢉ",
+  "label": "",
+  "cp": "U+1889",
+  "generic": "ḵ",
+  "khudum": "ḵ",
+  "todo": "ḵ",
+  "sibe": "",
+  "manchu": ""
+ },
+ {
+  "char": "ᢊ",
+  "label": "",
+  "cp": "U+188A",
+  "generic": "ṉ",
+  "khudum": "ṉ",
+  "todo": "ṉ",
+  "sibe": "",
+  "manchu": ""
+ },
+ {
+  "char": "ᢋ",
+  "label": "",
+  "cp": "U+188B",
+  "generic": "ƈ",
+  "khudum": "ƈ",
+  "todo": "ƈ",
+  "sibe": "",
+  "manchu": ""
+ },
+ {
+  "char": "ᢌ",
+  "label": "",
+  "cp": "U+188C",
+  "generic": "ť",
+  "khudum": "ť",
+  "todo": "ť",
+  "sibe": "",
+  "manchu": ""
+ },
+ {
+  "char": "ᢍ",
+  "label": "",
+  "cp": "U+188D",
+  "generic": "ţ",
+  "khudum": "ţ",
+  "todo": "ţ",
+  "sibe": "",
+  "manchu": ""
+ },
+ {
+  "char": "ᢎ",
+  "label": "",
+  "cp": "U+188E",
+  "generic": "ḏ",
+  "khudum": "ḏ",
+  "todo": "ḏ",
+  "sibe": "",
+  "manchu": ""
+ },
+ {
+  "char": "ᢏ",
+  "label": "",
+  "cp": "U+188F",
+  "generic": "ņ",
+  "khudum": "ņ",
+  "todo": "ņ",
+  "sibe": "",
+  "manchu": "ņ"
+ },
+ {
+  "char": "ᢐ",
+  "label": "",
+  "cp": "U+1890",
+  "generic": "ṯ",
+  "khudum": "ṯ",
+  "todo": "ṯ",
+  "sibe": "",
+  "manchu": ""
+ },
+ {
+  "char": "ᢑ",
+  "label": "",
+  "cp": "U+1891",
+  "generic": "ḓ",
+  "khudum": "ḓ",
+  "todo": "ḓ",
+  "sibe": "",
+  "manchu": ""
+ },
+ {
+  "char": "ᢒ",
+  "label": "",
+  "cp": "U+1892",
+  "generic": "p̄",
+  "khudum": "p̄",
+  "todo": "p̄",
+  "sibe": "",
+  "manchu": ""
+ },
+ {
+  "char": "ᢓ",
+  "label": "",
+  "cp": "U+1893",
+  "generic": "ṕh",
+  "khudum": "ṕh",
+  "todo": "ṕh",
+  "sibe": "",
+  "manchu": ""
+ },
+ {
+  "char": "ᢔ",
+  "label": "",
+  "cp": "U+1894",
+  "generic": "ş",
+  "khudum": "ş",
+  "todo": "ş",
+  "sibe": "",
+  "manchu": ""
+ },
+ {
+  "char": "ᢕ",
+  "label": "",
+  "cp": "U+1895",
+  "generic": "ẖ",
+  "khudum": "ẖ",
+  "todo": "ẖ",
+  "sibe": "",
+  "manchu": ""
+ },
+ {
+  "char": "ᢖ",
+  "label": "",
+  "cp": "U+1896",
+  "generic": "ẕ",
+  "khudum": "ẕ",
+  "todo": "ẕ",
+  "sibe": "",
+  "manchu": ""
+ },
+ {
+  "char": "ᢗ",
+  "label": "",
+  "cp": "U+1897",
+  "generic": "ʒ̄",
+  "khudum": "ʒ̄",
+  "todo": "ʒ̄",
+  "sibe": "",
+  "manchu": ""
+ },
+ {
+  "char": "ᢘ",
+  "label": "",
+  "cp": "U+1898",
+  "generic": "ŧ",
+  "khudum": "",
+  "todo": "ŧ",
+  "sibe": "",
+  "manchu": ""
+ },
+ {
+  "char": "ᢙ",
+  "label": "",
+  "cp": "U+1899",
+  "generic": "ǯ",
+  "khudum": "",
+  "todo": "ǯ",
+  "sibe": "",
+  "manchu": ""
+ },
+ {
+  "char": "ᢚ",
+  "label": "",
+  "cp": "U+189A",
+  "generic": "g̊",
+  "khudum": "",
+  "todo": "",
+  "sibe": "",
+  "manchu": "g̊"
+ },
+ {
+  "char": "ᢛ",
+  "label": "",
+  "cp": "U+189B",
+  "generic": "ŋ",
+  "khudum": "",
+  "todo": "",
+  "sibe": "",
+  "manchu": "ŋ"
+ },
+ {
+  "char": "ᢜ",
+  "label": "",
+  "cp": "U+189C",
+  "generic": "c̊",
+  "khudum": "",
+  "todo": "",
+  "sibe": "",
+  "manchu": "c̊"
+ },
+ {
+  "char": "ᢝ",
+  "label": "",
+  "cp": "U+189D",
+  "generic": "żh",
+  "khudum": "",
+  "todo": "",
+  "sibe": "",
+  "manchu": "żh"
+ },
+ {
+  "char": "ᢞ",
+  "label": "",
+  "cp": "U+189E",
+  "generic": "ṱ",
+  "khudum": "",
+  "todo": "",
+  "sibe": "",
+  "manchu": "ṱ"
+ },
+ {
+  "char": "ᢟ",
+  "label": "",
+  "cp": "U+189F",
+  "generic": "ḑ",
+  "khudum": "",
+  "todo": "",
+  "sibe": "",
+  "manchu": "ḑ"
+ },
+ {
+  "char": "ᢠ",
+  "label": "",
+  "cp": "U+18A0",
+  "generic": "t́",
+  "khudum": "",
+  "todo": "",
+  "sibe": "",
+  "manchu": "t́"
+ },
+ {
+  "char": "ᢡ",
+  "label": "",
+  "cp": "U+18A1",
+  "generic": "đ",
+  "khudum": "",
+  "todo": "",
+  "sibe": "",
+  "manchu": "đ"
+ },
+ {
+  "char": "ᢢ",
+  "label": "",
+  "cp": "U+18A2",
+  "generic": "ŝ",
+  "khudum": "",
+  "todo": "",
+  "sibe": "",
+  "manchu": "ŝ"
+ },
+ {
+  "char": "ᢣ",
+  "label": "",
+  "cp": "U+18A3",
+  "generic": "c̯",
+  "khudum": "",
+  "todo": "",
+  "sibe": "",
+  "manchu": "c̯"
+ },
+ {
+  "char": "ᢤ",
+  "label": "",
+  "cp": "U+18A4",
+  "generic": "ʒ̊",
+  "khudum": "",
+  "todo": "",
+  "sibe": "",
+  "manchu": "ʒ̊"
+ },
+ {
+  "char": "ᢥ",
+  "label": "",
+  "cp": "U+18A5",
+  "generic": "z̊",
+  "khudum": "",
+  "todo": "",
+  "sibe": "",
+  "manchu": "z̊"
+ },
+ {
+  "char": "ᢦ",
+  "label": "",
+  "cp": "U+18A6",
+  "generic": "ŭ",
+  "khudum": "ŭ",
+  "todo": "ŭ",
+  "sibe": "",
+  "manchu": ""
+ },
+ {
+  "char": "ᢧ",
+  "label": "",
+  "cp": "U+18A7",
+  "generic": "ÿ",
+  "khudum": "ÿ",
+  "todo": "ÿ",
+  "sibe": "",
+  "manchu": ""
+ },
+ {
+  "char": "ᢨ",
+  "label": "",
+  "cp": "U+18A8",
+  "generic": "b̊",
+  "khudum": "",
+  "todo": "",
+  "sibe": "",
+  "manchu": "b̊"
+ },
+ {
+  "char": "ᢩ",
+  "label": "",
+  "cp": "U+18A9",
+  "generic": "̲",
+  "khudum": "̲",
+  "todo": "",
+  "sibe": "",
+  "manchu": ""
+ },
+ {
+  "char": "ᢪ",
+  "label": "",
+  "cp": "U+18AA",
+  "generic": "lh",
+  "khudum": "",
+  "todo": "",
+  "sibe": "",
+  "manchu": "lh"
+ }
+]

@@ -1,0 +1,1090 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>M02 · 函数初步</title>
+<link rel="stylesheet" href="assets/m02_c_functions.css">
+<link rel="stylesheet" href="assets/series-theme.css">
+<style>
+/* ================= 自动注入：返回 home + 系列小目录 ================= */
+.home-fab{position:fixed;left:11px;bottom:11px;z-index:65;display:inline-flex;
+  align-items:center;gap:6px;padding:8px 14px;border-radius:999px;
+  background:#fff;border:1px solid var(--line-2);color:var(--fg-2);
+  text-decoration:none;font:600 13px/1 var(--sans);
+  box-shadow:0 4px 16px rgba(20,30,50,.16);transition:transform .14s,box-shadow .14s,color .14s}
+.home-fab:hover{transform:translateY(-2px);color:var(--blue);
+  box-shadow:0 8px 22px rgba(30,60,120,.24)}
+.home-fab::before{content:"⌂";font-size:15px}
+.series-nav{margin:34px 0 0;padding:14px 18px;border:1px solid var(--line-2);
+  border-radius:12px;background:var(--bg-soft);font-size:13.5px}
+.series-nav b{color:var(--fg)}
+.series-nav a{display:inline-block;margin:3px 8px 3px 0;padding:3px 11px;border-radius:999px;
+  background:#fff;border:1px solid var(--line-2);text-decoration:none;color:var(--fg-2);
+  transition:border-color .14s,color .14s}
+.series-nav a:hover{border-color:var(--blue);color:var(--blue)}
+.series-nav a.cur{background:var(--blue);border-color:var(--blue);color:#fff;font-weight:600}
+@media (max-width:560px){
+  .series-nav{font-size:12.5px;padding:12px 13px}
+  .series-nav a{font-size:12px;margin:2px 5px 2px 0;padding:2px 9px}
+  .home-fab{left:9px;bottom:9px;padding:7px 12px;font-size:12.5px}
+}
+
+/* ---------- 悬浮「返回 home」按钮的避让 ----------
+   窄屏下抽屉宽 min(86vw,300px)，而按钮固定在左下角、z-index 又高于抽屉，
+   会把抽屉底部的目录项压住导致点击无效。所以：
+     * 抽屉打开时直接藏起按钮
+     * 中等宽度把按钮移到底部右侧（320px 之外就不与抽屉重叠） */
+body.toc-open .home-fab{display:none}
+@media (min-width:561px) and (max-width:980px){
+  .home-fab{left:auto;right:12px}
+}
+
+/* ---------- 遮罩层不接收指针事件 ----------
+   body.toc-open::after 是「抽屉打开时的变暗遮罩」。
+   它曾经把抽屉里的点击全吃掉：实测 elementFromPoint 返回 body.toc-open，
+   连目录项都点不动（JS 直接 .click() 却正常，说明只是指针层被挡）。
+   遮罩只负责变暗，关闭逻辑由脚本按坐标判断。 */
+body.toc-open::after{pointer-events:none}
+</style>
+</head>
+<body class="mseries" data-series="M">
+<div id="shell">
+
+<nav id="toc">
+  <h5>目录</h5>
+  <a href="#s1">1 · 为什么需要函数</a>
+  <a href="#s2">2 · 函数长什么样</a>
+  <a href="#s3">3 · 定义与调用</a>
+  <a href="#s4">4 · 返回值</a>
+  <a href="#s5">5 · 参数</a>
+  <a href="#s6">6 · 值传递（重点）</a>
+  <a href="#s7">7 · 变量的作用范围</a>
+  <a href="#s8">8 · 先声明后使用</a>
+  <div class="sep"></div>
+  <a href="#s9">9 · 函数配数组</a>
+  <a href="#s10">10 · 把大问题拆成小函数</a>
+  <a href="#s11">11 · 常见错误</a>
+  <a href="#s12">12 · 一页速查</a>
+</nav>
+
+<main>
+<h1>函数初步</h1>
+<p class="sub-title">UME 项目组内部教程 · M02（Main） · 面向零编程基础成员</p>
+<p>
+  <span class="tag">已学：输入输出</span>
+  <span class="tag">已学：选择 / 循环</span>
+  <span class="tag">已学：数组（M01）</span>
+  <span class="tag b">本讲：函数</span>
+</p>
+
+<div class="card note">
+  <div class="card-t">怎么用这份文档</div>
+  <p>和M01一样：<b>先讲清楚，再给代码，代码后面紧跟运行结果</b>。
+  代码框右上角有「复制」，鼠标移上去有反馈。</p>
+  <p>本讲<b>不涉及任何指针内容</b>，参数只讲最普通的写法，可以放心看。</p>
+</div>
+
+<!-- ============================================================ -->
+<h2 id="s1"><span class="n">1</span>为什么需要函数</h2>
+
+<p>先看一段「能跑但很难看」的代码。需求：判断 3 个数是不是素数。</p>
+
+<div class="code-wrap"><div class="bar"><span class="dot r"></span><span class="dot y"></span><span class="dot g"></span><span class="name">没有函数：同样的判断写了三遍</span><span class="cp">复制</span></div><pre><span class="hl-p">#include</span> <span class="hl-s">&lt;stdio.h&gt;</span>
+
+<span class="hl-k">int</span> <span class="hl-f">main</span>(<span class="hl-k">void</span>) {
+    <span class="hl-k">int</span> a = <span class="hl-n">7</span>, b = <span class="hl-n">12</span>, c = <span class="hl-n">13</span>;
+
+    <span class="hl-c">/* 判断 a */</span>
+    <span class="hl-k">int</span> ok1 = <span class="hl-n">1</span>;
+    <span class="hl-k">if</span> (a &lt; <span class="hl-n">2</span>) ok1 = <span class="hl-n">0</span>;
+    <span class="hl-k">for</span> (<span class="hl-k">int</span> i = <span class="hl-n">2</span>; i * i &lt;= a; i++) {
+        <span class="hl-k">if</span> (a % i == <span class="hl-n">0</span>) { ok1 = <span class="hl-n">0</span>; <span class="hl-k">break</span>; }
+    }
+
+    <span class="hl-c">/* 判断 b —— 又抄一遍 */</span>
+    <span class="hl-k">int</span> ok2 = <span class="hl-n">1</span>;
+    <span class="hl-k">if</span> (b &lt; <span class="hl-n">2</span>) ok2 = <span class="hl-n">0</span>;
+    <span class="hl-k">for</span> (<span class="hl-k">int</span> i = <span class="hl-n">2</span>; i * i &lt;= b; i++) {
+        <span class="hl-k">if</span> (b % i == <span class="hl-n">0</span>) { ok2 = <span class="hl-n">0</span>; <span class="hl-k">break</span>; }
+    }
+
+    <span class="hl-c">/* 判断 c —— 再抄一遍 */</span>
+    <span class="hl-k">int</span> ok3 = <span class="hl-n">1</span>;
+    <span class="hl-k">if</span> (c &lt; <span class="hl-n">2</span>) ok3 = <span class="hl-n">0</span>;
+    <span class="hl-k">for</span> (<span class="hl-k">int</span> i = <span class="hl-n">2</span>; i * i &lt;= c; i++) {
+        <span class="hl-k">if</span> (c % i == <span class="hl-n">0</span>) { ok3 = <span class="hl-n">0</span>; <span class="hl-k">break</span>; }
+    }
+
+    <span class="hl-f">printf</span>(<span class="hl-s">"%d %d %d\n"</span>, ok1, ok2, ok3);
+    <span class="hl-k">return</span> <span class="hl-n">0</span>;
+}</pre></div>
+
+<div class="out-wrap"><div class="cap">运行结果</div><pre>1 0 1</pre></div>
+
+<p>代码是能跑的，但有三个问题，而且会随着需求变大越来越严重：</p>
+
+<div class="flow">
+  <div class="s"><div class="t">重复</div><div class="d">同一段判断抄了三遍，写 100 个数就要抄 100 遍</div></div>
+  <div class="s"><div class="t">难改</div><div class="d">发现判断逻辑写错了，得改 3 个地方</div></div>
+  <div class="s"><div class="t">难读</div><div class="d"><code>main</code> 里塞满了细节，看不出整体在做什么</div></div>
+</div>
+
+<p>用<b>函数</b>改写之后：</p>
+
+<div class="code-wrap"><div class="bar"><span class="dot r"></span><span class="dot y"></span><span class="dot g"></span><span class="name">有函数：判断逻辑只写一遍</span><span class="cp">复制</span></div><pre><span class="hl-p">#include</span> <span class="hl-s">&lt;stdio.h&gt;</span>
+
+<span class="hl-c">/* 把「判断素数」打包成一个名字 */</span>
+<span class="hl-k">int</span> <span class="hl-f">isPrime</span>(<span class="hl-k">int</span> n) {
+    <span class="hl-k">if</span> (n &lt; <span class="hl-n">2</span>) {
+        <span class="hl-k">return</span> <span class="hl-n">0</span>;
+    }
+    <span class="hl-k">for</span> (<span class="hl-k">int</span> i = <span class="hl-n">2</span>; i * i &lt;= n; i++) {
+        <span class="hl-k">if</span> (n % i == <span class="hl-n">0</span>) {
+            <span class="hl-k">return</span> <span class="hl-n">0</span>;
+        }
+    }
+    <span class="hl-k">return</span> <span class="hl-n">1</span>;
+}
+
+<span class="hl-k">int</span> <span class="hl-f">main</span>(<span class="hl-k">void</span>) {
+    <span class="hl-k">int</span> a = <span class="hl-n">7</span>, b = <span class="hl-n">12</span>, c = <span class="hl-n">13</span>;
+    <span class="hl-f">printf</span>(<span class="hl-s">"%d %d %d\n"</span>, <span class="hl-f">isPrime</span>(a), <span class="hl-f">isPrime</span>(b), <span class="hl-f">isPrime</span>(c));
+    <span class="hl-k">return</span> <span class="hl-n">0</span>;
+}</pre></div>
+
+<div class="out-wrap"><div class="cap">运行结果（完全一样）</div><pre>1 0 1</pre></div>
+
+<p>判断逻辑只写了一遍，<code>main</code> 也从十几行缩到三行。
+要判断 100 个数，只是多调用几次 <code>isPrime</code> 而已。</p>
+
+<div class="card key">
+  <div class="card-t">函数的本质</div>
+  <p><b>函数 = 把一段代码打包起来，起个名字，以后用名字来使用它。</b></p>
+  <p>好处正好对应上面的三个问题：<b>不用抄、改一处就够、main 变得清爽</b>。</p>
+</div>
+
+<div class="card note">
+  <div class="card-t">你其实早就在用函数了</div>
+  <p><code>printf</code>、<code>scanf</code> 就是别人写好的函数，放在
+  <code>stdio.h</code> 里。你写 <code>printf("...")</code> 的时候，
+  就是在<b>调用</b>一个函数 —— 只不过它是别人写的。</p>
+  <p>本讲要做的事，就是<b>学会写自己的函数</b>。</p>
+</div>
+
+<!-- ============================================================ -->
+<h2 id="s2"><span class="n">2</span>函数长什么样</h2>
+
+<p>先看一个完整的函数，再逐块拆开：</p>
+
+<div class="code-wrap"><div class="bar"><span class="dot r"></span><span class="dot y"></span><span class="dot g"></span><span class="name">一个完整的函数</span><span class="cp">复制</span></div><pre><span class="hl-k">int</span> <span class="hl-f">add</span>(<span class="hl-k">int</span> a, <span class="hl-k">int</span> b) {
+    <span class="hl-k">int</span> s = a + b;
+    <span class="hl-k">return</span> s;
+}</pre></div>
+
+<div class="anat">
+  <div class="row">
+    <span class="part p1">int</span>
+    <span class="lab">返回值类型</span>
+    <span class="part p2">add</span>
+    <span class="lab">函数名</span>
+    <span class="part p3">(int a, int b)</span>
+    <span class="lab">参数表</span>
+    <span class="part p4">{ ... }</span>
+    <span class="lab">函数体</span>
+  </div>
+  <div class="lg">
+    <span><b>返回值类型</b> — 这个函数「算出来的东西」是什么类型</span>
+    <span><b>函数名</b> — 你给它起的名字，以后靠这个名字叫它</span>
+    <span><b>参数表</b> — 它需要你提供哪些材料</span>
+    <span><b>函数体</b> — 具体怎么算</span>
+  </div>
+</div>
+
+<p>用一句话概括这个结构：</p>
+
+<div class="mnemonic">
+  <b>返回值类型 &nbsp;函数名&nbsp;（材料清单）&nbsp;{ 怎么算 }</b><br>
+  读作：「给我这些材料，我还你一个什么东西。」
+</div>
+
+<h4>对比你已经会的东西</h4>
+
+<table>
+<thead><tr><th style="width:44%">你熟悉的 <code>main</code></th><th>自己写的函数</th></tr></thead>
+<tbody>
+<tr><td class="c">int main(void) { ... }</td><td class="c">int add(int a, int b) { ... }</td></tr>
+<tr><td>返回值类型是 <code>int</code></td><td>返回值类型是 <code>int</code></td></tr>
+<tr><td>名字必须叫 <code>main</code></td><td>名字自己起（<code>add</code>）</td></tr>
+<tr><td>参数是 <code>void</code>，表示不要材料</td><td>参数是 <code>int a, int b</code>，要两个整数</td></tr>
+<tr><td>整个程序的起点</td><td>被调用的工具</td></tr>
+</tbody>
+</table>
+
+<p>看出来了吗？<b><code>main</code> 本身也是一个函数</b>，
+只是它很特殊 —— 程序从它开始执行，而且没人调用它（是系统替你调用的）。</p>
+
+<h4>三种常见形态</h4>
+
+<div class="code-wrap"><div class="bar"><span class="dot r"></span><span class="dot y"></span><span class="dot g"></span><span class="name">有形参有返回 / 有形参无返回 / 都没有</span><span class="cp">复制</span></div><pre><span class="hl-c">/* ① 要材料，也要还东西 */</span>
+<span class="hl-k">int</span> <span class="hl-f">square</span>(<span class="hl-k">int</span> x) {
+    <span class="hl-k">return</span> x * x;
+}
+
+<span class="hl-c">/* ② 要材料，但不还东西（只是做点事，比如打印） */</span>
+<span class="hl-k">void</span> <span class="hl-f">greet</span>(<span class="hl-k">char</span> who[]) {
+    <span class="hl-f">printf</span>(<span class="hl-s">"Hello, %s!\n"</span>, who);
+}
+
+<span class="hl-c">/* ③ 不要材料，也不还东西 */</span>
+<span class="hl-k">void</span> <span class="hl-f">sayHello</span>(<span class="hl-k">void</span>) {
+    <span class="hl-f">printf</span>(<span class="hl-s">"Hello, C!\n"</span>);
+}</pre></div>
+
+<div class="card tip">
+  <div class="card-t"><code>void</code> 的两个位置，意思不同</div>
+  <ul>
+    <li><b>写在最前面</b>（返回值类型）：<code>void greet(...)</code> ——
+      <b>这个函数不还东西</b>，所以调用它时不能写 <code>int x = greet(...);</code></li>
+    <li><b>写在括号里</b>（参数表）：<code>void sayHello(void)</code> ——
+      <b>这个函数不要材料</b>，调用时写 <code>sayHello()</code>，括号里空着</li>
+  </ul>
+</div>
+
+<!-- ============================================================ -->
+<h2 id="s3"><span class="n">3</span>定义与调用</h2>
+
+<p>函数要发挥作用，需要两步：</p>
+
+<div class="flow">
+  <div class="s"><div class="t">① 定义</div><div class="d">把「怎么算」写出来，告诉编译器有这么个工具</div></div>
+  <div class="s"><div class="t">② 调用</div><div class="d">在需要的地方写上名字，让它干活</div></div>
+</div>
+
+<div class="code-wrap"><div class="bar"><span class="dot r"></span><span class="dot y"></span><span class="dot g"></span><span class="name">定义 + 调用</span><span class="cp">复制</span></div><pre><span class="hl-p">#include</span> <span class="hl-s">&lt;stdio.h&gt;</span>
+
+<span class="hl-c">/* ① 定义：把做法写清楚 */</span>
+<span class="hl-k">int</span> <span class="hl-f">square</span>(<span class="hl-k">int</span> x) {
+    <span class="hl-k">return</span> x * x;
+}
+
+<span class="hl-k">int</span> <span class="hl-f">main</span>(<span class="hl-k">void</span>) {
+    <span class="hl-c">/* ② 调用：写名字，括号里给材料 */</span>
+    <span class="hl-k">int</span> r = <span class="hl-f">square</span>(<span class="hl-n">5</span>);      <span class="hl-c">/* 把 5 交给 square，拿回结果存进 r */</span>
+    <span class="hl-f">printf</span>(<span class="hl-s">"r = %d\n"</span>, r);
+
+    <span class="hl-c">/* 也可以直接用在表达式里 */</span>
+    <span class="hl-f">printf</span>(<span class="hl-s">"3*3 + 4*4 = %d\n"</span>, <span class="hl-f">square</span>(<span class="hl-n">3</span>) + <span class="hl-f">square</span>(<span class="hl-n">4</span>));
+
+    <span class="hl-c">/* 还能套着用：先算 square(2)=4，再算 square(4)=16 */</span>
+    <span class="hl-f">printf</span>(<span class="hl-s">"square(square(2)) = %d\n"</span>, <span class="hl-f">square</span>(<span class="hl-f">square</span>(<span class="hl-n">2</span>)));
+    <span class="hl-k">return</span> <span class="hl-n">0</span>;
+}</pre></div>
+
+<div class="out-wrap"><div class="cap">运行结果</div><pre>r = 25
+3*3 + 4*4 = 25
+square(square(2)) = 16</pre></div>
+
+<p>调用时可以给<b>具体的数</b>，也可以给<b>变量</b>、<b>表达式</b>：</p>
+
+<div class="code-wrap"><div class="bar"><span class="dot r"></span><span class="dot y"></span><span class="dot g"></span><span class="name">调用时的三种材料</span><span class="cp">复制</span></div><pre><span class="hl-k">int</span> n = <span class="hl-n">6</span>;
+<span class="hl-f">square</span>(<span class="hl-n">5</span>);          <span class="hl-c">/* 直接给数 */</span>
+<span class="hl-f">square</span>(n);          <span class="hl-c">/* 给变量 */</span>
+<span class="hl-f">square</span>(n + <span class="hl-n">1</span>);      <span class="hl-c">/* 给表达式，会先算出 7 再传进去 */</span>
+<span class="hl-f">square</span>(<span class="hl-f">square</span>(<span class="hl-n">2</span>));  <span class="hl-c">/* 把上一个结果当材料 */</span></pre></div>
+
+<div class="card key">
+  <div class="card-t">「定义」和「调用」的写法差别</div>
+  <table style="margin:8px 0 0">
+  <thead><tr><th style="width:34%"></th><th>定义时</th><th>调用时</th></tr></thead>
+  <tbody>
+  <tr><td>要不要写类型</td><td class="c">要：int x</td><td class="c">不要：只写值</td></tr>
+  <tr><td>有没有函数体</td><td class="c">有 { }</td><td class="c">没有，只有名字和括号</td></tr>
+  <tr><td>例子</td><td class="c">int square(int x) { ... }</td><td class="c">square(5)</td></tr>
+  </tbody></table>
+</div>
+
+<!-- ============================================================ -->
+<h2 id="s4"><span class="n">4</span>返回值</h2>
+
+<p><code>return</code> 做两件事：<b>把结果交出去</b>，同时<b>立刻结束这个函数</b>。</p>
+
+<h4>返回值类型要对得上</h4>
+
+<div class="code-wrap"><div class="bar"><span class="dot r"></span><span class="dot y"></span><span class="dot g"></span><span class="name">返回不同类型</span><span class="cp">复制</span></div><pre><span class="hl-k">int</span> <span class="hl-f">add</span>(<span class="hl-k">int</span> a, <span class="hl-k">int</span> b) {
+    <span class="hl-k">return</span> a + b;          <span class="hl-c">/* 返回整数 */</span>
+}
+
+<span class="hl-k">double</span> <span class="hl-f">average</span>(<span class="hl-k">int</span> sum, <span class="hl-k">int</span> n) {
+    <span class="hl-k">return</span> (<span class="hl-k">double</span>)sum / n;  <span class="hl-c">/* 返回小数 */</span>
+}
+
+<span class="hl-k">int</span> <span class="hl-f">isEven</span>(<span class="hl-k">int</span> n) {
+    <span class="hl-k">return</span> n % <span class="hl-n">2</span> == <span class="hl-n">0</span>;      <span class="hl-c">/* 返回 1 或 0，当「是/否」用 */</span>
+}</pre></div>
+
+<div class="card tip">
+  <div class="card-t">用 0 / 1 表示「否 / 是」是常见习惯</div>
+  <p>C 语言里没有真正的「真/假」类型（初学阶段这样理解就好），
+  大家约定：<b>返回 0 表示否，返回非 0（通常写 1）表示是</b>。</p>
+  <p>所以判断语句可以直接写 <code>if (isPrime(n))</code>，
+  意思是「如果 isPrime(n) 返回的不是 0」。<br>
+  反过来写 <code>if (isPrime(n) == 0)</code> 就是「如果返回 0，即不是素数」。</p>
+</div>
+
+<h4><code>return</code> 会立刻结束函数</h4>
+
+<p>这是 <code>return</code> 很重要的性质，可以用来简化代码：</p>
+
+<div class="code-wrap"><div class="bar"><span class="dot r"></span><span class="dot y"></span><span class="dot g"></span><span class="name">用 return 提前退出</span><span class="cp">复制</span></div><pre><span class="hl-c">/* 写法一：用标志变量 */</span>
+<span class="hl-k">int</span> <span class="hl-f">isPrime1</span>(<span class="hl-k">int</span> n) {
+    <span class="hl-k">int</span> ok = <span class="hl-n">1</span>;
+    <span class="hl-k">if</span> (n &lt; <span class="hl-n">2</span>) ok = <span class="hl-n">0</span>;
+    <span class="hl-k">for</span> (<span class="hl-k">int</span> i = <span class="hl-n">2</span>; i * i &lt;= n; i++) {
+        <span class="hl-k">if</span> (n % i == <span class="hl-n">0</span>) { ok = <span class="hl-n">0</span>; <span class="hl-k">break</span>; }
+    }
+    <span class="hl-k">return</span> ok;
+}
+
+<span class="hl-c">/* 写法二：直接 return，更清楚 */</span>
+<span class="hl-k">int</span> <span class="hl-f">isPrime2</span>(<span class="hl-k">int</span> n) {
+    <span class="hl-k">if</span> (n &lt; <span class="hl-n">2</span>) {
+        <span class="hl-k">return</span> <span class="hl-n">0</span>;              <span class="hl-c">/* 立刻结束，后面的代码不会执行 */</span>
+    }
+    <span class="hl-k">for</span> (<span class="hl-k">int</span> i = <span class="hl-n">2</span>; i * i &lt;= n; i++) {
+        <span class="hl-k">if</span> (n % i == <span class="hl-n">0</span>) {
+            <span class="hl-k">return</span> <span class="hl-n">0</span>;          <span class="hl-c">/* 找到一个因子就够，不用再找 */</span>
+        }
+    }
+    <span class="hl-k">return</span> <span class="hl-n">1</span>;                  <span class="hl-c">/* 一路都没被 return 掉，说明是素数 */</span>
+}</pre></div>
+
+<p>写法二不需要 <code>ok</code> 这个变量，也不用 <code>break</code>，
+读起来就是「<b>遇到什么情况就返回什么</b>」，更贴近人的思路。</p>
+
+<h4>没有返回值的函数</h4>
+<div class="code-wrap"><div class="bar"><span class="dot r"></span><span class="dot y"></span><span class="dot g"></span><span class="name">void 函数</span><span class="cp">复制</span></div><pre><span class="hl-k">void</span> <span class="hl-f">printLine</span>(<span class="hl-k">int</span> n) {
+    <span class="hl-k">for</span> (<span class="hl-k">int</span> i = <span class="hl-n">0</span>; i &lt; n; i++) {
+        <span class="hl-f">printf</span>(<span class="hl-s">"-"</span>);
+    }
+    <span class="hl-f">printf</span>(<span class="hl-s">"\n"</span>);
+    <span class="hl-c">/* 没有 return，或者写 return; （不带值）都可以 */</span>
+}</pre></div>
+
+<div class="card warn">
+  <div class="card-t">两个容易犯的错</div>
+  <ul>
+    <li><b>该返回却没返回。</b>如果函数声明是 <code>int</code>，
+      但某条路径走下来没有 <code>return</code>，结果就是<b>不确定的</b>。
+      编译器可能只给个警告，程序照样跑 —— 这种 bug 很难查。</li>
+    <li><b>把 <code>void</code> 函数的返回值拿来用。</b>
+      <code>int x = printLine(5);</code> 是错的，因为它不还东西。</li>
+  </ul>
+</div>
+
+<!-- ============================================================ -->
+<h2 id="s5"><span class="n">5</span>参数</h2>
+
+<p>参数就是函数需要的「材料清单」。定义时写类型和名字，调用时只给值。</p>
+
+<h4>几个参数都行</h4>
+<div class="code-wrap"><div class="bar"><span class="dot r"></span><span class="dot y"></span><span class="dot g"></span><span class="name">0 个、1 个、2 个、3 个参数</span><span class="cp">复制</span></div><pre><span class="hl-k">void</span> <span class="hl-f">sayHello</span>(<span class="hl-k">void</span>) { ... }                       <span class="hl-c">/* 0 个 */</span>
+<span class="hl-k">int</span>  <span class="hl-f">square</span>(<span class="hl-k">int</span> x) { ... }                       <span class="hl-c">/* 1 个 */</span>
+<span class="hl-k">int</span>  <span class="hl-f">add</span>(<span class="hl-k">int</span> a, <span class="hl-k">int</span> b) { ... }                  <span class="hl-c">/* 2 个 */</span>
+<span class="hl-k">int</span>  <span class="hl-f">max3</span>(<span class="hl-k">int</span> a, <span class="hl-k">int</span> b, <span class="hl-k">int</span> c) { ... }         <span class="hl-c">/* 3 个 */</span></pre></div>
+
+<h4>形参和实参</h4>
+
+<p>这两个词听起来吓人，其实就是「定义时的名字」和「调用时给的值」：</p>
+
+<table>
+<thead><tr><th style="width:120px">叫法</th><th style="width:34%">出现在哪</th><th>例子</th></tr></thead>
+<tbody>
+<tr><td><b>形参</b></td><td>函数<b>定义</b>的括号里</td>
+    <td class="c">int add(int <b>a</b>, int <b>b</b>) 里的 a 和 b</td></tr>
+<tr><td><b>实参</b></td><td>函数<b>调用</b>的括号里</td>
+    <td class="c">add(<b>3</b>, <b>4</b>) 里的 3 和 4</td></tr>
+</tbody>
+</table>
+
+<p>形参的名字随便起，但<b>顺序和类型要和实参对得上</b>：</p>
+
+<div class="code-wrap"><div class="bar"><span class="dot r"></span><span class="dot y"></span><span class="dot g"></span><span class="name">顺序错了，结果就错了</span><span class="cp">复制</span></div><pre><span class="hl-k">int</span> <span class="hl-f">sub</span>(<span class="hl-k">int</span> a, <span class="hl-k">int</span> b) {
+    <span class="hl-k">return</span> a - b;
+}
+
+<span class="hl-f">sub</span>(<span class="hl-n">10</span>, <span class="hl-n">3</span>);   <span class="hl-c">/* ✅ a=10, b=3  结果 7  */</span>
+<span class="hl-f">sub</span>(<span class="hl-n">3</span>, <span class="hl-n">10</span>);   <span class="hl-c">/* ❌ 顺序反了  结果 -7 */</span></pre></div>
+
+<div class="out-wrap"><div class="cap">运行结果</div><pre>7
+-7</pre></div>
+
+<div class="card note">
+  <div class="card-t">起名的建议</div>
+  <p>形参的名字尽量有意义。下面两版功能一样，但第二版一看就懂：</p>
+  <ul>
+    <li><code>int f(int a, int b) { return a * b; }</code> —— 得猜 a、b 是什么</li>
+    <li><code>int area(int w, int h) { return w * h; }</code> —— 一眼看出是宽乘高</li>
+  </ul>
+</div>
+
+<!-- ============================================================ -->
+<h2 id="s6"><span class="n">6</span>值传递（本讲最重要的一节）</h2>
+
+<p>这是学函数时<b>最容易误解</b>的一点，请慢慢看。</p>
+
+<div class="card key">
+  <div class="card-t">核心结论</div>
+  <p><b>调用函数时，传给形参的是实参的一份「副本」。</b></p>
+  <p>也就是说：函数里拿到的是一个<b>拷贝</b>，
+  它在函数里怎么改，都<b>不会影响</b>外面的原变量。</p>
+</div>
+
+<p>画个图理解。执行 <code>square(n)</code> 时，发生了这样的事：</p>
+
+<div class="passv">
+  <div class="box">
+    <div class="ttl">main 里的 n（原变量）</div>
+    <div class="val">n = 10</div>
+  </div>
+  <div class="arrow">── 复制一份 ──▶</div>
+  <div class="box">
+    <div class="ttl">square 里的 x（副本）</div>
+    <div class="val">x = 10</div>
+  </div>
+</div>
+
+<p><code>square</code> 里无论把 <code>x</code> 改成什么，
+改的都是右边这个副本，左边的 <code>n</code> 一动也不动。</p>
+
+<div class="code-wrap"><div class="bar"><span class="dot r"></span><span class="dot y"></span><span class="dot g"></span><span class="name">动手验证：函数里改了，外面没变</span><span class="cp">复制</span></div><pre><span class="hl-p">#include</span> <span class="hl-s">&lt;stdio.h&gt;</span>
+
+<span class="hl-k">void</span> <span class="hl-f">tryChange</span>(<span class="hl-k">int</span> x) {
+    <span class="hl-f">printf</span>(<span class="hl-s">"  函数里，改之前 x = %d\n"</span>, x);
+    x = <span class="hl-n">999</span>;                              <span class="hl-c">/* 改的是副本 */</span>
+    <span class="hl-f">printf</span>(<span class="hl-s">"  函数里，改之后 x = %d\n"</span>, x);
+}
+
+<span class="hl-k">int</span> <span class="hl-f">main</span>(<span class="hl-k">void</span>) {
+    <span class="hl-k">int</span> n = <span class="hl-n">10</span>;
+    <span class="hl-f">printf</span>(<span class="hl-s">"调用前，n = %d\n"</span>, n);
+
+    <span class="hl-f">tryChange</span>(n);
+
+    <span class="hl-f">printf</span>(<span class="hl-s">"调用后，n = %d\n"</span>, n);   <span class="hl-c">/* 还是 10！ */</span>
+    <span class="hl-k">return</span> <span class="hl-n">0</span>;
+}</pre></div>
+
+<div class="out-wrap"><div class="cap">运行结果</div><pre>调用前，n = 10
+  函数里，改之前 x = 10
+  函数里，改之后 x = 999
+调用后，n = 10</pre></div>
+
+<p>函数里明明把 <code>x</code> 改成了 999，回到 <code>main</code>，
+<code>n</code> 还是 10。<b>这就是值传递。</b></p>
+
+<div class="mnemonic">
+  <b>记住这个比喻：</b>你把文件<b>复印</b>一份交给同事，
+  他在复印件上怎么涂改，你手里的原件都不会变。
+  <br>值传递传的就是「复印件」。
+</div>
+
+<h4>那函数怎么把结果送出来？</h4>
+
+<p>用 <code>return</code>。<b>函数想给外面的东西，只能通过返回值送出去。</b></p>
+
+<div class="code-wrap"><div class="bar"><span class="dot r"></span><span class="dot y"></span><span class="dot g"></span><span class="name">正确做法：靠返回值</span><span class="cp">复制</span></div><pre><span class="hl-p">#include</span> <span class="hl-s">&lt;stdio.h&gt;</span>
+
+<span class="hl-c">/* 想要「把 n 变成两倍」，不能改形参，而要 return 新值 */</span>
+<span class="hl-k">int</span> <span class="hl-f">doubled</span>(<span class="hl-k">int</span> x) {
+    <span class="hl-k">return</span> x * <span class="hl-n">2</span>;
+}
+
+<span class="hl-k">int</span> <span class="hl-f">main</span>(<span class="hl-k">void</span>) {
+    <span class="hl-k">int</span> n = <span class="hl-n">10</span>;
+
+    <span class="hl-c">/* 在外面用返回值更新自己，这才改得动 */</span>
+    n = <span class="hl-f">doubled</span>(n);
+    <span class="hl-f">printf</span>(<span class="hl-s">"n = %d\n"</span>, n);
+    <span class="hl-k">return</span> <span class="hl-n">0</span>;
+}</pre></div>
+
+<div class="out-wrap"><div class="cap">运行结果</div><pre>n = 20</pre></div>
+
+<p>关键在这一句：<code>n = doubled(n);</code></p>
+<div class="flow">
+  <div class="s"><div class="t">doubled(n)</div><div class="d">把 10 的副本传进去，算出 20 并返回</div></div>
+  <div class="s"><div class="t">n = 20</div><div class="d">在 main 里把返回值赋给 n，这才是真的改了 n</div></div>
+</div>
+
+<div class="card tip">
+  <div class="card-t">值传递的好处</div>
+  <p>换个角度想：因为函数拿到的是副本，所以<b>你不用担心调用一个函数会把变量弄坏</b>。
+  <code>square(n)</code> 无论内部怎么折腾，你的 <code>n</code> 都是安全的。
+  这让函数用起来很放心。</p>
+</div>
+
+<div class="card note">
+  <div class="card-t">数组作为参数时的情况</div>
+  <p>有一点要提前说明：<b>把数组传给函数时，行为与普通变量不同</b> ——
+  函数里对数组元素的修改<b>会</b>影响原数组。</p>
+  <p>这一点第 9 节会专门演示。现在先记住：
+  <b>普通变量是「复印件」，数组是「同一本」。</b></p>
+</div>
+
+<!-- ============================================================ -->
+<h2 id="s7"><span class="n">7</span>变量的作用范围</h2>
+
+<p>在函数里定义的变量，<b>只在这个函数里活着</b>。出了这个函数就没了。</p>
+
+<div class="code-wrap"><div class="bar"><span class="dot r"></span><span class="dot y"></span><span class="dot g"></span><span class="name">各管各家</span><span class="cp">复制</span></div><pre><span class="hl-p">#include</span> <span class="hl-s">&lt;stdio.h&gt;</span>
+
+<span class="hl-k">void</span> <span class="hl-f">f</span>(<span class="hl-k">void</span>) {
+    <span class="hl-k">int</span> a = <span class="hl-n">100</span>;      <span class="hl-c">/* 这个 a 只属于 f */</span>
+    <span class="hl-f">printf</span>(<span class="hl-s">"f 里的 a = %d\n"</span>, a);
+}
+
+<span class="hl-k">int</span> <span class="hl-f">main</span>(<span class="hl-k">void</span>) {
+    <span class="hl-k">int</span> a = <span class="hl-n">1</span>;        <span class="hl-c">/* 这个 a 只属于 main，和上面的 a 毫无关系 */</span>
+    <span class="hl-f">printf</span>(<span class="hl-s">"main 里的 a = %d\n"</span>, a);
+    <span class="hl-f">f</span>();
+    <span class="hl-f">printf</span>(<span class="hl-s">"调用 f 之后，main 里的 a 还是 %d\n"</span>, a);
+    <span class="hl-k">return</span> <span class="hl-n">0</span>;
+}</pre></div>
+
+<div class="out-wrap"><div class="cap">运行结果</div><pre>main 里的 a = 1
+f 里的 a = 100
+调用 f 之后，main 里的 a 还是 1</pre></div>
+
+<p>两个 <code>a</code> 名字一样，但<b>是两个完全无关的变量</b>，
+各在各的函数里，互不干扰。</p>
+
+<h4>形参也是这个函数的「内部变量」</h4>
+<p>形参 <code>x</code> 只在这个函数里存在。<b>别的函数里也可以叫 <code>x</code></b>，不冲突。</p>
+
+<div class="code-wrap"><div class="bar"><span class="dot r"></span><span class="dot y"></span><span class="dot g"></span><span class="name">两个函数都用 x，互不影响</span><span class="cp">复制</span></div><pre><span class="hl-k">int</span> <span class="hl-f">inc</span>(<span class="hl-k">int</span> x) {
+    <span class="hl-k">return</span> x + <span class="hl-n">1</span>;
+}
+
+<span class="hl-k">int</span> <span class="hl-f">dec</span>(<span class="hl-k">int</span> x) {
+    <span class="hl-k">return</span> x - <span class="hl-n">1</span>;
+}</pre></div>
+
+<div class="card warn">
+  <div class="card-t">循环里定义的变量也一样</div>
+  <p>你在M01见过的这种写法：</p>
+  <pre style="background:#f2f4f8;border:1px solid var(--line);border-radius:8px;padding:10px 12px;font-family:var(--mono);font-size:13px;color:var(--fg);overflow:auto"><span class="hl-k">for</span> (<span class="hl-k">int</span> i = <span class="hl-n">0</span>; i &lt; n; i++) {
+    <span class="hl-k">int</span> t = i * <span class="hl-n">10</span>;    <span class="hl-c">/* t 只在这个 for 里活着 */</span>
+}</pre>
+  <p>出了这个 <code>for</code>，<code>i</code> 和 <code>t</code> 就都不存在了，
+  不能再使用。</p>
+</div>
+
+<!-- ============================================================ -->
+<h2 id="s8"><span class="n">8</span>先声明后使用</h2>
+
+<p>C 语言有个规矩：<b>函数必须先「见过」，才能调用。</b>
+所以定义要写在调用它的地方前面。</p>
+
+<h4>问题：互相调用怎么办</h4>
+
+<p>如果 <code>f</code> 想调用 <code>g</code>，<code>g</code> 又想调用 <code>f</code>，
+无论谁写前面都不对 —— 总有一个「还没见过」。</p>
+
+<p>解决办法是<b>函数声明</b>（也叫函数原型）：<b>只写函数头，加个分号，不写函数体。</b></p>
+
+<div class="code-wrap"><div class="bar"><span class="dot r"></span><span class="dot y"></span><span class="dot g"></span><span class="name">先声明，后定义</span><span class="cp">复制</span></div><pre><span class="hl-p">#include</span> <span class="hl-s">&lt;stdio.h&gt;</span>
+
+<span class="hl-c">/* ① 声明：告诉编译器「有这么个函数」，先不写怎么做 */</span>
+<span class="hl-k">int</span> <span class="hl-f">cube</span>(<span class="hl-k">int</span> x);
+
+<span class="hl-k">int</span> <span class="hl-f">main</span>(<span class="hl-k">void</span>) {
+    <span class="hl-c">/* ② 这里就能用了，虽然 cube 的真正定义还在下面 */</span>
+    <span class="hl-f">printf</span>(<span class="hl-s">"cube(3) = %d\n"</span>, <span class="hl-f">cube</span>(<span class="hl-n">3</span>));
+    <span class="hl-k">return</span> <span class="hl-n">0</span>;
+}
+
+<span class="hl-c">/* ③ 定义：现在才写怎么做 */</span>
+<span class="hl-k">int</span> <span class="hl-f">cube</span>(<span class="hl-k">int</span> x) {
+    <span class="hl-k">return</span> x * x * x;
+}</pre></div>
+
+<div class="out-wrap"><div class="cap">运行结果</div><pre>cube(3) = 27</pre></div>
+
+<p>声明和定义的区别，就看有没有函数体：</p>
+
+<table>
+<thead><tr><th style="width:22%"></th><th>写法</th><th style="width:26%">作用</th></tr></thead>
+<tbody>
+<tr><td><b>声明</b></td><td class="c">int cube(int x);</td><td>告诉编译器「有这个东西」</td></tr>
+<tr><td><b>定义</b></td><td class="c">int cube(int x) { ... }</td><td>真正写出怎么做</td></tr>
+</tbody>
+</table>
+
+<div class="card tip">
+  <div class="card-t">写代码的建议顺序</div>
+  <p>养成这个习惯，就不用老想着「谁该写前面」：</p>
+  <ol>
+    <li>开头把要用的函数<b>声明</b>一遍</li>
+    <li>然后是 <code>main</code></li>
+    <li>最后统一写各个函数的<b>定义</b></li>
+  </ol>
+  <p>这样 <code>main</code> 放在靠前的位置，读代码的人一眼就能看到整体流程。</p>
+</div>
+
+<!-- ============================================================ -->
+<h2 id="s9"><span class="n">9</span>函数配数组</h2>
+
+<p>函数和数组配在一起特别好用。因为数组常常需要「同一类处理」，
+比如求最大、求和、查找 —— 这些都可以做成函数，反复使用。</p>
+
+<h4>数组作为参数怎么写</h4>
+
+<div class="code-wrap"><div class="bar"><span class="dot r"></span><span class="dot y"></span><span class="dot g"></span><span class="name">方括号里留空，长度另外传</span><span class="cp">复制</span></div><pre><span class="hl-k">int</span> <span class="hl-f">maxInArray</span>(<span class="hl-k">int</span> a[], <span class="hl-k">int</span> n) {
+    <span class="hl-c">/*            ↑ 方括号留空      ↑ 长度单独作为参数传进来 */</span>
+    <span class="hl-k">int</span> mx = a[<span class="hl-n">0</span>];
+    <span class="hl-k">for</span> (<span class="hl-k">int</span> i = <span class="hl-n">1</span>; i &lt; n; i++) {
+        <span class="hl-k">if</span> (a[i] &gt; mx) {
+            mx = a[i];
+        }
+    }
+    <span class="hl-k">return</span> mx;
+}</pre></div>
+
+<div class="card note">
+  <div class="card-t">为什么长度要单独传</div>
+  <p>因为函数<b>没法从 <code>a[]</code> 看出数组有多长</b>。
+  所以必须额外给一个 <code>n</code>，明确告诉它「只看前 n 个」。</p>
+  <p>调用时把长度一起写上：<code>maxInArray(a, 6)</code>。</p>
+</div>
+
+<h4>完整例子</h4>
+<div class="code-wrap"><div class="bar"><span class="dot r"></span><span class="dot y"></span><span class="dot g"></span><span class="name">求最大 / 求和 / 求平均</span><span class="cp">复制</span></div><pre><span class="hl-p">#include</span> <span class="hl-s">&lt;stdio.h&gt;</span>
+
+<span class="hl-k">int</span> <span class="hl-f">maxInArray</span>(<span class="hl-k">int</span> a[], <span class="hl-k">int</span> n) {
+    <span class="hl-k">int</span> mx = a[<span class="hl-n">0</span>];
+    <span class="hl-k">for</span> (<span class="hl-k">int</span> i = <span class="hl-n">1</span>; i &lt; n; i++) {
+        <span class="hl-k">if</span> (a[i] &gt; mx) mx = a[i];
+    }
+    <span class="hl-k">return</span> mx;
+}
+
+<span class="hl-k">int</span> <span class="hl-f">sumOfArray</span>(<span class="hl-k">int</span> a[], <span class="hl-k">int</span> n) {
+    <span class="hl-k">int</span> s = <span class="hl-n">0</span>;
+    <span class="hl-k">for</span> (<span class="hl-k">int</span> i = <span class="hl-n">0</span>; i &lt; n; i++) {
+        s += a[i];
+    }
+    <span class="hl-k">return</span> s;
+}
+
+<span class="hl-k">int</span> <span class="hl-f">main</span>(<span class="hl-k">void</span>) {
+    <span class="hl-k">int</span> a[<span class="hl-n">6</span>] = {<span class="hl-n">88</span>, <span class="hl-n">92</span>, <span class="hl-n">79</span>, <span class="hl-n">95</span>, <span class="hl-n">61</span>, <span class="hl-n">84</span>};
+
+    <span class="hl-f">printf</span>(<span class="hl-s">"max = %d\n"</span>, <span class="hl-f">maxInArray</span>(a, <span class="hl-n">6</span>));
+    <span class="hl-f">printf</span>(<span class="hl-s">"sum = %d\n"</span>, <span class="hl-f">sumOfArray</span>(a, <span class="hl-n">6</span>));
+    <span class="hl-f">printf</span>(<span class="hl-s">"avg = %.2f\n"</span>, <span class="hl-f">sumOfArray</span>(a, <span class="hl-n">6</span>) / <span class="hl-n">6.0</span>);
+    <span class="hl-k">return</span> <span class="hl-n">0</span>;
+}</pre></div>
+
+<div class="out-wrap"><div class="cap">运行结果</div><pre>max = 95
+sum = 499
+avg = 83.17</pre></div>
+
+<p>注意 <code>maxInArray(a, 6)</code> 里的 <code>a</code> 写法：
+<b>只写数组名，不写方括号</b>。写成 <code>a[]</code> 或 <code>a[6]</code> 都不对。</p>
+
+<h4>重要差别：函数里改了数组，外面真的会变</h4>
+
+<p>第 6 节说过，普通变量传的是「复印件」。但数组不一样，我们验证一下：</p>
+
+<div class="code-wrap"><div class="bar"><span class="dot r"></span><span class="dot y"></span><span class="dot g"></span><span class="name">函数里改数组 vs 改普通变量</span><span class="cp">复制</span></div><pre><span class="hl-p">#include</span> <span class="hl-s">&lt;stdio.h&gt;</span>
+
+<span class="hl-k">void</span> <span class="hl-f">changeVar</span>(<span class="hl-k">int</span> x) {
+    x = <span class="hl-n">999</span>;                <span class="hl-c">/* 改副本 */</span>
+}
+
+<span class="hl-k">void</span> <span class="hl-f">changeArray</span>(<span class="hl-k">int</span> a[], <span class="hl-k">int</span> n) {
+    <span class="hl-c">/* 把每个元素都乘 2 */</span>
+    <span class="hl-k">for</span> (<span class="hl-k">int</span> i = <span class="hl-n">0</span>; i &lt; n; i++) {
+        a[i] = a[i] * <span class="hl-n">2</span>;
+    }
+}
+
+<span class="hl-k">int</span> <span class="hl-f">main</span>(<span class="hl-k">void</span>) {
+    <span class="hl-k">int</span> v = <span class="hl-n">10</span>;
+    <span class="hl-k">int</span> a[<span class="hl-n">3</span>] = {<span class="hl-n">1</span>, <span class="hl-n">2</span>, <span class="hl-n">3</span>};
+    <span class="hl-k">int</span> n = <span class="hl-n">3</span>;
+
+    <span class="hl-f">changeVar</span>(v);
+    <span class="hl-f">printf</span>(<span class="hl-s">"普通变量 v = %d    （没变）\n"</span>, v);
+
+    <span class="hl-f">changeArray</span>(a, n);
+    <span class="hl-f">printf</span>(<span class="hl-s">"数组     a = %d %d %d  （变了！）\n"</span>, a[<span class="hl-n">0</span>], a[<span class="hl-n">1</span>], a[<span class="hl-n">2</span>]);
+    <span class="hl-k">return</span> <span class="hl-n">0</span>;
+}</pre></div>
+
+<div class="out-wrap"><div class="cap">运行结果</div><pre>普通变量 v = 10    （没变）
+数组     a = 2 4 6  （变了！）</pre></div>
+
+<div class="card key">
+  <div class="card-t">这两条要一起记住</div>
+  <table style="margin:8px 0 0">
+  <thead><tr><th style="width:26%">传给函数的东西</th><th>函数里改了会怎样</th></tr></thead>
+  <tbody>
+  <tr><td><b>普通变量</b>（int、double…）</td><td>外面<b>不受影响</b>（改的是副本）</td></tr>
+  <tr><td><b>数组</b></td><td>外面<b>会跟着变</b>（操作的是同一批格子）</td></tr>
+  </tbody></table>
+  <p style="margin-top:10px">所以：想通过函数「改掉一个普通变量」，就<b>用返回值</b>；
+  想通过函数「改掉一个数组的内容」，<b>直接改元素</b>就行，不用返回。</p>
+</div>
+
+<div class="card tip">
+  <div class="card-t">这个特性很有用</div>
+  <p>比如写一个「把数组所有元素加 1」的函数，就不需要返回值了：</p>
+  <pre style="background:#f2f4f8;border:1px solid var(--line);border-radius:8px;padding:10px 12px;font-family:var(--mono);font-size:13px;color:var(--fg);overflow:auto"><span class="hl-k">void</span> <span class="hl-f">addOneToAll</span>(<span class="hl-k">int</span> a[], <span class="hl-k">int</span> n) {
+    <span class="hl-k">for</span> (<span class="hl-k">int</span> i = <span class="hl-n">0</span>; i &lt; n; i++) {
+        a[i]++;
+    }
+}</pre>
+  <p>调用完，原数组就已经被改好了。</p>
+</div>
+
+<!-- ============================================================ -->
+<h2 id="s10"><span class="n">10</span>把大问题拆成小函数</h2>
+
+<p>函数最实际的用处，是<b>把一个大问题拆成几个小问题</b>，每个小问题写一个函数。
+这样每一步都很简单，合起来就把难题解决了。</p>
+
+<p>举例：<b>输入 6 个成绩，输出最高分、平均分、及格人数。</b></p>
+
+<p>先想清楚要哪几个「小工具」：</p>
+<div class="flow">
+  <div class="s"><div class="t">最高分</div><div class="d">maxInArray(a, n)</div></div>
+  <div class="s"><div class="t">平均分</div><div class="d">sumOfArray(a, n) / n</div></div>
+  <div class="s"><div class="t">及格人数</div><div class="d">countAtLeast(a, n, 60)</div></div>
+</div>
+
+<div class="code-wrap"><div class="bar"><span class="dot r"></span><span class="dot y"></span><span class="dot g"></span><span class="name">三个小函数 + 一个清爽的 main</span><span class="cp">复制</span></div><pre><span class="hl-p">#include</span> <span class="hl-s">&lt;stdio.h&gt;</span>
+
+<span class="hl-k">int</span> <span class="hl-f">maxInArray</span>(<span class="hl-k">int</span> a[], <span class="hl-k">int</span> n) {
+    <span class="hl-k">int</span> mx = a[<span class="hl-n">0</span>];
+    <span class="hl-k">for</span> (<span class="hl-k">int</span> i = <span class="hl-n">1</span>; i &lt; n; i++) {
+        <span class="hl-k">if</span> (a[i] &gt; mx) mx = a[i];
+    }
+    <span class="hl-k">return</span> mx;
+}
+
+<span class="hl-k">int</span> <span class="hl-f">sumOfArray</span>(<span class="hl-k">int</span> a[], <span class="hl-k">int</span> n) {
+    <span class="hl-k">int</span> s = <span class="hl-n">0</span>;
+    <span class="hl-k">for</span> (<span class="hl-k">int</span> i = <span class="hl-n">0</span>; i &lt; n; i++) {
+        s += a[i];
+    }
+    <span class="hl-k">return</span> s;
+}
+
+<span class="hl-c">/* 数出 &gt;= line 的个数 */</span>
+<span class="hl-k">int</span> <span class="hl-f">countAtLeast</span>(<span class="hl-k">int</span> a[], <span class="hl-k">int</span> n, <span class="hl-k">int</span> line) {
+    <span class="hl-k">int</span> c = <span class="hl-n">0</span>;
+    <span class="hl-k">for</span> (<span class="hl-k">int</span> i = <span class="hl-n">0</span>; i &lt; n; i++) {
+        <span class="hl-k">if</span> (a[i] &gt;= line) c++;
+    }
+    <span class="hl-k">return</span> c;
+}
+
+<span class="hl-k">int</span> <span class="hl-f">main</span>(<span class="hl-k">void</span>) {
+    <span class="hl-k">int</span> a[<span class="hl-n">6</span>] = {<span class="hl-n">88</span>, <span class="hl-n">52</span>, <span class="hl-n">79</span>, <span class="hl-n">95</span>, <span class="hl-n">61</span>, <span class="hl-n">84</span>};
+    <span class="hl-k">int</span> n = <span class="hl-n">6</span>;
+
+    <span class="hl-f">printf</span>(<span class="hl-s">"最高分：  %d\n"</span>, <span class="hl-f">maxInArray</span>(a, n));
+    <span class="hl-f">printf</span>(<span class="hl-s">"平均分：  %.2f\n"</span>, <span class="hl-f">sumOfArray</span>(a, n) / (<span class="hl-k">double</span>)n);
+    <span class="hl-f">printf</span>(<span class="hl-s">"及格人数：%d\n"</span>, <span class="hl-f">countAtLeast</span>(a, n, <span class="hl-n">60</span>));
+    <span class="hl-f">printf</span>(<span class="hl-s">"90 分以上：%d\n"</span>, <span class="hl-f">countAtLeast</span>(a, n, <span class="hl-n">90</span>));
+
+    <span class="hl-k">return</span> <span class="hl-n">0</span>;
+}</pre></div>
+
+<div class="out-wrap"><div class="cap">运行结果</div><pre>最高分：  95
+平均分：  76.50
+及格人数：5
+90 分以上：1</pre></div>
+
+<p>注意 <code>countAtLeast</code> 被用了两次，只是分数线不同 ——
+<b>一个函数，两处复用</b>，这就是函数的价值。</p>
+
+<p>看 <code>main</code> 的最后几行 —— <b>读起来就像在读题目本身</b>，
+不需要再去看循环细节。这就是拆函数最大的好处。</p>
+
+<div class="card key">
+  <div class="card-t">拆函数的思路</div>
+  <p>拿到一道题，先别急着写 <code>for</code>。先问自己：</p>
+  <ol>
+    <li><b>这道题要算哪几件事？</b>（比如：最高分、平均分、人数）</li>
+    <li><b>每件事能不能用一个函数完成？</b>给它起个一看就懂的名字。</li>
+    <li>每个函数只管一件事，写起来就简单了。</li>
+    <li>最后在 <code>main</code> 里把它们串起来。</li>
+  </ol>
+</div>
+
+<h4>再练一个：判断回文数</h4>
+<p>「回文数」指正着读和倒着读一样，比如 12321。拆成两个小函数：</p>
+
+<div class="code-wrap"><div class="bar"><span class="dot r"></span><span class="dot y"></span><span class="dot g"></span><span class="name">先写「反转整数」，再用它判断回文</span><span class="cp">复制</span></div><pre><span class="hl-p">#include</span> <span class="hl-s">&lt;stdio.h&gt;</span>
+
+<span class="hl-c">/* 小工具一：把一个整数的数字倒过来 */</span>
+<span class="hl-k">int</span> <span class="hl-f">reverseInt</span>(<span class="hl-k">int</span> n) {
+    <span class="hl-k">int</span> r = <span class="hl-n">0</span>;
+    <span class="hl-k">while</span> (n &gt; <span class="hl-n">0</span>) {
+        r = r * <span class="hl-n">10</span> + n % <span class="hl-n">10</span>;
+        n /= <span class="hl-n">10</span>;
+    }
+    <span class="hl-k">return</span> r;
+}
+
+<span class="hl-c">/* 小工具二：判断是不是回文（直接用工具一） */</span>
+<span class="hl-k">int</span> <span class="hl-f">isPalindrome</span>(<span class="hl-k">int</span> n) {
+    <span class="hl-k">return</span> n == <span class="hl-f">reverseInt</span>(n);
+}
+
+<span class="hl-k">int</span> <span class="hl-f">main</span>(<span class="hl-k">void</span>) {
+    <span class="hl-f">printf</span>(<span class="hl-s">"reverse(1234) = %d\n"</span>, <span class="hl-f">reverseInt</span>(<span class="hl-n">1234</span>));
+    <span class="hl-f">printf</span>(<span class="hl-s">"12321 是回文吗？%d\n"</span>, <span class="hl-f">isPalindrome</span>(<span class="hl-n">12321</span>));
+    <span class="hl-f">printf</span>(<span class="hl-s">"1234  是回文吗？%d\n"</span>, <span class="hl-f">isPalindrome</span>(<span class="hl-n">1234</span>));
+    <span class="hl-k">return</span> <span class="hl-n">0</span>;
+}</pre></div>
+
+<div class="out-wrap"><div class="cap">运行结果</div><pre>reverse(1234) = 4321
+12321 是回文吗？1
+1234  是回文吗？0</pre></div>
+
+<p>注意 <code>isPalindrome</code> 有多短 —— 因为它<b>站在 <code>reverseInt</code> 的肩膀上</b>。
+函数可以相互调用，一个小工具可以建立在另一个小工具之上。</p>
+
+<h4>配合循环使用</h4>
+<p>函数一旦写好，配合循环就能反复使用，这是它最省事的地方：</p>
+
+<div class="code-wrap"><div class="bar"><span class="dot r"></span><span class="dot y"></span><span class="dot g"></span><span class="name">打印 1~20 里的素数</span><span class="cp">复制</span></div><pre><span class="hl-k">for</span> (<span class="hl-k">int</span> v = <span class="hl-n">1</span>; v &lt;= <span class="hl-n">20</span>; v++) {
+    <span class="hl-k">if</span> (<span class="hl-f">isPrime</span>(v)) {
+        <span class="hl-f">printf</span>(<span class="hl-s">"%d "</span>, v);
+    }
+}</pre></div>
+
+<div class="out-wrap"><div class="cap">运行结果</div><pre>2 3 5 7 11 13 17 19 </pre></div>
+
+<p>如果判断素数的逻辑改了，只要改 <code>isPrime</code> 一处，
+所有调用它的地方都会跟着变正确 —— 这就是第 1 节说的「改一处就够了」。</p>
+
+<!-- ============================================================ -->
+<h2 id="s11"><span class="n">11</span>常见错误</h2>
+
+<h4>错误 1 · 调用时多写了类型</h4>
+<div class="code-wrap"><div class="bar"><span class="dot r"></span><span class="dot y"></span><span class="dot g"></span><span class="name">对比</span><span class="cp">复制</span></div><pre><span class="hl-k">int</span> <span class="hl-f">square</span>(<span class="hl-k">int</span> x) { <span class="hl-k">return</span> x * x; }
+
+<span class="hl-f">square</span>(<span class="hl-k">int</span> <span class="hl-n">5</span>);   <span class="hl-c">/* ❌ 调用时不要写类型 */</span>
+<span class="hl-f">square</span>(<span class="hl-n">5</span>);       <span class="hl-c">/* ✅ */</span></pre></div>
+<p><b>类型只在定义时写一次。</b>调用时只给值。</p>
+
+<h4>错误 2 · 忘了接收返回值</h4>
+<div class="code-wrap"><div class="bar"><span class="dot r"></span><span class="dot y"></span><span class="dot g"></span><span class="name">对比</span><span class="cp">复制</span></div><pre><span class="hl-k">int</span> n = <span class="hl-n">10</span>;
+
+<span class="hl-f">doubled</span>(n);        <span class="hl-c">/* ❌ 算完就丢了，n 一点没变 */</span>
+n = <span class="hl-f">doubled</span>(n);    <span class="hl-c">/* ✅ 把返回值存回去 */</span></pre></div>
+<p>这是第 6 节值传递的直接后果：<b>返回值不用，就等于没算。</b></p>
+
+<h4>错误 3 · 以为改形参能改外面</h4>
+<div class="code-wrap"><div class="bar"><span class="dot r"></span><span class="dot y"></span><span class="dot g"></span><span class="name">对比</span><span class="cp">复制</span></div><pre><span class="hl-c">/* ❌ 想让外面的 n 变成 2 倍，但改的是副本 */</span>
+<span class="hl-k">void</span> <span class="hl-f">bad</span>(<span class="hl-k">int</span> x) { x = x * <span class="hl-n">2</span>; }
+
+<span class="hl-c">/* ✅ 用 return 把结果送出来 */</span>
+<span class="hl-k">int</span> <span class="hl-f">good</span>(<span class="hl-k">int</span> x) { <span class="hl-k">return</span> x * <span class="hl-n">2</span>; }</pre></div>
+
+<h4>错误 4 · 数组名后面多写了方括号</h4>
+<div class="code-wrap"><div class="bar"><span class="dot r"></span><span class="dot y"></span><span class="dot g"></span><span class="name">对比</span><span class="cp">复制</span></div><pre><span class="hl-k">int</span> a[<span class="hl-n">6</span>] = {<span class="hl-n">88</span>, <span class="hl-n">92</span>, <span class="hl-n">79</span>, <span class="hl-n">95</span>, <span class="hl-n">61</span>, <span class="hl-n">84</span>};
+
+<span class="hl-f">maxInArray</span>(a[], <span class="hl-n">6</span>);   <span class="hl-c">/* ❌ */</span>
+<span class="hl-f">maxInArray</span>(a[<span class="hl-n">6</span>], <span class="hl-n">6</span>);  <span class="hl-c">/* ❌ 而且还越界了 */</span>
+<span class="hl-f">maxInArray</span>(a, <span class="hl-n">6</span>);     <span class="hl-c">/* ✅ 只写数组名 */</span></pre></div>
+
+<h4>错误 5 · <code>int</code> 函数没有在所有路径上 return</h4>
+<div class="code-wrap"><div class="bar"><span class="dot r"></span><span class="dot y"></span><span class="dot g"></span><span class="name">对比</span><span class="cp">复制</span></div><pre><span class="hl-c">/* ❌ n 为负数时没有 return，结果不确定 */</span>
+<span class="hl-k">int</span> <span class="hl-f">bad</span>(<span class="hl-k">int</span> n) {
+    <span class="hl-k">if</span> (n &gt; <span class="hl-n">0</span>) {
+        <span class="hl-k">return</span> <span class="hl-n">1</span>;
+    }
+}
+
+<span class="hl-c">/* ✅ 保证每条路都有 return */</span>
+<span class="hl-k">int</span> <span class="hl-f">good</span>(<span class="hl-k">int</span> n) {
+    <span class="hl-k">if</span> (n &gt; <span class="hl-n">0</span>) {
+        <span class="hl-k">return</span> <span class="hl-n">1</span>;
+    }
+    <span class="hl-k">return</span> <span class="hl-n">0</span>;      <span class="hl-c">/* 兜底 */</span>
+}</pre></div>
+
+<h4>错误 6 · 定义写在调用之后，又没声明</h4>
+<div class="code-wrap"><div class="bar"><span class="dot r"></span><span class="dot y"></span><span class="dot g"></span><span class="name">对比</span><span class="cp">复制</span></div><pre><span class="hl-c">/* ❌ main 在 cube 之前，编译器没见过 cube */</span>
+<span class="hl-k">int</span> <span class="hl-f">main</span>(<span class="hl-k">void</span>) {
+    <span class="hl-f">printf</span>(<span class="hl-s">"%d\n"</span>, <span class="hl-f">cube</span>(<span class="hl-n">3</span>));
+    <span class="hl-k">return</span> <span class="hl-n">0</span>;
+}
+<span class="hl-k">int</span> <span class="hl-f">cube</span>(<span class="hl-k">int</span> x) { <span class="hl-k">return</span> x * x * x; }
+
+<span class="hl-c">/* ✅ 在 main 之前加一行声明 */</span>
+<span class="hl-k">int</span> <span class="hl-f">cube</span>(<span class="hl-k">int</span> x);
+<span class="hl-k">int</span> <span class="hl-f">main</span>(<span class="hl-k">void</span>) { ... }</pre></div>
+
+<!-- ============================================================ -->
+<h2 id="s12"><span class="n">12</span>一页速查</h2>
+
+<table>
+<thead><tr><th style="width:36%">想做的事</th><th>写法</th></tr></thead>
+<tbody>
+<tr><td>定义无参无返回</td><td class="c">void f(void) { ... }</td></tr>
+<tr><td>定义有参有返回</td><td class="c">int f(int a, int b) { ... return r; }</td></tr>
+<tr><td>定义有参无返回</td><td class="c">void f(int a) { ... }</td></tr>
+<tr><td>返回小数</td><td class="c">double f(int a) { return (double)a / 2; }</td></tr>
+<tr><td>返回「是 / 否」</td><td class="c">return 1; / return 0;</td></tr>
+<tr><td>提前结束函数</td><td class="c">return;</td></tr>
+<tr><td>调用</td><td class="c">f(3, 4);</td></tr>
+<tr><td>用返回值</td><td class="c">int r = f(3, 4);</td></tr>
+<tr><td>先声明后使用</td><td class="c">int f(int a, int b);</td></tr>
+<tr><td>数组作参数</td><td class="c">int f(int a[], int n)</td></tr>
+<tr><td>调用数组参数</td><td class="c">f(a, n);</td></tr>
+<tr><td>通过函数改普通变量</td><td class="c">n = f(n);&nbsp;&nbsp;（靠返回值）</td></tr>
+<tr><td>通过函数改数组内容</td><td class="c">直接改 a[i]，不用返回</td></tr>
+</tbody>
+</table>
+
+<div class="card key">
+  <div class="card-t">本讲要记住的五句话</div>
+  <ol>
+    <li><b>函数 = 把代码打包起个名字</b>，好处是不用抄、改一处就够、main 变清爽。</li>
+    <li><b>结构：返回值类型 &nbsp;名字&nbsp;（材料清单）&nbsp;{ 怎么算 }</b>。</li>
+    <li><b><code>return</code> 有两个作用：交出结果 + 立刻结束函数</b>。</li>
+    <li><b>普通变量传的是副本，函数里改了外面不变</b> —— 要靠返回值送结果。</li>
+    <li><b>数组传进去，函数里改了外面会变</b> —— 这一点和普通变量不同。</li>
+  </ol>
+</div>
+
+<div class="card note">
+  <div class="card-t">两讲合起来，你已经能做什么</div>
+  <ul>
+    <li>用数组存一批数据，用循环处理它们</li>
+    <li>把「求最大、求和、计数、查找」这些常见处理写成函数，反复使用</li>
+    <li>把一道复杂的题拆成几个小函数，逐个实现</li>
+  </ul>
+  <p>接下来可以练的题目类型：统计类（各类计数、分段统计）、
+  查找类（最大最小、第几大）、判断类（素数、回文、完全数）、
+  数组处理类（逆序、去重、排序入门）。</p>
+</div>
+
+
+
+<!-- NAV-AUTO -->
+<a class="home-fab" href="../../index.html" title="返回教程总目录">返回 home</a>
+<div class="series-nav">
+<b>本系列</b>　<span class="series-tag">M 系列 · 课本内容速成与补充</span>　
+<a href="m01-c-arrays.html">M01 数组初步</a>
+<a href="m02-c-functions.html" class="cur">M02 函数初步</a>
+<a href="m03-c-types.html">M03 类型概论</a>
+<a href="m04-c-pointers.html">M04 指针初步</a>
+<a href="m05-memory.html">M05 静态、动态内存与内存安全初步</a>
+<a href="m06-class-struct.html">M06 类、结构体</a>
+<a href="m07-scope.html">M07 作用域、全局与局部变量</a>
+<a href="m08-c-strings.html">M08 C 风格字符串</a>
+<a href="m09-vector-and-array.html">M09 vector 和 array <span class="star" title="与本项目施行密切相关">*</span></a>
+</div>
+<div class="series-switch">
+<b>全部系列</b>　
+<a href="t01-mongolian-script-intro.html">理论 · T（3 篇）</a>
+<span class="ss-cur">课本 · M（9 篇）</span>
+<a href="q01-std-and-namespace.html">Qt · Q（1 篇）</a>
+<a href="e01-recursion.html">Extra · E（2 篇）</a>
+<a href="f01-command-prompt.html">File · F（3 篇）</a>
+<span class="ss-empty">相关 · R（0 篇，暂空）</span>
+</div>
+<!-- /NAV-AUTO -->
+<footer>
+UME 项目组内部教程 · M02《函数初步》<br>
+代码示例均以 <b>Consolas</b> 等宽字体呈现；文中所有「运行结果」都经过实际编译运行核对。
+</footer>
+
+</main>
+</div>
+
+<script>
+/* 目录滚动高亮 */
+(function(){
+  const links = [...document.querySelectorAll('#toc a')];
+  const targets = links.map(a => document.querySelector(a.getAttribute('href'))).filter(Boolean);
+  const setOn = id => links.forEach(a => a.classList.toggle('on', a.getAttribute('href') === '#'+id));
+  const io = new IntersectionObserver(es => {
+    const vis = es.filter(e => e.isIntersecting)
+                  .sort((a,b) => a.boundingClientRect.top - b.boundingClientRect.top);
+    if (vis[0]) setOn(vis[0].target.id);
+  }, { rootMargin:'-8% 0px -72% 0px', threshold:0 });
+  targets.forEach(t => io.observe(t));
+})();
+
+/* 复制按钮 */
+(function(){
+  document.querySelectorAll('.code-wrap').forEach(box => {
+    const btn = box.querySelector('.cp');
+    const pre = box.querySelector('pre');
+    if (!btn || !pre) return;
+    btn.addEventListener('click', async () => {
+      const text = pre.textContent;
+      try { await navigator.clipboard.writeText(text); }
+      catch (e) {
+        const ta = document.createElement('textarea');
+        ta.value = text; document.body.appendChild(ta);
+        ta.select(); document.execCommand('copy'); ta.remove();
+      }
+      const old = btn.textContent;
+      btn.textContent = '已复制 ✓';
+      setTimeout(() => { btn.textContent = old; }, 1200);
+    });
+  });
+})();
+</script>
+<script>
+/* 移动端：生成「目录」按钮，点击呼出/收起侧滑目录 */
+(function(){
+  var toc = document.getElementById('toc');
+  if (!toc) return;
+  var btn = document.createElement('button');
+  btn.id = 'tocToggle';
+  btn.type = 'button';
+  btn.setAttribute('aria-controls','toc');
+  btn.textContent = '目录';
+  document.body.appendChild(btn);
+
+  function setOpen(on){
+    toc.classList.toggle('open', on);
+    document.body.classList.toggle('toc-open', on);
+    btn.setAttribute('aria-expanded', on ? 'true' : 'false');
+    btn.textContent = on ? '收起' : '目录';
+  }
+  btn.addEventListener('click', function(){
+    setOpen(!toc.classList.contains('open'));
+  });
+  /* 点目录里的链接后自动收起；点遮罩（#toc 之外的区域）也收起 */
+  toc.addEventListener('click', function(e){
+    if (e.target.closest('a')) setOpen(false);
+  });
+  document.addEventListener('click', function(e){
+    if (!toc.classList.contains('open')) return;
+    if (e.target === toc || toc.contains(e.target) || e.target === btn) return;
+    setOpen(false);
+  });
+  document.addEventListener('keydown', function(e){
+    if (e.key === 'Escape') setOpen(false);
+  });
+  /* 窄屏进入页面时默认收起，宽屏则清掉状态 */
+  function sync(){ if (window.innerWidth > 980) setOpen(false); }
+  window.addEventListener('resize', sync);
+  sync();
+})();
+</script>
+<script src="assets/series-common.js"></script>
+</body>
+</html>

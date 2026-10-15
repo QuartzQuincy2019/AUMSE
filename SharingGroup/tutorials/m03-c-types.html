@@ -1,0 +1,1026 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>M03 · 类型概论</title>
+<link rel="stylesheet" href="assets/m03_c_types.css">
+<link rel="stylesheet" href="assets/series-theme.css">
+<style>
+/* ================= 自动注入：返回 home + 系列小目录 ================= */
+.home-fab{position:fixed;left:11px;bottom:11px;z-index:65;display:inline-flex;
+  align-items:center;gap:6px;padding:8px 14px;border-radius:999px;
+  background:#fff;border:1px solid var(--line-2);color:var(--fg-2);
+  text-decoration:none;font:600 13px/1 var(--sans);
+  box-shadow:0 4px 16px rgba(20,30,50,.16);transition:transform .14s,box-shadow .14s,color .14s}
+.home-fab:hover{transform:translateY(-2px);color:var(--blue);
+  box-shadow:0 8px 22px rgba(30,60,120,.24)}
+.home-fab::before{content:"⌂";font-size:15px}
+.series-nav{margin:34px 0 0;padding:14px 18px;border:1px solid var(--line-2);
+  border-radius:12px;background:var(--bg-soft);font-size:13.5px}
+.series-nav b{color:var(--fg)}
+.series-nav a{display:inline-block;margin:3px 8px 3px 0;padding:3px 11px;border-radius:999px;
+  background:#fff;border:1px solid var(--line-2);text-decoration:none;color:var(--fg-2);
+  transition:border-color .14s,color .14s}
+.series-nav a:hover{border-color:var(--blue);color:var(--blue)}
+.series-nav a.cur{background:var(--blue);border-color:var(--blue);color:#fff;font-weight:600}
+@media (max-width:560px){
+  .series-nav{font-size:12.5px;padding:12px 13px}
+  .series-nav a{font-size:12px;margin:2px 5px 2px 0;padding:2px 9px}
+  .home-fab{left:9px;bottom:9px;padding:7px 12px;font-size:12.5px}
+}
+
+/* ---------- 悬浮「返回 home」按钮的避让 ----------
+   窄屏下抽屉宽 min(86vw,300px)，而按钮固定在左下角、z-index 又高于抽屉，
+   会把抽屉底部的目录项压住导致点击无效。所以：
+     * 抽屉打开时直接藏起按钮
+     * 中等宽度把按钮移到底部右侧（320px 之外就不与抽屉重叠） */
+body.toc-open .home-fab{display:none}
+@media (min-width:561px) and (max-width:980px){
+  .home-fab{left:auto;right:12px}
+}
+
+/* ---------- 遮罩层不接收指针事件 ----------
+   body.toc-open::after 是「抽屉打开时的变暗遮罩」。
+   它曾经把抽屉里的点击全吃掉：实测 elementFromPoint 返回 body.toc-open，
+   连目录项都点不动（JS 直接 .click() 却正常，说明只是指针层被挡）。
+   遮罩只负责变暗，关闭逻辑由脚本按坐标判断。 */
+body.toc-open::after{pointer-events:none}
+</style>
+</head>
+<body class="mseries" data-series="M">
+<div id="shell">
+
+<nav id="toc">
+  <h5>目录</h5>
+  <a href="#s1">1 · 类型为什么重要</a>
+  <a href="#s2">2 · 类型的三件事</a>
+  <div class="sep"></div>
+  <a href="#s3">3 · 二进制速成</a>
+  <a href="#s3a" class="sub">3.1 只有 0 和 1</a>
+  <a href="#s3b" class="sub">3.2 十进制 ↔ 二进制</a>
+  <a href="#s3c" class="sub">3.3 位与字节</a>
+  <a href="#s3d" class="sub">3.4 为什么用十六进制</a>
+  <div class="sep"></div>
+  <a href="#s4">4 · 常见类型的大小</a>
+  <a href="#s5">5 · 有多少位，就有多大范围</a>
+  <a href="#s6">6 · 有符号与无符号</a>
+  <a href="#s7">7 · 溢出的真面目</a>
+  <a href="#s8">8 · 类型转换</a>
+  <div class="sep"></div>
+  <a href="#s9">9 · 初识「地址」</a>
+  <a href="#s10">10 · 地址与数组</a>
+  <a href="#s11">11 · 常见错误</a>
+  <a href="#s12">12 · 一页速查</a>
+</nav>
+
+<main>
+<h1>类型概论</h1>
+<p class="sub-title">UME 项目组内部教程 · M03（Main） · 面向零编程基础成员</p>
+<p>
+  <span class="tag">已学：输入输出 / 选择 / 循环</span>
+  <span class="tag">已学：数组（M01）</span>
+  <span class="tag">已学：函数（M02）</span>
+  <span class="tag b">本讲：类型与地址</span>
+</p>
+
+<div class="card note">
+  <div class="card-t">怎么用这份文档</div>
+  <p>每个知识点都是「<b>先讲清楚，再给代码，代码后面紧跟运行结果</b>」。
+  本文里<b>所有「运行结果」都经过实际编译运行核对</b>，不是编的。</p>
+  <p>本讲是M04《指针初步》的地基，特别是第 9、10 节的「地址」概念，
+  <b>请务必看懂再往下走</b>。</p>
+</div>
+
+<!-- ============================================================ -->
+<h2 id="s1"><span class="n">1</span>类型为什么重要</h2>
+
+<p>你写过的每一条变量声明，都包含了类型：</p>
+
+<div class="code-wrap"><div class="bar"><span class="dot r"></span><span class="dot y"></span><span class="dot g"></span><span class="name">类型无处不在</span><span class="cp">复制</span></div><pre><span class="hl-k">int</span> a = <span class="hl-n">10</span>;          <span class="hl-c">/* int 是类型 */</span>
+<span class="hl-k">double</span> d = <span class="hl-n">3.14</span>;     <span class="hl-c">/* double 是类型 */</span>
+<span class="hl-k">char</span> c = <span class="hl-s">'A'</span>;        <span class="hl-c">/* char 是类型 */</span>
+<span class="hl-k">int</span> arr[<span class="hl-n">5</span>];          <span class="hl-c">/* 「5 个 int」也是一种类型 */</span></pre></div>
+
+<p>很多人觉得类型只是「写代码时的规定」，其实它管着三件大事：</p>
+
+<div class="flow">
+  <div class="s"><div class="t">占多少内存</div><div class="d">int 占 4 字节，char 占 1 字节</div></div>
+  <div class="s"><div class="t">能表示多大</div><div class="d">决定取值范围，超了就出错</div></div>
+  <div class="s"><div class="t">怎么解释这串位</div><div class="d">同样的位，按不同规则读出不同的值</div></div>
+</div>
+
+<p>举一个立刻能感受到的例子 —— 同一串二进制位 <code>11111111</code>：</p>
+
+<div class="code-wrap"><div class="bar"><span class="dot r"></span><span class="dot y"></span><span class="dot g"></span><span class="name">同样的位，不同的读法</span><span class="cp">复制</span></div><pre><span class="hl-p">#include</span> <span class="hl-s">&lt;stdio.h&gt;</span>
+
+<span class="hl-k">int</span> <span class="hl-f">main</span>(<span class="hl-k">void</span>) {
+    <span class="hl-k">char</span> c = <span class="hl-n">-1</span>;
+    <span class="hl-k">unsigned char</span> u = <span class="hl-n">255</span>;
+
+    <span class="hl-f">printf</span>(<span class="hl-s">"按有符号读： %d\n"</span>, (<span class="hl-k">int</span>)c);
+    <span class="hl-f">printf</span>(<span class="hl-s">"按无符号读： %d\n"</span>, (<span class="hl-k">int</span>)u);
+    <span class="hl-k">return</span> <span class="hl-n">0</span>;
+}</pre></div>
+
+<div class="out-wrap"><div class="cap">运行结果</div><pre>按有符号读： -1
+按无符号读： 255</pre></div>
+
+<p>内存里那 8 位<b>都是 <code>11111111</code></b>，一模一样。
+但按 <code>char</code> 读出来是 <code>-1</code>，按 <code>unsigned char</code> 读出来是 <code>255</code>。</p>
+
+<div class="card key">
+  <div class="card-t">本讲最重要的一句话</div>
+  <p><b>类型决定了「这块内存占多宽」以及「里面的位该怎么解释」。</b></p>
+  <p>所以类型不是形式主义 —— 它直接决定了程序算出来的是不是你要的答案。</p>
+</div>
+
+<!-- ============================================================ -->
+<h2 id="s2"><span class="n">2</span>类型的三件事</h2>
+
+<p>学类型，只要盯住三个问题就够了：</p>
+
+<table>
+<thead><tr><th style="width:24%">问题</th><th style="width:30%">以 <code>int</code> 为例</th><th>为什么重要</th></tr></thead>
+<tbody>
+<tr><td><b>① 占几字节</b></td><td class="c">4 字节 = 32 位</td>
+    <td>决定内存用量；也是数组「总大小 ÷ 单个大小 = 元素个数」的依据</td></tr>
+<tr><td><b>② 能表示多大范围</b></td><td class="c">-2147483648 ~ 2147483647</td>
+    <td>算超出范围就会「溢出」，结果不是你想要的</td></tr>
+<tr><td><b>③ 有没有负数</b></td><td class="c">有（signed）；<br>加了 <code>unsigned</code> 就没有</td>
+    <td>影响比较运算的结果，也影响范围怎么算</td></tr>
+</tbody>
+</table>
+
+<p>这三件事理解了，后面所有类型都是同一套逻辑。</p>
+
+<!-- ============================================================ -->
+<h2 id="s3"><span class="n">3</span>二进制速成</h2>
+
+<p>要理解类型，先得知道内存里的数字长什么样。这一节把二进制讲清楚。</p>
+
+<h3 id="s3a">3.1 内存里只有 0 和 1</h3>
+
+<p>内存由无数个小开关组成，每个开关只有两种状态：<b>通</b>或<b>断</b>，
+记作 <code>1</code> 和 <code>0</code>。这就是<b>二进制</b>。</p>
+
+<p>为什么不用十进制？因为电路做「两种状态」最容易、最可靠。
+计算机内部一切都是二进制，我们看到的 <code>10</code>、<code>'A'</code>、<code>3.14</code>
+都是「给人看的写法」，存进去时都变成了 0 和 1。</p>
+
+<h3 id="s3b">3.2 十进制 ↔ 二进制</h3>
+
+<p>十进制的每一位代表 10 的幂，二进制每一位代表 <b>2 的幂</b>：
+</p>
+
+<table>
+<thead><tr><th class="c">第几位（从右往左数）</th><th class="c">0</th><th class="c">1</th><th class="c">2</th><th class="c">3</th><th class="c">4</th><th class="c">5</th><th class="c">6</th><th class="c">7</th></tr></thead>
+<tbody>
+<tr><td class="c">代表的值</td><td class="c">1</td><td class="c">2</td><td class="c">4</td><td class="c">8</td><td class="c">16</td><td class="c">32</td><td class="c">64</td><td class="c">128</td></tr>
+</tbody>
+</table>
+
+<p>把十进制数拆成「2 的幂之和」，再把对应的位置写成 1，就得到二进制。</p>
+
+<h4>例：把 5 写成二进制</h4>
+<p><code>5 = 4 + 1</code>，也就是 <code>2² + 2⁰</code>，
+所以第 2 位和第 0 位是 1：</p>
+
+<div class="bits">
+  <div class="b w">0</div><div class="b w">0</div><div class="b w">0</div><div class="b w">0</div>
+  <div class="b on w">0</div><div class="b w">1</div><div class="b on w">0</div><div class="b w">1</div>
+</div>
+<p style="font-size:13px;color:var(--fg-3);margin-top:-4px">
+从右往左读：第 0 位=1，第 1 位=0，第 2 位=1，第 3 位及更高都是 0 → <code>00000101</code> = 5</p>
+
+<h4>例：把 12 写成二进制</h4>
+<p><code>12 = 8 + 4</code> = <code>2³ + 2²</code>，所以第 3 位和第 2 位是 1：</p>
+
+<div class="bits">
+  <div class="b w">0</div><div class="b w">0</div><div class="b w">0</div><div class="b w">0</div>
+  <div class="b on w">1</div><div class="b on w">1</div><div class="b w">0</div><div class="b w">0</div>
+</div>
+<p style="font-size:13px;color:var(--fg-3);margin-top:-4px">
+仍是<b>左边是高位</b>：第 7~4 位都是 0，第 3 位 = 1、第 2 位 = 1，第 1、0 位是 0 →
+<code>00001100</code> = 8 + 4 = 12</p>
+
+<p>用程序打印出来核对一下：</p>
+
+<div class="code-wrap"><div class="bar"><span class="dot r"></span><span class="dot y"></span><span class="dot g"></span><span class="name">打印一个数的二进制</span><span class="cp">复制</span></div><pre><span class="hl-p">#include</span> <span class="hl-s">&lt;stdio.h&gt;</span>
+
+<span class="hl-c">/* 从最高位往最低位，一位一位打印 */</span>
+<span class="hl-k">void</span> <span class="hl-f">printBinary</span>(<span class="hl-k">int</span> n) {
+    <span class="hl-k">for</span> (<span class="hl-k">int</span> i = <span class="hl-n">7</span>; i &gt;= <span class="hl-n">0</span>; i--) {
+        <span class="hl-f">printf</span>(<span class="hl-s">"%d"</span>, (n &gt;&gt; i) &amp; <span class="hl-n">1</span>);
+    }
+}
+
+<span class="hl-k">int</span> <span class="hl-f">main</span>(<span class="hl-k">void</span>) {
+    <span class="hl-k">int</span> vals[<span class="hl-n">5</span>] = {<span class="hl-n">0</span>, <span class="hl-n">1</span>, <span class="hl-n">2</span>, <span class="hl-n">5</span>, <span class="hl-n">12</span>};
+    <span class="hl-k">for</span> (<span class="hl-k">int</span> i = <span class="hl-n">0</span>; i &lt; <span class="hl-n">5</span>; i++) {
+        <span class="hl-f">printf</span>(<span class="hl-s">"%3d -&gt; "</span>, vals[i]);
+        <span class="hl-f">printBinary</span>(vals[i]);
+        <span class="hl-f">printf</span>(<span class="hl-s">"\n"</span>);
+    }
+    <span class="hl-k">return</span> <span class="hl-n">0</span>;
+}</pre></div>
+
+<div class="out-wrap"><div class="cap">运行结果</div><pre>  0 -> 00000000
+  1 -> 00000001
+  2 -> 00000010
+  5 -> 00000101
+ 12 -> 00001100</pre></div>
+
+<p>其中 <code>(n &gt;&gt; i) &amp; 1</code> 的意思是：
+<b>把第 i 位移到最右边，再取出最低位</b>。
+现在不用深究，第 4 节之后再回来看就懂了。</p>
+
+<h3 id="s3c">3.3 位与字节</h3>
+
+<p>一位（bit）太小，所以把 <b>8 位打包成一个字节（byte）</b>：</p>
+
+<div class="bits bits-lg">
+  <div class="b">1</div><div class="b">0</div><div class="b">1</div><div class="b">1</div>
+  <div class="b">0</div><div class="b">1</div><div class="b">0</div><div class="b">0</div>
+</div>
+<p style="font-size:13px;color:var(--fg-3);margin-top:-2px">1 字节 = 8 位</p>
+
+<div class="card key">
+  <div class="card-t">8 位能表示多少个数</div>
+  <p>每一位有 2 种可能，8 位就有 <code>2⁸ = 256</code> 种组合。所以：</p>
+  <ul>
+    <li><b>无符号</b> <code>unsigned char</code>：把 256 种全给非负数 → <code>0 ~ 255</code></li>
+    <li><b>有符号</b> <code>char</code>：正负各分一半 → <code>-128 ~ 127</code></li>
+  </ul>
+  <p>注意两种情况的<b>总数都是 256</b>，只是分配方式不同。</p>
+</div>
+
+<h3 id="s3d">3.4 为什么还要用十六进制</h3>
+
+<p>二进制写起来太长（<code>00001100</code>），十进制又看不出位的规律。
+于是有了折中方案：<b>十六进制</b>。</p>
+
+<p>它好用的原因很巧：<b>1 位十六进制正好等于 4 位二进制</b>。
+所以 8 位二进制正好写成 2 位十六进制，非常整齐。</p>
+
+<table>
+<thead><tr><th class="c">十进制</th><th class="c">二进制</th><th class="c">十六进制</th><th>说明</th></tr></thead>
+<tbody>
+<tr><td class="c">10</td><td class="c">1010</td><td class="c">A</td><td>十六进制里 10~15 用 A~F 表示</td></tr>
+<tr><td class="c">12</td><td class="c">1100</td><td class="c">C</td><td></td></tr>
+<tr><td class="c">15</td><td class="c">1111</td><td class="c">F</td><td>4 位全是 1</td></tr>
+<tr><td class="c">255</td><td class="c">11111111</td><td class="c">FF</td><td>8 位全是 1 = 一个字节塞满</td></tr>
+</tbody>
+</table>
+
+<p>在 C 里写十六进制，前面加 <code>0x</code>：</p>
+
+<div class="code-wrap"><div class="bar"><span class="dot r"></span><span class="dot y"></span><span class="dot g"></span><span class="name">十六进制写法</span><span class="cp">复制</span></div><pre><span class="hl-p">#include</span> <span class="hl-s">&lt;stdio.h&gt;</span>
+
+<span class="hl-k">int</span> <span class="hl-f">main</span>(<span class="hl-k">void</span>) {
+    <span class="hl-k">int</span> a = <span class="hl-n">12</span>;
+
+    <span class="hl-f">printf</span>(<span class="hl-s">"12 = 0x%X\n"</span>, a);      <span class="hl-c">/* %X 按十六进制打印 */</span>
+    <span class="hl-f">printf</span>(<span class="hl-s">"255 = 0x%X\n"</span>, <span class="hl-n">255</span>);
+    <span class="hl-f">printf</span>(<span class="hl-s">"0xFF = %d\n"</span>, <span class="hl-n">0xFF</span>);  <span class="hl-c">/* 反过来：0x 开头就是十六进制数 */</span>
+    <span class="hl-f">printf</span>(<span class="hl-s">"0x10 = %d\n"</span>, <span class="hl-n">0x10</span>);  <span class="hl-c">/* 注意不是 10，是 16 */</span>
+    <span class="hl-k">return</span> <span class="hl-n">0</span>;
+}</pre></div>
+
+<div class="out-wrap"><div class="cap">运行结果</div><pre>12 = 0xC
+255 = 0xFF
+0xFF = 255
+0x10 = 16</pre></div>
+
+<div class="card warn">
+  <div class="card-t">小心这个坑</div>
+  <p><code>0x10</code> <b>不是</b> 10，而是 16（<code>1×16 + 0</code>）。
+  同理 <code>010</code>（以 0 开头）在 C 里是<b>八进制</b>，等于 8。
+  写数字时不要随便在前面加 0。</p>
+</div>
+
+<!-- ============================================================ -->
+<h2 id="s4"><span class="n">4</span>常见类型的大小</h2>
+
+<p>先亲手量一量最靠谱 —— 用 <code>sizeof</code> 运算符，
+它能问出「某个类型占几字节」：</p>
+
+<div class="code-wrap"><div class="bar"><span class="dot r"></span><span class="dot y"></span><span class="dot g"></span><span class="name">sizeof 量一量</span><span class="cp">复制</span></div><pre><span class="hl-p">#include</span> <span class="hl-s">&lt;stdio.h&gt;</span>
+
+<span class="hl-k">int</span> <span class="hl-f">main</span>(<span class="hl-k">void</span>) {
+    <span class="hl-f">printf</span>(<span class="hl-s">"char        %d 字节\n"</span>, (<span class="hl-k">int</span>)<span class="hl-f">sizeof</span>(<span class="hl-k">char</span>));
+    <span class="hl-f">printf</span>(<span class="hl-s">"short       %d 字节\n"</span>, (<span class="hl-k">int</span>)<span class="hl-f">sizeof</span>(<span class="hl-k">short</span>));
+    <span class="hl-f">printf</span>(<span class="hl-s">"int         %d 字节\n"</span>, (<span class="hl-k">int</span>)<span class="hl-f">sizeof</span>(<span class="hl-k">int</span>));
+    <span class="hl-f">printf</span>(<span class="hl-s">"long        %d 字节\n"</span>, (<span class="hl-k">int</span>)<span class="hl-f">sizeof</span>(<span class="hl-k">long</span>));
+    <span class="hl-f">printf</span>(<span class="hl-s">"long long   %d 字节\n"</span>, (<span class="hl-k">int</span>)<span class="hl-f">sizeof</span>(<span class="hl-k">long long</span>));
+    <span class="hl-f">printf</span>(<span class="hl-s">"float       %d 字节\n"</span>, (<span class="hl-k">int</span>)<span class="hl-f">sizeof</span>(<span class="hl-k">float</span>));
+    <span class="hl-f">printf</span>(<span class="hl-s">"double      %d 字节\n"</span>, (<span class="hl-k">int</span>)<span class="hl-f">sizeof</span>(<span class="hl-k">double</span>));
+    <span class="hl-k">return</span> <span class="hl-n">0</span>;
+}</pre></div>
+
+<div class="out-wrap"><div class="cap">运行结果（64 位 Windows）</div><pre>char        1 字节
+short       2 字节
+int         4 字节
+long        4 字节
+long long   8 字节
+float       4 字节
+double      8 字节</pre></div>
+
+<h4>整理成表</h4>
+
+<table>
+<thead><tr>
+  <th style="width:20%">类型</th><th class="c" style="width:12%">字节</th>
+  <th class="c" style="width:12%">位数</th><th>取值范围</th><th style="width:22%">典型用途</th>
+</tr></thead>
+<tbody>
+<tr><td class="c">char</td><td class="c">1</td><td class="c">8</td>
+    <td class="c">-128 ~ 127</td><td>单个字符、很小的数</td></tr>
+<tr><td class="c">unsigned char</td><td class="c">1</td><td class="c">8</td>
+    <td class="c">0 ~ 255</td><td>字节数据、0~255 的数</td></tr>
+<tr><td class="c">short</td><td class="c">2</td><td class="c">16</td>
+    <td class="c">-32768 ~ 32767</td><td>省内存的小整数</td></tr>
+<tr><td class="c">int</td><td class="c">4</td><td class="c">32</td>
+    <td class="c">-2147483648 ~ 2147483647</td><td><b>最常用的整数</b></td></tr>
+<tr><td class="c">unsigned int</td><td class="c">4</td><td class="c">32</td>
+    <td class="c">0 ~ 4294967295</td><td>不需要负数的计数</td></tr>
+<tr><td class="c">long long</td><td class="c">8</td><td class="c">64</td>
+    <td class="c">约 ±9.2×10¹⁸</td><td>很大的整数</td></tr>
+<tr><td class="c">float</td><td class="c">4</td><td class="c">32</td>
+    <td>约 ±3.4×10³⁸（7 位有效数字）</td><td>精度要求不高的小数</td></tr>
+<tr><td class="c">double</td><td class="c">8</td><td class="c">64</td>
+    <td>约 ±1.8×10³⁰⁸（15 位有效数字）</td><td><b>最常用的小数</b></td></tr>
+</tbody>
+</table>
+
+<div class="card warn">
+  <div class="card-t">两点必须注意</div>
+  <ul>
+    <li><b>上表是「常见情况」，不是铁律。</b>C 标准只规定了最少位数，
+      具体大小由「编译器 + 平台」决定。
+      比如 <code>long</code> 在 64 位 Windows 上是 <b>4 字节</b>，
+      在 64 位 Linux 上却是 <b>8 字节</b>。</li>
+    <li><b>想确定就用 <code>sizeof</code> 量</b>，不要凭记忆猜。
+      这也是为什么上面先让你自己跑一遍。</li>
+  </ul>
+</div>
+
+<div class="card key">
+  <div class="card-t">关于 float 和 double 怎么存</div>
+  <p>本讲<b>不展开</b>小数（浮点数）的内部编码 ——
+  那涉及 IEEE 754 的符号位/指数位/尾数位划分，属于进阶内容。</p>
+  <p>现在只需要记住三件事：</p>
+  <ul>
+    <li><code>float</code> 占 4 字节，<code>double</code> 占 8 字节</li>
+    <li>它们能表示的范围极大，但<b>有效数字有限</b>
+      （<code>float</code> 约 7 位，<code>double</code> 约 15 位）</li>
+    <li>初学阶段<b>小数一律用 <code>double</code></b>，稳妥</li>
+  </ul>
+</div>
+
+<h4>用 sizeof 算出数组长度</h4>
+<p>你在M01见过这个用法，现在能解释原理了：</p>
+
+<div class="code-wrap"><div class="bar"><span class="dot r"></span><span class="dot y"></span><span class="dot g"></span><span class="name">总大小 ÷ 单个大小</span><span class="cp">复制</span></div><pre><span class="hl-k">int</span> a[<span class="hl-n">10</span>];
+<span class="hl-k">int</span> n = (<span class="hl-k">int</span>)(<span class="hl-f">sizeof</span>(a) / <span class="hl-f">sizeof</span>(a[<span class="hl-n">0</span>]));
+<span class="hl-c">/*  40 字节  ÷  4 字节  =  10 个元素 */</span></pre></div>
+
+<!-- ============================================================ -->
+<h2 id="s5"><span class="n">5</span>有多少位，就有多大范围</h2>
+
+<p>范围不是随便定的，它由<b>位数</b>直接算出来：</p>
+
+<div class="mnemonic">
+  <b>n 位的无符号整数，能表示 <code>2ⁿ</code> 个数，范围是 <code>0 ~ 2ⁿ-1</code>。</b><br>
+  有符号的话，把 <code>2ⁿ</code> 个名额分成「负数 + 非负数」两半，就是 <code>-2ⁿ⁻¹ ~ 2ⁿ⁻¹-1</code>。
+</div>
+
+<p>对照着看，规律非常明显：</p>
+
+<table>
+<thead><tr><th class="c">位数</th><th class="c">2ⁿ</th><th class="c">无符号范围</th><th class="c">有符号范围</th></tr></thead>
+<tbody>
+<tr><td class="c">8</td><td class="c">256</td><td class="c">0 ~ 255</td><td class="c">-128 ~ 127</td></tr>
+<tr><td class="c">16</td><td class="c">65536</td><td class="c">0 ~ 65535</td><td class="c">-32768 ~ 32767</td></tr>
+<tr><td class="c">32</td><td class="c">4294967296</td><td class="c">0 ~ 4294967295</td><td class="c">-2147483648 ~ 2147483647</td></tr>
+<tr><td class="c">64</td><td class="c">1.8×10¹⁹</td><td class="c">0 ~ 1.8×10¹⁹</td><td class="c">约 ±9.2×10¹⁸</td></tr>
+</tbody>
+</table>
+
+<p>注意有符号的那一列：<b>负数那半边总比正数那半边多一个</b>。
+因为 0 占了正数侧的一个名额，所以 <code>char</code> 是 <code>-128 ~ 127</code>，
+而不是对称的 <code>-127 ~ 127</code>。</p>
+
+<p>用程序把上下限打出来（用 <code>&lt;limits.h&gt;</code> 里的现成常量）：</p>
+
+<div class="code-wrap"><div class="bar"><span class="dot r"></span><span class="dot y"></span><span class="dot g"></span><span class="name">打印各类型的边界</span><span class="cp">复制</span></div><pre><span class="hl-p">#include</span> <span class="hl-s">&lt;stdio.h&gt;</span>
+<span class="hl-p">#include</span> <span class="hl-s">&lt;limits.h&gt;</span>      <span class="hl-c">/* 各种边界常量都在这里 */</span>
+
+<span class="hl-k">int</span> <span class="hl-f">main</span>(<span class="hl-k">void</span>) {
+    <span class="hl-f">printf</span>(<span class="hl-s">"char      %d ~ %d\n"</span>, CHAR_MIN, CHAR_MAX);
+    <span class="hl-f">printf</span>(<span class="hl-s">"short     %d ~ %d\n"</span>, SHRT_MIN, SHRT_MAX);
+    <span class="hl-f">printf</span>(<span class="hl-s">"int       %d ~ %d\n"</span>, INT_MIN, INT_MAX);
+    <span class="hl-f">printf</span>(<span class="hl-s">"unsigned  %u ~ %u\n"</span>, <span class="hl-n">0u</span>, UINT_MAX);
+    <span class="hl-f">printf</span>(<span class="hl-s">"int 有 %d 位\n"</span>, (<span class="hl-k">int</span>)(<span class="hl-f">sizeof</span>(<span class="hl-k">int</span>) * <span class="hl-n">8</span>));
+    <span class="hl-k">return</span> <span class="hl-n">0</span>;
+}</pre></div>
+
+<div class="out-wrap"><div class="cap">运行结果</div><pre>char      -128 ~ 127
+short     -32768 ~ 32767
+int       -2147483648 ~ 2147483647
+unsigned  0 ~ 4294967295
+int 有 32 位</pre></div>
+
+<!-- ============================================================ -->
+<h2 id="s6"><span class="n">6</span>有符号与无符号</h2>
+
+<p>在类型前加 <code>unsigned</code>，就表示<b>「不要负数，把全部名额都给非负数」</b>：</p>
+
+<table>
+<thead><tr><th style="width:28%">类型</th><th>含义</th><th class="c" style="width:30%">范围</th></tr></thead>
+<tbody>
+<tr><td class="c">int</td><td>有符号，能存负数</td><td class="c">-2147483648 ~ 2147483647</td></tr>
+<tr><td class="c">unsigned int</td><td>无符号，只能非负</td><td class="c">0 ~ 4294967295</td></tr>
+</tbody>
+</table>
+
+<p>注意：<b>两者的范围宽度是一样的</b>（都是 2³²），
+只是 <code>unsigned</code> 把原本给负数的部分挪到了正数那边。</p>
+
+<h3>无符号的「回绕」</h3>
+<p>无符号数减到 0 以下不会变成负数，而是<b>绕回到最大值</b>：</p>
+
+<div class="code-wrap"><div class="bar"><span class="dot r"></span><span class="dot y"></span><span class="dot g"></span><span class="name">0 减 1 的两种命运</span><span class="cp">复制</span></div><pre><span class="hl-p">#include</span> <span class="hl-s">&lt;stdio.h&gt;</span>
+
+<span class="hl-k">int</span> <span class="hl-f">main</span>(<span class="hl-k">void</span>) {
+    <span class="hl-k">int</span> i = <span class="hl-n">0</span>;
+    <span class="hl-k">unsigned int</span> u = <span class="hl-n">0</span>;
+    <span class="hl-k">unsigned char</span> uc = <span class="hl-n">0</span>;
+
+    <span class="hl-f">printf</span>(<span class="hl-s">"int           0 - 1 = %d\n"</span>, i - <span class="hl-n">1</span>);
+    <span class="hl-f">printf</span>(<span class="hl-s">"unsigned int  0 - 1 = %u\n"</span>, u - <span class="hl-n">1</span>);
+    <span class="hl-f">printf</span>(<span class="hl-s">"unsigned char 0 - 1 = %d\n"</span>, (<span class="hl-k">int</span>)(<span class="hl-k">unsigned char</span>)(uc - <span class="hl-n">1</span>));
+    <span class="hl-k">return</span> <span class="hl-n">0</span>;
+}</pre></div>
+
+<div class="out-wrap"><div class="cap">运行结果</div><pre>int           0 - 1 = -1
+unsigned int  0 - 1 = 4294967295
+unsigned char 0 - 1 = 255</pre></div>
+
+<p>可以这样理解：无符号数像一个<b>只有 0~9 的里程表</b>，
+从 0 往回拨一格，就跳到了 9（最大值）。</p>
+
+<h3>真正的陷阱：有符号和无符号一起比较</h3>
+
+<p>当 <code>int</code> 和 <code>unsigned int</code> 出现在同一个比较里，
+C 会把 <code>int</code> <b>悄悄转成无符号</b>再看。如果它是负数，就会变成一个极大的数：</p>
+
+<div class="code-wrap"><div class="bar"><span class="dot r"></span><span class="dot y"></span><span class="dot g"></span><span class="name">看着对，其实反了</span><span class="cp">复制</span></div><pre><span class="hl-p">#include</span> <span class="hl-s">&lt;stdio.h&gt;</span>
+
+<span class="hl-k">int</span> <span class="hl-f">main</span>(<span class="hl-k">void</span>) {
+    <span class="hl-k">int</span> n = <span class="hl-n">-1</span>;
+    <span class="hl-k">unsigned int</span> m = <span class="hl-n">1</span>;
+
+    <span class="hl-f">printf</span>(<span class="hl-s">"m &gt; n 的结果 = %d\n"</span>, m &gt; n);
+    <span class="hl-f">printf</span>(<span class="hl-s">"(unsigned)-1 = %u\n"</span>, (<span class="hl-k">unsigned</span>)<span class="hl-n">-1</span>);
+
+    <span class="hl-c">/* 无符号循环变量往回走，会死循环 */</span>
+    <span class="hl-f">printf</span>(<span class="hl-s">"0u - 1 = %u\n"</span>, <span class="hl-n">0u</span> - <span class="hl-n">1</span>);
+    <span class="hl-k">return</span> <span class="hl-n">0</span>;
+}</pre></div>
+
+<div class="out-wrap"><div class="cap">运行结果</div><pre>m > n 的结果 = 0
+(unsigned)-1 = 4294967295
+0u - 1 = 4294967295</pre></div>
+
+<p><code>m &gt; n</code> 即 <code>1 &gt; -1</code>，
+按数学应该是「成立」，可结果是 <code>0</code>（不成立）！
+原因是 <code>-1</code> 被当成了 <code>4294967295</code>，1 当然不比它大。</p>
+
+<div class="card tip">
+  <div class="card-t">实用建议</div>
+  <ul>
+    <li><b>循环变量一律用 <code>int</code></b>，不要用 <code>unsigned</code>。
+      这样倒着遍历（<code>i--</code>）才不会出事。</li>
+    <li>不要拿无符号数和有符号数直接比大小。真的要混用，
+      先想清楚哪一个该转成什么。</li>
+    <li>日常生活中「数量、下标」这类天然非负的量，
+      用 <code>int</code> 也完全够（21 亿的上限很难用完）。</li>
+  </ul>
+</div>
+
+<!-- ============================================================ -->
+<h2 id="s7"><span class="n">7</span>溢出的真面目</h2>
+
+<p>既然范围有限，那超过范围会怎样？
+答案：<b>绕回去</b>，而且<b>不报错</b>。这是 C 语言最需要警惕的地方之一。</p>
+
+<div class="code-wrap"><div class="bar"><span class="dot r"></span><span class="dot y"></span><span class="dot g"></span><span class="name">最大值再加 1 会怎样</span><span class="cp">复制</span></div><pre><span class="hl-p">#include</span> <span class="hl-s">&lt;stdio.h&gt;</span>
+<span class="hl-p">#include</span> <span class="hl-s">&lt;limits.h&gt;</span>
+
+<span class="hl-k">int</span> <span class="hl-f">main</span>(<span class="hl-k">void</span>) {
+    <span class="hl-k">int</span> big = INT_MAX;
+
+    <span class="hl-f">printf</span>(<span class="hl-s">"INT_MAX     = %d\n"</span>, big);
+    <span class="hl-f">printf</span>(<span class="hl-s">"INT_MAX + 1 = %d\n"</span>, big + <span class="hl-n">1</span>);
+    <span class="hl-f">printf</span>(<span class="hl-s">"INT_MIN     = %d\n"</span>, INT_MIN);
+    <span class="hl-f">printf</span>(<span class="hl-s">"INT_MIN - 1 = %d\n"</span>, INT_MIN - <span class="hl-n">1</span>);
+    <span class="hl-k">return</span> <span class="hl-n">0</span>;
+}</pre></div>
+
+<div class="out-wrap"><div class="cap">运行结果</div><pre>INT_MAX     = 2147483647
+INT_MAX + 1 = -2147483648
+INT_MIN     = -2147483648
+INT_MIN - 1 = 2147483647</pre></div>
+
+<p>最大的正数加 1，变成了<b>最小的负数</b>；最小的负数减 1，变成了<b>最大的正数</b>。
+就像里程表从 99999 再走一格变成 00000。</p>
+
+<div class="card warn">
+  <div class="card-t">溢出为什么危险</div>
+  <p>因为它<b>不会报错、不会崩溃</b>，只是安静地给你一个错的数。
+  等你发现结果不对时，可能已经排查了很久。</p>
+  <p>典型场景：</p>
+  <ul>
+    <li>累加很多个大数（比如求 1 到 100000 的平方和）</li>
+    <li>计算阶乘（<code>13!</code> 就已经超出 <code>int</code> 范围了）</li>
+    <li>两个大数相乘</li>
+  </ul>
+  <p>对策：<b>事先估算一下结果大概多大</b>。觉得可能超，就换成
+  <code>long long</code>（8 字节，约 ±9.2×10¹⁸）。</p>
+</div>
+
+<h4>自己动手检查有没有溢出</h4>
+<p>有个简单办法：<b>加之前先看看会不会超</b>。</p>
+
+<div class="code-wrap"><div class="bar"><span class="dot r"></span><span class="dot y"></span><span class="dot g"></span><span class="name">加法前先判断</span><span class="cp">复制</span></div><pre><span class="hl-p">#include</span> <span class="hl-s">&lt;stdio.h&gt;</span>
+<span class="hl-p">#include</span> <span class="hl-s">&lt;limits.h&gt;</span>
+
+<span class="hl-k">int</span> <span class="hl-f">main</span>(<span class="hl-k">void</span>) {
+    <span class="hl-k">int</span> a = <span class="hl-n">2000000000</span>;
+    <span class="hl-k">int</span> b = <span class="hl-n">2000000000</span>;
+
+    <span class="hl-c">/* 若 a + b 会超出 INT_MAX，就提前提醒 */</span>
+    <span class="hl-k">if</span> (a &gt; INT_MAX - b) {
+        <span class="hl-f">printf</span>(<span class="hl-s">"会溢出，不能直接相加\n"</span>);
+        <span class="hl-f">printf</span>(<span class="hl-s">"用 long long 算：%lld\n"</span>, (<span class="hl-k">long long</span>)a + b);
+    }
+    <span class="hl-k">return</span> <span class="hl-n">0</span>;
+}</pre></div>
+
+<div class="out-wrap"><div class="cap">运行结果</div><pre>会溢出，不能直接相加
+用 long long 算：4000000000</pre></div>
+
+<p>诀窍是：<b>把「加法」换成「减法」来判断</b>。
+<code>a + b</code> 会溢出，但 <code>INT_MAX - b</code> 不会，
+所以比较 <code>a &gt; INT_MAX - b</code> 是安全的。</p>
+
+<!-- ============================================================ -->
+<h2 id="s8"><span class="n">8</span>类型转换</h2>
+
+<p>不同类型混在一起运算时，C 会自动转换；你也可以用 <code>(类型)</code> 强制转换。</p>
+
+<h3>自动转换：小的往大的靠</h3>
+<div class="code-wrap"><div class="bar"><span class="dot r"></span><span class="dot y"></span><span class="dot g"></span><span class="name">int 和 double 一起算</span><span class="cp">复制</span></div><pre><span class="hl-k">int</span> a = <span class="hl-n">5</span>;
+<span class="hl-k">double</span> d = <span class="hl-n">2.0</span>;
+
+a + d      <span class="hl-c">/* a 先被转成 double，结果是 7.0 */</span></pre></div>
+
+<h3>强制转换：写 <code>(类型)</code></h3>
+<div class="code-wrap"><div class="bar"><span class="dot r"></span><span class="dot y"></span><span class="dot g"></span><span class="name">显式转换</span><span class="cp">复制</span></div><pre><span class="hl-k">int</span> n = <span class="hl-n">7</span>, m = <span class="hl-n">2</span>;
+
+<span class="hl-f">printf</span>(<span class="hl-s">"%d\n"</span>, n / m);              <span class="hl-c">/* 整数除法：3      */</span>
+<span class="hl-f">printf</span>(<span class="hl-s">"%.1f\n"</span>, (<span class="hl-k">double</span>)n / m); <span class="hl-c">/* 转成小数再除：3.5 */</span></pre></div>
+
+<div class="out-wrap"><div class="cap">运行结果</div><pre>3
+3.5</pre></div>
+
+<h3>大转小：会把高位切掉</h3>
+<p>把一个大的数塞进小的类型，多出来的部分会被<b>直接丢掉</b>：</p>
+
+<div class="code-wrap"><div class="bar"><span class="dot r"></span><span class="dot y"></span><span class="dot g"></span><span class="name">300 装不进一个 char</span><span class="cp">复制</span></div><pre><span class="hl-p">#include</span> <span class="hl-s">&lt;stdio.h&gt;</span>
+
+<span class="hl-k">int</span> <span class="hl-f">main</span>(<span class="hl-k">void</span>) {
+    <span class="hl-k">int</span> v = <span class="hl-n">300</span>;
+
+    <span class="hl-f">printf</span>(<span class="hl-s">"v = %d\n"</span>, v);
+    <span class="hl-f">printf</span>(<span class="hl-s">"(char)300          = %d\n"</span>, (<span class="hl-k">char</span>)v);
+    <span class="hl-f">printf</span>(<span class="hl-s">"(unsigned char)300 = %d\n"</span>, (<span class="hl-k">unsigned char</span>)v);
+    <span class="hl-f">printf</span>(<span class="hl-s">"(short)70000       = %d\n"</span>, (<span class="hl-k">short</span>)<span class="hl-n">70000</span>);
+    <span class="hl-k">return</span> <span class="hl-n">0</span>;
+}</pre></div>
+
+<div class="out-wrap"><div class="cap">运行结果</div><pre>v = 300
+(char)300          = 44
+(unsigned char)300 = 44
+(short)70000       = 4464</pre></div>
+
+<p>为什么 300 会变成 44？因为 <code>char</code> 只有 8 位，
+只能留下 300 的低 8 位。<code>300 = 100101100</code>（9 位），
+砍掉最高位剩下 <code>00101100</code> = 44。</p>
+
+<h3>小数转整数：直接截断，不四舍五入</h3>
+
+<div class="code-wrap"><div class="bar"><span class="dot r"></span><span class="dot y"></span><span class="dot g"></span><span class="name">截断而不是取整</span><span class="cp">复制</span></div><pre><span class="hl-p">#include</span> <span class="hl-s">&lt;stdio.h&gt;</span>
+
+<span class="hl-k">int</span> <span class="hl-f">main</span>(<span class="hl-k">void</span>) {
+    <span class="hl-f">printf</span>(<span class="hl-s">"(int)3.9  = %d\n"</span>, (<span class="hl-k">int</span>)<span class="hl-n">3.9</span>);
+    <span class="hl-f">printf</span>(<span class="hl-s">"(int)-3.9 = %d\n"</span>, (<span class="hl-k">int</span>)<span class="hl-n">-3.9</span>);
+    <span class="hl-f">printf</span>(<span class="hl-s">"(int)3.5 + (int)3.5 = %d\n"</span>, (<span class="hl-k">int</span>)<span class="hl-n">3.5</span> + (<span class="hl-k">int</span>)<span class="hl-n">3.5</span>);
+    <span class="hl-f">printf</span>(<span class="hl-s">"(int)(3.5 + 3.5)    = %d\n"</span>, (<span class="hl-k">int</span>)(<span class="hl-n">3.5</span> + <span class="hl-n">3.5</span>));
+    <span class="hl-k">return</span> <span class="hl-n">0</span>;
+}</pre></div>
+
+<div class="out-wrap"><div class="cap">运行结果</div><pre>(int)3.9  = 3
+(int)-3.9 = -3
+(int)3.5 + (int)3.5 = 6
+(int)(3.5 + 3.5)    = 7</pre></div>
+
+<div class="card warn">
+  <div class="card-t">最后两行的差别很关键</div>
+  <p><code>(int)3.5 + (int)3.5</code> 是<b>先各自截断再相加</b>：
+  <code>3 + 3 = 6</code>。</p>
+  <p><code>(int)(3.5 + 3.5)</code> 是<b>先加再截断</b>：
+  <code>(int)7.0 = 7</code>。</p>
+  <p>括号的位置决定了先做哪一步，结果就不一样。
+  <b>强制转换的括号要写清楚作用范围。</b></p>
+</div>
+
+<h3>需要四舍五入怎么办</h3>
+<p><code>(int)</code> 只会砍掉小数，想要「四舍五入」得自己加 0.5：</p>
+
+<div class="code-wrap"><div class="bar"><span class="dot r"></span><span class="dot y"></span><span class="dot g"></span><span class="name">手工四舍五入</span><span class="cp">复制</span></div><pre><span class="hl-k">double</span> x = <span class="hl-n">3.7</span>;
+<span class="hl-k">int</span> r = (<span class="hl-k">int</span>)(x + <span class="hl-n">0.5</span>);   <span class="hl-c">/* 3.7+0.5 = 4.2 → 4 */</span>
+
+<span class="hl-k">double</span> y = <span class="hl-n">3.2</span>;
+<span class="hl-k">int</span> s = (<span class="hl-k">int</span>)(y + <span class="hl-n">0.5</span>);   <span class="hl-c">/* 3.2+0.5 = 3.7 → 3 */</span></pre></div>
+
+<!-- ============================================================ -->
+<h2 id="s9"><span class="n">9</span>初识「地址」</h2>
+
+<p>前面讲了「一个变量占几字节」。接下来问一个更根本的问题：
+<b>这些字节到底放在哪里？</b></p>
+
+<div class="card key">
+  <div class="card-t">核心概念：地址</div>
+  <p>内存可以想象成一条<b>很长很长的走廊</b>，走廊两侧是无数个编了号的房间，
+  每个房间 1 字节。</p>
+  <p><b>房间的编号，就叫「地址」。</b></p>
+  <p>你声明一个变量时，系统就分配给它若干个房间（int 要 4 个），
+  并且<b>这些房间有确定的地址</b>。</p>
+</div>
+
+<h4>怎么看到一个变量的地址</h4>
+<p>用 <code>&amp;</code> 运算符 —— 读作「取地址」：</p>
+
+<div class="code-wrap"><div class="bar"><span class="dot r"></span><span class="dot y"></span><span class="dot g"></span><span class="name">&amp; 取地址</span><span class="cp">复制</span></div><pre><span class="hl-p">#include</span> <span class="hl-s">&lt;stdio.h&gt;</span>
+
+<span class="hl-k">int</span> <span class="hl-f">main</span>(<span class="hl-k">void</span>) {
+    <span class="hl-k">int</span> a = <span class="hl-n">10</span>;
+
+    <span class="hl-f">printf</span>(<span class="hl-s">"a 的值   = %d\n"</span>, a);
+    <span class="hl-f">printf</span>(<span class="hl-s">"a 的地址 = %p\n"</span>, (<span class="hl-k">void</span> *)&amp;a);
+    <span class="hl-k">return</span> <span class="hl-n">0</span>;
+}</pre></div>
+
+<div class="out-wrap"><div class="cap">运行结果（每次运行地址都会变）</div><pre>a 的值   = 10
+a 的地址 = 000000000060FD8C</pre></div>
+
+<p>说明两点：</p>
+<ul>
+  <li><code>%p</code> 是专门用来打印地址的格式符（<code>p</code> = pointer）。
+    这里的 <code>(void *)</code> 是打印地址时的固定写法，先照抄。</li>
+  <li><b>这个数字每次运行都可能不同</b>，也可能换台电脑就不同。
+    它是系统运行时分配的，不用去记具体值。</li>
+</ul>
+
+<div class="card key">
+  <div class="card-t">记住这个符号表</div>
+  <table style="margin:8px 0 0">
+  <thead><tr><th style="width:16%">写法</th><th style="width:26%">读作</th><th>意思</th></tr></thead>
+  <tbody>
+  <tr><td class="c">a</td><td>a 的值</td><td>房间里装的东西</td></tr>
+  <tr><td class="c">&amp;a</td><td>a 的地址</td><td>房间的编号</td></tr>
+  </tbody></table>
+  <p style="margin-top:10px">
+  <b>「值」和「地址」是两回事，别混。</b>
+  就像「房间里住着谁」和「房间是 302 号」是两回事。</p>
+</div>
+
+<h4>画成图看</h4>
+<p>执行 <code>int a = 10;</code> 之后，内存里大致是这样：</p>
+
+<div class="addr">
+  <div>地址</div><div>内容</div><div>谁在用</div>
+  <div>...0060FD88</div><div>（别的数据）</div><div>—</div>
+  <div>...0060FD8C</div><div class="hi">10</div><div>变量 a 的第 1 个字节</div>
+  <div>...0060FD8D</div><div>0</div><div>a 的第 2 个字节</div>
+  <div>...0060FD8E</div><div>0</div><div>a 的第 3 个字节</div>
+  <div>...0060FD8F</div><div>0</div><div>a 的第 4 个字节</div>
+  <div>...0060FD90</div><div>（别的数据）</div><div>—</div>
+</div>
+<p style="font-size:13px;color:var(--fg-3);margin-top:-6px">
+<code>10</code> 的二进制是 <code>00000000 00000000 00000000 00001010</code>，
+小端机器上低位字节放在低地址，所以能看到 <code>10, 0, 0, 0</code> 这样的排布。
+（「小端」是字节存放顺序的约定，现在了解有这回事即可。）</p>
+
+<div class="card tip">
+  <div class="card-t">为什么要知道地址</div>
+  <p>因为下一讲的<b>指针</b>，本质就是<b>「专门用来装地址的变量」</b>。</p>
+  <p>如果现在「地址」这个概念没立住，学指针时就会一头雾水。
+  所以这一节请务必看懂：<b>变量有值，也有地址；<code>&amp;</code> 用来取地址。</b></p>
+</div>
+
+<!-- ============================================================ -->
+<h2 id="s10"><span class="n">10</span>地址与数组</h2>
+
+<p>数组和地址的关系特别紧密，因为M01说过：<b>数组元素是排成一排挨着的</b>。
+这一节用地址来验证这句话。</p>
+
+<div class="code-wrap"><div class="bar"><span class="dot r"></span><span class="dot y"></span><span class="dot g"></span><span class="name">看看相邻元素的地址</span><span class="cp">复制</span></div><pre><span class="hl-p">#include</span> <span class="hl-s">&lt;stdio.h&gt;</span>
+
+<span class="hl-k">int</span> <span class="hl-f">main</span>(<span class="hl-k">void</span>) {
+    <span class="hl-k">int</span> arr[<span class="hl-n">4</span>] = {<span class="hl-n">10</span>, <span class="hl-n">20</span>, <span class="hl-n">30</span>, <span class="hl-n">40</span>};
+
+    <span class="hl-k">for</span> (<span class="hl-k">int</span> i = <span class="hl-n">0</span>; i &lt; <span class="hl-n">4</span>; i++) {
+        <span class="hl-f">printf</span>(<span class="hl-s">"arr[%d] 值=%-3d 地址=%p\n"</span>, i, arr[i], (<span class="hl-k">void</span> *)&amp;arr[i]);
+    }
+    <span class="hl-k">return</span> <span class="hl-n">0</span>;
+}</pre></div>
+
+<div class="out-wrap"><div class="cap">运行结果</div><pre>arr[0] 值=10  地址=000000000060FD7C
+arr[1] 值=20  地址=000000000060FD80
+arr[2] 值=30  地址=000000000060FD84
+arr[3] 值=40  地址=000000000060FD88</pre></div>
+
+<p>把地址的<b>后两位</b>单独看，规律一目了然：</p>
+
+<table>
+<thead><tr><th class="c">元素</th><th class="c">地址</th><th class="c">与上一个相差</th></tr></thead>
+<tbody>
+<tr><td class="c">arr[0]</td><td class="c">...FD7C</td><td class="c">—</td></tr>
+<tr><td class="c">arr[1]</td><td class="c">...FD80</td><td class="c">+4</td></tr>
+<tr><td class="c">arr[2]</td><td class="c">...FD84</td><td class="c">+4</td></tr>
+<tr><td class="c">arr[3]</td><td class="c">...FD88</td><td class="c">+4</td></tr>
+</tbody>
+</table>
+
+<p><b>每个元素正好差 4 字节</b> —— 因为每个 <code>int</code> 占 4 字节，
+它们一个挨一个排着，中间没有空隙。</p>
+
+<div class="card key">
+  <div class="card-t">数组的第一条地址规律</div>
+  <p>数组名就是<b>第一个元素的地址</b>：</p>
+  <pre style="background:#f2f4f8;border:1px solid var(--line);border-radius:8px;padding:10px 12px;font-family:var(--mono);font-size:13px;color:var(--fg);overflow:auto"><span class="hl-k">int</span> arr[<span class="hl-n">4</span>];
+<span class="hl-c">/* arr      等价于  &amp;arr[0]   —— 都是第一个元素的地址 */</span></pre>
+  <p>这也是为什么 <code>scanf("%d", &amp;arr[i])</code> 要写 <code>&amp;</code>：
+  <code>scanf</code> 需要知道<b>往哪个房间放东西</b>，所以要给它地址。</p>
+</div>
+
+<div class="code-wrap"><div class="bar"><span class="dot r"></span><span class="dot y"></span><span class="dot g"></span><span class="name">验证 arr 与 &amp;arr[0] 相同</span><span class="cp">复制</span></div><pre><span class="hl-p">#include</span> <span class="hl-s">&lt;stdio.h&gt;</span>
+
+<span class="hl-k">int</span> <span class="hl-f">main</span>(<span class="hl-k">void</span>) {
+    <span class="hl-k">int</span> arr[<span class="hl-n">4</span>] = {<span class="hl-n">10</span>, <span class="hl-n">20</span>, <span class="hl-n">30</span>, <span class="hl-n">40</span>};
+
+    <span class="hl-f">printf</span>(<span class="hl-s">"arr       = %p\n"</span>, (<span class="hl-k">void</span> *)arr);
+    <span class="hl-f">printf</span>(<span class="hl-s">"&amp;arr[0]   = %p\n"</span>, (<span class="hl-k">void</span> *)&amp;arr[<span class="hl-n">0</span>]);
+    <span class="hl-f">printf</span>(<span class="hl-s">"两者相同吗？ %d\n"</span>, arr == &amp;arr[<span class="hl-n">0</span>]);
+    <span class="hl-k">return</span> <span class="hl-n">0</span>;
+}</pre></div>
+
+<div class="out-wrap"><div class="cap">运行结果</div><pre>arr       = 000000000060FD7C
+&arr[0]   = 000000000060FD7C
+两者相同吗？ 1</pre></div>
+
+<h4>地址的「步长」由类型决定</h4>
+<p>有意思的是：<b>同样是「加 1」，不同类型的地址前进的距离不一样</b>。
+因为要跳过一个完整的元素。</p>
+
+<div class="code-wrap"><div class="bar"><span class="dot r"></span><span class="dot y"></span><span class="dot g"></span><span class="name">不同类型前进多少字节</span><span class="cp">复制</span></div><pre><span class="hl-p">#include</span> <span class="hl-s">&lt;stdio.h&gt;</span>
+
+<span class="hl-k">int</span> <span class="hl-f">main</span>(<span class="hl-k">void</span>) {
+    <span class="hl-k">int</span>    ia[<span class="hl-n">2</span>] = {<span class="hl-n">0</span>, <span class="hl-n">0</span>};
+    <span class="hl-k">char</span>   ca[<span class="hl-n">2</span>] = {<span class="hl-n">0</span>, <span class="hl-n">0</span>};
+    <span class="hl-k">double</span> da[<span class="hl-n">2</span>] = {<span class="hl-n">0</span>, <span class="hl-n">0</span>};
+
+    <span class="hl-f">printf</span>(<span class="hl-s">"int    相邻元素差 %d 字节\n"</span>,
+           (<span class="hl-k">int</span>)((<span class="hl-k">char</span> *)&amp;ia[<span class="hl-n">1</span>] - (<span class="hl-k">char</span> *)&amp;ia[<span class="hl-n">0</span>]));
+    <span class="hl-f">printf</span>(<span class="hl-s">"char   相邻元素差 %d 字节\n"</span>,
+           (<span class="hl-k">int</span>)((<span class="hl-k">char</span> *)&amp;ca[<span class="hl-n">1</span>] - (<span class="hl-k">char</span> *)&amp;ca[<span class="hl-n">0</span>]));
+    <span class="hl-f">printf</span>(<span class="hl-s">"double 相邻元素差 %d 字节\n"</span>,
+           (<span class="hl-k">int</span>)((<span class="hl-k">char</span> *)&amp;da[<span class="hl-n">1</span>] - (<span class="hl-k">char</span> *)&amp;da[<span class="hl-n">0</span>]));
+    <span class="hl-k">return</span> <span class="hl-n">0</span>;
+}</pre></div>
+
+<div class="out-wrap"><div class="cap">运行结果</div><pre>int    相邻元素差 4 字节
+char   相邻元素差 1 字节
+double 相邻元素差 8 字节</pre></div>
+
+<p>正好对应它们的 <code>sizeof</code>：4、1、8。</p>
+
+<div class="mnemonic">
+  <b>一句话总结本讲：</b>
+  类型决定<b>房间有多大</b>（sizeof）、<b>能装多大的数</b>（范围）、
+  <b>怎么读里面的位</b>（有符号/无符号）；<br>
+  而每个变量都住在<b>有编号的房间</b>里，编号就是<b>地址</b>，<code>&amp;</code> 用来取它。
+</div>
+
+<!-- ============================================================ -->
+<h2 id="s11"><span class="n">11</span>常见错误</h2>
+
+<h4>错误 1 · 以为数据能装进小类型</h4>
+<div class="code-wrap"><div class="bar"><span class="dot r"></span><span class="dot y"></span><span class="dot g"></span><span class="name">对比</span><span class="cp">复制</span></div><pre><span class="hl-c">/* ❌ char 最大 127，装不下 200 */</span>
+<span class="hl-k">char</span> c = <span class="hl-n">200</span>;              <span class="hl-c">/* 结果 -56，完全不是 200 */</span>
+
+<span class="hl-c">/* ✅ 用够大的类型 */</span>
+<span class="hl-k">int</span>  c = <span class="hl-n">200</span>;              <span class="hl-c">/* 200 */</span>
+<span class="hl-k">unsigned char</span> c = <span class="hl-n">200</span>;     <span class="hl-c">/* 200（0~255 装得下） */</span></pre></div>
+
+<h4>错误 2 · 整数除法丢小数</h4>
+<div class="code-wrap"><div class="bar"><span class="dot r"></span><span class="dot y"></span><span class="dot g"></span><span class="name">对比</span><span class="cp">复制</span></div><pre><span class="hl-k">int</span> sum = <span class="hl-n">499</span>, n = <span class="hl-n">6</span>;
+
+<span class="hl-f">printf</span>(<span class="hl-s">"%.2f\n"</span>, sum / n);         <span class="hl-c">/* ❌ 83.00 */</span>
+<span class="hl-f">printf</span>(<span class="hl-s">"%.2f\n"</span>, (<span class="hl-k">double</span>)sum / n); <span class="hl-c">/* ✅ 83.17 */</span></pre></div>
+
+<h4>错误 3 · 混用有符号与无符号做比较</h4>
+<div class="code-wrap"><div class="bar"><span class="dot r"></span><span class="dot y"></span><span class="dot g"></span><span class="name">对比</span><span class="cp">复制</span></div><pre><span class="hl-k">unsigned int</span> m = <span class="hl-n">1</span>;
+<span class="hl-k">int</span> n = <span class="hl-n">-1</span>;
+
+<span class="hl-k">if</span> (m &gt; n) { ... }            <span class="hl-c">/* ❌ 结果是不成立！ */</span>
+
+<span class="hl-c">/* ✅ 要么都用 int，要么先想清楚转换方向 */</span>
+<span class="hl-k">int</span> m = <span class="hl-n">1</span>;
+<span class="hl-k">if</span> (m &gt; n) { ... }            <span class="hl-c">/* 成立 */</span></pre></div>
+
+<h4>错误 4 · 数字前面随手加 0</h4>
+<div class="code-wrap"><div class="bar"><span class="dot r"></span><span class="dot y"></span><span class="dot g"></span><span class="name">对比</span><span class="cp">复制</span></div><pre><span class="hl-k">int</span> a = <span class="hl-n">010</span>;      <span class="hl-c">/* ❌ 这是八进制，等于 8，不是 10 */</span>
+<span class="hl-k">int</span> a = <span class="hl-n">10</span>;       <span class="hl-c">/* ✅ */</span></pre></div>
+
+<h4>错误 5 · 溢出没察觉</h4>
+<div class="code-wrap"><div class="bar"><span class="dot r"></span><span class="dot y"></span><span class="dot g"></span><span class="name">对比</span><span class="cp">复制</span></div><pre><span class="hl-c">/* 求 1..100000 的平方和，结果约 3.3×10^14，远超 int */</span>
+<span class="hl-k">int</span> s = <span class="hl-n">0</span>;                              <span class="hl-c">/* ❌ 溢出，结果是错的 */</span>
+<span class="hl-k">long long</span> s = <span class="hl-n">0</span>;                      <span class="hl-c">/* ✅ 8 字节能装下 */</span></pre></div>
+
+<h4>错误 6 · 把「地址」和「值」搞混</h4>
+<div class="code-wrap"><div class="bar"><span class="dot r"></span><span class="dot y"></span><span class="dot g"></span><span class="name">对比</span><span class="cp">复制</span></div><pre><span class="hl-k">int</span> a = <span class="hl-n">10</span>;
+
+<span class="hl-f">printf</span>(<span class="hl-s">"%d\n"</span>, a);     <span class="hl-c">/* ✅ 打印值：10 */</span>
+<span class="hl-f">printf</span>(<span class="hl-s">"%d\n"</span>, &amp;a);    <span class="hl-c">/* ❌ 用 %d 打印地址，类型不对 */</span>
+<span class="hl-f">printf</span>(<span class="hl-s">"%p\n"</span>, (<span class="hl-k">void</span> *)&amp;a);  <span class="hl-c">/* ✅ 地址要用 %p */</span></pre></div>
+
+<!-- ============================================================ -->
+<h2 id="s12"><span class="n">12</span>一页速查</h2>
+
+<table>
+<thead><tr><th style="width:34%">想做的事</th><th>写法</th></tr></thead>
+<tbody>
+<tr><td>量某个类型占几字节</td><td class="c">sizeof(int)</td></tr>
+<tr><td>量某个变量占几字节</td><td class="c">sizeof(a)</td></tr>
+<tr><td>算出数组元素个数</td><td class="c">sizeof(a) / sizeof(a[0])</td></tr>
+<tr><td>取变量的地址</td><td class="c">&amp;a</td></tr>
+<tr><td>打印地址</td><td class="c">printf("%p", (void *)&amp;a);</td></tr>
+<tr><td>int 的范围</td><td class="c">-2147483648 ~ 2147483647</td></tr>
+<tr><td>unsigned int 的范围</td><td class="c">0 ~ 4294967295</td></tr>
+<tr><td>查范围常量</td><td class="c">#include &lt;limits.h&gt;  →  INT_MAX</td></tr>
+<tr><td>十六进制字面量</td><td class="c">0xFF   （= 255）</td></tr>
+<tr><td>按十六进制打印</td><td class="c">printf("%X", n);</td></tr>
+<tr><td>强制类型转换</td><td class="c">(double)sum / n</td></tr>
+<tr><td>数组首地址</td><td class="c">arr   等价于   &amp;arr[0]</td></tr>
+<tr><td>第 i 个元素的地址</td><td class="c">&amp;arr[i]</td></tr>
+<tr><td>两个地址相差多少字节</td><td class="c">(char *)&amp;b - (char *)&amp;a</td></tr>
+</tbody>
+</table>
+
+<div class="card key">
+  <div class="card-t">本讲要记住的五句话</div>
+  <ol>
+    <li><b>类型决定三件事：占多宽、能表示多大、怎么读里面的位。</b></li>
+    <li><b>1 字节 = 8 位；n 位无符号能表示 2ⁿ 个数，范围 0 ~ 2ⁿ-1。</b></li>
+    <li><b>int 是 4 字节 32 位，范围约 ±21 亿；超了会「绕回去」，而且不报错。</b></li>
+    <li><b><code>unsigned</code> 没有负数，减到 0 以下会绕成最大值。</b></li>
+    <li><b>变量有值，也有地址；<code>&amp;</code> 取地址，<code>%p</code> 打印地址。</b></li>
+  </ol>
+</div>
+
+<div class="card note">
+  <div class="card-t">下一讲预告</div>
+  <p>下一讲《指针初步》会回答这个问题：</p>
+  <p><b>既然地址就是一个数，那能不能把它存进一个变量里？</b></p>
+  <p>能 —— 这种「专门装地址的变量」就叫<b>指针</b>。
+  你会发现它一点也不神秘，只是把本讲第 9 节的「地址」装进了变量；
+  而且它非常强大：能让函数修改外面的变量、能高效遍历数组、
+  能用一句话处理一整片数据。</p>
+</div>
+
+
+
+<!-- NAV-AUTO -->
+<a class="home-fab" href="../../index.html" title="返回教程总目录">返回 home</a>
+<div class="series-nav">
+<b>本系列</b>　<span class="series-tag">M 系列 · 课本内容速成与补充</span>　
+<a href="m01-c-arrays.html">M01 数组初步</a>
+<a href="m02-c-functions.html">M02 函数初步</a>
+<a href="m03-c-types.html" class="cur">M03 类型概论</a>
+<a href="m04-c-pointers.html">M04 指针初步</a>
+<a href="m05-memory.html">M05 静态、动态内存与内存安全初步</a>
+<a href="m06-class-struct.html">M06 类、结构体</a>
+<a href="m07-scope.html">M07 作用域、全局与局部变量</a>
+<a href="m08-c-strings.html">M08 C 风格字符串</a>
+<a href="m09-vector-and-array.html">M09 vector 和 array <span class="star" title="与本项目施行密切相关">*</span></a>
+</div>
+<div class="series-switch">
+<b>全部系列</b>　
+<a href="t01-mongolian-script-intro.html">理论 · T（3 篇）</a>
+<span class="ss-cur">课本 · M（9 篇）</span>
+<a href="q01-std-and-namespace.html">Qt · Q（1 篇）</a>
+<a href="e01-recursion.html">Extra · E（2 篇）</a>
+<a href="f01-command-prompt.html">File · F（3 篇）</a>
+<span class="ss-empty">相关 · R（0 篇，暂空）</span>
+</div>
+<!-- /NAV-AUTO -->
+<footer>
+UME 项目组内部教程 · M03《类型概论》<br>
+代码示例均以 <b>Consolas</b> 等宽字体呈现；文中所有「运行结果」都经过实际编译运行核对。<br>
+本讲不涉及 float / double 的 IEEE 754 编码细节（留待进阶）。
+</footer>
+
+</main>
+</div>
+
+<script>
+/* 目录滚动高亮 */
+(function(){
+  const links = [...document.querySelectorAll('#toc a')];
+  const targets = links.map(a => document.querySelector(a.getAttribute('href'))).filter(Boolean);
+  const setOn = id => links.forEach(a => a.classList.toggle('on', a.getAttribute('href') === '#'+id));
+  const io = new IntersectionObserver(es => {
+    const vis = es.filter(e => e.isIntersecting)
+                  .sort((a,b) => a.boundingClientRect.top - b.boundingClientRect.top);
+    if (vis[0]) setOn(vis[0].target.id);
+  }, { rootMargin:'-8% 0px -72% 0px', threshold:0 });
+  targets.forEach(t => io.observe(t));
+})();
+
+/* 复制按钮 */
+(function(){
+  document.querySelectorAll('.code-wrap').forEach(box => {
+    const btn = box.querySelector('.cp');
+    const pre = box.querySelector('pre');
+    if (!btn || !pre) return;
+    btn.addEventListener('click', async () => {
+      const text = pre.textContent;
+      try { await navigator.clipboard.writeText(text); }
+      catch (e) {
+        const ta = document.createElement('textarea');
+        ta.value = text; document.body.appendChild(ta);
+        ta.select(); document.execCommand('copy'); ta.remove();
+      }
+      const old = btn.textContent;
+      btn.textContent = '已复制 ✓';
+      setTimeout(() => { btn.textContent = old; }, 1200);
+    });
+  });
+})();
+</script>
+<script>
+/* 移动端：生成「目录」按钮，点击呼出/收起侧滑目录 */
+(function(){
+  var toc = document.getElementById('toc');
+  if (!toc) return;
+  var btn = document.createElement('button');
+  btn.id = 'tocToggle';
+  btn.type = 'button';
+  btn.setAttribute('aria-controls','toc');
+  btn.textContent = '目录';
+  document.body.appendChild(btn);
+
+  function setOpen(on){
+    toc.classList.toggle('open', on);
+    document.body.classList.toggle('toc-open', on);
+    btn.setAttribute('aria-expanded', on ? 'true' : 'false');
+    btn.textContent = on ? '收起' : '目录';
+  }
+  btn.addEventListener('click', function(){
+    setOpen(!toc.classList.contains('open'));
+  });
+  /* 点目录里的链接后自动收起；点遮罩（#toc 之外的区域）也收起 */
+  toc.addEventListener('click', function(e){
+    if (e.target.closest('a')) setOpen(false);
+  });
+  document.addEventListener('click', function(e){
+    if (!toc.classList.contains('open')) return;
+    if (e.target === toc || toc.contains(e.target) || e.target === btn) return;
+    setOpen(false);
+  });
+  document.addEventListener('keydown', function(e){
+    if (e.key === 'Escape') setOpen(false);
+  });
+  /* 窄屏进入页面时默认收起，宽屏则清掉状态 */
+  function sync(){ if (window.innerWidth > 980) setOpen(false); }
+  window.addEventListener('resize', sync);
+  sync();
+})();
+</script>
+<script src="assets/series-common.js"></script>
+</body>
+</html>

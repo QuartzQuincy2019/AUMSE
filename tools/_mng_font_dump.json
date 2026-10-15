@@ -1,0 +1,1199 @@
+[
+ {
+  "cp": 6144,
+  "glyph": "uni1800",
+  "name": "MONGOLIAN BIRGA",
+  "adv": 614,
+  "lsb": 100
+ },
+ {
+  "cp": 6145,
+  "glyph": "uni1801",
+  "name": "MONGOLIAN ELLIPSIS",
+  "adv": 1086,
+  "lsb": 100
+ },
+ {
+  "cp": 6146,
+  "glyph": "uni1802",
+  "name": "MONGOLIAN COMMA",
+  "adv": 324,
+  "lsb": 100
+ },
+ {
+  "cp": 6147,
+  "glyph": "uni1803",
+  "name": "MONGOLIAN FULL STOP",
+  "adv": 578,
+  "lsb": 100
+ },
+ {
+  "cp": 6148,
+  "glyph": "uni1804",
+  "name": "MONGOLIAN COLON",
+  "adv": 324,
+  "lsb": 100
+ },
+ {
+  "cp": 6149,
+  "glyph": "uni1805",
+  "name": "MONGOLIAN FOUR DOTS",
+  "adv": 638,
+  "lsb": 100
+ },
+ {
+  "cp": 6150,
+  "glyph": "uni1806",
+  "name": "MONGOLIAN TODO SOFT HYPHEN",
+  "adv": 630,
+  "lsb": 100
+ },
+ {
+  "cp": 6151,
+  "glyph": "uni1807",
+  "name": "MONGOLIAN SIBE SYLLABLE BOUNDARY MARKER",
+  "adv": 284,
+  "lsb": 0
+ },
+ {
+  "cp": 6152,
+  "glyph": "uni1808",
+  "name": "MONGOLIAN MANCHU COMMA",
+  "adv": 372,
+  "lsb": 100
+ },
+ {
+  "cp": 6153,
+  "glyph": "uni1809",
+  "name": "MONGOLIAN MANCHU FULL STOP",
+  "adv": 592,
+  "lsb": 100
+ },
+ {
+  "cp": 6154,
+  "glyph": "uni180A",
+  "name": "MONGOLIAN NIRUGU",
+  "adv": 168,
+  "lsb": 0
+ },
+ {
+  "cp": 6155,
+  "glyph": "uni180B",
+  "name": "MONGOLIAN FREE VARIATION SELECTOR ONE",
+  "adv": 770,
+  "lsb": 45
+ },
+ {
+  "cp": 6156,
+  "glyph": "uni180C",
+  "name": "MONGOLIAN FREE VARIATION SELECTOR TWO",
+  "adv": 770,
+  "lsb": 45
+ },
+ {
+  "cp": 6157,
+  "glyph": "uni180D",
+  "name": "MONGOLIAN FREE VARIATION SELECTOR THREE",
+  "adv": 770,
+  "lsb": 45
+ },
+ {
+  "cp": 6158,
+  "glyph": "uni180E",
+  "name": "MONGOLIAN VOWEL SEPARATOR",
+  "adv": 770,
+  "lsb": 45
+ },
+ {
+  "cp": 6159,
+  "glyph": "fvs4",
+  "name": "MONGOLIAN FREE VARIATION SELECTOR FOUR",
+  "adv": 770,
+  "lsb": 45
+ },
+ {
+  "cp": 6160,
+  "glyph": "uni1810",
+  "name": "MONGOLIAN DIGIT ZERO",
+  "adv": 572,
+  "lsb": 49
+ },
+ {
+  "cp": 6161,
+  "glyph": "uni1811",
+  "name": "MONGOLIAN DIGIT ONE",
+  "adv": 572,
+  "lsb": 49
+ },
+ {
+  "cp": 6162,
+  "glyph": "uni1812",
+  "name": "MONGOLIAN DIGIT TWO",
+  "adv": 605,
+  "lsb": 49
+ },
+ {
+  "cp": 6163,
+  "glyph": "uni1813",
+  "name": "MONGOLIAN DIGIT THREE",
+  "adv": 875,
+  "lsb": 49
+ },
+ {
+  "cp": 6164,
+  "glyph": "uni1814",
+  "name": "MONGOLIAN DIGIT FOUR",
+  "adv": 534,
+  "lsb": 50
+ },
+ {
+  "cp": 6165,
+  "glyph": "uni1815",
+  "name": "MONGOLIAN DIGIT FIVE",
+  "adv": 712,
+  "lsb": 30
+ },
+ {
+  "cp": 6166,
+  "glyph": "uni1816",
+  "name": "MONGOLIAN DIGIT SIX",
+  "adv": 630,
+  "lsb": 30
+ },
+ {
+  "cp": 6167,
+  "glyph": "uni1817",
+  "name": "MONGOLIAN DIGIT SEVEN",
+  "adv": 630,
+  "lsb": 42
+ },
+ {
+  "cp": 6168,
+  "glyph": "uni1818",
+  "name": "MONGOLIAN DIGIT EIGHT",
+  "adv": 564,
+  "lsb": 40
+ },
+ {
+  "cp": 6169,
+  "glyph": "uni1819",
+  "name": "MONGOLIAN DIGIT NINE",
+  "adv": 534,
+  "lsb": 50
+ },
+ {
+  "cp": 6176,
+  "glyph": "uni1820",
+  "name": "MONGOLIAN LETTER A",
+  "adv": 919,
+  "lsb": 10
+ },
+ {
+  "cp": 6177,
+  "glyph": "uni1821",
+  "name": "MONGOLIAN LETTER E",
+  "adv": 824,
+  "lsb": 10
+ },
+ {
+  "cp": 6178,
+  "glyph": "uni1822",
+  "name": "MONGOLIAN LETTER I",
+  "adv": 993,
+  "lsb": 10
+ },
+ {
+  "cp": 6179,
+  "glyph": "uni1823",
+  "name": "MONGOLIAN LETTER O",
+  "adv": 932,
+  "lsb": 10
+ },
+ {
+  "cp": 6180,
+  "glyph": "uni1824",
+  "name": "MONGOLIAN LETTER U",
+  "adv": 1065,
+  "lsb": 10
+ },
+ {
+  "cp": 6181,
+  "glyph": "uni1825",
+  "name": "MONGOLIAN LETTER OE",
+  "adv": 1235,
+  "lsb": 10
+ },
+ {
+  "cp": 6182,
+  "glyph": "uni1826",
+  "name": "MONGOLIAN LETTER UE",
+  "adv": 1426,
+  "lsb": 10
+ },
+ {
+  "cp": 6183,
+  "glyph": "uni1827",
+  "name": "MONGOLIAN LETTER EE",
+  "adv": 1200,
+  "lsb": 10
+ },
+ {
+  "cp": 6184,
+  "glyph": "uni1828",
+  "name": "MONGOLIAN LETTER NA",
+  "adv": 492,
+  "lsb": 10
+ },
+ {
+  "cp": 6185,
+  "glyph": "uni1829",
+  "name": "MONGOLIAN LETTER ANG",
+  "adv": 614,
+  "lsb": 0
+ },
+ {
+  "cp": 6186,
+  "glyph": "uni182A",
+  "name": "MONGOLIAN LETTER BA",
+  "adv": 557,
+  "lsb": 45
+ },
+ {
+  "cp": 6187,
+  "glyph": "uni182B",
+  "name": "MONGOLIAN LETTER PA",
+  "adv": 552,
+  "lsb": 45
+ },
+ {
+  "cp": 6188,
+  "glyph": "uni182C",
+  "name": "MONGOLIAN LETTER QA",
+  "adv": 788,
+  "lsb": 45
+ },
+ {
+  "cp": 6189,
+  "glyph": "uni182D",
+  "name": "MONGOLIAN LETTER GA",
+  "adv": 788,
+  "lsb": 45
+ },
+ {
+  "cp": 6190,
+  "glyph": "uni182E",
+  "name": "MONGOLIAN LETTER MA",
+  "adv": 492,
+  "lsb": 10
+ },
+ {
+  "cp": 6191,
+  "glyph": "uni182F",
+  "name": "MONGOLIAN LETTER LA",
+  "adv": 492,
+  "lsb": 10
+ },
+ {
+  "cp": 6192,
+  "glyph": "uni1830",
+  "name": "MONGOLIAN LETTER SA",
+  "adv": 681,
+  "lsb": 45
+ },
+ {
+  "cp": 6193,
+  "glyph": "uni1831",
+  "name": "MONGOLIAN LETTER SHA",
+  "adv": 681,
+  "lsb": 45
+ },
+ {
+  "cp": 6194,
+  "glyph": "uni1832",
+  "name": "MONGOLIAN LETTER TA",
+  "adv": 670,
+  "lsb": 45
+ },
+ {
+  "cp": 6195,
+  "glyph": "uni1833",
+  "name": "MONGOLIAN LETTER DA",
+  "adv": 673,
+  "lsb": 45
+ },
+ {
+  "cp": 6196,
+  "glyph": "uni1834",
+  "name": "MONGOLIAN LETTER CHA",
+  "adv": 692,
+  "lsb": 45
+ },
+ {
+  "cp": 6197,
+  "glyph": "uni1835",
+  "name": "MONGOLIAN LETTER JA",
+  "adv": 421,
+  "lsb": 45
+ },
+ {
+  "cp": 6198,
+  "glyph": "uni1836",
+  "name": "MONGOLIAN LETTER YA",
+  "adv": 421,
+  "lsb": 45
+ },
+ {
+  "cp": 6199,
+  "glyph": "uni1837",
+  "name": "MONGOLIAN LETTER RA",
+  "adv": 421,
+  "lsb": 45
+ },
+ {
+  "cp": 6200,
+  "glyph": "uni1838",
+  "name": "MONGOLIAN LETTER WA",
+  "adv": 520,
+  "lsb": 45
+ },
+ {
+  "cp": 6201,
+  "glyph": "uni1839",
+  "name": "MONGOLIAN LETTER FA",
+  "adv": 557,
+  "lsb": 45
+ },
+ {
+  "cp": 6202,
+  "glyph": "uni183A",
+  "name": "MONGOLIAN LETTER KA",
+  "adv": 429,
+  "lsb": 45
+ },
+ {
+  "cp": 6203,
+  "glyph": "uni183B",
+  "name": "MONGOLIAN LETTER KHA",
+  "adv": 428,
+  "lsb": 45
+ },
+ {
+  "cp": 6204,
+  "glyph": "uni183C",
+  "name": "MONGOLIAN LETTER TSA",
+  "adv": 817,
+  "lsb": 45
+ },
+ {
+  "cp": 6205,
+  "glyph": "uni183D",
+  "name": "MONGOLIAN LETTER ZA",
+  "adv": 740,
+  "lsb": 45
+ },
+ {
+  "cp": 6206,
+  "glyph": "uni183E",
+  "name": "MONGOLIAN LETTER HAA",
+  "adv": 1013,
+  "lsb": 10
+ },
+ {
+  "cp": 6207,
+  "glyph": "uni183F",
+  "name": "MONGOLIAN LETTER ZRA",
+  "adv": 833,
+  "lsb": 45
+ },
+ {
+  "cp": 6208,
+  "glyph": "uni1840",
+  "name": "MONGOLIAN LETTER LHA",
+  "adv": 1013,
+  "lsb": 10
+ },
+ {
+  "cp": 6209,
+  "glyph": "uni1841",
+  "name": "MONGOLIAN LETTER ZHI",
+  "adv": 566,
+  "lsb": 45
+ },
+ {
+  "cp": 6210,
+  "glyph": "uni1842",
+  "name": "MONGOLIAN LETTER CHI",
+  "adv": 1102,
+  "lsb": 45
+ },
+ {
+  "cp": 6211,
+  "glyph": "uni1843",
+  "name": "MONGOLIAN LETTER TODO LONG VOWEL SIGN",
+  "adv": 267,
+  "lsb": 0
+ },
+ {
+  "cp": 6212,
+  "glyph": "uni1844",
+  "name": "MONGOLIAN LETTER TODO E",
+  "adv": 899,
+  "lsb": 10
+ },
+ {
+  "cp": 6213,
+  "glyph": "uni1845",
+  "name": "MONGOLIAN LETTER TODO I",
+  "adv": 906,
+  "lsb": 10
+ },
+ {
+  "cp": 6214,
+  "glyph": "uni1846",
+  "name": "MONGOLIAN LETTER TODO O",
+  "adv": 915,
+  "lsb": 10
+ },
+ {
+  "cp": 6215,
+  "glyph": "uni1847",
+  "name": "MONGOLIAN LETTER TODO U",
+  "adv": 1126,
+  "lsb": 10
+ },
+ {
+  "cp": 6216,
+  "glyph": "uni1848",
+  "name": "MONGOLIAN LETTER TODO OE",
+  "adv": 915,
+  "lsb": 10
+ },
+ {
+  "cp": 6217,
+  "glyph": "uni1849",
+  "name": "MONGOLIAN LETTER TODO UE",
+  "adv": 1126,
+  "lsb": 10
+ },
+ {
+  "cp": 6218,
+  "glyph": "uni184A",
+  "name": "MONGOLIAN LETTER TODO ANG",
+  "adv": 1024,
+  "lsb": 0
+ },
+ {
+  "cp": 6219,
+  "glyph": "uni184B",
+  "name": "MONGOLIAN LETTER TODO BA",
+  "adv": 511,
+  "lsb": -1
+ },
+ {
+  "cp": 6220,
+  "glyph": "uni184C",
+  "name": "MONGOLIAN LETTER TODO PA",
+  "adv": 594,
+  "lsb": 45
+ },
+ {
+  "cp": 6221,
+  "glyph": "uni184D",
+  "name": "MONGOLIAN LETTER TODO QA",
+  "adv": 786,
+  "lsb": 10
+ },
+ {
+  "cp": 6222,
+  "glyph": "uni184E",
+  "name": "MONGOLIAN LETTER TODO GA",
+  "adv": 786,
+  "lsb": 10
+ },
+ {
+  "cp": 6223,
+  "glyph": "uni184F",
+  "name": "MONGOLIAN LETTER TODO MA",
+  "adv": 284,
+  "lsb": -31
+ },
+ {
+  "cp": 6224,
+  "glyph": "uni1850",
+  "name": "MONGOLIAN LETTER TODO TA",
+  "adv": 648,
+  "lsb": 45
+ },
+ {
+  "cp": 6225,
+  "glyph": "uni1851",
+  "name": "MONGOLIAN LETTER TODO DA",
+  "adv": 576,
+  "lsb": 45
+ },
+ {
+  "cp": 6226,
+  "glyph": "uni1852",
+  "name": "MONGOLIAN LETTER TODO CHA",
+  "adv": 710,
+  "lsb": 45
+ },
+ {
+  "cp": 6227,
+  "glyph": "uni1853",
+  "name": "MONGOLIAN LETTER TODO JA",
+  "adv": 692,
+  "lsb": 45
+ },
+ {
+  "cp": 6228,
+  "glyph": "uni1854",
+  "name": "MONGOLIAN LETTER TODO TSA",
+  "adv": 575,
+  "lsb": 45
+ },
+ {
+  "cp": 6229,
+  "glyph": "uni1855",
+  "name": "MONGOLIAN LETTER TODO YA",
+  "adv": 361,
+  "lsb": 0
+ },
+ {
+  "cp": 6230,
+  "glyph": "uni1856",
+  "name": "MONGOLIAN LETTER TODO WA",
+  "adv": 674,
+  "lsb": 45
+ },
+ {
+  "cp": 6231,
+  "glyph": "uni1857",
+  "name": "MONGOLIAN LETTER TODO KA",
+  "adv": 446,
+  "lsb": 45
+ },
+ {
+  "cp": 6232,
+  "glyph": "uni1858",
+  "name": "MONGOLIAN LETTER TODO GAA",
+  "adv": 428,
+  "lsb": -20
+ },
+ {
+  "cp": 6233,
+  "glyph": "uni1859",
+  "name": "MONGOLIAN LETTER TODO HAA",
+  "adv": 805,
+  "lsb": 0
+ },
+ {
+  "cp": 6234,
+  "glyph": "uni185A",
+  "name": "MONGOLIAN LETTER TODO JIA",
+  "adv": 870,
+  "lsb": 45
+ },
+ {
+  "cp": 6235,
+  "glyph": "uni185B",
+  "name": "MONGOLIAN LETTER TODO NIA",
+  "adv": 443,
+  "lsb": 45
+ },
+ {
+  "cp": 6236,
+  "glyph": "uni185C",
+  "name": "MONGOLIAN LETTER TODO DZA",
+  "adv": 652,
+  "lsb": 45
+ },
+ {
+  "cp": 6237,
+  "glyph": "uni185D",
+  "name": "MONGOLIAN LETTER SIBE E",
+  "adv": 660,
+  "lsb": 10
+ },
+ {
+  "cp": 6238,
+  "glyph": "uni185E",
+  "name": "MONGOLIAN LETTER SIBE I",
+  "adv": 853,
+  "lsb": 10
+ },
+ {
+  "cp": 6239,
+  "glyph": "uni185F",
+  "name": "MONGOLIAN LETTER SIBE IY",
+  "adv": 284,
+  "lsb": -59
+ },
+ {
+  "cp": 6240,
+  "glyph": "uni1860",
+  "name": "MONGOLIAN LETTER SIBE UE",
+  "adv": 932,
+  "lsb": 10
+ },
+ {
+  "cp": 6241,
+  "glyph": "uni1861",
+  "name": "MONGOLIAN LETTER SIBE U",
+  "adv": 934,
+  "lsb": 0
+ },
+ {
+  "cp": 6242,
+  "glyph": "uni1862",
+  "name": "MONGOLIAN LETTER SIBE ANG",
+  "adv": 875,
+  "lsb": 0
+ },
+ {
+  "cp": 6243,
+  "glyph": "uni1863",
+  "name": "MONGOLIAN LETTER SIBE KA",
+  "adv": 568,
+  "lsb": 0
+ },
+ {
+  "cp": 6244,
+  "glyph": "uni1864",
+  "name": "MONGOLIAN LETTER SIBE GA",
+  "adv": 788,
+  "lsb": 45
+ },
+ {
+  "cp": 6245,
+  "glyph": "uni1865",
+  "name": "MONGOLIAN LETTER SIBE HA",
+  "adv": 887,
+  "lsb": 45
+ },
+ {
+  "cp": 6246,
+  "glyph": "uni1866",
+  "name": "MONGOLIAN LETTER SIBE PA",
+  "adv": 593,
+  "lsb": 45
+ },
+ {
+  "cp": 6247,
+  "glyph": "uni1867",
+  "name": "MONGOLIAN LETTER SIBE SHA",
+  "adv": 681,
+  "lsb": 45
+ },
+ {
+  "cp": 6248,
+  "glyph": "uni1868",
+  "name": "MONGOLIAN LETTER SIBE TA",
+  "adv": 757,
+  "lsb": 45
+ },
+ {
+  "cp": 6249,
+  "glyph": "uni1869",
+  "name": "MONGOLIAN LETTER SIBE DA",
+  "adv": 670,
+  "lsb": 45
+ },
+ {
+  "cp": 6250,
+  "glyph": "uni186A",
+  "name": "MONGOLIAN LETTER SIBE JA",
+  "adv": 360,
+  "lsb": 0
+ },
+ {
+  "cp": 6251,
+  "glyph": "uni186B",
+  "name": "MONGOLIAN LETTER SIBE FA",
+  "adv": 520,
+  "lsb": 10
+ },
+ {
+  "cp": 6252,
+  "glyph": "uni186C",
+  "name": "MONGOLIAN LETTER SIBE GAA",
+  "adv": 429,
+  "lsb": 45
+ },
+ {
+  "cp": 6253,
+  "glyph": "uni186D",
+  "name": "MONGOLIAN LETTER SIBE HAA",
+  "adv": 429,
+  "lsb": 45
+ },
+ {
+  "cp": 6254,
+  "glyph": "uni186E",
+  "name": "MONGOLIAN LETTER SIBE TSA",
+  "adv": 681,
+  "lsb": 45
+ },
+ {
+  "cp": 6255,
+  "glyph": "uni186F",
+  "name": "MONGOLIAN LETTER SIBE ZA",
+  "adv": 681,
+  "lsb": 45
+ },
+ {
+  "cp": 6256,
+  "glyph": "uni1870",
+  "name": "MONGOLIAN LETTER SIBE RAA",
+  "adv": 288,
+  "lsb": 45
+ },
+ {
+  "cp": 6257,
+  "glyph": "uni1871",
+  "name": "MONGOLIAN LETTER SIBE CHA",
+  "adv": 692,
+  "lsb": 45
+ },
+ {
+  "cp": 6258,
+  "glyph": "uni1872",
+  "name": "MONGOLIAN LETTER SIBE ZHA",
+  "adv": 421,
+  "lsb": 45
+ },
+ {
+  "cp": 6259,
+  "glyph": "uni1873",
+  "name": "MONGOLIAN LETTER MANCHU I",
+  "adv": 501,
+  "lsb": -2
+ },
+ {
+  "cp": 6260,
+  "glyph": "uni1874",
+  "name": "MONGOLIAN LETTER MANCHU KA",
+  "adv": 708,
+  "lsb": 0
+ },
+ {
+  "cp": 6261,
+  "glyph": "uni1875",
+  "name": "MONGOLIAN LETTER MANCHU RA",
+  "adv": 361,
+  "lsb": -2
+ },
+ {
+  "cp": 6262,
+  "glyph": "uni1876",
+  "name": "MONGOLIAN LETTER MANCHU FA",
+  "adv": 540,
+  "lsb": 0
+ },
+ {
+  "cp": 6263,
+  "glyph": "uni1877",
+  "name": "MONGOLIAN LETTER MANCHU ZHA",
+  "adv": 530,
+  "lsb": 0
+ },
+ {
+  "cp": 6264,
+  "glyph": "u1878",
+  "name": "MONGOLIAN LETTER CHA WITH TWO DOTS",
+  "adv": 692,
+  "lsb": 45
+ },
+ {
+  "cp": 6272,
+  "glyph": "uni1880",
+  "name": "MONGOLIAN LETTER ALI GALI ANUSVARA ONE",
+  "adv": 583,
+  "lsb": 45
+ },
+ {
+  "cp": 6273,
+  "glyph": "uni1881",
+  "name": "MONGOLIAN LETTER ALI GALI VISARGA ONE",
+  "adv": 790,
+  "lsb": 45
+ },
+ {
+  "cp": 6274,
+  "glyph": "uni1882",
+  "name": "MONGOLIAN LETTER ALI GALI DAMARU",
+  "adv": 673,
+  "lsb": 45
+ },
+ {
+  "cp": 6275,
+  "glyph": "uni1883",
+  "name": "MONGOLIAN LETTER ALI GALI UBADAMA",
+  "adv": 483,
+  "lsb": 40
+ },
+ {
+  "cp": 6276,
+  "glyph": "uni1884",
+  "name": "MONGOLIAN LETTER ALI GALI INVERTED UBADAMA",
+  "adv": 483,
+  "lsb": 45
+ },
+ {
+  "cp": 6277,
+  "glyph": "uni1885",
+  "name": "MONGOLIAN LETTER ALI GALI BALUDA",
+  "adv": 0,
+  "lsb": 100
+ },
+ {
+  "cp": 6278,
+  "glyph": "uni1886",
+  "name": "MONGOLIAN LETTER ALI GALI THREE BALUDA",
+  "adv": 0,
+  "lsb": 100
+ },
+ {
+  "cp": 6279,
+  "glyph": "uni1887",
+  "name": "MONGOLIAN LETTER ALI GALI A",
+  "adv": 1021,
+  "lsb": 10
+ },
+ {
+  "cp": 6280,
+  "glyph": "uni1888",
+  "name": "MONGOLIAN LETTER ALI GALI I",
+  "adv": 993,
+  "lsb": 10
+ },
+ {
+  "cp": 6281,
+  "glyph": "uni1889",
+  "name": "MONGOLIAN LETTER ALI GALI KA",
+  "adv": 377,
+  "lsb": 45
+ },
+ {
+  "cp": 6282,
+  "glyph": "uni188A",
+  "name": "MONGOLIAN LETTER ALI GALI NGA",
+  "adv": 822,
+  "lsb": 10
+ },
+ {
+  "cp": 6283,
+  "glyph": "uni188B",
+  "name": "MONGOLIAN LETTER ALI GALI CA",
+  "adv": 652,
+  "lsb": 45
+ },
+ {
+  "cp": 6284,
+  "glyph": "uni188C",
+  "name": "MONGOLIAN LETTER ALI GALI TTA",
+  "adv": 555,
+  "lsb": 45
+ },
+ {
+  "cp": 6285,
+  "glyph": "uni188D",
+  "name": "MONGOLIAN LETTER ALI GALI TTHA",
+  "adv": 856,
+  "lsb": 45
+ },
+ {
+  "cp": 6286,
+  "glyph": "uni188E",
+  "name": "MONGOLIAN LETTER ALI GALI DDA",
+  "adv": 640,
+  "lsb": 45
+ },
+ {
+  "cp": 6287,
+  "glyph": "uni188F",
+  "name": "MONGOLIAN LETTER ALI GALI NNA",
+  "adv": 520,
+  "lsb": 45
+ },
+ {
+  "cp": 6288,
+  "glyph": "uni1890",
+  "name": "MONGOLIAN LETTER ALI GALI TA",
+  "adv": 569,
+  "lsb": 45
+ },
+ {
+  "cp": 6289,
+  "glyph": "uni1891",
+  "name": "MONGOLIAN LETTER ALI GALI DA",
+  "adv": 576,
+  "lsb": 45
+ },
+ {
+  "cp": 6290,
+  "glyph": "uni1892",
+  "name": "MONGOLIAN LETTER ALI GALI PA",
+  "adv": 557,
+  "lsb": 45
+ },
+ {
+  "cp": 6291,
+  "glyph": "uni1893",
+  "name": "MONGOLIAN LETTER ALI GALI PHA",
+  "adv": 552,
+  "lsb": 45
+ },
+ {
+  "cp": 6292,
+  "glyph": "uni1894",
+  "name": "MONGOLIAN LETTER ALI GALI SSA",
+  "adv": 580,
+  "lsb": 16
+ },
+ {
+  "cp": 6293,
+  "glyph": "uni1895",
+  "name": "MONGOLIAN LETTER ALI GALI ZHA",
+  "adv": 833,
+  "lsb": 45
+ },
+ {
+  "cp": 6294,
+  "glyph": "uni1896",
+  "name": "MONGOLIAN LETTER ALI GALI ZA",
+  "adv": 652,
+  "lsb": 45
+ },
+ {
+  "cp": 6295,
+  "glyph": "uni1897",
+  "name": "MONGOLIAN LETTER ALI GALI AH",
+  "adv": 428,
+  "lsb": 45
+ },
+ {
+  "cp": 6296,
+  "glyph": "uni1898",
+  "name": "MONGOLIAN LETTER TODO ALI GALI TA",
+  "adv": 650,
+  "lsb": 45
+ },
+ {
+  "cp": 6297,
+  "glyph": "uni1899",
+  "name": "MONGOLIAN LETTER TODO ALI GALI ZHA",
+  "adv": 885,
+  "lsb": 45
+ },
+ {
+  "cp": 6298,
+  "glyph": "uni189A",
+  "name": "MONGOLIAN LETTER MANCHU ALI GALI GHA",
+  "adv": 785,
+  "lsb": 45
+ },
+ {
+  "cp": 6299,
+  "glyph": "uni189B",
+  "name": "MONGOLIAN LETTER MANCHU ALI GALI NGA",
+  "adv": 774,
+  "lsb": 10
+ },
+ {
+  "cp": 6300,
+  "glyph": "uni189C",
+  "name": "MONGOLIAN LETTER MANCHU ALI GALI CA",
+  "adv": 681,
+  "lsb": 45
+ },
+ {
+  "cp": 6301,
+  "glyph": "uni189D",
+  "name": "MONGOLIAN LETTER MANCHU ALI GALI JHA",
+  "adv": 848,
+  "lsb": 45
+ },
+ {
+  "cp": 6302,
+  "glyph": "uni189E",
+  "name": "MONGOLIAN LETTER MANCHU ALI GALI TTA",
+  "adv": 445,
+  "lsb": 10
+ },
+ {
+  "cp": 6303,
+  "glyph": "uni189F",
+  "name": "MONGOLIAN LETTER MANCHU ALI GALI DDHA",
+  "adv": 622,
+  "lsb": 45
+ },
+ {
+  "cp": 6304,
+  "glyph": "uni18A0",
+  "name": "MONGOLIAN LETTER MANCHU ALI GALI TA",
+  "adv": 576,
+  "lsb": 45
+ },
+ {
+  "cp": 6305,
+  "glyph": "uni18A1",
+  "name": "MONGOLIAN LETTER MANCHU ALI GALI DHA",
+  "adv": 973,
+  "lsb": 45
+ },
+ {
+  "cp": 6306,
+  "glyph": "uni18A2",
+  "name": "MONGOLIAN LETTER MANCHU ALI GALI SSA",
+  "adv": 681,
+  "lsb": 45
+ },
+ {
+  "cp": 6307,
+  "glyph": "uni18A3",
+  "name": "MONGOLIAN LETTER MANCHU ALI GALI CYA",
+  "adv": 445,
+  "lsb": 10
+ },
+ {
+  "cp": 6308,
+  "glyph": "uni18A4",
+  "name": "MONGOLIAN LETTER MANCHU ALI GALI ZHA",
+  "adv": 681,
+  "lsb": 45
+ },
+ {
+  "cp": 6309,
+  "glyph": "uni18A5",
+  "name": "MONGOLIAN LETTER MANCHU ALI GALI ZA",
+  "adv": 681,
+  "lsb": 45
+ },
+ {
+  "cp": 6310,
+  "glyph": "uni18A6",
+  "name": "MONGOLIAN LETTER ALI GALI HALF U",
+  "adv": 311,
+  "lsb": 0
+ },
+ {
+  "cp": 6311,
+  "glyph": "uni18A7",
+  "name": "MONGOLIAN LETTER ALI GALI HALF YA",
+  "adv": 313,
+  "lsb": -145
+ },
+ {
+  "cp": 6312,
+  "glyph": "uni18A8",
+  "name": "MONGOLIAN LETTER MANCHU ALI GALI BHA",
+  "adv": 557,
+  "lsb": 45
+ },
+ {
+  "cp": 6313,
+  "glyph": "uni18A9",
+  "name": "MONGOLIAN LETTER ALI GALI DAGALGA",
+  "adv": 0,
+  "lsb": 100
+ },
+ {
+  "cp": 6314,
+  "glyph": "uni18AA",
+  "name": "MONGOLIAN LETTER MANCHU ALI GALI LHA",
+  "adv": 643,
+  "lsb": 10
+ },
+ {
+  "cp": 71264,
+  "glyph": "u11660",
+  "name": "MONGOLIAN BIRGA WITH ORNAMENT",
+  "adv": 776,
+  "lsb": 100
+ },
+ {
+  "cp": 71265,
+  "glyph": "u11661",
+  "name": "MONGOLIAN ROTATED BIRGA",
+  "adv": 910,
+  "lsb": 100
+ },
+ {
+  "cp": 71266,
+  "glyph": "u11662",
+  "name": "MONGOLIAN DOUBLE BIRGA WITH ORNAMENT",
+  "adv": 736,
+  "lsb": 100
+ },
+ {
+  "cp": 71267,
+  "glyph": "u11663",
+  "name": "MONGOLIAN TRIPLE BIRGA WITH ORNAMENT",
+  "adv": 696,
+  "lsb": 100
+ },
+ {
+  "cp": 71268,
+  "glyph": "u11664",
+  "name": "MONGOLIAN BIRGA WITH DOUBLE ORNAMENT",
+  "adv": 938,
+  "lsb": 100
+ },
+ {
+  "cp": 71269,
+  "glyph": "u11665",
+  "name": "MONGOLIAN ROTATED BIRGA WITH ORNAMENT",
+  "adv": 1072,
+  "lsb": 100
+ },
+ {
+  "cp": 71270,
+  "glyph": "u11666",
+  "name": "MONGOLIAN ROTATED BIRGA WITH DOUBLE ORNAMENT",
+  "adv": 1234,
+  "lsb": 100
+ },
+ {
+  "cp": 71271,
+  "glyph": "u11667",
+  "name": "MONGOLIAN INVERTED BIRGA",
+  "adv": 614,
+  "lsb": 100
+ },
+ {
+  "cp": 71272,
+  "glyph": "u11668",
+  "name": "MONGOLIAN INVERTED BIRGA WITH DOUBLE ORNAMENT",
+  "adv": 938,
+  "lsb": 100
+ },
+ {
+  "cp": 71273,
+  "glyph": "u11669",
+  "name": "MONGOLIAN SWIRL BIRGA",
+  "adv": 788,
+  "lsb": 100
+ },
+ {
+  "cp": 71274,
+  "glyph": "u1166A",
+  "name": "MONGOLIAN SWIRL BIRGA WITH ORNAMENT",
+  "adv": 948,
+  "lsb": 100
+ },
+ {
+  "cp": 71275,
+  "glyph": "u1166B",
+  "name": "MONGOLIAN SWIRL BIRGA WITH DOUBLE ORNAMENT",
+  "adv": 1110,
+  "lsb": 100
+ },
+ {
+  "cp": 71276,
+  "glyph": "u1166C",
+  "name": "MONGOLIAN TURNED SWIRL BIRGA WITH DOUBLE ORNAMENT",
+  "adv": 1110,
+  "lsb": 100
+ }
+]

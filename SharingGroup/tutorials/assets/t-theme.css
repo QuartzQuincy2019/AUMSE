@@ -1,0 +1,638 @@
+/* =====================================================================
+   t-theme.css —— 理论系列（T）统一主题
+   ---------------------------------------------------------------------
+   三篇 T（T01 / T02 / T03）都<link>这一个文件，放在最后加载，
+   它负责：
+
+     1. 整篇「金色渐变背景」—— 与 F 系列（蓝）、正文系列（纸白）区分开
+     2. 覆盖旧的 body.fseries 主题（T02 原来用的是 F 系列的蓝色皮肤）
+     3. 浏览器暗色模式适配（prefers-color-scheme: dark）
+     4. 「返回 home」按钮的样式
+        —— 这个原来只写在 T02 注入的 <style> 里，T01 / T03 没注入，
+           所以那两篇的按钮丢了样式（只有一个光秃秃的链接）
+     5. 文末「T 系列内部跳转」—— 由 assets/t-common.js 动态生成
+     6. 窄屏表格与图片的防溢出
+
+   为什么用 CSS 变量打底：
+     暗色模式只要换变量值即可，不用把整套规则重写一遍。
+     亮色变量写在 :root，暗色写在 @media (prefers-color-scheme: dark) 里。
+   ===================================================================== */
+
+/* ---------- 亮色（默认）：金色渐变 ---------- */
+:root{
+  /* 金色主题色板 */
+  --t-gold-1:#fffdf5;
+  --t-gold-2:#fdf3dc;
+  --t-gold-3:#fbe8bf;
+  --t-gold-4:#f6dc9e;
+  --t-amber:#c8901a;
+  --t-amber-deep:#a8760f;
+  --t-amber-soft:rgba(200,144,26,.16);
+  --t-ink:#3a2f14;
+  /* 半透明叠层：让卡片浮在金色渐变上仍然清晰 */
+  --t-card:rgba(255,255,255,.82);
+  --t-card-solid:#fffdf7;
+  --t-toc:rgba(255,251,240,.90);
+  --t-line:rgba(200,144,26,.28);
+  --t-code-bg:#1d1530;
+  --t-shadow:0 2px 10px rgba(168,118,15,.10);
+}
+
+/* ---------- 整篇金色渐变背景 ----------
+   多层叠加：三团径向光晕 + 一层 135° 斜向金带。
+   斜带用 12px 一格，远看是细腻的丝绸感，不抢正文。 */
+body.tseries{
+  background-color:var(--t-gold-3);
+  background-image:
+    radial-gradient(circle at 12% 8%,   rgba(255,255,255,.92) 0, transparent 42%),
+    radial-gradient(circle at 88% 4%,   rgba(255,246,214,.85) 0, transparent 38%),
+    radial-gradient(circle at 70% 96%,  rgba(246,220,158,.55) 0, transparent 46%),
+    linear-gradient(135deg,
+      rgba(255,255,255,.42) 0 6px,
+      rgba(255,247,222,.16) 6px 12px,
+      rgba(255,255,255,.42) 12px 18px);
+  background-size:auto, auto, auto, 18px 18px;
+  background-attachment:fixed;
+  color:var(--t-ink);
+}
+
+/* ---------- 覆盖 F 系列主题（T02 原来带的蓝色皮肤）----------
+   T02 的 <body class="fseries"> 已经去掉，但它的样式表里仍写着
+   body.fseries 的规则。这里用同等特异度、靠后加载来压过去，
+   万一以后哪篇又误加了 fseries，也不会变回蓝色。 */
+body.tseries.fseries,
+body.tseries{
+  --f-bg:transparent;
+  --f-grid:transparent;
+}
+body.tseries.fseries #toc{background:var(--t-toc);border-right-color:var(--t-line)}
+body.tseries.fseries main{padding-top:52px}
+
+/* 顶部标记：F 系列是蓝条，T 系列换成金色条 */
+body.tseries::before{
+  content:"T 系列 · 核心理论和底层逻辑";
+  position:fixed;top:0;left:0;right:0;z-index:80;
+  padding:5px 14px;font:700 12px/1.5 var(--sans,system-ui,sans-serif);
+  color:#4a3708;letter-spacing:.08em;
+  background:linear-gradient(90deg,#f7e3ae,#eccf85 45%,#f7e3ae);
+  border-bottom:1px solid rgba(168,118,15,.30);
+  box-shadow:0 1px 8px rgba(168,118,15,.18);
+  text-shadow:0 1px 0 rgba(255,255,255,.55);
+}
+
+/* ---------- 侧栏目录 ---------- */
+body.tseries #toc{
+  background:var(--t-toc);
+  border-right:1px solid var(--t-line);
+  backdrop-filter:blur(6px);
+}
+body.tseries #toc h5{color:var(--t-amber-deep)}
+body.tseries #toc a{color:#6b5a2c}
+body.tseries #toc a:hover{background:var(--t-amber-soft)}
+body.tseries #toc a.on{
+  background:linear-gradient(90deg,rgba(200,144,26,.26),rgba(200,144,26,.10));
+  color:var(--t-amber-deep);font-weight:650;
+}
+
+/* ---------- 正文容器：浮在金色底上 ---------- */
+body.tseries h1{
+  background:linear-gradient(96deg,#8a6208,#c8901a 45%,#e0b23f);
+  -webkit-background-clip:text;background-clip:text;
+  -webkit-text-fill-color:transparent;color:#a8760f;
+}
+body.tseries h2{
+  border-bottom:1px solid var(--t-line);
+  color:#5c470f;
+}
+body.tseries h2 .n{
+  background:linear-gradient(140deg,#e0b23f,#c8901a);
+  color:#3d2c05;box-shadow:0 1px 4px rgba(168,118,15,.30);
+}
+body.tseries h3,body.tseries h4{color:#6b530f}
+body.tseries .sub-title{color:#8a7538}
+body.tseries a{color:#a8760f}
+body.tseries a:hover{color:#7d5606}
+
+/* ---------- 卡片 / 代码块 / 表格：给足对比度 ---------- */
+body.tseries main > .card,
+body.tseries main > .code-wrap,
+body.tseries main > .out-wrap,
+body.tseries main > table,
+body.tseries main > .fig,
+body.tseries main > .umc-demo,
+body.tseries main > .t-nav,
+body.tseries main > .mnemonic,
+body.tseries main > .flow,
+body.tseries main > .qa{
+  background:var(--t-card);
+  border-color:var(--t-line);
+  box-shadow:var(--t-shadow);
+  backdrop-filter:blur(4px);
+}
+body.tseries .card.note{background:rgba(240,247,255,.90)}
+body.tseries .card.tip{background:rgba(238,250,244,.90)}
+body.tseries .card.warn{background:rgba(255,241,240,.92)}
+body.tseries .card.key{
+  background:linear-gradient(96deg,var(--t-gold-1),var(--t-gold-2) 55%,var(--t-gold-3));
+  border-left:6px solid var(--t-amber);
+}
+body.tseries .key-mark{color:var(--t-amber)}
+body.tseries .key-h{
+  background:linear-gradient(96deg,#fffdf5,#fdf3dc,#fbe9c4);
+  border-left-color:var(--t-amber);
+}
+body.tseries .code-wrap{background:var(--t-code-bg)}
+body.tseries table th{
+  background:linear-gradient(180deg,rgba(253,243,220,.96),rgba(251,232,191,.90));
+  color:#5c470f;border-color:var(--t-line);
+}
+body.tseries table td{border-color:var(--t-line)}
+body.tseries table tbody tr:nth-child(even){background:rgba(255,253,245,.55)}
+body.tseries .tag{background:rgba(255,255,255,.75);border-color:var(--t-line);color:#6b530f}
+body.tseries .tag.b{background:rgba(232,240,255,.85);border-color:#c9d8f0;color:#2a4a86}
+
+/* ---------- 返回 home 按钮 ----------
+   原来这段样式只存在于 T02 注入的 <style> 里；
+   T01 / T03 的按钮因此是「裸链接」。这里统一补上。 */
+.home-fab{
+  position:fixed;left:12px;bottom:12px;z-index:65;
+  display:inline-flex;align-items:center;gap:7px;
+  padding:9px 15px;border-radius:999px;
+  font:650 13.5px/1 var(--sans,system-ui,"Microsoft YaHei",sans-serif);
+  color:#4a3708 !important;text-decoration:none;
+  background:linear-gradient(140deg,#fbe9c4,#eccf85);
+  border:1px solid rgba(168,118,15,.42);
+  box-shadow:0 3px 12px rgba(168,118,15,.26);
+  transition:transform .16s ease,box-shadow .16s ease,background .16s ease;
+}
+.home-fab::before{content:"⌂";font-size:15px;line-height:1}
+.home-fab:hover{
+  transform:translateY(-2px);
+  box-shadow:0 6px 18px rgba(168,118,15,.34);
+  background:linear-gradient(140deg,#fdf3dc,#e0b23f);
+  color:#3d2c05 !important;
+}
+.home-fab:focus-visible{outline:3px solid #c8901a;outline-offset:2px}
+
+/* 抽屉打开时把按钮藏起来，免得压住目录项（这个坑踩过） */
+body.toc-open .home-fab{display:none}
+
+/* ---------- 文末「T 系列内部跳转」 ---------- */
+.t-nav{
+  margin:26px 0 8px;padding:14px 16px;
+  border:1px solid var(--t-line);border-radius:14px;
+  background:linear-gradient(135deg,rgba(255,253,245,.94),rgba(251,232,191,.80));
+  box-shadow:var(--t-shadow);
+}
+.t-nav > .t-nav-h{
+  display:flex;align-items:center;gap:8px;flex-wrap:wrap;
+  font:700 12.5px/1.4 var(--sans,system-ui,sans-serif);
+  color:var(--t-amber-deep);letter-spacing:.06em;margin:0 0 10px;
+}
+.t-nav > .t-nav-h::before{content:"◆";font-size:10px}
+.t-nav-grid{display:flex;flex-wrap:wrap;gap:9px}
+.t-nav-grid a{
+  flex:1 1 190px;min-width:0;
+  display:flex;align-items:center;gap:9px;
+  padding:9px 12px;border-radius:10px;text-decoration:none;
+  background:rgba(255,255,255,.80);
+  border:1px solid rgba(200,144,26,.30);
+  color:#5c470f;
+  font:600 13px/1.45 var(--sans,system-ui,sans-serif);
+  transition:transform .14s ease,background .14s ease,border-color .14s ease;
+}
+.t-nav-grid a:hover{
+  transform:translateY(-1px);
+  background:#fffdf5;border-color:var(--t-amber);color:#4a3708;
+}
+.t-nav-grid a .t-no{
+  flex:0 0 auto;padding:2px 8px;border-radius:6px;
+  font:700 11px/1.6 var(--mono,Consolas,monospace);
+  background:linear-gradient(140deg,#e0b23f,#c8901a);color:#3d2c05;
+}
+.t-nav-grid a .t-tt{flex:1 1 auto;min-width:0;
+  overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.t-nav-grid a[aria-current="page"]{
+  background:linear-gradient(96deg,var(--t-gold-2),var(--t-gold-4));
+  border-color:var(--t-amber);cursor:default;
+}
+.t-nav-grid a[aria-current="page"] .t-tt{font-weight:750}
+.t-nav-cur{
+  margin-left:6px;padding:1px 7px;border-radius:5px;
+  font:600 10.5px/1.7 var(--sans,system-ui,sans-serif);
+  background:rgba(74,55,8,.14);color:#4a3708;
+}
+
+/* 当前页的小目录（由 t-common.js 从 h2 动态生成） */
+.t-nav-toc{margin:12px 0 0;padding:10px 12px;
+  border-top:1px dashed rgba(200,144,26,.35);border-radius:0}
+.t-nav-toc .t-nav-h{margin-bottom:7px}
+.t-nav-toc ol{margin:0;padding-left:22px;columns:2;column-gap:22px}
+.t-nav-toc li{margin:0 0 3px;font:500 12.5px/1.6 var(--sans,system-ui,sans-serif)}
+.t-nav-toc a{color:#6b530f;text-decoration:none}
+.t-nav-toc a:hover{color:#3d2c05;text-decoration:underline}
+@media (max-width:620px){.t-nav-toc ol{columns:1}}
+
+/* ---------- 窄屏表格与图片：防横向溢出 ---------- */
+table{max-width:100%}
+@media (max-width:720px){
+  table{display:block;overflow-x:auto}
+  table th,table td{overflow-wrap:anywhere;word-break:break-word}
+  .umc-demo,.fig,.umc-demo .umc{max-width:100%}
+  .fig img{max-width:100%;height:auto}
+}
+.fig{margin:18px 0;text-align:center}
+.fig figcaption{margin-top:10px;font-size:13px;color:#8a7538;
+  line-height:1.75;text-align:left}
+
+/* =====================================================================
+   暗色模式
+   ---------------------------------------------------------------------
+   金色在暗背景上要降明度、加暖度，否则会刺眼。
+   变量整套换掉，规则不动。
+   ===================================================================== */
+@media (prefers-color-scheme: dark){
+  :root{
+    --t-gold-1:#241d0c;
+    --t-gold-2:#2b2210;
+    --t-gold-3:#1a1509;
+    --t-gold-4:#332813;
+    --t-amber:#e0b23f;
+    --t-amber-deep:#f0cc72;
+    --t-amber-soft:rgba(224,178,63,.18);
+    --t-ink:#ece3cd;
+    --t-card:rgba(38,31,15,.72);
+    --t-card-solid:#241d0c;
+    --t-toc:rgba(26,21,9,.88);
+    --t-line:rgba(224,178,63,.26);
+    --t-code-bg:#120e20;
+    --t-shadow:0 2px 12px rgba(0,0,0,.42);
+  }
+  body.tseries{
+    background-color:#16120a;
+    background-image:
+      radial-gradient(circle at 12% 8%,  rgba(224,178,63,.10) 0, transparent 44%),
+      radial-gradient(circle at 88% 4%,  rgba(200,144,26,.09) 0, transparent 40%),
+      radial-gradient(circle at 70% 96%, rgba(120,88,18,.16) 0, transparent 48%),
+      linear-gradient(135deg,
+        rgba(224,178,63,.045) 0 6px,
+        rgba(0,0,0,0) 6px 12px,
+        rgba(224,178,63,.045) 12px 18px);
+    background-size:auto, auto, auto, 18px 18px;
+    color:var(--t-ink);
+  }
+  body.tseries::before{
+    color:#f4e3b4;
+    background:linear-gradient(90deg,#3a2d10,#4a3a15 45%,#3a2d10);
+    border-bottom-color:rgba(224,178,63,.34);
+    text-shadow:none;
+  }
+  body.tseries #toc a{color:#cdbf9a}
+  body.tseries #toc a:hover{background:rgba(224,178,63,.12)}
+  body.tseries #toc a.on{
+    background:linear-gradient(90deg,rgba(224,178,63,.24),rgba(224,178,63,.08));
+    color:#f0cc72;
+  }
+  body.tseries h1{
+    background:linear-gradient(96deg,#f0cc72,#e0b23f 45%,#c8901a);
+    -webkit-background-clip:text;background-clip:text;
+    -webkit-text-fill-color:transparent;color:#e0b23f;
+  }
+  body.tseries h2{color:#e6d4a4;border-bottom-color:var(--t-line)}
+  body.tseries h3,body.tseries h4{color:#dcc98f}
+  body.tseries .sub-title{color:#a89871}
+  body.tseries a{color:#e0b23f}
+  body.tseries a:hover{color:#f0cc72}
+  body.tseries .card.note{background:rgba(24,34,52,.86)}
+  body.tseries .card.tip{background:rgba(20,40,32,.86)}
+  body.tseries .card.warn{background:rgba(46,26,24,.88)}
+  body.tseries .card.key{
+    background:linear-gradient(96deg,#2b2210,#332813 55%,#241d0c);
+    border-left-color:var(--t-amber);
+  }
+  body.tseries .key-h{
+    background:linear-gradient(96deg,#2b2210,#332813,#241d0c);
+    border-left-color:var(--t-amber);
+  }
+  body.tseries .key-mark{color:var(--t-amber)}
+  body.tseries table th{
+    background:linear-gradient(180deg,#332813,#2b2210);
+    color:#e6d4a4;border-color:var(--t-line);
+  }
+  body.tseries table tbody tr:nth-child(even){background:rgba(224,178,63,.05)}
+  body.tseries .tag{background:rgba(224,178,63,.12);border-color:var(--t-line);color:#dcc98f}
+  body.tseries .tag.b{background:rgba(90,130,200,.16);border-color:#3a5480;color:#bcd0f0}
+  .home-fab{
+    color:#3d2c05 !important;
+    background:linear-gradient(140deg,#e0b23f,#c8901a);
+    border-color:rgba(240,204,114,.44);
+    box-shadow:0 3px 14px rgba(0,0,0,.48);
+  }
+  .home-fab:hover{background:linear-gradient(140deg,#f0cc72,#e0b23f);color:#2e2103 !important}
+  .t-nav{
+    background:linear-gradient(135deg,rgba(43,34,16,.92),rgba(36,29,12,.86));
+    border-color:var(--t-line);
+  }
+  .t-nav-grid a{
+    background:rgba(224,178,63,.09);
+    border-color:rgba(224,178,63,.28);
+    color:#e6d4a4;
+  }
+  .t-nav-grid a:hover{background:rgba(224,178,63,.18);border-color:var(--t-amber);color:#f4e3b4}
+  .t-nav-grid a[aria-current="page"]{
+    background:linear-gradient(96deg,#3a2d10,#4a3a15);
+    border-color:var(--t-amber);
+  }
+  .t-nav-cur{background:rgba(240,204,114,.18);color:#f4e3b4}
+  .t-nav-toc a{color:#cdbf9a}
+  .t-nav-toc a:hover{color:#f4e3b4}
+  .fig figcaption{color:#a89871}
+
+  /* ---------- 暗色下的对比度修正 ----------
+     用脚本按 WCAG 对比度算过一遍，下面这些组合原来低于 4.5:1，
+     属于「看得见但读不清」。逐条改掉。
+
+     注意 .home-fab / .t-nav-grid a 那几条：它们的背景是**渐变**，
+     而渐变里的颜色不会被 getComputedStyle 报成 backgroundColor，
+     所以自动检查会误判成「深色文字压在深色页面上」。
+     这里给一个实色底色兜住，既修掉误判，也保证渐变失效时仍可读。 */
+
+  /* ① 正文与列表：明确给亮色，不要靠继承 */
+  body.tseries p,
+  body.tseries li,
+  body.tseries td,
+  body.tseries dt,
+  body.tseries dd{color:var(--t-ink)}
+
+  /* ② 卡片标题：原来继承卡片自己的品牌色（蓝/绿/红/紫），在暗底上太暗 */
+  body.tseries .card-t{color:#7cb0ff}
+  body.tseries .card.note  > .card-t{color:#7cb0ff}
+  body.tseries .card.tip   > .card-t{color:#5fd0a0}
+  body.tseries .card.warn  > .card-t{color:#ff9a92}
+  body.tseries .card.key   > .card-t{color:#f0cc72}
+  body.tseries .card.teal  > .card-t{color:#5fd0d0}
+
+  /* ③ 标签：原来用半透明金做底，几乎等于没有底 */
+  body.tseries .tag{
+    background:rgba(224,178,63,.18);
+    border-color:rgba(224,178,63,.42);
+    color:#f4e3b4;
+  }
+  body.tseries .tag.b{
+    background:rgba(90,130,200,.26);
+    border-color:rgba(140,175,235,.46);
+    color:#dce8fb;
+  }
+  body.tseries .tag.r{background:rgba(220,110,100,.24);
+    border-color:rgba(240,150,140,.46);color:#ffd9d4}
+
+  /* ④ 章节序号徽标：深棕字压在深色底上 */
+  body.tseries h2 .n{
+    background:linear-gradient(140deg,#f0cc72,#e0b23f);
+    color:#2b1d02;
+    box-shadow:0 1px 5px rgba(0,0,0,.45);
+  }
+
+  /* ⑤ 系列跳转链接：给实色底，不再依赖半透明 */
+  .t-nav-grid a{
+    background:#2b2210;
+    color:#f4e3b4;
+  }
+  .t-nav-grid a:hover{background:#3a2d10;color:#fff6dd}
+  .t-nav-grid a[aria-current="page"]{
+    background:linear-gradient(96deg,#4a3a15,#3a2d10);
+    color:#f4e3b4;
+  }
+
+  /* ⑥ 返回 home：给实色底兜住渐变 */
+  .home-fab{
+    background-color:#e0b23f;
+    color:#2b1d02 !important;
+  }
+  .home-fab:hover{background-color:#f0cc72;color:#241a03 !important}
+
+  /* ⑦ 小节目录里的链接 */
+  .t-nav-toc a{color:#e0cfa0}
+  .t-nav-toc a:hover{color:#fff6dd}
+
+  /* ---------- 暗色对比度：第二轮 ----------
+     剩下 4 条分两类：
+       · td / .tag / .tag.b —— 真问题。原来用很淡的半透明底，
+         背景几乎等于页面底色，文字读起来发虚。给足实色底。
+       · h2 .n —— 误判。它的底是**渐变**，渐变不会出现在
+         backgroundColor 里，所以自动检查拿页面底色去比了。
+         但为了保证「渐变万一失效也不瞎」，这里连 fallback 一起给实色。 */
+  body.tseries table tbody tr:nth-child(even){background:rgba(224,178,63,.07)}
+  body.tseries table tbody tr:nth-child(odd){background:rgba(0,0,0,.22)}
+  body.tseries table td{color:#f2e8cf}
+  body.tseries .tag{
+    background:#3a2d10;border-color:rgba(224,178,63,.50);color:#f7ecd0}
+  body.tseries .tag.b{
+    background:#1e2a44;border-color:rgba(140,175,235,.50);color:#dbe7fa}
+  body.tseries .tag.r{
+    background:#3a1d1a;border-color:rgba(240,150,140,.50);color:#ffdcd7}
+  body.tseries h2 .n{
+    background-color:#e0b23f;
+    background-image:linear-gradient(140deg,#f0cc72,#e0b23f);
+    color:#241a03;
+  }
+}
+
+/* 高对比度模式下不用渐变文字（会被系统改成纯色，反而看不清） */
+@media (forced-colors: active){
+  body.tseries h1{-webkit-text-fill-color:currentColor;color:CanvasText;background:none}
+  body.tseries::before{color:CanvasText;background:Canvas}
+}
+
+/* =====================================================================
+   从 T02 内嵌 <style> 搬过来的规则
+   ---------------------------------------------------------------------
+   这几条原来只存在于 T02 注入的那段 <style> 里。T02 改用本主题、
+   去掉内嵌样式之后，其它 T 篇也需要它们，所以在这里统一定义。
+   ===================================================================== */
+
+/* 重点标记 */
+.key-mark{display:inline-block;margin-right:8px;color:var(--t-amber);
+  font-size:15px;vertical-align:1px;cursor:help}
+.key-hint{display:inline-block;margin-left:8px;padding:1px 8px;border-radius:999px;
+  font-size:11px;font-weight:600;background:rgba(255,255,255,.72);
+  border:1px solid var(--t-line);color:#8a7538;vertical-align:2px;
+  font-family:var(--sans,system-ui,sans-serif)}
+
+/* 「本系列」小目录（后端各篇页尾那一条） */
+.series-nav{margin:34px 0 0;padding:14px 18px;border:1px solid var(--t-line);
+  border-radius:12px;background:var(--t-card);font-size:13.5px;
+  box-shadow:var(--t-shadow)}
+.series-nav b{color:#5c470f}
+.series-nav a{display:inline-block;margin:3px 8px 3px 0;padding:3px 11px;
+  border-radius:999px;background:rgba(255,255,255,.80);
+  border:1px solid var(--t-line);text-decoration:none;color:#6b5a2c;
+  transition:border-color .14s,color .14s,background .14s}
+.series-nav a:hover{border-color:var(--t-amber);color:var(--t-amber-deep);
+  background:#fffdf5}
+.series-nav a.cur{background:linear-gradient(140deg,#e0b23f,#c8901a);
+  border-color:var(--t-amber);color:#3d2c05;font-weight:600}
+@media (max-width:560px){
+  .series-nav{font-size:12.5px;padding:12px 13px}
+  .series-nav a{font-size:12px;margin:2px 5px 2px 0;padding:2px 9px}
+  .home-fab{left:9px;bottom:9px;padding:7px 12px;font-size:12.5px}
+}
+
+/* ---------- 两个必须保留的「坑规避」 ----------
+   ① 中等宽度把「返回 home」移到底部右侧
+      窄屏抽屉宽 min(86vw,300px)，而按钮固定在左下角、z-index 又高于抽屉，
+      会把抽屉底部的目录项压住导致点击无效。
+   ② 遮罩层不接收指针事件
+      body.toc-open::after 是抽屉打开时的变暗遮罩，它曾经把抽屉里的点击
+      全吃掉：实测 elementFromPoint 返回 body.toc-open，连目录项都点不动
+      （而 JS 直接 .click() 却正常，说明纯粹是指针层被挡）。
+      遮罩只负责变暗，关闭逻辑由脚本按坐标判断。 */
+@media (min-width:561px) and (max-width:980px){
+  .home-fab{left:auto;right:12px}
+}
+body.toc-open::after{pointer-events:none}
+
+@media (prefers-color-scheme: dark){
+  .key-hint{background:rgba(224,178,63,.12);color:#a89871}
+  .series-nav b{color:#e6d4a4}
+  .series-nav a{background:rgba(224,178,63,.09);color:#cdbf9a}
+  .series-nav a:hover{background:rgba(224,178,63,.18);color:#f4e3b4}
+  .series-nav a.cur{background:linear-gradient(140deg,#e0b23f,#c8901a);color:#2e2103}
+}
+/* =====================================================================
+   亮色（显式）对比度修正
+   ---------------------------------------------------------------------
+   ⚠ 必须包在 @media (prefers-color-scheme: light) 里。
+   这些规则不写媒体查询时是**无条件生效**的，会盖掉上面暗色段
+   里同样特异度的规则 —— 我第一次就直接追加在文件末尾，
+   结果暗色模式的对比度从 0 个失败反弹到 14 个。
+   ================================================================== */
+@media (prefers-color-scheme: light){
+  /* =====================================================================
+     亮色对比度修正
+     ---------------------------------------------------------------------
+     按 WCAG 算过一遍，下面几处原来读起来发虚：
+       · 代码块 1.29:1  —— 深色代码底被金色渐变盖住，变成了浅底浅字。
+         这是最严重的一条，必须修。
+       · 金色文字 3.3~4.0:1 —— 金色在白底上本来就偏淡。
+         把链接与标题的金色压深一档，仍是金色但读得清。
+     ===================================================================== */
+
+  /* ① 代码块：背景必须是不透明的深色，否则会被页面渐变「透上来」变浅 */
+  body.tseries .code-wrap{background:var(--t-code-bg)}
+  body.tseries .code-wrap pre{background:transparent;color:#e8e3f5}
+  body.tseries .code-wrap .bar{
+    background:linear-gradient(180deg,#2a2140,#221a33);
+    border-bottom:1px solid rgba(255,255,255,.10);
+  }
+  body.tseries .code-wrap .bar .name{color:#b9aee0}
+  body.tseries .code-wrap .bar .cp{color:#9d92c4;border-color:rgba(255,255,255,.20)}
+  body.tseries .code-wrap .bar .cp:hover{color:#e8e3f5;border-color:rgba(255,255,255,.42)}
+  /* 代码语法高亮：在深紫底上重新配色 */
+  body.tseries .hl-k{color:#c792ea}
+  body.tseries .hl-s{color:#c3e88d}
+  body.tseries .hl-c{color:#8b83a8;font-style:italic}
+  body.tseries .hl-f{color:#82aaff}
+  body.tseries .hl-n{color:#f78c6c}
+
+  /* 输出块同理 */
+  body.tseries .out-wrap{background:#0f2a27}
+  body.tseries .out-wrap pre{background:transparent;color:#c9ece6}
+  body.tseries .out-wrap .cap{color:#7fc7bb}
+
+  /* ② 金色文字压深一档：仍是金色，但对比度够读 */
+  body.tseries a{color:#8a6008}
+  body.tseries a:hover{color:#6d4a05}
+  body.tseries h2{color:#4a3708}
+  body.tseries h1{
+    background:linear-gradient(96deg,#6d4a05,#a8760f 45%,#c8901a);
+    -webkit-background-clip:text;background-clip:text;
+    -webkit-text-fill-color:transparent;color:#8a6008;
+  }
+  body.tseries .sub-title{color:#6f5c26}
+  body.tseries .fig figcaption{color:#6f5c26}
+
+  /* ③ 系列跳转与目录：给实色底，别让金色文字飘在渐变上 */
+  .t-nav{background:#fffdf6}
+  .t-nav > .t-nav-h{color:#7d5606}
+  .t-nav-grid a{background:#fffdf6;color:#7d5606}
+  .t-nav-grid a:hover{background:#fdf3dc;color:#5c4004}
+  .t-nav-toc a{color:#6f5c26}
+  .t-nav-toc a:hover{color:#3d2c05}
+  body.tseries #toc a{color:#5c4a1c}
+  body.tseries #toc a:hover{background:rgba(200,144,26,.20)}
+
+  /* ④ 卡片标题略压深，蓝/绿在浅底上更清楚 */
+  body.tseries .card-t{color:#175fd0}
+  body.tseries .card.note > .card-t{color:#175fd0}
+  body.tseries .card.tip  > .card-t{color:#0f6b3a}
+  body.tseries .card.warn > .card-t{color:#a82a1c}
+  body.tseries .card.key  > .card-t{color:#8a6008}
+  body.tseries .card.teal > .card-t{color:#0a6666}
+
+}
+
+/* =====================================================================
+   代码块：把底色拿回来
+   ---------------------------------------------------------------------
+   08_f03 那个样式表里有：
+
+     body.fseries main>.code-wrap{background-color:#fff}          (0,2,2)
+     body.fseries .code-wrap{background-color:var(--bg-code)}     (0,2,1)
+
+   我们原来的 body.tseries main>.code-wrap 只有 (0,1,2)，
+   **比不过**第一条，所以代码块被刷成了白底 —— 而代码文字仍是浅色，
+   对比度掉到 1.29:1，基本看不见。
+
+   修法：把 body.tseries 写成 body.tseries.tseries（同一个类写两遍），
+   特异度变成 (0,2,2)，与对方打平；再靠「后加载」赢。
+   —— 这是 CSS 里不增加新类名、只靠选择器提权重的常规办法。
+   ================================================================== */
+body.tseries.tseries main>.code-wrap,
+body.tseries.tseries .code-wrap{
+  background-color:var(--t-code-bg) !important;
+}
+body.tseries.tseries .code-wrap>pre{
+  background:transparent !important;color:#e8e3f5;
+}
+body.tseries.tseries .code-wrap .bar{
+  background-color:#191233 !important;
+  background-image:linear-gradient(180deg,#241b3d,#191233) !important;
+  border-bottom:1px solid rgba(255,255,255,.10) !important;
+  color:#c3b8e0;
+}
+body.tseries.tseries .code-wrap .bar .name{color:#b9aee0}
+body.tseries.tseries .code-wrap .bar .cp{
+  background-color:#241b3d;border-color:rgba(255,255,255,.22);color:#cfc6ea;
+}
+body.tseries.tseries .code-wrap .bar .cp:hover{
+  background-color:#312650;color:#fff;border-color:rgba(255,255,255,.46);
+}
+body.tseries.tseries .out-wrap{
+  background-color:#0c2523 !important;
+}
+body.tseries.tseries .out-wrap>pre{background:transparent !important;color:#c9ece6}
+body.tseries.tseries .out-wrap .cap{color:#7fc7bb}
+
+/* =====================================================================
+   最后三处对比度
+   ---------------------------------------------------------------------
+   ① .key-mark（重点星标）：亮色下金色 2.33:1，太小看不清 —— 压深一档。
+   ② .series-nav a.cur（页尾「本系列」里当前篇）：
+      暗色下它继承了亮色的深棕字 #2e2103，压在深色底上读不出来。
+      半透明底同理，给实色。
+   ===================================================================== */
+body.tseries .key-mark{color:#8a6008}
+.series-nav a.cur{
+  background-color:#d8a52c;
+  background-image:linear-gradient(140deg,#e0b23f,#c8901a);
+  color:#2e2103;
+}
+@media (prefers-color-scheme: dark){
+  body.tseries .key-mark{color:#f0cc72}
+  .series-nav a.cur{
+    background-color:#e0b23f;
+    background-image:linear-gradient(140deg,#f0cc72,#e0b23f);
+    color:#241a03;
+  }
+}

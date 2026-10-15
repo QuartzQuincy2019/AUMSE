@@ -10,7 +10,14 @@ const get = p => new Promise((res, rej) => {
 });
 
 (async () => {
-  const t = (await get('/json/list')).find(x => x.type === 'page');
+  // 浏览器里可能开着多个标签页；直接取第一个会截到别的页。
+  // 所以新建一个 about:blank 标签，再用最后那个 —— 保证截的是我们要的页面。
+  await new Promise(res => {
+    http.get({ host: '127.0.0.1', port: Number(PORT), path: '/json/new?about:blank' },
+      r => { r.on('data', () => {}); r.on('end', res); }).on('error', res);
+  });
+  await new Promise(r => setTimeout(r, 400));
+  const t = (await get('/json/list')).filter(x => x.type === 'page').pop();
   const ws = new WebSocket(t.webSocketDebuggerUrl);
   let id = 0; const pend = new Map();
   ws.onmessage = e => { const m = JSON.parse(e.data); if (m.id && pend.has(m.id)) { pend.get(m.id)(m); pend.delete(m.id); } };

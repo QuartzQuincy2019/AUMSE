@@ -1,0 +1,1279 @@
+/* =====================================================================
+   series-theme.css —— 并列系列（M / Q / E / R）的统一主题
+   ---------------------------------------------------------------------
+   **本文件由 tools/build_series_css.py 生成，请勿手改。**
+   要改配色或顶部条文案，改 tools/series_data.py 里的 SERIES，然后重跑：
+
+       python tools/build_series_css.py
+
+   说明：
+     · T 的完整规则在 assets/t-theme.css（手写，含两轮对比度修正），
+       本文件不为 T 重复生成，只在末尾补一条覆盖，免得两处打架。
+     · F 保留原来的蓝色皮肤（用户要求），本文件只把顶部常驻条的文字统一。
+     · 顶部常驻条用 body[data-series]::before 实现，position:fixed，
+       即「一直吸在视口顶部」——这是原 F / T 就有的行为，按要求保留。
+     · 颜色用 color-mix() 从主色派生，所以每个系列只填 4 个色值即可，
+       明暗两套完整配色自动出来。
+   ===================================================================== */
+
+/* 顶部常驻条的文字由 series_data.py 的 banner 决定，见下方各系列段落 */
+
+body[data-series]{box-sizing:border-box}
+body[data-series] .s-nav{margin:26px 0 8px;padding:14px 16px;
+  border:1px solid var(--s-line,#ccd5e3);border-radius:14px}
+body[data-series] .s-nav>.s-nav-h{display:flex;align-items:center;gap:8px;
+  flex-wrap:wrap;font:700 12.5px/1.4 var(--sans,system-ui,sans-serif);
+  letter-spacing:.06em;margin:0 0 10px}
+body[data-series] .s-nav>.s-nav-h::before{content:"\25C6";font-size:10px}
+body[data-series] .s-nav-grid{display:flex;flex-wrap:wrap;gap:9px}
+body[data-series] .s-nav-grid a{flex:1 1 190px;min-width:0;
+  display:flex;align-items:center;gap:9px;padding:9px 12px;border-radius:10px;
+  text-decoration:none;border:1px solid var(--s-line,#ccd5e3);
+  font:600 13px/1.45 var(--sans,system-ui,sans-serif);
+  transition:transform .14s ease,background .14s ease,border-color .14s ease}
+body[data-series] .s-nav-grid a:hover{transform:translateY(-1px)}
+body[data-series] .s-nav-grid a .s-no{flex:0 0 auto;padding:2px 8px;
+  border-radius:6px;font:700 11px/1.6 var(--mono,Consolas,monospace)}
+body[data-series] .s-nav-grid a .s-tt{flex:1 1 auto;min-width:0;
+  overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+body[data-series] .s-nav-grid a[aria-current="page"]{cursor:default}
+body[data-series] .s-nav-grid a[aria-current="page"] .s-tt{font-weight:750}
+body[data-series] .s-nav-cur{margin-left:6px;padding:1px 7px;border-radius:5px;
+  font:600 10.5px/1.7 var(--sans,system-ui,sans-serif)}
+body[data-series] .s-nav-toc{margin:12px 0 0;padding:10px 12px;
+  border-top:1px dashed var(--s-line,#ccd5e3)}
+body[data-series] .s-nav-toc .s-nav-h{margin-bottom:7px}
+body[data-series] .s-nav-toc ol{margin:0;padding-left:22px;columns:2;column-gap:22px}
+body[data-series] .s-nav-toc li{margin:0 0 3px;
+  font:500 12.5px/1.6 var(--sans,system-ui,sans-serif)}
+body[data-series] .s-nav-toc a{text-decoration:none}
+body[data-series] .s-nav-toc a:hover{text-decoration:underline}
+@media (max-width:620px){body[data-series] .s-nav-toc ol{columns:1}}
+
+/* T 系列见 assets/t-theme.css（手写） */
+
+/* ============================ M · Main ============================
+   M 系列 · 课本内容速成与补充
+   ==================================================================== */
+body[data-series="M"][data-series="M"]{
+  --s-bg:#dceaf7;
+  --s-bg2:#eef6fd;
+  --s-main:#1f6feb;
+  --s-main-deep:#14539f;
+  --s-ink:#16283c;
+  --s-line:color-mix(in srgb, #1f6feb 32%, transparent);
+  --s-card:rgba(255,255,255,.82);
+  --s-toc:rgba(255,255,255,.90);
+  --s-soft:color-mix(in srgb, #1f6feb 10%, transparent);
+  color:var(--s-ink);
+  background-color:#dceaf7;
+  background-image:
+    radial-gradient(circle at 12% 8%,  rgba(255,255,255,.90) 0, transparent 42%),
+    radial-gradient(circle at 88% 4%,  #eef6fd 0, transparent 38%),
+    radial-gradient(circle at 70% 96%, #eef6fd 0, transparent 46%),
+    linear-gradient(135deg,
+      rgba(255,255,255,.40) 0 6px,
+      #eef6fd 6px 12px,
+      rgba(255,255,255,.40) 12px 18px);
+  background-size:auto, auto, auto, 18px 18px;
+  background-attachment:fixed;
+}
+
+/* 顶部常驻条：固定在视口顶端（原来就有，保留行为、换文字） */
+body[data-series="M"][data-series="M"]::before{
+  content:"M 系列 · 课本内容速成与补充";
+  position:fixed;top:0;left:0;right:0;z-index:80;
+  padding:5px 14px;
+  font:700 12px/1.5 var(--sans,system-ui,sans-serif);
+  letter-spacing:.06em;
+  color:#fff;background:#1f6feb;
+  box-shadow:0 1px 8px color-mix(in srgb, #1f6feb 42%, transparent);
+}
+body[data-series="M"][data-series="M"] main{padding-top:52px}
+
+/* 侧栏目录 */
+body[data-series="M"][data-series="M"] #toc{
+  background:var(--s-toc);border-right:1px solid var(--s-line);
+  backdrop-filter:blur(6px);
+}
+body[data-series="M"][data-series="M"] #toc h5{color:var(--s-main-deep)}
+body[data-series="M"][data-series="M"] #toc a{color:color-mix(in srgb, #16283c 78%, transparent)}
+body[data-series="M"][data-series="M"] #toc a:hover{background:var(--s-soft)}
+body[data-series="M"][data-series="M"] #toc a.on{
+  background:linear-gradient(90deg,
+    color-mix(in srgb, #1f6feb 26%, transparent),
+    color-mix(in srgb, #1f6feb 8%, transparent));
+  color:var(--s-main-deep);font-weight:650;
+}
+
+/* 正文层级 */
+body[data-series="M"][data-series="M"] h1{color:#14539f}
+body[data-series="M"][data-series="M"] h2{border-bottom:1px solid var(--s-line);color:#14539f}
+body[data-series="M"][data-series="M"] h2 .n{background:#1f6feb;color:#fff;
+  box-shadow:0 1px 4px color-mix(in srgb, #1f6feb 40%, transparent)}
+body[data-series="M"][data-series="M"] h3,
+body[data-series="M"][data-series="M"] h4{color:var(--s-main-deep)}
+body[data-series="M"][data-series="M"] .sub-title{color:color-mix(in srgb, #16283c 62%, transparent)}
+body[data-series="M"][data-series="M"] a{color:var(--s-main-deep)}
+body[data-series="M"][data-series="M"] a:hover{color:#1f6feb}
+
+/* 卡片 / 代码 / 表格 */
+body[data-series="M"][data-series="M"] main > .card,
+body[data-series="M"][data-series="M"] main > .code-wrap,
+body[data-series="M"][data-series="M"] main > .out-wrap,
+body[data-series="M"][data-series="M"] main > table,
+body[data-series="M"][data-series="M"] main > .fig,
+body[data-series="M"][data-series="M"] main > .umc-demo,
+body[data-series="M"][data-series="M"] main > .s-nav{
+  background:var(--s-card);border-color:var(--s-line);
+  box-shadow:0 2px 10px color-mix(in srgb, #1f6feb 12%, transparent);
+  backdrop-filter:blur(4px);
+}
+body[data-series="M"][data-series="M"] table th{
+  background:color-mix(in srgb, #1f6feb 14%, #fff);
+  color:#14539f;border-color:var(--s-line);
+}
+body[data-series="M"][data-series="M"] table td{border-color:var(--s-line)}
+body[data-series="M"][data-series="M"] table tbody tr:nth-child(even){
+  background:color-mix(in srgb, #1f6feb 5%, transparent);
+}
+/* 代码块与输出块：底色必须不透明，而且要压过各篇自带样式表。
+   08_f03 里有 body.fseries main>.code-wrap{background-color:#fff}（0,2,2），
+   只写 body[data-series] 是压不过的 —— 代码块会被刷成白底而文字仍是浅色，
+   对比度掉到 1.2:1，等于看不见。所以这里写两遍属性提权重，再兜一个 !important。 */
+body[data-series="M"][data-series="M"] main>.code-wrap,
+body[data-series="M"][data-series="M"] .code-wrap{
+  background-color:#1d1530 !important;
+}
+body[data-series="M"][data-series="M"] .code-wrap>pre{
+  background:transparent !important;color:#e8e3f5;
+}
+body[data-series="M"][data-series="M"] .code-wrap .bar{
+  background-color:#191233 !important;
+  background-image:linear-gradient(180deg,#241b3d,#191233) !important;
+  border-bottom:1px solid rgba(255,255,255,.10) !important;
+  color:#c3b8e0;
+}
+body[data-series="M"][data-series="M"] .code-wrap .bar .cp{
+  background-color:#241b3d;border-color:rgba(255,255,255,.22);color:#cfc6ea;
+}
+body[data-series="M"][data-series="M"] main>.out-wrap,
+body[data-series="M"][data-series="M"] .out-wrap{
+  background-color:#0c2523 !important;
+}
+body[data-series="M"][data-series="M"] .out-wrap>pre{
+  background:transparent !important;color:#c9ece6;
+}
+body[data-series="M"][data-series="M"] .out-wrap .cap{color:#7fc7bb}
+body[data-series="M"][data-series="M"] .card.key{
+  background:linear-gradient(96deg,#eef6fd,#fff 55%,#eef6fd);
+  border-left:6px solid #1f6feb;
+}
+body[data-series="M"][data-series="M"] .key-mark{color:#1f6feb}
+body[data-series="M"][data-series="M"] .card-t{color:#14539f}
+body[data-series="M"][data-series="M"] .card.note>.card-t{color:#175fd0}
+body[data-series="M"][data-series="M"] .card.tip>.card-t{color:#0f6b3a}
+body[data-series="M"][data-series="M"] .card.warn>.card-t{color:#a82a1c}
+body[data-series="M"][data-series="M"] .card.teal>.card-t{color:#0a6666}
+body[data-series="M"][data-series="M"] .tag{
+  background:color-mix(in srgb, #1f6feb 12%, #fff);
+  border-color:var(--s-line);color:#14539f;
+}
+
+/* 「返回 home」：与顶条同色系 */
+body[data-series="M"][data-series="M"] .home-fab{
+  background:linear-gradient(140deg,#fff,#eef6fd);
+  border-color:var(--s-line);color:#14539f;
+  box-shadow:0 3px 12px color-mix(in srgb, #1f6feb 26%, transparent);
+}
+body[data-series="M"][data-series="M"] .home-fab:hover{
+  background:linear-gradient(140deg,#eef6fd,#dceaf7);color:#14539f;
+}
+
+/* 文末系列内跳转 */
+body[data-series="M"][data-series="M"] .s-nav{
+  background:linear-gradient(135deg,#eef6fd,#fff);
+}
+body[data-series="M"][data-series="M"] .s-nav > .s-nav-h{color:#14539f}
+body[data-series="M"][data-series="M"] .s-nav-grid a{
+  background:#fff;border-color:var(--s-line);color:#14539f;
+}
+body[data-series="M"][data-series="M"] .s-nav-grid a:hover{
+  background:#eef6fd;border-color:#1f6feb;
+}
+body[data-series="M"][data-series="M"] .s-nav-grid a .s-no{background:#1f6feb;color:#fff}
+body[data-series="M"][data-series="M"] .s-nav-grid a[aria-current="page"]{
+  background:linear-gradient(96deg,#eef6fd,#dceaf7);border-color:#1f6feb;
+}
+body[data-series="M"][data-series="M"] .s-nav-cur{background:color-mix(in srgb,#1f6feb 20%,transparent);color:#14539f}
+body[data-series="M"][data-series="M"] .s-nav-toc a{color:var(--s-main-deep)}
+
+/* 暗色 */
+@media (prefers-color-scheme: dark){
+  body[data-series="M"][data-series="M"]{
+    --s-bg:#0d1420;
+    --s-ink:#dae6f4;
+    --s-line:color-mix(in srgb, #5aa2f0 30%, transparent);
+    --s-card:rgba(30,34,42,.74);
+    --s-toc:rgba(18,21,26,.90);
+    --s-soft:color-mix(in srgb, #5aa2f0 14%, transparent);
+    background-color:#0d1420;
+    background-image:
+      radial-gradient(circle at 12% 8%,  color-mix(in srgb,#5aa2f0 10%,transparent) 0, transparent 44%),
+      radial-gradient(circle at 88% 4%,  color-mix(in srgb,#5aa2f0 8%,transparent) 0, transparent 40%),
+      radial-gradient(circle at 70% 96%, color-mix(in srgb,#8cc0ff 8%,transparent) 0, transparent 48%),
+      linear-gradient(135deg,
+        color-mix(in srgb,#5aa2f0 4%,transparent) 0 6px,
+        transparent 6px 12px,
+        color-mix(in srgb,#5aa2f0 4%,transparent) 12px 18px);
+    background-size:auto, auto, auto, 18px 18px;
+    color:#dae6f4;
+  }
+  body[data-series="M"][data-series="M"]::before{
+    color:#0d1420;background:#5aa2f0;
+  }
+  body[data-series="M"][data-series="M"] main > .card,
+  body[data-series="M"][data-series="M"] main > .code-wrap,
+  body[data-series="M"][data-series="M"] main > .out-wrap,
+  body[data-series="M"][data-series="M"] main > table,
+  body[data-series="M"][data-series="M"] main > .fig,
+  body[data-series="M"][data-series="M"] main > .umc-demo,
+  body[data-series="M"][data-series="M"] main > .s-nav{background:var(--s-card)}
+  body[data-series="M"][data-series="M"] h1{color:#8cc0ff}
+  body[data-series="M"][data-series="M"] h2{color:#dae6f4;border-bottom-color:var(--s-line)}
+  body[data-series="M"][data-series="M"] h3,
+  body[data-series="M"][data-series="M"] h4{color:#8cc0ff}
+  body[data-series="M"][data-series="M"] h2 .n{background:#5aa2f0;color:#0d1420}
+  body[data-series="M"][data-series="M"] .sub-title{
+    color:color-mix(in srgb,#dae6f4 66%,transparent)}
+  body[data-series="M"][data-series="M"] a{color:#8cc0ff}
+  body[data-series="M"][data-series="M"] a:hover{color:#5aa2f0}
+  body[data-series="M"][data-series="M"] #toc a{color:color-mix(in srgb,#dae6f4 78%,transparent)}
+  body[data-series="M"][data-series="M"] #toc a.on{
+    background:linear-gradient(90deg,
+      color-mix(in srgb,#5aa2f0 24%,transparent),
+      color-mix(in srgb,#5aa2f0 8%,transparent));
+    color:#8cc0ff;
+  }
+  body[data-series="M"][data-series="M"] table th{
+    background:color-mix(in srgb,#5aa2f0 16%,#1b1e25);color:#dae6f4;
+    border-color:var(--s-line);
+  }
+  body[data-series="M"][data-series="M"] table tbody tr:nth-child(even){
+    background:color-mix(in srgb,#5aa2f0 6%,transparent)}
+  body[data-series="M"][data-series="M"] .card.key{
+    background:linear-gradient(96deg,#252a33,#2b313b 55%,#1f242c);
+    border-left-color:#5aa2f0;
+  }
+  body[data-series="M"][data-series="M"] .key-mark{color:#5aa2f0}
+  /* 卡片标题：原来继承卡片自带的品牌色（蓝/绿/红/紫），暗底上太暗 */
+  body[data-series="M"][data-series="M"] .card-t{color:#7cb0ff}
+  body[data-series="M"][data-series="M"] .card.note>.card-t{color:#7cb0ff}
+  body[data-series="M"][data-series="M"] .card.tip>.card-t{color:#5fd0a0}
+  body[data-series="M"][data-series="M"] .card.warn>.card-t{color:#ff9a92}
+  body[data-series="M"][data-series="M"] .card.key>.card-t{color:#8cc0ff}
+  body[data-series="M"][data-series="M"] .card.teal>.card-t{color:#5fd0d0}
+  body[data-series="M"][data-series="M"] .tag{
+    background:color-mix(in srgb,#5aa2f0 16%,#1b1e25);
+    border-color:var(--s-line);color:#dae6f4;
+  }
+  body[data-series="M"][data-series="M"] .home-fab{
+    background:linear-gradient(140deg,#5aa2f0,#8cc0ff);color:#0d1420;
+    border-color:var(--s-line);
+  }
+  body[data-series="M"][data-series="M"] .home-fab:hover{
+    background:linear-gradient(140deg,#8cc0ff,#5aa2f0);color:#0d1420;
+  }
+  body[data-series="M"][data-series="M"] .s-nav{
+    background:linear-gradient(135deg,#22262e,#1b1e25)}
+  body[data-series="M"][data-series="M"] .s-nav-grid a{
+    background:color-mix(in srgb,#5aa2f0 10%,#1b1e25);
+    border-color:var(--s-line);color:#dae6f4;
+  }
+  body[data-series="M"][data-series="M"] .s-nav-grid a:hover{
+    background:color-mix(in srgb,#5aa2f0 20%,#1b1e25);border-color:#5aa2f0;
+  }
+  body[data-series="M"][data-series="M"] .s-nav-grid a[aria-current="page"]{
+    background:linear-gradient(96deg,color-mix(in srgb,#5aa2f0 20%,#1b1e25),
+      color-mix(in srgb,#5aa2f0 10%,#1b1e25));
+  }
+  body[data-series="M"][data-series="M"] .s-nav-toc a{color:#8cc0ff}
+  body[data-series="M"][data-series="M"] .series-nav{
+    background:var(--s-card);border-color:var(--s-line);}
+  body[data-series="M"][data-series="M"] .series-nav b{color:#dae6f4}
+  body[data-series="M"][data-series="M"] .series-nav a{
+    background:color-mix(in srgb,#5aa2f0 10%,#1b1e25);
+    border-color:var(--s-line);color:#dae6f4;}
+  body[data-series="M"][data-series="M"] .series-nav a.cur{
+    background:linear-gradient(140deg,#5aa2f0,#8cc0ff);color:#0d1420;}
+}
+
+/* 高对比度：渐变文字会被系统改成纯色，反而看不清，直接退回实色 */
+@media (forced-colors: active){
+  body[data-series="M"][data-series="M"] h1{
+    -webkit-text-fill-color:currentColor;color:CanvasText;background:none}
+  body[data-series="M"][data-series="M"]::before{color:CanvasText;background:Canvas}
+}
+
+/* ============================ Q · Qt ============================
+   Q 系列 · C++ 开发事项和 Qt 基础
+   ==================================================================== */
+body[data-series="Q"][data-series="Q"]{
+  --s-bg:#dff2ec;
+  --s-bg2:#eefaf6;
+  --s-main:#0f9d76;
+  --s-main-deep:#0a7157;
+  --s-ink:#10322a;
+  --s-line:color-mix(in srgb, #0f9d76 32%, transparent);
+  --s-card:rgba(255,255,255,.82);
+  --s-toc:rgba(255,255,255,.90);
+  --s-soft:color-mix(in srgb, #0f9d76 10%, transparent);
+  color:var(--s-ink);
+  background-color:#dff2ec;
+  background-image:
+    radial-gradient(circle at 12% 8%,  rgba(255,255,255,.90) 0, transparent 42%),
+    radial-gradient(circle at 88% 4%,  #eefaf6 0, transparent 38%),
+    radial-gradient(circle at 70% 96%, #eefaf6 0, transparent 46%),
+    linear-gradient(135deg,
+      rgba(255,255,255,.40) 0 6px,
+      #eefaf6 6px 12px,
+      rgba(255,255,255,.40) 12px 18px);
+  background-size:auto, auto, auto, 18px 18px;
+  background-attachment:fixed;
+}
+
+/* 顶部常驻条：固定在视口顶端（原来就有，保留行为、换文字） */
+body[data-series="Q"][data-series="Q"]::before{
+  content:"Q 系列 · C++ 开发事项和 Qt 基础";
+  position:fixed;top:0;left:0;right:0;z-index:80;
+  padding:5px 14px;
+  font:700 12px/1.5 var(--sans,system-ui,sans-serif);
+  letter-spacing:.06em;
+  color:#fff;background:#0f9d76;
+  box-shadow:0 1px 8px color-mix(in srgb, #0f9d76 42%, transparent);
+}
+body[data-series="Q"][data-series="Q"] main{padding-top:52px}
+
+/* 侧栏目录 */
+body[data-series="Q"][data-series="Q"] #toc{
+  background:var(--s-toc);border-right:1px solid var(--s-line);
+  backdrop-filter:blur(6px);
+}
+body[data-series="Q"][data-series="Q"] #toc h5{color:var(--s-main-deep)}
+body[data-series="Q"][data-series="Q"] #toc a{color:color-mix(in srgb, #10322a 78%, transparent)}
+body[data-series="Q"][data-series="Q"] #toc a:hover{background:var(--s-soft)}
+body[data-series="Q"][data-series="Q"] #toc a.on{
+  background:linear-gradient(90deg,
+    color-mix(in srgb, #0f9d76 26%, transparent),
+    color-mix(in srgb, #0f9d76 8%, transparent));
+  color:var(--s-main-deep);font-weight:650;
+}
+
+/* 正文层级 */
+body[data-series="Q"][data-series="Q"] h1{color:#0a7157}
+body[data-series="Q"][data-series="Q"] h2{border-bottom:1px solid var(--s-line);color:#0a7157}
+body[data-series="Q"][data-series="Q"] h2 .n{background:#0f9d76;color:#fff;
+  box-shadow:0 1px 4px color-mix(in srgb, #0f9d76 40%, transparent)}
+body[data-series="Q"][data-series="Q"] h3,
+body[data-series="Q"][data-series="Q"] h4{color:var(--s-main-deep)}
+body[data-series="Q"][data-series="Q"] .sub-title{color:color-mix(in srgb, #10322a 62%, transparent)}
+body[data-series="Q"][data-series="Q"] a{color:var(--s-main-deep)}
+body[data-series="Q"][data-series="Q"] a:hover{color:#0f9d76}
+
+/* 卡片 / 代码 / 表格 */
+body[data-series="Q"][data-series="Q"] main > .card,
+body[data-series="Q"][data-series="Q"] main > .code-wrap,
+body[data-series="Q"][data-series="Q"] main > .out-wrap,
+body[data-series="Q"][data-series="Q"] main > table,
+body[data-series="Q"][data-series="Q"] main > .fig,
+body[data-series="Q"][data-series="Q"] main > .umc-demo,
+body[data-series="Q"][data-series="Q"] main > .s-nav{
+  background:var(--s-card);border-color:var(--s-line);
+  box-shadow:0 2px 10px color-mix(in srgb, #0f9d76 12%, transparent);
+  backdrop-filter:blur(4px);
+}
+body[data-series="Q"][data-series="Q"] table th{
+  background:color-mix(in srgb, #0f9d76 14%, #fff);
+  color:#0a7157;border-color:var(--s-line);
+}
+body[data-series="Q"][data-series="Q"] table td{border-color:var(--s-line)}
+body[data-series="Q"][data-series="Q"] table tbody tr:nth-child(even){
+  background:color-mix(in srgb, #0f9d76 5%, transparent);
+}
+/* 代码块与输出块：底色必须不透明，而且要压过各篇自带样式表。
+   08_f03 里有 body.fseries main>.code-wrap{background-color:#fff}（0,2,2），
+   只写 body[data-series] 是压不过的 —— 代码块会被刷成白底而文字仍是浅色，
+   对比度掉到 1.2:1，等于看不见。所以这里写两遍属性提权重，再兜一个 !important。 */
+body[data-series="Q"][data-series="Q"] main>.code-wrap,
+body[data-series="Q"][data-series="Q"] .code-wrap{
+  background-color:#1d1530 !important;
+}
+body[data-series="Q"][data-series="Q"] .code-wrap>pre{
+  background:transparent !important;color:#e8e3f5;
+}
+body[data-series="Q"][data-series="Q"] .code-wrap .bar{
+  background-color:#191233 !important;
+  background-image:linear-gradient(180deg,#241b3d,#191233) !important;
+  border-bottom:1px solid rgba(255,255,255,.10) !important;
+  color:#c3b8e0;
+}
+body[data-series="Q"][data-series="Q"] .code-wrap .bar .cp{
+  background-color:#241b3d;border-color:rgba(255,255,255,.22);color:#cfc6ea;
+}
+body[data-series="Q"][data-series="Q"] main>.out-wrap,
+body[data-series="Q"][data-series="Q"] .out-wrap{
+  background-color:#0c2523 !important;
+}
+body[data-series="Q"][data-series="Q"] .out-wrap>pre{
+  background:transparent !important;color:#c9ece6;
+}
+body[data-series="Q"][data-series="Q"] .out-wrap .cap{color:#7fc7bb}
+body[data-series="Q"][data-series="Q"] .card.key{
+  background:linear-gradient(96deg,#eefaf6,#fff 55%,#eefaf6);
+  border-left:6px solid #0f9d76;
+}
+body[data-series="Q"][data-series="Q"] .key-mark{color:#0f9d76}
+body[data-series="Q"][data-series="Q"] .card-t{color:#0a7157}
+body[data-series="Q"][data-series="Q"] .card.note>.card-t{color:#175fd0}
+body[data-series="Q"][data-series="Q"] .card.tip>.card-t{color:#0f6b3a}
+body[data-series="Q"][data-series="Q"] .card.warn>.card-t{color:#a82a1c}
+body[data-series="Q"][data-series="Q"] .card.teal>.card-t{color:#0a6666}
+body[data-series="Q"][data-series="Q"] .tag{
+  background:color-mix(in srgb, #0f9d76 12%, #fff);
+  border-color:var(--s-line);color:#0a7157;
+}
+
+/* 「返回 home」：与顶条同色系 */
+body[data-series="Q"][data-series="Q"] .home-fab{
+  background:linear-gradient(140deg,#fff,#eefaf6);
+  border-color:var(--s-line);color:#0a7157;
+  box-shadow:0 3px 12px color-mix(in srgb, #0f9d76 26%, transparent);
+}
+body[data-series="Q"][data-series="Q"] .home-fab:hover{
+  background:linear-gradient(140deg,#eefaf6,#dff2ec);color:#0a7157;
+}
+
+/* 文末系列内跳转 */
+body[data-series="Q"][data-series="Q"] .s-nav{
+  background:linear-gradient(135deg,#eefaf6,#fff);
+}
+body[data-series="Q"][data-series="Q"] .s-nav > .s-nav-h{color:#0a7157}
+body[data-series="Q"][data-series="Q"] .s-nav-grid a{
+  background:#fff;border-color:var(--s-line);color:#0a7157;
+}
+body[data-series="Q"][data-series="Q"] .s-nav-grid a:hover{
+  background:#eefaf6;border-color:#0f9d76;
+}
+body[data-series="Q"][data-series="Q"] .s-nav-grid a .s-no{background:#0f9d76;color:#fff}
+body[data-series="Q"][data-series="Q"] .s-nav-grid a[aria-current="page"]{
+  background:linear-gradient(96deg,#eefaf6,#dff2ec);border-color:#0f9d76;
+}
+body[data-series="Q"][data-series="Q"] .s-nav-cur{background:color-mix(in srgb,#0f9d76 20%,transparent);color:#0a7157}
+body[data-series="Q"][data-series="Q"] .s-nav-toc a{color:var(--s-main-deep)}
+
+/* 暗色 */
+@media (prefers-color-scheme: dark){
+  body[data-series="Q"][data-series="Q"]{
+    --s-bg:#0a1614;
+    --s-ink:#d6f0e8;
+    --s-line:color-mix(in srgb, #3fc4a0 30%, transparent);
+    --s-card:rgba(30,34,42,.74);
+    --s-toc:rgba(18,21,26,.90);
+    --s-soft:color-mix(in srgb, #3fc4a0 14%, transparent);
+    background-color:#0a1614;
+    background-image:
+      radial-gradient(circle at 12% 8%,  color-mix(in srgb,#3fc4a0 10%,transparent) 0, transparent 44%),
+      radial-gradient(circle at 88% 4%,  color-mix(in srgb,#3fc4a0 8%,transparent) 0, transparent 40%),
+      radial-gradient(circle at 70% 96%, color-mix(in srgb,#7adfc4 8%,transparent) 0, transparent 48%),
+      linear-gradient(135deg,
+        color-mix(in srgb,#3fc4a0 4%,transparent) 0 6px,
+        transparent 6px 12px,
+        color-mix(in srgb,#3fc4a0 4%,transparent) 12px 18px);
+    background-size:auto, auto, auto, 18px 18px;
+    color:#d6f0e8;
+  }
+  body[data-series="Q"][data-series="Q"]::before{
+    color:#0a1614;background:#3fc4a0;
+  }
+  body[data-series="Q"][data-series="Q"] main > .card,
+  body[data-series="Q"][data-series="Q"] main > .code-wrap,
+  body[data-series="Q"][data-series="Q"] main > .out-wrap,
+  body[data-series="Q"][data-series="Q"] main > table,
+  body[data-series="Q"][data-series="Q"] main > .fig,
+  body[data-series="Q"][data-series="Q"] main > .umc-demo,
+  body[data-series="Q"][data-series="Q"] main > .s-nav{background:var(--s-card)}
+  body[data-series="Q"][data-series="Q"] h1{color:#7adfc4}
+  body[data-series="Q"][data-series="Q"] h2{color:#d6f0e8;border-bottom-color:var(--s-line)}
+  body[data-series="Q"][data-series="Q"] h3,
+  body[data-series="Q"][data-series="Q"] h4{color:#7adfc4}
+  body[data-series="Q"][data-series="Q"] h2 .n{background:#3fc4a0;color:#0a1614}
+  body[data-series="Q"][data-series="Q"] .sub-title{
+    color:color-mix(in srgb,#d6f0e8 66%,transparent)}
+  body[data-series="Q"][data-series="Q"] a{color:#7adfc4}
+  body[data-series="Q"][data-series="Q"] a:hover{color:#3fc4a0}
+  body[data-series="Q"][data-series="Q"] #toc a{color:color-mix(in srgb,#d6f0e8 78%,transparent)}
+  body[data-series="Q"][data-series="Q"] #toc a.on{
+    background:linear-gradient(90deg,
+      color-mix(in srgb,#3fc4a0 24%,transparent),
+      color-mix(in srgb,#3fc4a0 8%,transparent));
+    color:#7adfc4;
+  }
+  body[data-series="Q"][data-series="Q"] table th{
+    background:color-mix(in srgb,#3fc4a0 16%,#1b1e25);color:#d6f0e8;
+    border-color:var(--s-line);
+  }
+  body[data-series="Q"][data-series="Q"] table tbody tr:nth-child(even){
+    background:color-mix(in srgb,#3fc4a0 6%,transparent)}
+  body[data-series="Q"][data-series="Q"] .card.key{
+    background:linear-gradient(96deg,#252a33,#2b313b 55%,#1f242c);
+    border-left-color:#3fc4a0;
+  }
+  body[data-series="Q"][data-series="Q"] .key-mark{color:#3fc4a0}
+  /* 卡片标题：原来继承卡片自带的品牌色（蓝/绿/红/紫），暗底上太暗 */
+  body[data-series="Q"][data-series="Q"] .card-t{color:#7cb0ff}
+  body[data-series="Q"][data-series="Q"] .card.note>.card-t{color:#7cb0ff}
+  body[data-series="Q"][data-series="Q"] .card.tip>.card-t{color:#5fd0a0}
+  body[data-series="Q"][data-series="Q"] .card.warn>.card-t{color:#ff9a92}
+  body[data-series="Q"][data-series="Q"] .card.key>.card-t{color:#7adfc4}
+  body[data-series="Q"][data-series="Q"] .card.teal>.card-t{color:#5fd0d0}
+  body[data-series="Q"][data-series="Q"] .tag{
+    background:color-mix(in srgb,#3fc4a0 16%,#1b1e25);
+    border-color:var(--s-line);color:#d6f0e8;
+  }
+  body[data-series="Q"][data-series="Q"] .home-fab{
+    background:linear-gradient(140deg,#3fc4a0,#7adfc4);color:#0a1614;
+    border-color:var(--s-line);
+  }
+  body[data-series="Q"][data-series="Q"] .home-fab:hover{
+    background:linear-gradient(140deg,#7adfc4,#3fc4a0);color:#0a1614;
+  }
+  body[data-series="Q"][data-series="Q"] .s-nav{
+    background:linear-gradient(135deg,#22262e,#1b1e25)}
+  body[data-series="Q"][data-series="Q"] .s-nav-grid a{
+    background:color-mix(in srgb,#3fc4a0 10%,#1b1e25);
+    border-color:var(--s-line);color:#d6f0e8;
+  }
+  body[data-series="Q"][data-series="Q"] .s-nav-grid a:hover{
+    background:color-mix(in srgb,#3fc4a0 20%,#1b1e25);border-color:#3fc4a0;
+  }
+  body[data-series="Q"][data-series="Q"] .s-nav-grid a[aria-current="page"]{
+    background:linear-gradient(96deg,color-mix(in srgb,#3fc4a0 20%,#1b1e25),
+      color-mix(in srgb,#3fc4a0 10%,#1b1e25));
+  }
+  body[data-series="Q"][data-series="Q"] .s-nav-toc a{color:#7adfc4}
+  body[data-series="Q"][data-series="Q"] .series-nav{
+    background:var(--s-card);border-color:var(--s-line);}
+  body[data-series="Q"][data-series="Q"] .series-nav b{color:#d6f0e8}
+  body[data-series="Q"][data-series="Q"] .series-nav a{
+    background:color-mix(in srgb,#3fc4a0 10%,#1b1e25);
+    border-color:var(--s-line);color:#d6f0e8;}
+  body[data-series="Q"][data-series="Q"] .series-nav a.cur{
+    background:linear-gradient(140deg,#3fc4a0,#7adfc4);color:#0a1614;}
+}
+
+/* 高对比度：渐变文字会被系统改成纯色，反而看不清，直接退回实色 */
+@media (forced-colors: active){
+  body[data-series="Q"][data-series="Q"] h1{
+    -webkit-text-fill-color:currentColor;color:CanvasText;background:none}
+  body[data-series="Q"][data-series="Q"]::before{color:CanvasText;background:Canvas}
+}
+
+/* ============================ E · Extra ============================
+   E 系列 · 补充练习与进阶
+   ==================================================================== */
+body[data-series="E"][data-series="E"]{
+  --s-bg:#f3e4f7;
+  --s-bg2:#faf1fd;
+  --s-main:#8b3fbe;
+  --s-main-deep:#67289a;
+  --s-ink:#2e1638;
+  --s-line:color-mix(in srgb, #8b3fbe 32%, transparent);
+  --s-card:rgba(255,255,255,.82);
+  --s-toc:rgba(255,255,255,.90);
+  --s-soft:color-mix(in srgb, #8b3fbe 10%, transparent);
+  color:var(--s-ink);
+  background-color:#f3e4f7;
+  background-image:
+    radial-gradient(circle at 12% 8%,  rgba(255,255,255,.90) 0, transparent 42%),
+    radial-gradient(circle at 88% 4%,  #faf1fd 0, transparent 38%),
+    radial-gradient(circle at 70% 96%, #faf1fd 0, transparent 46%),
+    linear-gradient(135deg,
+      rgba(255,255,255,.40) 0 6px,
+      #faf1fd 6px 12px,
+      rgba(255,255,255,.40) 12px 18px);
+  background-size:auto, auto, auto, 18px 18px;
+  background-attachment:fixed;
+}
+
+/* 顶部常驻条：固定在视口顶端（原来就有，保留行为、换文字） */
+body[data-series="E"][data-series="E"]::before{
+  content:"E 系列 · 补充练习与进阶";
+  position:fixed;top:0;left:0;right:0;z-index:80;
+  padding:5px 14px;
+  font:700 12px/1.5 var(--sans,system-ui,sans-serif);
+  letter-spacing:.06em;
+  color:#fff;background:#8b3fbe;
+  box-shadow:0 1px 8px color-mix(in srgb, #8b3fbe 42%, transparent);
+}
+body[data-series="E"][data-series="E"] main{padding-top:52px}
+
+/* 侧栏目录 */
+body[data-series="E"][data-series="E"] #toc{
+  background:var(--s-toc);border-right:1px solid var(--s-line);
+  backdrop-filter:blur(6px);
+}
+body[data-series="E"][data-series="E"] #toc h5{color:var(--s-main-deep)}
+body[data-series="E"][data-series="E"] #toc a{color:color-mix(in srgb, #2e1638 78%, transparent)}
+body[data-series="E"][data-series="E"] #toc a:hover{background:var(--s-soft)}
+body[data-series="E"][data-series="E"] #toc a.on{
+  background:linear-gradient(90deg,
+    color-mix(in srgb, #8b3fbe 26%, transparent),
+    color-mix(in srgb, #8b3fbe 8%, transparent));
+  color:var(--s-main-deep);font-weight:650;
+}
+
+/* 正文层级 */
+body[data-series="E"][data-series="E"] h1{color:#67289a}
+body[data-series="E"][data-series="E"] h2{border-bottom:1px solid var(--s-line);color:#67289a}
+body[data-series="E"][data-series="E"] h2 .n{background:#8b3fbe;color:#fff;
+  box-shadow:0 1px 4px color-mix(in srgb, #8b3fbe 40%, transparent)}
+body[data-series="E"][data-series="E"] h3,
+body[data-series="E"][data-series="E"] h4{color:var(--s-main-deep)}
+body[data-series="E"][data-series="E"] .sub-title{color:color-mix(in srgb, #2e1638 62%, transparent)}
+body[data-series="E"][data-series="E"] a{color:var(--s-main-deep)}
+body[data-series="E"][data-series="E"] a:hover{color:#8b3fbe}
+
+/* 卡片 / 代码 / 表格 */
+body[data-series="E"][data-series="E"] main > .card,
+body[data-series="E"][data-series="E"] main > .code-wrap,
+body[data-series="E"][data-series="E"] main > .out-wrap,
+body[data-series="E"][data-series="E"] main > table,
+body[data-series="E"][data-series="E"] main > .fig,
+body[data-series="E"][data-series="E"] main > .umc-demo,
+body[data-series="E"][data-series="E"] main > .s-nav{
+  background:var(--s-card);border-color:var(--s-line);
+  box-shadow:0 2px 10px color-mix(in srgb, #8b3fbe 12%, transparent);
+  backdrop-filter:blur(4px);
+}
+body[data-series="E"][data-series="E"] table th{
+  background:color-mix(in srgb, #8b3fbe 14%, #fff);
+  color:#67289a;border-color:var(--s-line);
+}
+body[data-series="E"][data-series="E"] table td{border-color:var(--s-line)}
+body[data-series="E"][data-series="E"] table tbody tr:nth-child(even){
+  background:color-mix(in srgb, #8b3fbe 5%, transparent);
+}
+/* 代码块与输出块：底色必须不透明，而且要压过各篇自带样式表。
+   08_f03 里有 body.fseries main>.code-wrap{background-color:#fff}（0,2,2），
+   只写 body[data-series] 是压不过的 —— 代码块会被刷成白底而文字仍是浅色，
+   对比度掉到 1.2:1，等于看不见。所以这里写两遍属性提权重，再兜一个 !important。 */
+body[data-series="E"][data-series="E"] main>.code-wrap,
+body[data-series="E"][data-series="E"] .code-wrap{
+  background-color:#1d1530 !important;
+}
+body[data-series="E"][data-series="E"] .code-wrap>pre{
+  background:transparent !important;color:#e8e3f5;
+}
+body[data-series="E"][data-series="E"] .code-wrap .bar{
+  background-color:#191233 !important;
+  background-image:linear-gradient(180deg,#241b3d,#191233) !important;
+  border-bottom:1px solid rgba(255,255,255,.10) !important;
+  color:#c3b8e0;
+}
+body[data-series="E"][data-series="E"] .code-wrap .bar .cp{
+  background-color:#241b3d;border-color:rgba(255,255,255,.22);color:#cfc6ea;
+}
+body[data-series="E"][data-series="E"] main>.out-wrap,
+body[data-series="E"][data-series="E"] .out-wrap{
+  background-color:#0c2523 !important;
+}
+body[data-series="E"][data-series="E"] .out-wrap>pre{
+  background:transparent !important;color:#c9ece6;
+}
+body[data-series="E"][data-series="E"] .out-wrap .cap{color:#7fc7bb}
+body[data-series="E"][data-series="E"] .card.key{
+  background:linear-gradient(96deg,#faf1fd,#fff 55%,#faf1fd);
+  border-left:6px solid #8b3fbe;
+}
+body[data-series="E"][data-series="E"] .key-mark{color:#8b3fbe}
+body[data-series="E"][data-series="E"] .card-t{color:#67289a}
+body[data-series="E"][data-series="E"] .card.note>.card-t{color:#175fd0}
+body[data-series="E"][data-series="E"] .card.tip>.card-t{color:#0f6b3a}
+body[data-series="E"][data-series="E"] .card.warn>.card-t{color:#a82a1c}
+body[data-series="E"][data-series="E"] .card.teal>.card-t{color:#0a6666}
+body[data-series="E"][data-series="E"] .tag{
+  background:color-mix(in srgb, #8b3fbe 12%, #fff);
+  border-color:var(--s-line);color:#67289a;
+}
+
+/* 「返回 home」：与顶条同色系 */
+body[data-series="E"][data-series="E"] .home-fab{
+  background:linear-gradient(140deg,#fff,#faf1fd);
+  border-color:var(--s-line);color:#67289a;
+  box-shadow:0 3px 12px color-mix(in srgb, #8b3fbe 26%, transparent);
+}
+body[data-series="E"][data-series="E"] .home-fab:hover{
+  background:linear-gradient(140deg,#faf1fd,#f3e4f7);color:#67289a;
+}
+
+/* 文末系列内跳转 */
+body[data-series="E"][data-series="E"] .s-nav{
+  background:linear-gradient(135deg,#faf1fd,#fff);
+}
+body[data-series="E"][data-series="E"] .s-nav > .s-nav-h{color:#67289a}
+body[data-series="E"][data-series="E"] .s-nav-grid a{
+  background:#fff;border-color:var(--s-line);color:#67289a;
+}
+body[data-series="E"][data-series="E"] .s-nav-grid a:hover{
+  background:#faf1fd;border-color:#8b3fbe;
+}
+body[data-series="E"][data-series="E"] .s-nav-grid a .s-no{background:#8b3fbe;color:#fff}
+body[data-series="E"][data-series="E"] .s-nav-grid a[aria-current="page"]{
+  background:linear-gradient(96deg,#faf1fd,#f3e4f7);border-color:#8b3fbe;
+}
+body[data-series="E"][data-series="E"] .s-nav-cur{background:color-mix(in srgb,#8b3fbe 20%,transparent);color:#67289a}
+body[data-series="E"][data-series="E"] .s-nav-toc a{color:var(--s-main-deep)}
+
+/* 暗色 */
+@media (prefers-color-scheme: dark){
+  body[data-series="E"][data-series="E"]{
+    --s-bg:#150d1c;
+    --s-ink:#e8d8f2;
+    --s-line:color-mix(in srgb, #b877e0 30%, transparent);
+    --s-card:rgba(30,34,42,.74);
+    --s-toc:rgba(18,21,26,.90);
+    --s-soft:color-mix(in srgb, #b877e0 14%, transparent);
+    background-color:#150d1c;
+    background-image:
+      radial-gradient(circle at 12% 8%,  color-mix(in srgb,#b877e0 10%,transparent) 0, transparent 44%),
+      radial-gradient(circle at 88% 4%,  color-mix(in srgb,#b877e0 8%,transparent) 0, transparent 40%),
+      radial-gradient(circle at 70% 96%, color-mix(in srgb,#d6a6f2 8%,transparent) 0, transparent 48%),
+      linear-gradient(135deg,
+        color-mix(in srgb,#b877e0 4%,transparent) 0 6px,
+        transparent 6px 12px,
+        color-mix(in srgb,#b877e0 4%,transparent) 12px 18px);
+    background-size:auto, auto, auto, 18px 18px;
+    color:#e8d8f2;
+  }
+  body[data-series="E"][data-series="E"]::before{
+    color:#150d1c;background:#b877e0;
+  }
+  body[data-series="E"][data-series="E"] main > .card,
+  body[data-series="E"][data-series="E"] main > .code-wrap,
+  body[data-series="E"][data-series="E"] main > .out-wrap,
+  body[data-series="E"][data-series="E"] main > table,
+  body[data-series="E"][data-series="E"] main > .fig,
+  body[data-series="E"][data-series="E"] main > .umc-demo,
+  body[data-series="E"][data-series="E"] main > .s-nav{background:var(--s-card)}
+  body[data-series="E"][data-series="E"] h1{color:#d6a6f2}
+  body[data-series="E"][data-series="E"] h2{color:#e8d8f2;border-bottom-color:var(--s-line)}
+  body[data-series="E"][data-series="E"] h3,
+  body[data-series="E"][data-series="E"] h4{color:#d6a6f2}
+  body[data-series="E"][data-series="E"] h2 .n{background:#b877e0;color:#150d1c}
+  body[data-series="E"][data-series="E"] .sub-title{
+    color:color-mix(in srgb,#e8d8f2 66%,transparent)}
+  body[data-series="E"][data-series="E"] a{color:#d6a6f2}
+  body[data-series="E"][data-series="E"] a:hover{color:#b877e0}
+  body[data-series="E"][data-series="E"] #toc a{color:color-mix(in srgb,#e8d8f2 78%,transparent)}
+  body[data-series="E"][data-series="E"] #toc a.on{
+    background:linear-gradient(90deg,
+      color-mix(in srgb,#b877e0 24%,transparent),
+      color-mix(in srgb,#b877e0 8%,transparent));
+    color:#d6a6f2;
+  }
+  body[data-series="E"][data-series="E"] table th{
+    background:color-mix(in srgb,#b877e0 16%,#1b1e25);color:#e8d8f2;
+    border-color:var(--s-line);
+  }
+  body[data-series="E"][data-series="E"] table tbody tr:nth-child(even){
+    background:color-mix(in srgb,#b877e0 6%,transparent)}
+  body[data-series="E"][data-series="E"] .card.key{
+    background:linear-gradient(96deg,#252a33,#2b313b 55%,#1f242c);
+    border-left-color:#b877e0;
+  }
+  body[data-series="E"][data-series="E"] .key-mark{color:#b877e0}
+  /* 卡片标题：原来继承卡片自带的品牌色（蓝/绿/红/紫），暗底上太暗 */
+  body[data-series="E"][data-series="E"] .card-t{color:#7cb0ff}
+  body[data-series="E"][data-series="E"] .card.note>.card-t{color:#7cb0ff}
+  body[data-series="E"][data-series="E"] .card.tip>.card-t{color:#5fd0a0}
+  body[data-series="E"][data-series="E"] .card.warn>.card-t{color:#ff9a92}
+  body[data-series="E"][data-series="E"] .card.key>.card-t{color:#d6a6f2}
+  body[data-series="E"][data-series="E"] .card.teal>.card-t{color:#5fd0d0}
+  body[data-series="E"][data-series="E"] .tag{
+    background:color-mix(in srgb,#b877e0 16%,#1b1e25);
+    border-color:var(--s-line);color:#e8d8f2;
+  }
+  body[data-series="E"][data-series="E"] .home-fab{
+    background:linear-gradient(140deg,#b877e0,#d6a6f2);color:#150d1c;
+    border-color:var(--s-line);
+  }
+  body[data-series="E"][data-series="E"] .home-fab:hover{
+    background:linear-gradient(140deg,#d6a6f2,#b877e0);color:#150d1c;
+  }
+  body[data-series="E"][data-series="E"] .s-nav{
+    background:linear-gradient(135deg,#22262e,#1b1e25)}
+  body[data-series="E"][data-series="E"] .s-nav-grid a{
+    background:color-mix(in srgb,#b877e0 10%,#1b1e25);
+    border-color:var(--s-line);color:#e8d8f2;
+  }
+  body[data-series="E"][data-series="E"] .s-nav-grid a:hover{
+    background:color-mix(in srgb,#b877e0 20%,#1b1e25);border-color:#b877e0;
+  }
+  body[data-series="E"][data-series="E"] .s-nav-grid a[aria-current="page"]{
+    background:linear-gradient(96deg,color-mix(in srgb,#b877e0 20%,#1b1e25),
+      color-mix(in srgb,#b877e0 10%,#1b1e25));
+  }
+  body[data-series="E"][data-series="E"] .s-nav-toc a{color:#d6a6f2}
+  body[data-series="E"][data-series="E"] .series-nav{
+    background:var(--s-card);border-color:var(--s-line);}
+  body[data-series="E"][data-series="E"] .series-nav b{color:#e8d8f2}
+  body[data-series="E"][data-series="E"] .series-nav a{
+    background:color-mix(in srgb,#b877e0 10%,#1b1e25);
+    border-color:var(--s-line);color:#e8d8f2;}
+  body[data-series="E"][data-series="E"] .series-nav a.cur{
+    background:linear-gradient(140deg,#b877e0,#d6a6f2);color:#150d1c;}
+}
+
+/* 高对比度：渐变文字会被系统改成纯色，反而看不清，直接退回实色 */
+@media (forced-colors: active){
+  body[data-series="E"][data-series="E"] h1{
+    -webkit-text-fill-color:currentColor;color:CanvasText;background:none}
+  body[data-series="E"][data-series="E"]::before{color:CanvasText;background:Canvas}
+}
+
+/* ============================ F · File（保留原样式） ====================
+   用户要求「为 F 保留之前的样式」——所以底色、卡片、代码块一律沿用
+   f03_compile_and_link.css 里的蓝色皮肤，这里**只**改顶部常驻条的
+   文字，并确认它仍然是 position:fixed（吸在视口顶部）。
+   ==================================================================== */
+body[data-series="F"]::before{
+  content:"F 系列 · 文件操作基础";
+  position:fixed;top:0;left:0;right:0;z-index:80;
+  padding:5px 14px;font:600 12px/1.5 var(--sans,system-ui,sans-serif);
+  color:#fff;background:#1f6feb;letter-spacing:.02em;
+  box-shadow:0 1px 6px rgba(31,111,235,.28);
+}
+body[data-series="F"] main{padding-top:52px}
+
+/* ============================ R · Related ============================
+   R 系列 · 相关资讯与理论
+   ==================================================================== */
+body[data-series="R"][data-series="R"]{
+  --s-bg:#fbdfe0;
+  --s-bg2:#fdf0f0;
+  --s-main:#d1435b;
+  --s-main-deep:#a02b40;
+  --s-ink:#3a141b;
+  --s-line:color-mix(in srgb, #d1435b 32%, transparent);
+  --s-card:rgba(255,255,255,.82);
+  --s-toc:rgba(255,255,255,.90);
+  --s-soft:color-mix(in srgb, #d1435b 10%, transparent);
+  color:var(--s-ink);
+  background-color:#fbdfe0;
+  background-image:
+    radial-gradient(circle at 12% 8%,  rgba(255,255,255,.90) 0, transparent 42%),
+    radial-gradient(circle at 88% 4%,  #fdf0f0 0, transparent 38%),
+    radial-gradient(circle at 70% 96%, #fdf0f0 0, transparent 46%),
+    linear-gradient(135deg,
+      rgba(255,255,255,.40) 0 6px,
+      #fdf0f0 6px 12px,
+      rgba(255,255,255,.40) 12px 18px);
+  background-size:auto, auto, auto, 18px 18px;
+  background-attachment:fixed;
+}
+
+/* 顶部常驻条：固定在视口顶端（原来就有，保留行为、换文字） */
+body[data-series="R"][data-series="R"]::before{
+  content:"R 系列 · 相关资讯与理论";
+  position:fixed;top:0;left:0;right:0;z-index:80;
+  padding:5px 14px;
+  font:700 12px/1.5 var(--sans,system-ui,sans-serif);
+  letter-spacing:.06em;
+  color:#fff;background:#d1435b;
+  box-shadow:0 1px 8px color-mix(in srgb, #d1435b 42%, transparent);
+}
+body[data-series="R"][data-series="R"] main{padding-top:52px}
+
+/* 侧栏目录 */
+body[data-series="R"][data-series="R"] #toc{
+  background:var(--s-toc);border-right:1px solid var(--s-line);
+  backdrop-filter:blur(6px);
+}
+body[data-series="R"][data-series="R"] #toc h5{color:var(--s-main-deep)}
+body[data-series="R"][data-series="R"] #toc a{color:color-mix(in srgb, #3a141b 78%, transparent)}
+body[data-series="R"][data-series="R"] #toc a:hover{background:var(--s-soft)}
+body[data-series="R"][data-series="R"] #toc a.on{
+  background:linear-gradient(90deg,
+    color-mix(in srgb, #d1435b 26%, transparent),
+    color-mix(in srgb, #d1435b 8%, transparent));
+  color:var(--s-main-deep);font-weight:650;
+}
+
+/* 正文层级 */
+body[data-series="R"][data-series="R"] h1{color:#a02b40}
+body[data-series="R"][data-series="R"] h2{border-bottom:1px solid var(--s-line);color:#a02b40}
+body[data-series="R"][data-series="R"] h2 .n{background:#d1435b;color:#fff;
+  box-shadow:0 1px 4px color-mix(in srgb, #d1435b 40%, transparent)}
+body[data-series="R"][data-series="R"] h3,
+body[data-series="R"][data-series="R"] h4{color:var(--s-main-deep)}
+body[data-series="R"][data-series="R"] .sub-title{color:color-mix(in srgb, #3a141b 62%, transparent)}
+body[data-series="R"][data-series="R"] a{color:var(--s-main-deep)}
+body[data-series="R"][data-series="R"] a:hover{color:#d1435b}
+
+/* 卡片 / 代码 / 表格 */
+body[data-series="R"][data-series="R"] main > .card,
+body[data-series="R"][data-series="R"] main > .code-wrap,
+body[data-series="R"][data-series="R"] main > .out-wrap,
+body[data-series="R"][data-series="R"] main > table,
+body[data-series="R"][data-series="R"] main > .fig,
+body[data-series="R"][data-series="R"] main > .umc-demo,
+body[data-series="R"][data-series="R"] main > .s-nav{
+  background:var(--s-card);border-color:var(--s-line);
+  box-shadow:0 2px 10px color-mix(in srgb, #d1435b 12%, transparent);
+  backdrop-filter:blur(4px);
+}
+body[data-series="R"][data-series="R"] table th{
+  background:color-mix(in srgb, #d1435b 14%, #fff);
+  color:#a02b40;border-color:var(--s-line);
+}
+body[data-series="R"][data-series="R"] table td{border-color:var(--s-line)}
+body[data-series="R"][data-series="R"] table tbody tr:nth-child(even){
+  background:color-mix(in srgb, #d1435b 5%, transparent);
+}
+/* 代码块与输出块：底色必须不透明，而且要压过各篇自带样式表。
+   08_f03 里有 body.fseries main>.code-wrap{background-color:#fff}（0,2,2），
+   只写 body[data-series] 是压不过的 —— 代码块会被刷成白底而文字仍是浅色，
+   对比度掉到 1.2:1，等于看不见。所以这里写两遍属性提权重，再兜一个 !important。 */
+body[data-series="R"][data-series="R"] main>.code-wrap,
+body[data-series="R"][data-series="R"] .code-wrap{
+  background-color:#1d1530 !important;
+}
+body[data-series="R"][data-series="R"] .code-wrap>pre{
+  background:transparent !important;color:#e8e3f5;
+}
+body[data-series="R"][data-series="R"] .code-wrap .bar{
+  background-color:#191233 !important;
+  background-image:linear-gradient(180deg,#241b3d,#191233) !important;
+  border-bottom:1px solid rgba(255,255,255,.10) !important;
+  color:#c3b8e0;
+}
+body[data-series="R"][data-series="R"] .code-wrap .bar .cp{
+  background-color:#241b3d;border-color:rgba(255,255,255,.22);color:#cfc6ea;
+}
+body[data-series="R"][data-series="R"] main>.out-wrap,
+body[data-series="R"][data-series="R"] .out-wrap{
+  background-color:#0c2523 !important;
+}
+body[data-series="R"][data-series="R"] .out-wrap>pre{
+  background:transparent !important;color:#c9ece6;
+}
+body[data-series="R"][data-series="R"] .out-wrap .cap{color:#7fc7bb}
+body[data-series="R"][data-series="R"] .card.key{
+  background:linear-gradient(96deg,#fdf0f0,#fff 55%,#fdf0f0);
+  border-left:6px solid #d1435b;
+}
+body[data-series="R"][data-series="R"] .key-mark{color:#d1435b}
+body[data-series="R"][data-series="R"] .card-t{color:#a02b40}
+body[data-series="R"][data-series="R"] .card.note>.card-t{color:#175fd0}
+body[data-series="R"][data-series="R"] .card.tip>.card-t{color:#0f6b3a}
+body[data-series="R"][data-series="R"] .card.warn>.card-t{color:#a82a1c}
+body[data-series="R"][data-series="R"] .card.teal>.card-t{color:#0a6666}
+body[data-series="R"][data-series="R"] .tag{
+  background:color-mix(in srgb, #d1435b 12%, #fff);
+  border-color:var(--s-line);color:#a02b40;
+}
+
+/* 「返回 home」：与顶条同色系 */
+body[data-series="R"][data-series="R"] .home-fab{
+  background:linear-gradient(140deg,#fff,#fdf0f0);
+  border-color:var(--s-line);color:#a02b40;
+  box-shadow:0 3px 12px color-mix(in srgb, #d1435b 26%, transparent);
+}
+body[data-series="R"][data-series="R"] .home-fab:hover{
+  background:linear-gradient(140deg,#fdf0f0,#fbdfe0);color:#a02b40;
+}
+
+/* 文末系列内跳转 */
+body[data-series="R"][data-series="R"] .s-nav{
+  background:linear-gradient(135deg,#fdf0f0,#fff);
+}
+body[data-series="R"][data-series="R"] .s-nav > .s-nav-h{color:#a02b40}
+body[data-series="R"][data-series="R"] .s-nav-grid a{
+  background:#fff;border-color:var(--s-line);color:#a02b40;
+}
+body[data-series="R"][data-series="R"] .s-nav-grid a:hover{
+  background:#fdf0f0;border-color:#d1435b;
+}
+body[data-series="R"][data-series="R"] .s-nav-grid a .s-no{background:#d1435b;color:#fff}
+body[data-series="R"][data-series="R"] .s-nav-grid a[aria-current="page"]{
+  background:linear-gradient(96deg,#fdf0f0,#fbdfe0);border-color:#d1435b;
+}
+body[data-series="R"][data-series="R"] .s-nav-cur{background:color-mix(in srgb,#d1435b 20%,transparent);color:#a02b40}
+body[data-series="R"][data-series="R"] .s-nav-toc a{color:var(--s-main-deep)}
+
+/* 暗色 */
+@media (prefers-color-scheme: dark){
+  body[data-series="R"][data-series="R"]{
+    --s-bg:#1a0e11;
+    --s-ink:#f2d8dd;
+    --s-line:color-mix(in srgb, #ef7288 30%, transparent);
+    --s-card:rgba(30,34,42,.74);
+    --s-toc:rgba(18,21,26,.90);
+    --s-soft:color-mix(in srgb, #ef7288 14%, transparent);
+    background-color:#1a0e11;
+    background-image:
+      radial-gradient(circle at 12% 8%,  color-mix(in srgb,#ef7288 10%,transparent) 0, transparent 44%),
+      radial-gradient(circle at 88% 4%,  color-mix(in srgb,#ef7288 8%,transparent) 0, transparent 40%),
+      radial-gradient(circle at 70% 96%, color-mix(in srgb,#f7a8b6 8%,transparent) 0, transparent 48%),
+      linear-gradient(135deg,
+        color-mix(in srgb,#ef7288 4%,transparent) 0 6px,
+        transparent 6px 12px,
+        color-mix(in srgb,#ef7288 4%,transparent) 12px 18px);
+    background-size:auto, auto, auto, 18px 18px;
+    color:#f2d8dd;
+  }
+  body[data-series="R"][data-series="R"]::before{
+    color:#1a0e11;background:#ef7288;
+  }
+  body[data-series="R"][data-series="R"] main > .card,
+  body[data-series="R"][data-series="R"] main > .code-wrap,
+  body[data-series="R"][data-series="R"] main > .out-wrap,
+  body[data-series="R"][data-series="R"] main > table,
+  body[data-series="R"][data-series="R"] main > .fig,
+  body[data-series="R"][data-series="R"] main > .umc-demo,
+  body[data-series="R"][data-series="R"] main > .s-nav{background:var(--s-card)}
+  body[data-series="R"][data-series="R"] h1{color:#f7a8b6}
+  body[data-series="R"][data-series="R"] h2{color:#f2d8dd;border-bottom-color:var(--s-line)}
+  body[data-series="R"][data-series="R"] h3,
+  body[data-series="R"][data-series="R"] h4{color:#f7a8b6}
+  body[data-series="R"][data-series="R"] h2 .n{background:#ef7288;color:#1a0e11}
+  body[data-series="R"][data-series="R"] .sub-title{
+    color:color-mix(in srgb,#f2d8dd 66%,transparent)}
+  body[data-series="R"][data-series="R"] a{color:#f7a8b6}
+  body[data-series="R"][data-series="R"] a:hover{color:#ef7288}
+  body[data-series="R"][data-series="R"] #toc a{color:color-mix(in srgb,#f2d8dd 78%,transparent)}
+  body[data-series="R"][data-series="R"] #toc a.on{
+    background:linear-gradient(90deg,
+      color-mix(in srgb,#ef7288 24%,transparent),
+      color-mix(in srgb,#ef7288 8%,transparent));
+    color:#f7a8b6;
+  }
+  body[data-series="R"][data-series="R"] table th{
+    background:color-mix(in srgb,#ef7288 16%,#1b1e25);color:#f2d8dd;
+    border-color:var(--s-line);
+  }
+  body[data-series="R"][data-series="R"] table tbody tr:nth-child(even){
+    background:color-mix(in srgb,#ef7288 6%,transparent)}
+  body[data-series="R"][data-series="R"] .card.key{
+    background:linear-gradient(96deg,#252a33,#2b313b 55%,#1f242c);
+    border-left-color:#ef7288;
+  }
+  body[data-series="R"][data-series="R"] .key-mark{color:#ef7288}
+  /* 卡片标题：原来继承卡片自带的品牌色（蓝/绿/红/紫），暗底上太暗 */
+  body[data-series="R"][data-series="R"] .card-t{color:#7cb0ff}
+  body[data-series="R"][data-series="R"] .card.note>.card-t{color:#7cb0ff}
+  body[data-series="R"][data-series="R"] .card.tip>.card-t{color:#5fd0a0}
+  body[data-series="R"][data-series="R"] .card.warn>.card-t{color:#ff9a92}
+  body[data-series="R"][data-series="R"] .card.key>.card-t{color:#f7a8b6}
+  body[data-series="R"][data-series="R"] .card.teal>.card-t{color:#5fd0d0}
+  body[data-series="R"][data-series="R"] .tag{
+    background:color-mix(in srgb,#ef7288 16%,#1b1e25);
+    border-color:var(--s-line);color:#f2d8dd;
+  }
+  body[data-series="R"][data-series="R"] .home-fab{
+    background:linear-gradient(140deg,#ef7288,#f7a8b6);color:#1a0e11;
+    border-color:var(--s-line);
+  }
+  body[data-series="R"][data-series="R"] .home-fab:hover{
+    background:linear-gradient(140deg,#f7a8b6,#ef7288);color:#1a0e11;
+  }
+  body[data-series="R"][data-series="R"] .s-nav{
+    background:linear-gradient(135deg,#22262e,#1b1e25)}
+  body[data-series="R"][data-series="R"] .s-nav-grid a{
+    background:color-mix(in srgb,#ef7288 10%,#1b1e25);
+    border-color:var(--s-line);color:#f2d8dd;
+  }
+  body[data-series="R"][data-series="R"] .s-nav-grid a:hover{
+    background:color-mix(in srgb,#ef7288 20%,#1b1e25);border-color:#ef7288;
+  }
+  body[data-series="R"][data-series="R"] .s-nav-grid a[aria-current="page"]{
+    background:linear-gradient(96deg,color-mix(in srgb,#ef7288 20%,#1b1e25),
+      color-mix(in srgb,#ef7288 10%,#1b1e25));
+  }
+  body[data-series="R"][data-series="R"] .s-nav-toc a{color:#f7a8b6}
+  body[data-series="R"][data-series="R"] .series-nav{
+    background:var(--s-card);border-color:var(--s-line);}
+  body[data-series="R"][data-series="R"] .series-nav b{color:#f2d8dd}
+  body[data-series="R"][data-series="R"] .series-nav a{
+    background:color-mix(in srgb,#ef7288 10%,#1b1e25);
+    border-color:var(--s-line);color:#f2d8dd;}
+  body[data-series="R"][data-series="R"] .series-nav a.cur{
+    background:linear-gradient(140deg,#ef7288,#f7a8b6);color:#1a0e11;}
+}
+
+/* 高对比度：渐变文字会被系统改成纯色，反而看不清，直接退回实色 */
+@media (forced-colors: active){
+  body[data-series="R"][data-series="R"] h1{
+    -webkit-text-fill-color:currentColor;color:CanvasText;background:none}
+  body[data-series="R"][data-series="R"]::before{color:CanvasText;background:Canvas}
+}
+
+/* ---------------- M 系列：实色覆盖（替掉 color-mix 派生色） ---------------- */
+body[data-series="M"][data-series="M"] a{color:#14539f}
+body[data-series="M"][data-series="M"] a:hover{color:#1f6feb}
+body[data-series="M"][data-series="M"] .sub-title{color:#4a5b70}
+body[data-series="M"][data-series="M"] #toc a{color:#4a5b70}
+body[data-series="M"][data-series="M"] table th{background:#dbe8f8;color:#12447f;border-color:#1f6feb}
+body[data-series="M"][data-series="M"] .series-nav a.cur{background:#1f6feb !important;color:#ffffff !important;
+  border-color:#1f6feb !important}
+body[data-series="M"][data-series="M"] .series-nav b{color:#4a5b70}
+body[data-series="M"][data-series="M"] .series-nav a{color:#14539f}
+body[data-series="M"][data-series="M"] .s-nav-h{color:#14539f}
+body[data-series="M"][data-series="M"] .s-nav-grid a{color:#14539f}
+body[data-series="M"][data-series="M"] .s-nav-toc a{color:#14539f}
+body[data-series="M"][data-series="M"] .home-fab{background-color:#eef6fd;
+  background-image:linear-gradient(140deg,#fff,#eef6fd) !important;
+  color:#14539f !important}
+body[data-series="M"][data-series="M"]::before{background-color:#1f6feb !important;background-image:none;
+  color:#fff !important}
+
+@media (prefers-color-scheme: dark){
+  body[data-series="M"][data-series="M"] a{color:#8cc0ff}
+  body[data-series="M"][data-series="M"] a:hover{color:#5aa2f0}
+  body[data-series="M"][data-series="M"] .sub-title{color:#9fb0c6}
+  body[data-series="M"][data-series="M"] #toc a{color:#9fb0c6}
+  body[data-series="M"][data-series="M"] table th{background:#22304a;color:#cfe0f5;border-color:#5aa2f0}
+  body[data-series="M"][data-series="M"] .series-nav a.cur{background:#5aa2f0 !important;color:#0d1420 !important;
+    border-color:#5aa2f0 !important}
+  body[data-series="M"][data-series="M"] .series-nav b{color:#9fb0c6}
+  body[data-series="M"][data-series="M"] .series-nav a{color:#9fb0c6}
+  body[data-series="M"][data-series="M"] .s-nav-h{color:#8cc0ff}
+  body[data-series="M"][data-series="M"] .s-nav-grid a{color:#9fb0c6}
+  body[data-series="M"][data-series="M"] .s-nav-toc a{color:#8cc0ff}
+  body[data-series="M"][data-series="M"] .home-fab{background-color:#5aa2f0;
+    background-image:linear-gradient(140deg,#8cc0ff,#5aa2f0) !important;
+    color:#0d1420 !important}
+  body[data-series="M"][data-series="M"] .home-fab:hover{background-color:#8cc0ff !important;
+    color:#0d1420 !important}
+  body[data-series="M"][data-series="M"]::before{background-color:#5aa2f0 !important;color:#0d1420 !important}
+}
+
+/* ---------------- Q 系列：实色覆盖（替掉 color-mix 派生色） ---------------- */
+body[data-series="Q"][data-series="Q"] a{color:#0a7157}
+body[data-series="Q"][data-series="Q"] a:hover{color:#0f9d76}
+body[data-series="Q"][data-series="Q"] .sub-title{color:#40584f}
+body[data-series="Q"][data-series="Q"] #toc a{color:#40584f}
+body[data-series="Q"][data-series="Q"] table th{background:#d6efe6;color:#075c46;border-color:#0f9d76}
+body[data-series="Q"][data-series="Q"] .series-nav a.cur{background:#0f9d76 !important;color:#ffffff !important;
+  border-color:#0f9d76 !important}
+body[data-series="Q"][data-series="Q"] .series-nav b{color:#40584f}
+body[data-series="Q"][data-series="Q"] .series-nav a{color:#0a7157}
+body[data-series="Q"][data-series="Q"] .s-nav-h{color:#0a7157}
+body[data-series="Q"][data-series="Q"] .s-nav-grid a{color:#0a7157}
+body[data-series="Q"][data-series="Q"] .s-nav-toc a{color:#0a7157}
+body[data-series="Q"][data-series="Q"] .home-fab{background-color:#eefaf6;
+  background-image:linear-gradient(140deg,#fff,#eefaf6) !important;
+  color:#0a7157 !important}
+body[data-series="Q"][data-series="Q"]::before{background-color:#0f9d76 !important;background-image:none;
+  color:#fff !important}
+
+@media (prefers-color-scheme: dark){
+  body[data-series="Q"][data-series="Q"] a{color:#7adfc4}
+  body[data-series="Q"][data-series="Q"] a:hover{color:#3fc4a0}
+  body[data-series="Q"][data-series="Q"] .sub-title{color:#9db8ae}
+  body[data-series="Q"][data-series="Q"] #toc a{color:#9db8ae}
+  body[data-series="Q"][data-series="Q"] table th{background:#1c3b33;color:#c9ece1;border-color:#3fc4a0}
+  body[data-series="Q"][data-series="Q"] .series-nav a.cur{background:#3fc4a0 !important;color:#0a1614 !important;
+    border-color:#3fc4a0 !important}
+  body[data-series="Q"][data-series="Q"] .series-nav b{color:#9db8ae}
+  body[data-series="Q"][data-series="Q"] .series-nav a{color:#9db8ae}
+  body[data-series="Q"][data-series="Q"] .s-nav-h{color:#7adfc4}
+  body[data-series="Q"][data-series="Q"] .s-nav-grid a{color:#9db8ae}
+  body[data-series="Q"][data-series="Q"] .s-nav-toc a{color:#7adfc4}
+  body[data-series="Q"][data-series="Q"] .home-fab{background-color:#3fc4a0;
+    background-image:linear-gradient(140deg,#7adfc4,#3fc4a0) !important;
+    color:#0a1614 !important}
+  body[data-series="Q"][data-series="Q"] .home-fab:hover{background-color:#7adfc4 !important;
+    color:#0a1614 !important}
+  body[data-series="Q"][data-series="Q"]::before{background-color:#3fc4a0 !important;color:#0a1614 !important}
+}
+
+/* ---------------- E 系列：实色覆盖（替掉 color-mix 派生色） ---------------- */
+body[data-series="E"][data-series="E"] a{color:#67289a}
+body[data-series="E"][data-series="E"] a:hover{color:#8b3fbe}
+body[data-series="E"][data-series="E"] .sub-title{color:#554067}
+body[data-series="E"][data-series="E"] #toc a{color:#554067}
+body[data-series="E"][data-series="E"] table th{background:#eddcf6;color:#541f80;border-color:#8b3fbe}
+body[data-series="E"][data-series="E"] .series-nav a.cur{background:#8b3fbe !important;color:#ffffff !important;
+  border-color:#8b3fbe !important}
+body[data-series="E"][data-series="E"] .series-nav b{color:#554067}
+body[data-series="E"][data-series="E"] .series-nav a{color:#67289a}
+body[data-series="E"][data-series="E"] .s-nav-h{color:#67289a}
+body[data-series="E"][data-series="E"] .s-nav-grid a{color:#67289a}
+body[data-series="E"][data-series="E"] .s-nav-toc a{color:#67289a}
+body[data-series="E"][data-series="E"] .home-fab{background-color:#faf1fd;
+  background-image:linear-gradient(140deg,#fff,#faf1fd) !important;
+  color:#67289a !important}
+body[data-series="E"][data-series="E"]::before{background-color:#8b3fbe !important;background-image:none;
+  color:#fff !important}
+
+@media (prefers-color-scheme: dark){
+  body[data-series="E"][data-series="E"] a{color:#d6a6f2}
+  body[data-series="E"][data-series="E"] a:hover{color:#b877e0}
+  body[data-series="E"][data-series="E"] .sub-title{color:#b9a6c8}
+  body[data-series="E"][data-series="E"] #toc a{color:#b9a6c8}
+  body[data-series="E"][data-series="E"] table th{background:#33203f;color:#ead9f5;border-color:#b877e0}
+  body[data-series="E"][data-series="E"] .series-nav a.cur{background:#b877e0 !important;color:#150d1c !important;
+    border-color:#b877e0 !important}
+  body[data-series="E"][data-series="E"] .series-nav b{color:#b9a6c8}
+  body[data-series="E"][data-series="E"] .series-nav a{color:#b9a6c8}
+  body[data-series="E"][data-series="E"] .s-nav-h{color:#d6a6f2}
+  body[data-series="E"][data-series="E"] .s-nav-grid a{color:#b9a6c8}
+  body[data-series="E"][data-series="E"] .s-nav-toc a{color:#d6a6f2}
+  body[data-series="E"][data-series="E"] .home-fab{background-color:#b877e0;
+    background-image:linear-gradient(140deg,#d6a6f2,#b877e0) !important;
+    color:#150d1c !important}
+  body[data-series="E"][data-series="E"] .home-fab:hover{background-color:#d6a6f2 !important;
+    color:#150d1c !important}
+  body[data-series="E"][data-series="E"]::before{background-color:#b877e0 !important;color:#150d1c !important}
+}
+
+/* ---------------- R 系列：实色覆盖（替掉 color-mix 派生色） ---------------- */
+body[data-series="R"][data-series="R"] a{color:#a02b40}
+body[data-series="R"][data-series="R"] a:hover{color:#d1435b}
+body[data-series="R"][data-series="R"] .sub-title{color:#6b4550}
+body[data-series="R"][data-series="R"] #toc a{color:#6b4550}
+body[data-series="R"][data-series="R"] table th{background:#f7dde0;color:#8a2338;border-color:#d1435b}
+body[data-series="R"][data-series="R"] .series-nav a.cur{background:#d1435b !important;color:#ffffff !important;
+  border-color:#d1435b !important}
+body[data-series="R"][data-series="R"] .series-nav b{color:#6b4550}
+body[data-series="R"][data-series="R"] .series-nav a{color:#a02b40}
+body[data-series="R"][data-series="R"] .s-nav-h{color:#a02b40}
+body[data-series="R"][data-series="R"] .s-nav-grid a{color:#a02b40}
+body[data-series="R"][data-series="R"] .s-nav-toc a{color:#a02b40}
+body[data-series="R"][data-series="R"] .home-fab{background-color:#fdf0f0;
+  background-image:linear-gradient(140deg,#fff,#fdf0f0) !important;
+  color:#a02b40 !important}
+body[data-series="R"][data-series="R"]::before{background-color:#d1435b !important;background-image:none;
+  color:#fff !important}
+
+@media (prefers-color-scheme: dark){
+  body[data-series="R"][data-series="R"] a{color:#f7a8b6}
+  body[data-series="R"][data-series="R"] a:hover{color:#ef7288}
+  body[data-series="R"][data-series="R"] .sub-title{color:#c9a6ad}
+  body[data-series="R"][data-series="R"] #toc a{color:#c9a6ad}
+  body[data-series="R"][data-series="R"] table th{background:#3d2229;color:#f5dae0;border-color:#ef7288}
+  body[data-series="R"][data-series="R"] .series-nav a.cur{background:#ef7288 !important;color:#1a0e11 !important;
+    border-color:#ef7288 !important}
+  body[data-series="R"][data-series="R"] .series-nav b{color:#c9a6ad}
+  body[data-series="R"][data-series="R"] .series-nav a{color:#c9a6ad}
+  body[data-series="R"][data-series="R"] .s-nav-h{color:#f7a8b6}
+  body[data-series="R"][data-series="R"] .s-nav-grid a{color:#c9a6ad}
+  body[data-series="R"][data-series="R"] .s-nav-toc a{color:#f7a8b6}
+  body[data-series="R"][data-series="R"] .home-fab{background-color:#ef7288;
+    background-image:linear-gradient(140deg,#f7a8b6,#ef7288) !important;
+    color:#1a0e11 !important}
+  body[data-series="R"][data-series="R"] .home-fab:hover{background-color:#f7a8b6 !important;
+    color:#1a0e11 !important}
+  body[data-series="R"][data-series="R"]::before{background-color:#ef7288 !important;color:#1a0e11 !important}
+}

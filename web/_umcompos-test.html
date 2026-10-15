@@ -1,0 +1,20 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<title>UMCompos 自测台</title>
+<link rel="stylesheet" href="vendor/umcompos-test.css">
+</head>
+<body>
+<h1>UMCompos.js 自测台</h1>
+<p>这个页面只用来验证插件本身，不属于教程。</p>
+<div id="host"></div>
+<script src="vendor/font-subset.js"></script>
+<script src="UMCompos.js"></script>
+<script src="project-config.js"></script>
+<script>
+  /* 让测试页也把字体真正载入，模拟真实使用环境 */
+  UMCompos.loadFont();   /* 路径来自 project-config.js */
+</script>
+</body>
+</html>

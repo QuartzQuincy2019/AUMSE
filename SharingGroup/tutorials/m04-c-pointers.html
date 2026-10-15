@@ -1,0 +1,1285 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>M04 · 指针初步</title>
+<link rel="stylesheet" href="assets/tutorial.css">
+<link rel="stylesheet" href="assets/series-theme.css">
+<style>
+/* ================= 自动注入：返回 home + 系列小目录 ================= */
+.home-fab{position:fixed;left:11px;bottom:11px;z-index:65;display:inline-flex;
+  align-items:center;gap:6px;padding:8px 14px;border-radius:999px;
+  background:#fff;border:1px solid var(--line-2);color:var(--fg-2);
+  text-decoration:none;font:600 13px/1 var(--sans);
+  box-shadow:0 4px 16px rgba(20,30,50,.16);transition:transform .14s,box-shadow .14s,color .14s}
+.home-fab:hover{transform:translateY(-2px);color:var(--blue);
+  box-shadow:0 8px 22px rgba(30,60,120,.24)}
+.home-fab::before{content:"⌂";font-size:15px}
+.series-nav{margin:34px 0 0;padding:14px 18px;border:1px solid var(--line-2);
+  border-radius:12px;background:var(--bg-soft);font-size:13.5px}
+.series-nav b{color:var(--fg)}
+.series-nav a{display:inline-block;margin:3px 8px 3px 0;padding:3px 11px;border-radius:999px;
+  background:#fff;border:1px solid var(--line-2);text-decoration:none;color:var(--fg-2);
+  transition:border-color .14s,color .14s}
+.series-nav a:hover{border-color:var(--blue);color:var(--blue)}
+.series-nav a.cur{background:var(--blue);border-color:var(--blue);color:#fff;font-weight:600}
+@media (max-width:560px){
+  .series-nav{font-size:12.5px;padding:12px 13px}
+  .series-nav a{font-size:12px;margin:2px 5px 2px 0;padding:2px 9px}
+  .home-fab{left:9px;bottom:9px;padding:7px 12px;font-size:12.5px}
+}
+
+/* ---------- 悬浮「返回 home」按钮的避让 ----------
+   窄屏下抽屉宽 min(86vw,300px)，而按钮固定在左下角、z-index 又高于抽屉，
+   会把抽屉底部的目录项压住导致点击无效。所以：
+     * 抽屉打开时直接藏起按钮
+     * 中等宽度把按钮移到底部右侧（320px 之外就不与抽屉重叠） */
+body.toc-open .home-fab{display:none}
+@media (min-width:561px) and (max-width:980px){
+  .home-fab{left:auto;right:12px}
+}
+
+/* ---------- 遮罩层不接收指针事件 ----------
+   body.toc-open::after 是「抽屉打开时的变暗遮罩」。
+   它曾经把抽屉里的点击全吃掉：实测 elementFromPoint 返回 body.toc-open，
+   连目录项都点不动（JS 直接 .click() 却正常，说明只是指针层被挡）。
+   遮罩只负责变暗，关闭逻辑由脚本按坐标判断。 */
+body.toc-open::after{pointer-events:none}
+</style>
+</head>
+<body class="mseries" data-series="M">
+<div id="shell">
+
+<nav id="toc">
+  <h5>目录</h5>
+  <a href="#s1">1 · 一句话认识指针</a>
+  <a href="#s2">2 · 两个符号：&amp; 和 *</a>
+  <a href="#s3">3 · 声明一个指针</a>
+  <a href="#s4">4 · &amp; 与 * 是一对相反操作</a>
+  <div class="sep"></div>
+  <a href="#s5">5 · 疑难解答（十一问）</a>
+  <a href="#s5a" class="sub">① 指针里到底装了什么</a>
+  <a href="#s5b" class="sub">② 为什么要分类型</a>
+  <a href="#s5c" class="sub">③ * 的三种含义怎么分</a>
+  <a href="#s5d" class="sub">④ 未初始化的指针</a>
+  <a href="#s5e" class="sub">⑤ NULL 与 nullptr</a>
+  <a href="#s5f" class="sub">⑥ 数组的本质是什么</a>
+  <a href="#s5g" class="sub">⑦ 为什么要多传一个长度</a>
+  <a href="#s5h" class="sub">⑧ 为什么加 1 是下一格</a>
+  <a href="#s5i" class="sub">⑨ 改指向 vs 改值</a>
+  <a href="#s5j" class="sub">⑩ *p++ 直接记住就好</a>
+  <a href="#s5k" class="sub">⑪ 二级指针</a>
+  <div class="sep"></div>
+  <a href="#s6">6 · 指针的强大之处</a>
+  <a href="#s6a" class="sub">6.1 让函数修改外部变量</a>
+  <a href="#s6c" class="sub">6.2 用指针遍历数组</a>
+  <a href="#s7">7 · 常见错误</a>
+  <a href="#s8">8 · 一页速查</a>
+</nav>
+
+<main>
+<h1>指针初步</h1>
+<p class="sub-title">UME 项目组内部教程 · M04（Main） · 面向零编程基础成员</p>
+<p>
+  <span class="tag">已学：输入输出 / 选择 / 循环</span>
+  <span class="tag">已学：数组 / 函数</span>
+  <span class="tag">已学：类型与地址（M03）</span>
+  <span class="tag b">本讲：指针</span>
+</p>
+
+<div class="card note">
+  <div class="card-t">开始之前</div>
+  <p>很多人被「指针」这个词吓住，其实它<b>一点也不神秘</b>。</p>
+  <p>如果你看懂了M03第 9 节的「<b>地址</b>」——
+  变量住在有编号的房间里，<code>&amp;</code> 能问出房间号 ——
+  那么指针就只是一句话的事。</p>
+  <p>本讲的代码与输出<b>全部经过实际编译运行核对</b>。
+  文中所有<b>箭头图</b>都表示「指向」，鼠标移上去有反馈。</p>
+</div>
+
+<!-- ============================================================ -->
+<h2 id="s1"><span class="n">1</span>一句话认识指针</h2>
+
+<p>回想M03：每个变量都有自己的<b>地址</b>（房间号），<code>&amp;a</code> 就能取到。</p>
+
+<p>那么问题来了：<b>既然地址就是一个数，能不能把它存进一个变量里？</b></p>
+
+<p>能。这种「专门用来装地址的变量」，就叫<b>指针</b>。</p>
+
+<div class="card key">
+  <div class="card-t">指针的定义</div>
+  <p style="font-size:17px"><b>指针 = 一个变量，它里面装的是另一个变量的地址。</b></p>
+  <p>就这么简单。它不是魔法，也不是什么高级技巧，
+  只是「内容是地址」的普通变量。</p>
+</div>
+
+<h4>画成图看</h4>
+<p>执行这两行之后：</p>
+<div class="code-wrap"><div class="bar"><span class="dot r"></span><span class="dot y"></span><span class="dot g"></span><span class="name">一个最简单的指针</span><span class="cp">复制</span></div><pre><span class="hl-k">int</span> x = <span class="hl-n">42</span>;        <span class="hl-c">/* 普通变量：装了一个数 42 */</span>
+<span class="hl-k">int</span> *p = <span class="arw">&amp;</span>x;       <span class="hl-c">/* 指针变量：装了 x 的地址 */</span></pre></div>
+
+<div class="ptr-demo">
+  <div class="n">内存里的样子（箭头表示「指向」）</div>
+  <div class="box">
+    <div class="nm">变量 x</div>
+    <div class="vl">42</div>
+  </div>
+  <div class="link">◀─── <span class="arw2">p</span> 指向这里 ───</div>
+  <div class="box p">
+    <div class="nm">指针 p</div>
+    <div class="vl">x 的地址</div>
+  </div>
+</div>
+
+<p>理解这张图的两个要点：</p>
+<ul>
+  <li><code>x</code> 的盒子里装的是 <b>42</b>（一个数）</li>
+  <li><code>p</code> 的盒子里装的是 <b>x 的地址</b>（不是 42）。
+    但我们说「<b>p 指向 x</b>」，因为顺着 p 里的地址就能找到 x</li>
+</ul>
+
+<div class="mnemonic">
+  <b>记住这个比喻：</b>
+  <code>x</code> 是一间房，<code>42</code> 是房里住的人。<br>
+  <code>p</code> 是一张<b>纸条</b>，上面写着「x 的房间号」。<br>
+  纸条上写的不是「42」，而是「<b>去哪里找 42</b>」。
+</div>
+
+<!-- ============================================================ -->
+<h2 id="s2"><span class="n">2</span>两个符号：&amp; 和 *</h2>
+
+<p>学指针只需要两个符号，它们的作用正好相反：</p>
+
+<table>
+<thead><tr><th style="width:14%">符号</th><th style="width:20%">读作</th><th>作用</th><th style="width:26%">例子</th></tr></thead>
+<tbody>
+<tr><td class="c" style="font-size:18px"><b>&amp;</b></td><td>取地址</td>
+    <td>给我这个变量的<b>地址</b></td><td class="c">&amp;x  →  x 的地址</td></tr>
+<tr><td class="c" style="font-size:18px"><b>*</b></td><td>解引用<br>（取值）</td>
+    <td>顺着这个地址，<b>把里面的东西拿出来</b></td><td class="c">*p  →  p 指向的那个值</td></tr>
+</tbody>
+</table>
+
+<div class="card key">
+  <div class="card-t">用「箭头」来想 <code>*</code></div>
+  <p><code>*p</code> 的意思是：<b>从 p 出发，顺着箭头走到它指向的房间，把里面的东西取出来。</b></p>
+  <p>你可以把 <code>*</code> 读成「<b>顺着箭头走到……</b>」。</p>
+</div>
+
+<div class="code-wrap"><div class="bar"><span class="dot r"></span><span class="dot y"></span><span class="dot g"></span><span class="name">完整例子：取值与改值</span><span class="cp">复制</span></div><pre><span class="hl-p">#include</span> <span class="hl-s">&lt;stdio.h&gt;</span>
+
+<span class="hl-k">int</span> <span class="hl-f">main</span>(<span class="hl-k">void</span>) {
+    <span class="hl-k">int</span> x = <span class="hl-n">42</span>;
+    <span class="hl-k">int</span> *p = <span class="arw">&amp;</span>x;              <span class="hl-c">/* p 指向 x */</span>
+
+    <span class="hl-f">printf</span>(<span class="hl-s">"x     = %d\n"</span>, x);
+    <span class="hl-f">printf</span>(<span class="hl-s">"&amp;x    = %p\n"</span>, (<span class="hl-k">void</span> *)<span class="arw">&amp;</span>x);
+    <span class="hl-f">printf</span>(<span class="hl-s">"p     = %p   （p 里装的就是 &amp;x）\n"</span>, (<span class="hl-k">void</span> *)p);
+    <span class="hl-f">printf</span>(<span class="hl-s">"*p    = %d   （顺着 p 找到 x）\n"</span>, <span class="arw">*</span>p);
+
+    <span class="hl-c">/* 通过指针改 x —— 注意改的是 x，不是 p */</span>
+    <span class="arw">*</span>p = <span class="hl-n">99</span>;
+    <span class="hl-f">printf</span>(<span class="hl-s">"执行 *p = 99 之后：x = %d\n"</span>, x);
+
+    <span class="hl-c">/* 反过来，改 x 也能从 *p 看见 */</span>
+    x = <span class="hl-n">7</span>;
+    <span class="hl-f">printf</span>(<span class="hl-s">"执行 x = 7 之后：*p = %d\n"</span>, <span class="arw">*</span>p);
+    <span class="hl-k">return</span> <span class="hl-n">0</span>;
+}</pre></div>
+
+<div class="out-wrap"><div class="cap">运行结果（地址每次都会变）</div><pre>x     = 42
+&x    = 000000000060FD74
+p     = 000000000060FD74   （p 里装的就是 &x）
+*p    = 42   （顺着 p 找到 x）
+执行 *p = 99 之后：x = 99
+执行 x = 7 之后：*p = 7</pre></div>
+
+<p>注意 <code>p</code> 和 <code>&amp;x</code> 打印出来<b>一模一样</b> ——
+这直接证明了「p 里装的就是 x 的地址」。</p>
+
+<p>而后两行更重要，它说明一件事：
+<b><code>x</code> 和 <code>*p</code> 是同一个房间</b>。
+从哪个门进去改，另一个门看到的都变了。</p>
+
+<!-- ============================================================ -->
+<h2 id="s3"><span class="n">3</span>声明一个指针</h2>
+
+<p>语法就是在类型后面加一个 <code>*</code>：</p>
+
+<div class="code-wrap"><div class="bar"><span class="dot r"></span><span class="dot y"></span><span class="dot g"></span><span class="name">指针声明语法</span><span class="cp">复制</span></div><pre><span class="arw2">类型</span> <span class="arw">*</span>变量名;      <span class="hl-c">/* 例：int *p;   读作「p 是一个指向 int 的指针」 */</span></pre></div>
+
+<table>
+<thead><tr><th style="width:34%">写法</th><th>含义</th></tr></thead>
+<tbody>
+<tr><td class="c">int x;</td><td>一个整数</td></tr>
+<tr><td class="c">int *p;</td><td>一个指针，它<b>指向一个整数</b></td></tr>
+<tr><td class="c">double *q;</td><td>一个指针，它<b>指向一个小数</b></td></tr>
+<tr><td class="c">char *s;</td><td>一个指针，它<b>指向一个字符</b></td></tr>
+</tbody>
+</table>
+
+<div class="card warn">
+  <div class="card-t">重要：<code>*</code> 是跟着「变量名」的，不是跟着类型</div>
+  <p>下面两种写法<b>完全等价</b>，只是排版习惯不同：</p>
+  <pre style="background:#f2f4f8;border:1px solid var(--line);border-radius:8px;padding:10px 12px;font-family:var(--mono);font-size:13px;color:var(--fg);overflow:auto"><span class="hl-k">int</span> *p;      <span class="hl-c">/* 常见写法 */</span>
+<span class="hl-k">int</span>* p;      <span class="hl-c">/* 也合法，但容易误解 */</span></pre>
+  <p>之所以提醒这点，是因为这一行有<b>陷阱</b>：</p>
+  <pre style="background:#fdeceb;border:1px solid #f0c8c2;border-radius:8px;padding:10px 12px;font-family:var(--mono);font-size:13px;color:var(--fg);overflow:auto"><span class="hl-k">int</span> *a, b;   <span class="hl-c">/* 只有 a 是指针！b 是普通 int！ */</span></pre>
+  <p>因为 <code>*</code> 只管它后面那一个变量。<br>
+  想声明两个指针，要写 <code>int *a, *b;</code>，
+  或者干脆分行写清楚。</p>
+</div>
+
+<div class="card tip">
+  <div class="card-t">推荐的写法</div>
+  <p>把 <code>*</code> 紧贴变量名，并且<b>一行只声明一个</b>：</p>
+  <pre style="background:#f2f4f8;border:1px solid var(--line);border-radius:8px;padding:10px 12px;font-family:var(--mono);font-size:13px;color:var(--fg);overflow:auto"><span class="hl-k">int</span> *p;      <span class="hl-c">/* 清晰 */</span>
+<span class="hl-k">int</span> *q;</pre>
+  <p>这样不会看错，也符合「<code>*p</code> 是一个 int」的读法。</p>
+</div>
+
+<h4>指针类型名：<code>T*</code></h4>
+
+<p>先认识一个记号。<b>假设有一个类型，名字叫 <code>T</code></b>，那么：</p>
+
+<table>
+<thead><tr><th style="width:26%">写法</th><th>读作</th></tr></thead>
+<tbody>
+<tr><td class="c" style="font-size:15px"><b>T</b></td><td>类型 T 本身</td></tr>
+<tr><td class="c" style="font-size:15px"><b>T*</b></td><td>「<b>指向类型 T 的指针</b>」——它本身也是一个类型</td></tr>
+</tbody>
+</table>
+
+<p>把这个记号套进具体类型，就得到你已经见过的写法：</p>
+
+<table>
+<thead><tr><th style="width:20%">T 是什么</th><th style="width:24%">T* 写成</th><th>含义</th></tr></thead>
+<tbody>
+<tr><td class="c">int</td><td class="c">int*</td><td>指向 <code>int</code> 的指针</td></tr>
+<tr><td class="c">double</td><td class="c">double*</td><td>指向 <code>double</code> 的指针</td></tr>
+<tr><td class="c">char</td><td class="c">char*</td><td>指向 <code>char</code> 的指针</td></tr>
+</tbody>
+</table>
+
+<div class="card key">
+  <div class="card-t">要点：<code>T*</code> 是一个完整的类型</div>
+  <p><code>int*</code> 不是「int 加个星号」，而是<b>一个独立的类型名</b>，
+  就像 <code>double</code> 一样是一个整体。</p>
+  <p>所以这样读最顺：<b>「<code>int*</code> 是类型，<code>p</code> 是变量名」</b>，
+  于是 <code>int* p;</code> 和 <code>int x;</code> 结构完全相同。</p>
+</div>
+
+<h4>分清 <code>*</code> 的两种身份</h4>
+
+<p>初学者最容易混的就是这个：同一个 <code>*</code> 字符，
+在<b>类型名里</b>和在<b>表达式里</b>完全是两回事。</p>
+
+<table>
+<thead><tr><th style="width:24%">出现在哪</th><th style="width:22%">身份</th><th>含义</th><th style="width:26%">例子</th></tr></thead>
+<tbody>
+<tr><td><b>类型名的一部分</b></td><td>指针标记</td>
+    <td>说明「这是一个指针类型」</td><td class="c">int* p;</td></tr>
+<tr><td><b>表达式里</b></td><td>解引用运算符</td>
+    <td>顺着地址把值取出来</td><td class="c">*p = 10;</td></tr>
+<tr><td><b>两个值中间</b></td><td>乘号</td>
+    <td>乘法</td><td class="c">a * b</td></tr>
+</tbody>
+</table>
+
+<p>两个判断办法，哪个顺手用哪个：</p>
+
+<div class="flow">
+  <div class="s"><div class="t">看左边有没有类型名</div>
+    <div class="d">像 <code>int</code>、<code>double</code> 这种类型关键字紧挨在左边 → 这是<b>类型名的一部分</b></div></div>
+  <div class="s"><div class="t">看能不能换成别的变量名</div>
+    <div class="d"><code>*p</code> 里的 <code>p</code> 是已经存在的变量 → 这是<b>解引用</b></div></div>
+</div>
+
+<div class="code-wrap"><div class="bar"><span class="dot r"></span><span class="dot y"></span><span class="dot g"></span><span class="name">对照：类型名 vs 解引用</span><span class="cp">复制</span></div><pre><span class="hl-k">int</span>  x = <span class="hl-n">42</span>;
+
+<span class="hl-c">/* 第 1 行：* 是【类型名的一部分】，声明 p 是一个 int* 类型的变量 */</span>
+<span class="hl-k">int</span><span class="arw">*</span> p = <span class="arw">&amp;</span>x;
+
+<span class="hl-c">/* 第 2 行：* 是【解引用运算符】，取出 p 指向的值 */</span>
+<span class="hl-f">printf</span>(<span class="hl-s">"%d
+"</span>, <span class="arw">*</span>p);      <span class="hl-c">/* 42 */</span>
+
+<span class="hl-c">/* 第 3 行：* 是【乘号】 */</span>
+<span class="hl-f">printf</span>(<span class="hl-s">"%d
+"</span>, x <span class="arw">*</span> <span class="hl-n">2</span>);    <span class="hl-c">/* 84 */</span></pre></div>
+
+<div class="out-wrap"><div class="cap">运行结果</div><pre>42
+84</pre></div>
+
+<div class="card tip">
+  <div class="card-t">一个简单的记忆法</div>
+  <p><b>看 <code>*</code> 左边的那个词是不是「类型」。</b></p>
+  <ul>
+    <li><code>int* p</code> —— 左边是 <code>int</code>，是类型 → 指针类型</li>
+    <li><code>*p = 10</code> —— 左边没有类型，<code>p</code> 是变量 → 解引用</li>
+    <li><code>x * 2</code> —— 两边都是值 → 乘法</li>
+  </ul>
+  <p>另外提醒一句：<b>同一行声明里出现的 <code>*</code> 都算类型名的一部分</b>，
+  所以 <code>int *a, b;</code> 里的 <code>*</code> 只作用在 <code>a</code> 上
+  （前面那张警告卡片讲过）。</p>
+</div>
+
+<h4>指针占多大</h4>
+<p>有意思的是：<b>不管指向什么类型，指针自己占的字节数都一样</b>。
+因为它装的只是「房间号」，房间号的长度和房间里住什么无关。</p>
+
+<div class="code-wrap"><div class="bar"><span class="dot r"></span><span class="dot y"></span><span class="dot g"></span><span class="name">指针的大小</span><span class="cp">复制</span></div><pre><span class="hl-p">#include</span> <span class="hl-s">&lt;stdio.h&gt;</span>
+
+<span class="hl-k">int</span> <span class="hl-f">main</span>(<span class="hl-k">void</span>) {
+    <span class="hl-k">int</span>    a = <span class="hl-n">1</span>;
+    <span class="hl-k">double</span> d = <span class="hl-n">1.5</span>;
+    <span class="hl-k">char</span>   c = <span class="hl-s">'X'</span>;
+
+    <span class="hl-k">int</span>    *pa = <span class="arw">&amp;</span>a;
+    <span class="hl-k">double</span> *pd = <span class="arw">&amp;</span>d;
+    <span class="hl-k">char</span>   *pc = <span class="arw">&amp;</span>c;
+
+    <span class="hl-f">printf</span>(<span class="hl-s">"sizeof(int*)    = %d\n"</span>, (<span class="hl-k">int</span>)<span class="hl-f">sizeof</span>(pa));
+    <span class="hl-f">printf</span>(<span class="hl-s">"sizeof(double*) = %d\n"</span>, (<span class="hl-k">int</span>)<span class="hl-f">sizeof</span>(pd));
+    <span class="hl-f">printf</span>(<span class="hl-s">"sizeof(char*)   = %d\n"</span>, (<span class="hl-k">int</span>)<span class="hl-f">sizeof</span>(pc));
+
+    <span class="hl-c">/* 但指向的内容大小完全不同 */</span>
+    <span class="hl-f">printf</span>(<span class="hl-s">"*pa = %d, *pd = %.1f, *pc = %c\n"</span>, <span class="arw">*</span>pa, <span class="arw">*</span>pd, <span class="arw">*</span>pc);
+    <span class="hl-k">return</span> <span class="hl-n">0</span>;
+}</pre></div>
+
+<div class="out-wrap"><div class="cap">运行结果（64 位系统）</div><pre>sizeof(int*)    = 8
+sizeof(double*) = 8
+sizeof(char*)   = 8
+*pa = 1, *pd = 1.5, *pc = X</pre></div>
+
+<p>三个指针<b>都是 8 字节</b>（64 位系统上地址是 64 位）。
+那既然大小一样，为什么还要区分 <code>int*</code> 和 <code>double*</code> 这两种类型？
+第 5 节的疑难 ② 会回答。</p>
+
+<!-- ============================================================ -->
+<h2 id="s4"><span class="n">4</span>&amp; 与 * 是一对相反操作</h2>
+
+<p>这是理解指针最有用的一条规律：</p>
+
+<div class="mnemonic">
+  <b>★ 先取地址再解引用，等于什么都没做：<code>*&amp;x</code> 就是 <code>x</code>。</b><br>
+  就像「先问出房间号，再按房间号找过去」—— 你还站在原来的房间里。
+</div>
+
+<div class="code-wrap"><div class="bar"><span class="dot r"></span><span class="dot y"></span><span class="dot g"></span><span class="name">验证 *&amp;x == x</span><span class="cp">复制</span></div><pre><span class="hl-p">#include</span> <span class="hl-s">&lt;stdio.h&gt;</span>
+
+<span class="hl-k">int</span> <span class="hl-f">main</span>(<span class="hl-k">void</span>) {
+    <span class="hl-k">int</span> x = <span class="hl-n">42</span>;
+    <span class="hl-k">int</span> *p = <span class="arw">&amp;</span>x;
+
+    <span class="hl-f">printf</span>(<span class="hl-s">"x     = %d\n"</span>, x);
+    <span class="hl-f">printf</span>(<span class="hl-s">"*&amp;x   = %d   （先取地址再解引用，回到原值）\n"</span>, <span class="arw">*&amp;</span>x);
+    <span class="hl-f">printf</span>(<span class="hl-s">"*p    = %d\n"</span>, <span class="arw">*</span>p);
+    <span class="hl-f">printf</span>(<span class="hl-s">"p == &amp;x ? %d\n"</span>, p == <span class="arw">&amp;</span>x);
+    <span class="hl-k">return</span> <span class="hl-n">0</span>;
+}</pre></div>
+
+<div class="out-wrap"><div class="cap">运行结果</div><pre>x     = 42
+*&x   = 42   （先取地址再解引用，回到原值）
+*p    = 42
+p == &x ? 1</pre></div>
+
+<p><code>p == &amp;x</code> 输出 <code>1</code>（表示「成立」），
+说明 <code>p</code> 里装的<b>确实就是</b> <code>x</code> 的地址，不是别的。</p>
+
+<div class="card key">
+  <div class="card-t">一张表看懂几个写法</div>
+  <table style="margin:8px 0 0">
+  <thead><tr><th style="width:18%">写法</th><th style="width:22%">是什么</th><th>说明</th></tr></thead>
+  <tbody>
+  <tr><td class="c">x</td><td>数值</td><td>x 的值，如 42</td></tr>
+  <tr><td class="c">&amp;x</td><td>地址</td><td>x 的房间号</td></tr>
+  <tr><td class="c">p</td><td>地址</td><td>和 &amp;x 相同</td></tr>
+  <tr><td class="c">*p</td><td>数值</td><td>和 x 相同，是「p 指向的值」</td></tr>
+  <tr><td class="c">*&amp;x</td><td>数值</td><td>就是 x</td></tr>
+  </tbody></table>
+</div>
+
+<!-- ============================================================ -->
+<h2 id="s5"><span class="n">5</span>疑难解答（十一问）</h2>
+
+<p>这一节把学指针时最常卡住的十一个问题逐个讲透。
+<b>如果你只读一节，就读这一节。</b></p>
+
+<h3 id="s5a">① 指针里到底装了什么？</h3>
+<div class="qa">
+  <div class="q">疑惑：指针里装的是「值」还是「地址」？</div>
+  <div class="a">
+    <p><b>装的是地址</b>，一个数。而且它<b>不是</b>被指向变量的值。</p>
+    <p>看这段代码：</p>
+    <div class="code-wrap"><div class="bar"><span class="dot r"></span><span class="dot y"></span><span class="dot g"></span><span class="name">指针装的是地址</span><span class="cp">复制</span></div><pre><span class="hl-k">int</span> x = <span class="hl-n">42</span>;
+<span class="hl-k">int</span> *p = <span class="arw">&amp;</span>x;
+
+<span class="hl-f">printf</span>(<span class="hl-s">"%d\n"</span>, x);     <span class="hl-c">/* 42      —— x 里的值 */</span>
+<span class="hl-f">printf</span>(<span class="hl-s">"%p\n"</span>, (<span class="hl-k">void</span> *)p);   <span class="hl-c">/* 一串地址 —— p 里的值 */</span></pre></div>
+    <p>可以这样想：<b>p 的「值」就是那个地址</b>。
+    说「p 指向 x」是更形象的说法。</p>
+  </div>
+</div>
+
+<h3 id="s5b">② 既然指针大小都一样，为什么还要分 <code>int*</code> / <code>double*</code>？</h3>
+<div class="qa">
+  <div class="q">疑惑：都是 8 字节的地址，分类型岂不是多余？</div>
+  <div class="a">
+    <p><b>因为类型决定了「到了那个房间之后，怎么读、读多少」。</b></p>
+    <p>同一个地址 <code>0x1000</code>：</p>
+    <ul>
+      <li>如果是 <code>int*</code>：从 0x1000 起读 <b>4 字节</b>，按整数解释</li>
+      <li>如果是 <code>double*</code>：从 0x1000 起读 <b>8 字节</b>，按小数解释</li>
+      <li>如果是 <code>char*</code>：从 0x1000 起读 <b>1 字节</b>，按字符解释</li>
+    </ul>
+    <p>更关键的是<b>「加 1」前进多少</b>也要靠类型决定（见疑难 ⑦）。</p>
+    <div class="card warn" style="margin-top:12px">
+      <div class="card-t">所以类型必须匹配</div>
+      <p><code>int *p</code> 只能指向 <code>int</code>。
+      让它指向 <code>double</code>，读出来的就是错的。</p>
+    </div>
+  </div>
+</div>
+
+<h3 id="s5c">③ <code>*</code> 有三种含义，怎么区分？</h3>
+<div class="qa">
+  <div class="q">疑惑：<code>*</code> 一会儿是「乘」，一会儿是「声明」，一会儿是「取值」，怎么分？</div>
+  <div class="a">
+    <p><b>看 <code>*</code> 出现在哪里</b>：</p>
+    <table style="margin:10px 0">
+    <thead><tr><th style="width:34%">出现位置</th><th style="width:18%">含义</th><th>例子</th></tr></thead>
+    <tbody>
+    <tr><td>两个数中间</td><td>乘法</td><td class="c">a * b</td></tr>
+    <tr><td>类型和变量名之间<br>（声明语句里）</td><td>声明指针</td><td class="c">int *p;</td></tr>
+    <tr><td>变量名前面<br>（用在表达式里）</td><td>解引用取值</td><td class="c">*p = 10;</td></tr>
+    </tbody></table>
+    <p>最需要分清的是后两种。看这两行：</p>
+    <div class="code-wrap"><div class="bar"><span class="dot r"></span><span class="dot y"></span><span class="dot g"></span><span class="name">声明 vs 取值</span><span class="cp">复制</span></div><pre><span class="hl-k">int</span> <span class="arw">*</span>p = <span class="arw">&amp;</span>x;    <span class="hl-c">/* 这里的 * 是「声明 p 是指针」 */</span>
+<span class="arw">*</span>p = <span class="hl-n">99</span>;        <span class="hl-c">/* 这里的 * 是「取出 p 指向的格子，赋值为 99」 */</span></pre></div>
+    <p>一个简单判断法：<b>有类型名在前面的，就是声明；否则就是取值。</b></p>
+  </div>
+</div>
+
+<h3 id="s5d">④ 没初始化的指针很危险</h3>
+<div class="qa">
+  <div class="q">疑惑：<code>int *p;</code> 之后直接 <code>*p = 5;</code> 行不行？</div>
+  <div class="a">
+    <p><b>绝对不行。</b>这是指针最危险的错误。</p>
+    <p><code>int *p;</code> 只是划出了一个装地址的格子，<b>里面是垃圾值</b>，
+    它指向一个随机的、可能根本不属于你的地方。
+    此时 <code>*p = 5</code> 等于<b>往别人家里扔东西</b>。</p>
+    <div class="code-wrap"><div class="bar"><span class="dot r"></span><span class="dot y"></span><span class="dot g"></span><span class="name">对比</span><span class="cp">复制</span></div><pre><span class="hl-k">int</span> *p;        <span class="hl-c">/* ❌ p 里是垃圾，不知道指向哪 */</span>
+<span class="arw">*</span>p = <span class="hl-n">5</span>;       <span class="hl-c">/* ❌ 危险！可能让程序崩溃 */</span>
+
+<span class="hl-k">int</span> x;
+<span class="hl-k">int</span> *p = <span class="arw">&amp;</span>x;  <span class="hl-c">/* ✅ 声明时就指向一个真实的变量 */</span>
+<span class="arw">*</span>p = <span class="hl-n">5</span>;       <span class="hl-c">/* ✅ 安全，改的是 x */</span></pre></div>
+    <div class="card tip" style="margin-top:12px">
+      <div class="card-t">安全习惯</div>
+      <p><b>指针要么声明时就赋一个真实地址，要么先赋 <code>NULL</code>。</b>
+      不要留一个不知道指向哪的指针。</p>
+    </div>
+  </div>
+</div>
+
+<h3 id="s5e">⑤ <code>NULL</code> 是干什么的？<code>nullptr</code> 又是什么？</h3>
+<div class="qa">
+  <div class="q">疑惑：<code>NULL</code> 是什么？为什么老要判断它？</div>
+  <div class="a">
+    <p><code>NULL</code> 是一个特殊值，表示<b>「这个指针不指向任何地方」</b>，
+    相当于纸条上写「无」。</p>
+    <p>典型用法：函数<b>找不到东西时返回 <code>NULL</code></b>，
+    调用方先判断再使用。</p>
+    <div class="code-wrap"><div class="bar"><span class="dot r"></span><span class="dot y"></span><span class="dot g"></span><span class="name">先判断，再使用</span><span class="cp">复制</span></div><pre><span class="hl-p">#include</span> <span class="hl-s">&lt;stdio.h&gt;</span>
+
+<span class="hl-k">int</span> <span class="hl-f">main</span>(<span class="hl-k">void</span>) {
+    <span class="hl-k">int</span> *p = <span class="hl-n">NULL</span>;
+
+    <span class="hl-f">printf</span>(<span class="hl-s">"p == NULL 吗？ %d\n"</span>, p == <span class="hl-n">NULL</span>);
+
+    <span class="hl-k">if</span> (p == <span class="hl-n">NULL</span>) {
+        <span class="hl-f">printf</span>(<span class="hl-s">"p 没指向任何地方，不能解引用\n"</span>);
+    } <span class="hl-k">else</span> {
+        <span class="hl-f">printf</span>(<span class="hl-s">"*p = %d\n"</span>, <span class="arw">*</span>p);
+    }
+    <span class="hl-k">return</span> <span class="hl-n">0</span>;
+}</pre></div>
+    <div class="out-wrap"><div class="cap">运行结果</div><pre>p == NULL 吗？ 1
+p 没指向任何地方，不能解引用</pre></div>
+    <p><b><code>*NULL</code> 会导致程序崩溃</b>，所以用之前一定要判断。</p>
+    <div class="card tip" style="margin-top:12px">
+      <div class="card-t">记法</div>
+      <p><code>NULL</code> 之于指针，就像 <code>0</code> 之于数字 ——
+      一个表示「没有」的标记。</p>
+    </div>
+  </div>
+</div>
+
+<div class="card teal">
+  <div class="card-t">如果你以后写 C++：用 <code>nullptr</code> 更安全</div>
+  <p>我们这门课用的是 <b>C 语言</b>，写 <code>NULL</code> 就对了。
+  但你以后很可能会接触 <b>C++</b> —— 那里从 <b>C++11</b> 起多了一个新写法
+  <code>nullptr</code>，用来表示「空指针」。</p>
+  <p><code>nullptr</code> <b>比 <code>NULL</code> 更安全</b>，原因是：</p>
+  <ul>
+    <li><code>NULL</code> 在 C++ 里通常就是数字 <code>0</code>，
+      所以它会「悄悄」变成整数，可能被当成数字参与运算或重载匹配，容易出错。</li>
+    <li><code>nullptr</code> 有自己<b>专门的类型</b>，只表示空指针，
+      <b>不会退化成整数</b>，因此不会出现「本来想传指针，结果传了个 0」这类意外。</li>
+  </ul>
+  <pre style="background:#f2f4f8;border:1px solid var(--line);border-radius:8px;padding:10px 12px;font-family:var(--mono);font-size:13px;color:var(--fg);overflow:auto"><span class="hl-c">/* C   里这样写 */</span>
+<span class="hl-k">int</span> *p = <span class="hl-n">NULL</span>;
+
+<span class="hl-c">/* C++ 里推荐这样写 */</span>
+<span class="hl-k">int</span> *p = <span class="hl-n">nullptr</span>;</pre>
+  <p><b>但本课程的所有代码都用 C，请继续写 <code>NULL</code>。</b>
+  知道 <code>nullptr</code> 这回事、以及它更安全的原因就够了。</p>
+</div>
+
+<h3 id="s5f">⑥ 数组的本质是什么？</h3>
+<div class="qa">
+  <div class="q">疑惑：数组名 <code>arr</code> 到底是什么？为什么它和指针能混着用？</div>
+  <div class="a">
+    <p>先把结论说清楚 —— <b>数组的本质是「一块连续的、同类型的内存」</b>，
+    而<b>数组名 <code>arr</code> 在绝大多数使用场合会自动变成「首元素的地址」</b>。</p>
+
+    <h4>第 1 层：数组就是一块连续的内存</h4>
+    <p>这一点M03验证过。写 <code>int arr[4];</code> 之后，
+    内存里出现 <b>4 个紧挨着的 int 格子</b>，共 16 字节：</p>
+
+    <div class="ptr-demo">
+      <div class="n">int arr[4] —— 16 字节，4 个格子紧挨着（每个 4 字节）</div>
+      <div class="box"><div class="nm">arr[0]</div><div class="vl">10</div></div>
+      <div class="link">+4 ─▶</div>
+      <div class="box"><div class="nm">arr[1]</div><div class="vl">20</div></div>
+      <div class="link">+4 ─▶</div>
+      <div class="box"><div class="nm">arr[2]</div><div class="vl">30</div></div>
+      <div class="link">+4 ─▶</div>
+      <div class="box"><div class="nm">arr[3]</div><div class="vl">40</div></div>
+    </div>
+
+    <p>因为是连续的，所以只要知道<b>起点在哪</b>、<b>每格多宽</b>，
+    就能算出任意一格的位置 —— 这正是「下标」能工作的原理。</p>
+
+    <h4>第 2 层：数组名 = 首元素地址</h4>
+    <p>把数组名单独拿出来用时，它表示<b>第一个元素的地址</b>：</p>
+
+    <div class="code-wrap"><div class="bar"><span class="dot r"></span><span class="dot y"></span><span class="dot g"></span><span class="name">数组名与首元素地址相同</span><span class="cp">复制</span></div><pre><span class="hl-p">#include</span> <span class="hl-s">&lt;stdio.h&gt;</span>
+
+<span class="hl-k">int</span> <span class="hl-f">main</span>(<span class="hl-k">void</span>) {
+    <span class="hl-k">int</span> arr[<span class="hl-n">4</span>] = {<span class="hl-n">10</span>, <span class="hl-n">20</span>, <span class="hl-n">30</span>, <span class="hl-n">40</span>};
+
+    <span class="hl-f">printf</span>(<span class="hl-s">"arr      = %p\n"</span>, (<span class="hl-k">void</span> *)arr);
+    <span class="hl-f">printf</span>(<span class="hl-s">"&amp;arr[0]  = %p\n"</span>, (<span class="hl-k">void</span> *)<span class="arw">&amp;</span>arr[<span class="hl-n">0</span>]);
+    <span class="hl-f">printf</span>(<span class="hl-s">"两者相同吗？ %d\n"</span>, arr == <span class="arw">&amp;</span>arr[<span class="hl-n">0</span>]);
+
+    <span class="hl-c">/* 既然数组名就是地址，那就能赋给指针 */</span>
+    <span class="hl-k">int</span> *p = arr;              <span class="hl-c">/* 等价于 int *p = &amp;arr[0]; */</span>
+    <span class="hl-f">printf</span>(<span class="hl-s">"*p = %d\n"</span>, <span class="arw">*</span>p);
+    <span class="hl-k">return</span> <span class="hl-n">0</span>;
+}</pre></div>
+
+    <div class="out-wrap"><div class="cap">运行结果</div><pre>arr      = 000000000060FD7C
+&arr[0]  = 000000000060FD7C
+两者相同吗？ 1
+*p = 10</pre></div>
+
+    <p>这解释了一个你可能早就疑惑的写法：
+    <b><code>arr[i]</code> 和 <code>*(arr + i)</code> 是一回事</b>，
+    方括号只是「从首地址出发加偏移、再解引用」的简写。</p>
+
+    <div class="code-wrap"><div class="bar"><span class="dot r"></span><span class="dot y"></span><span class="dot g"></span><span class="name">两种写法完全等价</span><span class="cp">复制</span></div><pre><span class="hl-p">#include</span> <span class="hl-s">&lt;stdio.h&gt;</span>
+
+<span class="hl-k">int</span> <span class="hl-f">main</span>(<span class="hl-k">void</span>) {
+    <span class="hl-k">int</span> arr[<span class="hl-n">4</span>] = {<span class="hl-n">10</span>, <span class="hl-n">20</span>, <span class="hl-n">30</span>, <span class="hl-n">40</span>};
+
+    <span class="hl-k">for</span> (<span class="hl-k">int</span> i = <span class="hl-n">0</span>; i &lt; <span class="hl-n">4</span>; i++) {
+        <span class="hl-f">printf</span>(<span class="hl-s">"arr[%d]=%d  *(arr+%d)=%d  相同吗？%d\n"</span>,
+               i, arr[i], i, <span class="arw">*</span>(arr + i), arr[i] == <span class="arw">*</span>(arr + i));
+    }
+    <span class="hl-k">return</span> <span class="hl-n">0</span>;
+}</pre></div>
+
+    <div class="out-wrap"><div class="cap">运行结果</div><pre>arr[0]=10  *(arr+0)=10  相同吗？1
+arr[1]=20  *(arr+1)=20  相同吗？1
+arr[2]=30  *(arr+2)=30  相同吗？1
+arr[3]=40  *(arr+3)=40  相同吗？1</pre></div>
+
+    <h4>第 3 层：但数组名不是「指针变量」</h4>
+    <p>数组名虽然表现为地址，可它<b>不是一个能改指向的指针变量</b>：</p>
+
+    <div class="code-wrap"><div class="bar"><span class="dot r"></span><span class="dot y"></span><span class="dot g"></span><span class="name">对比</span><span class="cp">复制</span></div><pre><span class="hl-k">int</span> arr[<span class="hl-n">4</span>];
+<span class="hl-k">int</span> *p = arr;
+
+p = arr + <span class="hl-n">2</span>;      <span class="hl-c">/* ✅ 指针变量可以改指向 */</span>
+arr = arr + <span class="hl-n">2</span>;    <span class="hl-c">/* ❌ 数组名不能改，编译不过 */</span></pre></div>
+
+    <p>还有一个更实用的区别：<b>数组名知道整个数组有多大，指针只知道一个地址。</b></p>
+
+    <div class="code-wrap"><div class="bar"><span class="dot r"></span><span class="dot y"></span><span class="dot g"></span><span class="name">sizeof 的差别</span><span class="cp">复制</span></div><pre><span class="hl-p">#include</span> <span class="hl-s">&lt;stdio.h&gt;</span>
+
+<span class="hl-k">int</span> <span class="hl-f">main</span>(<span class="hl-k">void</span>) {
+    <span class="hl-k">int</span> arr[<span class="hl-n">10</span>];
+    <span class="hl-k">int</span> *p = arr;
+
+    <span class="hl-f">printf</span>(<span class="hl-s">"sizeof(arr) = %d   （整个数组：10 × 4）\n"</span>, (<span class="hl-k">int</span>)<span class="hl-f">sizeof</span>(arr));
+    <span class="hl-f">printf</span>(<span class="hl-s">"sizeof(p)   = %d   （只是一个指针）\n"</span>, (<span class="hl-k">int</span>)<span class="hl-f">sizeof</span>(p));
+    <span class="hl-k">return</span> <span class="hl-n">0</span>;
+}</pre></div>
+
+    <div class="out-wrap"><div class="cap">运行结果（64 位系统）</div><pre>sizeof(arr) = 40   （整个数组：10 × 4）
+sizeof(p)   = 8   （只是一个指针）</pre></div>
+
+    <div class="card key" style="margin-top:12px">
+      <div class="card-t">三句话总结数组的本质</div>
+      <ol>
+        <li><b>数组是一块连续的同类型内存</b>，靠「首地址 + 下标 × 元素大小」定位每一格。</li>
+        <li><b>数组名在多数场合自动变成首元素地址</b>，所以能赋给指针，
+          <code>arr[i]</code> 等价于 <code>*(arr + i)</code>。</li>
+        <li><b>数组名不是指针变量</b>：不能改指向，但 <code>sizeof(arr)</code>
+          能拿到整个数组的大小（而指针不行）。</li>
+      </ol>
+    </div>
+
+    <div class="card warn" style="margin-top:12px">
+      <div class="card-t">这些知识马上要用到</div>
+      <p>第 3 点正是<b>下一问</b>的关键 —— 因为「数组名一进函数就退化成指针」，
+      所以函数里再也拿不到数组的真实大小，只能靠外面多传一个长度进来。</p>
+    </div>
+  </div>
+</div>
+
+<h3 id="s5g">⑦ 为什么数组传给函数时，还要额外传一个长度？</h3>
+<div class="qa">
+  <div class="q">疑惑：函数参数写成 <code>int a[]</code>，为什么还要传 <code>n</code>？函数自己不能算出长度吗？</div>
+  <div class="a">
+    <p><b>不能。</b>这是学数组和函数时最常犯的疑惑，原因就在上一问的第 3 点。</p>
+
+    <h4>先看现象</h4>
+    <div class="code-wrap"><div class="bar"><span class="dot r"></span><span class="dot y"></span><span class="dot g"></span><span class="name">同一个 sizeof，两个地方结果不同</span><span class="cp">复制</span></div><pre><span class="hl-p">#include</span> <span class="hl-s">&lt;stdio.h&gt;</span>
+
+<span class="hl-c">/* 函数里想自己算长度 */</span>
+<span class="hl-k">int</span> <span class="hl-f">sizeInFunc</span>(<span class="hl-k">int</span> arr[]) {
+    <span class="hl-k">return</span> (<span class="hl-k">int</span>)<span class="hl-f">sizeof</span>(arr);
+}
+
+<span class="hl-k">int</span> <span class="hl-f">main</span>(<span class="hl-k">void</span>) {
+    <span class="hl-k">int</span> arr[<span class="hl-n">10</span>];
+
+    <span class="hl-f">printf</span>(<span class="hl-s">"main 里 sizeof(arr) = %d\n"</span>, (<span class="hl-k">int</span>)<span class="hl-f">sizeof</span>(arr));
+    <span class="hl-f">printf</span>(<span class="hl-s">"函数里 sizeof(arr) = %d\n"</span>, <span class="hl-f">sizeInFunc</span>(arr));
+    <span class="hl-f">printf</span>(<span class="hl-s">"sizeof(int*)       = %d\n"</span>, (<span class="hl-k">int</span>)<span class="hl-f">sizeof</span>(<span class="hl-k">int</span> *));
+    <span class="hl-k">return</span> <span class="hl-n">0</span>;
+}</pre></div>
+
+    <div class="out-wrap"><div class="cap">运行结果</div><pre>main 里 sizeof(arr) = 40
+函数里 sizeof(arr) = 8
+sizeof(int*)       = 8</pre></div>
+
+    <p>注意 <b>函数里算出的是 8</b>，正好等于 <code>sizeof(int*)</code>。
+这说明：<b>在函数眼里，<code>arr</code> 已经不是数组了，而是一个指针。</b></p>
+
+    <h4>为什么？</h4>
+    <p>因为把数组传给函数时，<b>传进去的其实是首元素地址</b>。
+    函数收到的是一个指针，它只知道「数据从哪儿开始」，
+    <b>完全不知道「一共有多少个」</b>。</p>
+
+    <div class="ptr-demo">
+      <div class="n">调用 maxInArray(arr, 10) 时，函数实际拿到的东西</div>
+      <div class="box"><div class="nm">外面：arr（数组）</div><div class="vl">10 个格子</div></div>
+      <div class="link">── 只传首地址 ──▶</div>
+      <div class="box p"><div class="nm">函数里：int *arr</div><div class="vl">起点地址（不知多长）</div></div>
+      <div class="link b">＋</div>
+      <div class="box"><div class="nm">另外传的 n</div><div class="vl">10</div></div>
+    </div>
+
+    <p>所以函数里的「长度」只能靠外面告诉它。这就是那个 <code>n</code> 存在的唯一理由。</p>
+
+    <h4>标准写法</h4>
+    <div class="code-wrap"><div class="bar"><span class="dot r"></span><span class="dot y"></span><span class="dot g"></span><span class="name">数组 + 长度，成对出现</span><span class="cp">复制</span></div><pre><span class="hl-c">/* 只要看到数组参数，就习惯性地配一个 n */</span>
+<span class="hl-k">int</span> <span class="hl-f">maxInArray</span>(<span class="hl-k">int</span> a[], <span class="hl-k">int</span> n) {
+    <span class="hl-k">int</span> mx = a[<span class="hl-n">0</span>];
+    <span class="hl-k">for</span> (<span class="hl-k">int</span> i = <span class="hl-n">1</span>; i &lt; n; i++) {      <span class="hl-c">/* 用 n，不能用 sizeof 算 */</span>
+        <span class="hl-k">if</span> (a[i] &gt; mx) mx = a[i];
+    }
+    <span class="hl-k">return</span> mx;
+}
+
+<span class="hl-c">/* 调用时把长度一起写上 */</span>
+<span class="hl-f">maxInArray</span>(arr, <span class="hl-n">10</span>);</pre></div>
+
+    <p>参数写成 <code>int a[]</code> 或 <code>int *a</code> 在功能上是一样的
+    （都表示「收到一个指向 int 的地址」），<code>a[]</code> 只是更能表达
+    「我期望你传一个数组来」这个意图。</p>
+
+    <div class="card tip" style="margin-top:12px">
+      <div class="card-t">一个常见的安全习惯</div>
+      <p>函数里既然不知道真实长度，就<b>完全信任外面传进来的 <code>n</code></b>。
+      所以调用方有责任传对：<b>传大了会越界，传小了会漏算。</b></p>
+      <p>另外，函数内部只用 <code>a[i]</code>（<code>0 &lt;= i &lt; n</code>），
+      不要试图用 <code>sizeof(a)</code> 去算长度 —— 那一定是你以为的那个数。</p>
+    </div>
+  </div>
+</div>
+
+<h3 id="s5h">⑧ 为什么指针「加 1」就是下一格？</h3>
+<div class="qa">
+  <div class="q">疑惑：<code>p + 1</code> 是地址加 1 吗？</div>
+  <div class="a">
+    <p><b>不是加 1 字节，而是「前进一个元素」</b>。</p>
+    <p>前进多少字节由<b>指向的类型</b>决定：
+    <code>int*</code> 前进 4 字节，<code>char*</code> 前进 1 字节，<code>double*</code> 前进 8 字节。</p>
+    <p>这正是疑难 ② 的答案 —— <b>指针类型的作用之一就是决定步长。</b></p>
+    <div class="code-wrap"><div class="bar"><span class="dot r"></span><span class="dot y"></span><span class="dot g"></span><span class="name">三种指针的步长</span><span class="cp">复制</span></div><pre><span class="hl-p">#include</span> <span class="hl-s">&lt;stdio.h&gt;</span>
+
+<span class="hl-k">int</span> <span class="hl-f">main</span>(<span class="hl-k">void</span>) {
+    <span class="hl-k">int</span>    ia[<span class="hl-n">2</span>] = {<span class="hl-n">0</span>, <span class="hl-n">0</span>};
+    <span class="hl-k">char</span>   ca[<span class="hl-n">2</span>] = {<span class="hl-n">0</span>, <span class="hl-n">0</span>};
+    <span class="hl-k">double</span> da[<span class="hl-n">2</span>] = {<span class="hl-n">0</span>, <span class="hl-n">0</span>};
+
+    <span class="hl-f">printf</span>(<span class="hl-s">"int*    加 1 前进 %d 字节\n"</span>,
+           (<span class="hl-k">int</span>)((<span class="hl-k">char</span> *)(<span class="arw">&amp;</span>ia[<span class="hl-n">0</span>] + <span class="hl-n">1</span>) - (<span class="hl-k">char</span> *)<span class="arw">&amp;</span>ia[<span class="hl-n">0</span>]));
+    <span class="hl-f">printf</span>(<span class="hl-s">"char*   加 1 前进 %d 字节\n"</span>,
+           (<span class="hl-k">int</span>)((<span class="hl-k">char</span> *)(<span class="arw">&amp;</span>ca[<span class="hl-n">0</span>] + <span class="hl-n">1</span>) - (<span class="hl-k">char</span> *)<span class="arw">&amp;</span>ca[<span class="hl-n">0</span>]));
+    <span class="hl-f">printf</span>(<span class="hl-s">"double* 加 1 前进 %d 字节\n"</span>,
+           (<span class="hl-k">int</span>)((<span class="hl-k">char</span> *)(<span class="arw">&amp;</span>da[<span class="hl-n">0</span>] + <span class="hl-n">1</span>) - (<span class="hl-k">char</span> *)<span class="arw">&amp;</span>da[<span class="hl-n">0</span>]));
+    <span class="hl-k">return</span> <span class="hl-n">0</span>;
+}</pre></div>
+    <div class="out-wrap"><div class="cap">运行结果</div><pre>int*    加 1 前进 4 字节
+char*   加 1 前进 1 字节
+double* 加 1 前进 8 字节</pre></div>
+    <p>所以 <code>p + 1</code> 读作「<b>下一个元素</b>」，
+    <code>p + i</code> 读作「<b>往后数第 i 个元素</b>」。
+    这个设计让指针遍历数组变得极其自然。</p>
+    <div class="card teal" style="margin-top:12px">
+      <div class="card-t">顺带一个常用技巧</div>
+      <p>两个指针相减，得到的是<b>相隔几个元素</b>（不是几字节）：</p>
+      <pre style="background:#f2f4f8;border:1px solid var(--line);border-radius:8px;padding:10px 12px;font-family:var(--mono);font-size:13px;color:var(--fg);overflow:auto"><span class="hl-k">int</span> *q = <span class="arw">&amp;</span>arr[<span class="hl-n">3</span>];
+<span class="hl-k">int</span> idx = (<span class="hl-k">int</span>)(q - arr);   <span class="hl-c">/* 3 —— 正好是下标 */</span></pre>
+    </div>
+  </div>
+</div>
+
+<h3 id="s5i">⑨ 指针能不能改指向别的变量？</h3>
+<div class="qa">
+  <div class="q">疑惑：指针指向一个变量后，还能改指向另一个吗？</div>
+  <div class="a">
+    <p><b>能。</b>指针变量本身也是变量，它的值（地址）可以重新赋值。
+    这和「通过指针改它指向的值」是两件不同的事，别搞混。</p>
+    <div class="code-wrap"><div class="bar"><span class="dot r"></span><span class="dot y"></span><span class="dot g"></span><span class="name">改指向 vs 改值</span><span class="cp">复制</span></div><pre><span class="hl-p">#include</span> <span class="hl-s">&lt;stdio.h&gt;</span>
+
+<span class="hl-k">int</span> <span class="hl-f">main</span>(<span class="hl-k">void</span>) {
+    <span class="hl-k">int</span> u = <span class="hl-n">1</span>, v = <span class="hl-n">2</span>;
+    <span class="hl-k">int</span> *p = <span class="arw">&amp;</span>u;
+
+    <span class="hl-f">printf</span>(<span class="hl-s">"一开始   *p = %d   （指向 u）\n"</span>, <span class="arw">*</span>p);
+
+    <span class="arw">*</span>p = <span class="hl-n">100</span>;                 <span class="hl-c">/* ① 改【值】：u 变成 100 */</span>
+    <span class="hl-f">printf</span>(<span class="hl-s">"*p=100 后 u = %d, v = %d\n"</span>, u, v);
+
+    p = <span class="arw">&amp;</span>v;                     <span class="hl-c">/* ② 改【指向】：p 现在指向 v */</span>
+    <span class="hl-f">printf</span>(<span class="hl-s">"改指向后 *p = %d   （指向 v）\n"</span>, <span class="arw">*</span>p);
+
+    <span class="arw">*</span>p = <span class="hl-n">200</span>;                 <span class="hl-c">/* 这次改的是 v */</span>
+    <span class="hl-f">printf</span>(<span class="hl-s">"再 *p=200 后 u = %d, v = %d\n"</span>, u, v);
+    <span class="hl-k">return</span> <span class="hl-n">0</span>;
+}</pre></div>
+    <div class="out-wrap"><div class="cap">运行结果</div><pre>一开始   *p = 1   （指向 u）
+*p=100 后 u = 100, v = 2
+改指向后 *p = 2   （指向 v）
+再 *p=200 后 u = 100, v = 200</pre></div>
+    <p>看最后一行：<code>*p = 200</code> 改的是 <code>v</code>，
+    因为此时 <code>p</code> 已经指向 <code>v</code> 了，<code>u</code> 保持在 100 不动。</p>
+    <div class="card key" style="margin-top:12px">
+      <div class="card-t">两句话区分开</div>
+      <ul>
+        <li><code>p = &amp;v;</code> → 改<b>指向</b>（换一张纸条）</li>
+        <li><code>*p = 200;</code> → 改<b>值</b>（改房间里的东西）</li>
+      </ul>
+    </div>
+  </div>
+</div>
+
+<h3 id="s5j">⑩ <code>*p++</code>：先记住怎么用，不用深究</h3>
+<div class="qa">
+  <div class="q">疑惑：看到 <code>*p++</code> 这种写法就懵，是先取值还是先自增？</div>
+  <div class="a">
+    <p><b>结论先摆出来，直接记住就行：</b></p>
+
+    <div class="mnemonic">
+      <b><code>*p++</code> 读作：<code>*(p++)</code></b><br>
+      意思是 —— <b>先把 p 指向的那个值取出来用，然后 p 自己往后走一格。</b>
+    </div>
+
+    <p>容易搞混的其实只有两点，把这两点分清楚就够了。</p>
+
+    <h4>第一点：顺序 —— 取值在前，自增在后</h4>
+    <p>所以第一次 <code>*p++</code> 取到的是<b>第 0 个</b>，不是第 1 个。
+    自增虽然写在后面，但它发生在「取值」之后。</p>
+
+    <h4>第二点：对谁自增 —— 自增的是指针 p，不是它指向的值</h4>
+    <p>这是最要紧的一点。用箭头想：<b><code>p++</code> 是让箭头往后挪一格</b>，
+    而<b>箭头指着的那个格子里装的东西，一点没动</b>。</p>
+
+    <div class="ptr-demo">
+      <div class="n">执行 *p++ 的完整过程（假设 p 原本指向 arr[1]）</div>
+      <div class="box"><div class="nm">第 1 步：取值</div><div class="vl">取出 arr[1] 的值</div></div>
+      <div class="link">然后 ──▶</div>
+      <div class="box p"><div class="nm">第 2 步：自增</div><div class="vl">p 挪到 arr[2]</div></div>
+      <div class="link b">注意 ──▶</div>
+      <div class="box"><div class="nm">arr[1] 本身</div><div class="vl">原封不动</div></div>
+    </div>
+
+    <div class="code-wrap"><div class="bar"><span class="dot r"></span><span class="dot y"></span><span class="dot g"></span><span class="name">验证上面两点</span><span class="cp">复制</span></div><pre><span class="hl-p">#include</span> <span class="hl-s">&lt;stdio.h&gt;</span>
+
+<span class="hl-k">int</span> <span class="hl-f">main</span>(<span class="hl-k">void</span>) {
+    <span class="hl-k">int</span> a[<span class="hl-n">5</span>] = {<span class="hl-n">100</span>, <span class="hl-n">200</span>, <span class="hl-n">300</span>, <span class="hl-n">400</span>, <span class="hl-n">500</span>};
+    <span class="hl-k">int</span> *p = a;
+
+    <span class="hl-c">/* 逐个取出 *p++ */</span>
+    <span class="hl-f">printf</span>(<span class="hl-s">"依次取出  : "</span>);
+    <span class="hl-k">for</span> (<span class="hl-k">int</span> i = <span class="hl-n">0</span>; i &lt; <span class="hl-n">5</span>; i++) {
+        <span class="hl-f">printf</span>(<span class="hl-s">"%d "</span>, <span class="arw">*</span>p++);
+    }
+    <span class="hl-f">printf</span>(<span class="hl-s">"\n"</span>);
+
+    <span class="hl-c">/* ① 自增的是 p：循环走了 5 次，p 就前进了 5 格 */</span>
+    <span class="hl-f">printf</span>(<span class="hl-s">"(p - a) = %d   （p 前进了 5 格）\n"</span>, (<span class="hl-k">int</span>)(p - a));
+
+    <span class="hl-c">/* ② 数组本身没被改动 */</span>
+    <span class="hl-f">printf</span>(<span class="hl-s">"数组内容  : %d %d %d %d %d\n"</span>,
+           a[<span class="hl-n">0</span>], a[<span class="hl-n">1</span>], a[<span class="hl-n">2</span>], a[<span class="hl-n">3</span>], a[<span class="hl-n">4</span>]);
+
+    <span class="hl-c">/* ③ 取值在自增之前：第一次拿到的不是第 1 个 */</span>
+    <span class="hl-k">int</span> c[<span class="hl-n">3</span>] = {<span class="hl-n">7</span>, <span class="hl-n">8</span>, <span class="hl-n">9</span>};
+    <span class="hl-k">int</span> *r = c;
+    <span class="hl-k">int</span> first = <span class="arw">*</span>r++;
+    <span class="hl-f">printf</span>(<span class="hl-s">"first = %d   （取到的是第 0 个）\n"</span>, first);
+    <span class="hl-f">printf</span>(<span class="hl-s">"*r    = %d   （r 已经指向第 1 个）\n"</span>, <span class="arw">*</span>r);
+    <span class="hl-k">return</span> <span class="hl-n">0</span>;
+}</pre></div>
+
+    <div class="out-wrap"><div class="cap">运行结果</div><pre>依次取出  : 100 200 300 400 500 
+(p - a) = 5   （p 前进了 5 格）
+数组内容  : 100 200 300 400 500
+first = 7   （取到的是第 0 个）
+*r    = 8   （r 已经指向第 1 个）</pre></div>
+
+    <p>三行输出分别证明了：依次取出了全部 5 个值、
+    <b>p 前进了 5 格</b>（说明自增的是 p）、<b>数组内容没变</b>
+    （说明没动它指向的值）。</p>
+
+    <h4>拆成两步，效果完全一样</h4>
+    <p>如果 <code>*p++</code> 让你觉得别扭，<b>完全可以拆开写</b>，
+    结果一模一样，而且更好读：</p>
+
+    <div class="code-wrap"><div class="bar"><span class="dot r"></span><span class="dot y"></span><span class="dot g"></span><span class="name">两种写法等价</span><span class="cp">复制</span></div><pre><span class="hl-c">/* 写法一：紧凑 */</span>
+<span class="hl-k">for</span> (<span class="hl-k">int</span> i = <span class="hl-n">0</span>; i &lt; n; i++) {
+    <span class="hl-f">printf</span>(<span class="hl-s">"%d "</span>, <span class="arw">*</span>p++);
+}
+
+<span class="hl-c">/* 写法二：拆成两步（推荐初学者） */</span>
+<span class="hl-k">for</span> (<span class="hl-k">int</span> i = <span class="hl-n">0</span>; i &lt; n; i++) {
+    <span class="hl-f">printf</span>(<span class="hl-s">"%d "</span>, <span class="arw">*</span>p);   <span class="hl-c">/* 先取值 */</span>
+    p++;                  <span class="hl-c">/* 再让 p 前进一格 */</span>
+}</pre></div>
+
+    <div class="card key">
+      <div class="card-t">这一节只需要记住两句话</div>
+      <ol>
+        <li><b><code>*p++</code> 先取值，后自增</b> —— 所以第一次取到的是当前那一格。</li>
+        <li><b><code>p++</code> 自增的是指针 p，不是它指向的值</b> —— 箭头往后挪，格子里东西不动。</li>
+      </ol>
+      <p>至于别的花式写法，初学阶段<b>不必去研究</b>，容易把自己绕晕。
+      真遇到看不懂的写法，先按上面两句话拆解，或者干脆改写成两步。</p>
+    </div>
+  </div>
+</div>
+
+<h3 id="s5k">⑪ 什么是指针的指针（二级指针）？</h3>
+<div class="qa">
+  <div class="q">疑惑：<code>int **pp;</code> 两个星号是什么意思？</div>
+  <div class="a">
+    <p>指针变量<b>自己也有地址</b>。把「指针的地址」存起来，就是<b>二级指针</b>。</p>
+    <p>用箭头想就清楚了：</p>
+    <div class="code-wrap"><div class="bar"><span class="dot r"></span><span class="dot y"></span><span class="dot g"></span><span class="name">两层箭头</span><span class="cp">复制</span></div><pre><span class="hl-k">int</span> w = <span class="hl-n">5</span>;
+<span class="hl-k">int</span> *pw = <span class="arw">&amp;</span>w;      <span class="hl-c">/* pw  ──▶  w */</span>
+<span class="hl-k">int</span> **ppw = <span class="arw">&amp;</span>pw;  <span class="hl-c">/* ppw ──▶  pw ──▶  w */</span>
+
+<span class="arw">*</span>pw      <span class="hl-c">/* 顺着 1 层箭头 → w 的值，即 5 */</span>
+<span class="arw">**</span>ppw    <span class="hl-c">/* 顺着 2 层箭头 → w 的值，即 5 */</span></pre></div>
+    <div class="code-wrap"><div class="bar"><span class="dot r"></span><span class="dot y"></span><span class="dot g"></span><span class="name">验证</span><span class="cp">复制</span></div><pre><span class="hl-p">#include</span> <span class="hl-s">&lt;stdio.h&gt;</span>
+
+<span class="hl-k">int</span> <span class="hl-f">main</span>(<span class="hl-k">void</span>) {
+    <span class="hl-k">int</span> w = <span class="hl-n">5</span>;
+    <span class="hl-k">int</span> *pw = <span class="arw">&amp;</span>w;
+    <span class="hl-k">int</span> **ppw = <span class="arw">&amp;</span>pw;
+
+    <span class="hl-f">printf</span>(<span class="hl-s">"w     = %d\n"</span>, w);
+    <span class="hl-f">printf</span>(<span class="hl-s">"*pw   = %d\n"</span>, <span class="arw">*</span>pw);
+    <span class="hl-f">printf</span>(<span class="hl-s">"**ppw = %d\n"</span>, <span class="arw">**</span>ppw);
+    <span class="hl-f">printf</span>(<span class="hl-s">"*ppw == pw ? %d\n"</span>, <span class="arw">*</span>ppw == pw);
+
+    <span class="arw">**</span>ppw = <span class="hl-n">50</span>;      <span class="hl-c">/* 顺着两层箭头改，改的还是 w */</span>
+    <span class="hl-f">printf</span>(<span class="hl-s">"执行 **ppw = 50 后 w = %d\n"</span>, w);
+    <span class="hl-k">return</span> <span class="hl-n">0</span>;
+}</pre></div>
+    <div class="out-wrap"><div class="cap">运行结果</div><pre>w     = 5
+*pw   = 5
+**ppw = 5
+*ppw == pw ? 1
+执行 **ppw = 50 后 w = 50</pre></div>
+    <div class="card note" style="margin-top:12px">
+      <div class="card-t">现在需要掌握到什么程度</div>
+      <p><b>能看懂 <code>int **pp</code> 是「两层箭头」就够了。</b>
+      实际写代码时，二级指针用得不多（常见于需要修改「指针本身」的场合）。</p>
+      <p>初学阶段不必主动使用，遇到时知道它是什么就行。</p>
+    </div>
+  </div>
+</div>
+
+<!-- ============================================================ -->
+<h2 id="s6"><span class="n">6</span>指针的强大之处</h2>
+
+<p>前面都在讲「是什么」。这一节讲「有什么用」——
+<b>指针真正解决了哪些没有它就很难办的问题。</b></p>
+
+<h3 id="s6a">6.1 让函数修改外部变量</h3>
+
+<p>还记得M02的核心结论吗？<b>普通变量传进函数的是「副本」，
+函数里怎么改都不影响外面。</b></p>
+
+<p>如果确实需要函数改外部变量呢？<b>把地址传进去。</b></p>
+
+<div class="ptr-demo">
+  <div class="n">值传递传的是「值」，指针传的是「地址」</div>
+  <div class="box">
+    <div class="nm">外面：x = 3</div>
+    <div class="vl">3</div>
+  </div>
+  <div class="link">── 传 &amp;x（地址）──▶</div>
+  <div class="box p">
+    <div class="nm">函数里：int *a</div>
+    <div class="vl">x 的地址</div>
+  </div>
+</div>
+
+<p>函数拿到地址后，就能<b>顺着箭头回去改原来的变量</b>：</p>
+
+<div class="code-wrap"><div class="bar"><span class="dot r"></span><span class="dot y"></span><span class="dot g"></span><span class="name">经典 swap：交换两个变量</span><span class="cp">复制</span></div><pre><span class="hl-p">#include</span> <span class="hl-s">&lt;stdio.h&gt;</span>
+
+<span class="hl-c">/* 参数写成指针：收的是地址 */</span>
+<span class="hl-k">void</span> <span class="hl-f">swap</span>(<span class="hl-k">int</span> <span class="arw">*</span>a, <span class="hl-k">int</span> <span class="arw">*</span>b) {
+    <span class="hl-k">int</span> t = <span class="arw">*</span>a;      <span class="hl-c">/* 取出 a 指向的值 */</span>
+    <span class="arw">*</span>a = <span class="arw">*</span>b;        <span class="hl-c">/* 把 b 指向的值写进 a 指向的格子 */</span>
+    <span class="arw">*</span>b = t;
+}
+
+<span class="hl-k">int</span> <span class="hl-f">main</span>(<span class="hl-k">void</span>) {
+    <span class="hl-k">int</span> x = <span class="hl-n">3</span>, y = <span class="hl-n">8</span>;
+
+    <span class="hl-f">printf</span>(<span class="hl-s">"交换前 x=%d y=%d\n"</span>, x, y);
+    <span class="hl-f">swap</span>(<span class="arw">&amp;</span>x, <span class="arw">&amp;</span>y);       <span class="hl-c">/* 传的是地址，不是值 */</span>
+    <span class="hl-f">printf</span>(<span class="hl-s">"交换后 x=%d y=%d\n"</span>, x, y);
+    <span class="hl-k">return</span> <span class="hl-n">0</span>;
+}</pre></div>
+
+<div class="out-wrap"><div class="cap">运行结果</div><pre>交换前 x=3 y=8
+交换后 x=8 y=3</pre></div>
+
+<p>对比一下两种写法，差别只在「传什么」：</p>
+
+<table>
+<thead><tr><th style="width:30%">写法</th><th>函数里能否改外部变量</th><th>调用方式</th></tr></thead>
+<tbody>
+<tr><td class="c">void f(int a)</td><td><span class="tag r">不能</span> 改的是副本</td><td class="c">f(x);</td></tr>
+<tr><td class="c">void f(int *a)</td><td><span class="tag g">能</span> 顺着地址回去改</td><td class="c">f(&amp;x);</td></tr>
+</tbody>
+</table>
+
+<div class="card key">
+  <div class="card-t">规律</div>
+  <p><b>想让函数改一个普通变量，就把它的地址 <code>&amp;x</code> 传进去，
+  函数参数写成指针 <code>int *a</code>。</b></p>
+  <p>于是 <code>scanf</code> 那个 <code>&amp;</code> 也解释通了：
+  <code>scanf</code> 需要<b>把读到的数写进你的变量</b>，
+  所以它要的是地址 —— <code>scanf("%d", &amp;x)</code>。</p>
+</div>
+
+<h3 id="s6c">6.2 用指针遍历数组</h3>
+
+<p>因为指针「加 1 就是下一个元素」，用它遍历数组非常自然：</p>
+
+<div class="code-wrap"><div class="bar"><span class="dot r"></span><span class="dot y"></span><span class="dot g"></span><span class="name">指针遍历</span><span class="cp">复制</span></div><pre><span class="hl-p">#include</span> <span class="hl-s">&lt;stdio.h&gt;</span>
+
+<span class="hl-k">int</span> <span class="hl-f">main</span>(<span class="hl-k">void</span>) {
+    <span class="hl-k">int</span> a[<span class="hl-n">5</span>] = {<span class="hl-n">100</span>, <span class="hl-n">200</span>, <span class="hl-n">300</span>, <span class="hl-n">400</span>, <span class="hl-n">500</span>};
+
+    <span class="hl-c">/* 写法一：指针 + 下标（最易读） */</span>
+    <span class="hl-k">int</span> *p = a;
+    <span class="hl-k">for</span> (<span class="hl-k">int</span> i = <span class="hl-n">0</span>; i &lt; <span class="hl-n">5</span>; i++) {
+        <span class="hl-f">printf</span>(<span class="hl-s">"%d "</span>, p[i]);
+    }
+    <span class="hl-f">printf</span>(<span class="hl-s">"\n"</span>);
+
+    <span class="hl-c">/* 写法二：指针自己走，直到越过末尾 */</span>
+    <span class="hl-k">for</span> (<span class="hl-k">int</span> *r = a; r &lt; a + <span class="hl-n">5</span>; r++) {
+        <span class="hl-f">printf</span>(<span class="hl-s">"%d "</span>, <span class="arw">*</span>r);
+    }
+    <span class="hl-f">printf</span>(<span class="hl-s">"\n"</span>);
+
+    <span class="hl-c">/* 写法三：通过指针就地修改数组 */</span>
+    <span class="hl-k">for</span> (<span class="hl-k">int</span> *r = a; r &lt; a + <span class="hl-n">5</span>; r++) {
+        <span class="arw">*</span>r = <span class="arw">*</span>r * <span class="hl-n">2</span>;
+    }
+    <span class="hl-k">for</span> (<span class="hl-k">int</span> i = <span class="hl-n">0</span>; i &lt; <span class="hl-n">5</span>; i++) {
+        <span class="hl-f">printf</span>(<span class="hl-s">"%d "</span>, a[i]);
+    }
+    <span class="hl-f">printf</span>(<span class="hl-s">"\n"</span>);
+    <span class="hl-k">return</span> <span class="hl-n">0</span>;
+}</pre></div>
+
+<div class="out-wrap"><div class="cap">运行结果</div><pre>100 200 300 400 500 
+100 200 300 400 500 
+200 400 600 800 1000 </pre></div>
+
+<p>三种写法都能用。<b>初学阶段推荐写法一或写法二</b>，
+写法三用 <code>*r</code> 直接改数组内容，需要你对「解引用」已经很熟。</p>
+
+<div class="card tip">
+  <div class="card-t">什么时候真的需要指针遍历</div>
+  <p>说实话，<b>仅仅把数组走一遍的话，下标写法更清楚</b>，
+  不必为了用指针而用指针。</p>
+  <p>指针遍历真正方便的地方是：<b>当你只想处理数组中间的一段</b>。
+  因为指针可以指向任意一格，所以 <code>int *p = a + 2;</code>
+  就能从第 3 个元素开始往后走，前面的元素完全不用管。</p>
+  <p>这个「从哪儿开始、走多少格」的搭配，正是疑难 ⑦
+  「数组要额外传一个长度」里那个 <code>n</code> 的用法。</p>
+</div>
+
+<h2 id="s7"><span class="n">7</span>常见错误</h2>
+
+<h4>错误 1 · 用了没初始化的指针</h4>
+<div class="code-wrap"><div class="bar"><span class="dot r"></span><span class="dot y"></span><span class="dot g"></span><span class="name">对比</span><span class="cp">复制</span></div><pre><span class="hl-k">int</span> *p;            <span class="hl-c">/* ❌ 指向未知 */</span>
+<span class="arw">*</span>p = <span class="hl-n">5</span>;           <span class="hl-c">/* ❌ 危险，可能崩溃 */</span>
+
+<span class="hl-k">int</span> x;
+<span class="hl-k">int</span> *p = <span class="arw">&amp;</span>x;      <span class="hl-c">/* ✅ 指向真实变量 */</span>
+<span class="arw">*</span>p = <span class="hl-n">5</span>;           <span class="hl-c">/* ✅ 改的是 x */</span></pre></div>
+
+<h4>错误 2 · 把值和地址搞混</h4>
+<div class="code-wrap"><div class="bar"><span class="dot r"></span><span class="dot y"></span><span class="dot g"></span><span class="name">对比</span><span class="cp">复制</span></div><pre><span class="hl-k">int</span> x = <span class="hl-n">42</span>;
+<span class="hl-k">int</span> *p = <span class="arw">&amp;</span>x;
+
+<span class="hl-f">printf</span>(<span class="hl-s">"%d\n"</span>, p);     <span class="hl-c">/* ❌ 用 %d 打印地址，类型不对 */</span>
+<span class="hl-f">printf</span>(<span class="hl-s">"%p\n"</span>, (<span class="hl-k">void</span> *)p);  <span class="hl-c">/* ✅ 地址用 %p */</span>
+
+<span class="hl-k">int</span> y = p;           <span class="hl-c">/* ❌ 把地址赋给 int，语义混乱 */</span>
+<span class="hl-k">int</span> y = <span class="arw">*</span>p;          <span class="hl-c">/* ✅ 要值就解引用 */</span></pre></div>
+
+<h4>错误 3 · 忘记 <code>&amp;</code>（swap 不生效）</h4>
+<div class="code-wrap"><div class="bar"><span class="dot r"></span><span class="dot y"></span><span class="dot g"></span><span class="name">对比</span><span class="cp">复制</span></div><pre><span class="hl-k">void</span> <span class="hl-f">swap</span>(<span class="hl-k">int</span> <span class="arw">*</span>a, <span class="hl-k">int</span> <span class="arw">*</span>b) { ... }
+
+<span class="hl-f">swap</span>(x, y);       <span class="hl-c">/* ❌ 传的是值，编译就报错 */</span>
+<span class="hl-f">swap</span>(<span class="arw">&amp;</span>x, <span class="arw">&amp;</span>y);     <span class="hl-c">/* ✅ 传地址 */</span></pre></div>
+<p>参数是 <code>int *</code>，就必须给地址。<b>「参数带星，调用带与」</b>。</p>
+
+<h4>错误 4 · 该解引用时没解引用</h4>
+<div class="code-wrap"><div class="bar"><span class="dot r"></span><span class="dot y"></span><span class="dot g"></span><span class="name">对比</span><span class="cp">复制</span></div><pre><span class="hl-k">void</span> <span class="hl-f">addOne</span>(<span class="hl-k">int</span> <span class="arw">*</span>p) {
+    p++;        <span class="hl-c">/* ❌ 改的是「指针自己」（指向下一格） */</span>
+    <span class="arw">*</span>p += <span class="hl-n">1</span>;    <span class="hl-c">/* ✅ 改的是「指向的那个值」 */</span>
+}</pre></div>
+
+<h4>错误 5 · 用 <code>NULL</code> 之前不判断</h4>
+<div class="code-wrap"><div class="bar"><span class="dot r"></span><span class="dot y"></span><span class="dot g"></span><span class="name">对比</span><span class="cp">复制</span></div><pre><span class="hl-k">int</span> *p = <span class="hl-f">find</span>(a, n, x);
+
+<span class="hl-f">printf</span>(<span class="hl-s">"%d\n"</span>, <span class="arw">*</span>p);          <span class="hl-c">/* ❌ 如果没找到会崩溃 */</span>
+
+<span class="hl-k">if</span> (p != <span class="hl-n">NULL</span>) {              <span class="hl-c">/* ✅ 先判断 */</span>
+    <span class="hl-f">printf</span>(<span class="hl-s">"%d\n"</span>, <span class="arw">*</span>p);
+} <span class="hl-k">else</span> {
+    <span class="hl-f">printf</span>(<span class="hl-s">"没找到\n"</span>);
+}</pre></div>
+
+<h4>错误 6 · <code>int *a, b;</code> 以为两个都是指针</h4>
+<div class="code-wrap"><div class="bar"><span class="dot r"></span><span class="dot y"></span><span class="dot g"></span><span class="name">对比</span><span class="cp">复制</span></div><pre><span class="hl-k">int</span> *a, b;     <span class="hl-c">/* ❌ b 是普通 int，不是指针 */</span>
+<span class="hl-k">int</span> *a, *b;    <span class="hl-c">/* ✅ 两个都是指针 */</span></pre></div>
+
+<h4>错误 7 · 拿指针当数组越界用</h4>
+<div class="code-wrap"><div class="bar"><span class="dot r"></span><span class="dot y"></span><span class="dot g"></span><span class="name">对比</span><span class="cp">复制</span></div><pre><span class="hl-k">int</span> a[<span class="hl-n">5</span>];
+<span class="hl-k">int</span> *p = a;
+
+<span class="hl-f">printf</span>(<span class="hl-s">"%d\n"</span>, <span class="arw">*</span>(p + <span class="hl-n">5</span>));   <span class="hl-c">/* ❌ 越界！合法只有 p+0 ~ p+4 */</span>
+<span class="hl-f">printf</span>(<span class="hl-s">"%d\n"</span>, <span class="arw">*</span>(p + <span class="hl-n">4</span>));   <span class="hl-c">/* ✅ 最后一个 */</span></pre></div>
+<p>指针也不会替你检查边界，和数组一样要自己小心。</p>
+
+<!-- ============================================================ -->
+<h2 id="s8"><span class="n">8</span>一页速查</h2>
+
+<table>
+<thead><tr><th style="width:36%">想做的事</th><th>写法</th></tr></thead>
+<tbody>
+<tr><td>声明一个指向 int 的指针</td><td class="c">int *p;</td></tr>
+<tr><td>让 p 指向 x</td><td class="c">p = &amp;x;</td></tr>
+<tr><td>声明时就指向 x</td><td class="c">int *p = &amp;x;</td></tr>
+<tr><td>取 p 指向的值</td><td class="c">*p</td></tr>
+<tr><td>改 p 指向的值</td><td class="c">*p = 99;</td></tr>
+<tr><td>取变量 x 的地址</td><td class="c">&amp;x</td></tr>
+<tr><td>让指针「什么都不指」</td><td class="c">p = NULL;</td></tr>
+<tr><td>判断指针是否有效</td><td class="c">if (p != NULL)</td></tr>
+<tr><td>打印地址</td><td class="c">printf("%p", (void *)p);</td></tr>
+<tr><td>指针加 1（下一格）</td><td class="c">p + 1</td></tr>
+<tr><td>指针往后第 i 格</td><td class="c">p + i &nbsp;或&nbsp; p[i]</td></tr>
+<tr><td>两个指针相隔几格</td><td class="c">(int)(q - p)</td></tr>
+<tr><td>数组名当指针用</td><td class="c">arr &nbsp;等价于&nbsp; &amp;arr[0]</td></tr>
+<tr><td><code>arr[i]</code> 的另一种写法</td><td class="c">*(arr + i)</td></tr>
+<tr><td>数组作函数参数</td><td class="c">int f(int a[], int n) &nbsp;→&nbsp; f(arr, 10);</td></tr>
+<tr><td>函数想改外部变量</td><td class="c">void f(int *p) &nbsp;→&nbsp; f(&amp;x);</td></tr>
+<tr><td>指针参数遍历</td><td class="c">for (int *r = a; r &lt; a + n; r++)</td></tr>
+<tr><td><code>*p++</code> 的含义</td><td class="c">先取 <code>*p</code>，再让 <code>p</code> 前进一格</td></tr>
+</tbody>
+</table>
+
+<div class="card key">
+  <div class="card-t">本讲要记住的七句话</div>
+  <ol>
+    <li><b>指针就是一个变量，里面装的是别的变量的地址。</b></li>
+    <li><b><code>&amp;</code> 取地址，<code>*</code> 顺着箭头取值；<code>*&amp;x</code> 就是 <code>x</code>。</b></li>
+    <li><b><code>T*</code> 是一个完整类型名；同一个 <code>*</code>，在类型名里是「指针标记」，
+      在表达式里是「解引用」，两个值中间才是乘号。</b></li>
+    <li><b>指针必须初始化（指向真实变量或 <code>NULL</code>），绝不能用没初始化的指针。</b></li>
+    <li><b><code>p = &amp;v</code> 是改指向；<code>*p = 100</code> 是改值。这是两件事。</b></li>
+    <li><b>数组名就是首元素地址，但数组名不是指针变量</b> ——
+      所以数组一进函数就退化，长度必须另外传一个 <code>n</code>。</li>
+    <li><b>想让函数改外部变量，就传地址 <code>&amp;x</code>；参数写成 <code>int *p</code>。</b></li>
+  </ol>
+</div>
+
+<div class="card note">
+  <div class="card-t">学完这两讲你可以做什么了</div>
+  <ul>
+    <li>明白变量在内存里怎么放、占多大、能表示多大范围</li>
+    <li>知道地址是什么，会用 <code>&amp;</code> 和 <code>*</code></li>
+    <li>能读懂 <code>void swap(int *a, int *b)</code> 这类函数，并自己写出来</li>
+    <li>理解为什么 <code>scanf</code> 要写 <code>&amp;x</code></li>
+    <li>理解数组的本质，以及为什么数组参数总要配一个长度</li>
+  </ul>
+  <p>再往后可以学的方向：动态内存（<code>malloc</code> / <code>free</code>）、
+  指针与结构体、函数指针。<b>不过先把本讲这七个要点用熟，比急着往下学更重要。</b></p>
+</div>
+
+
+
+<!-- NAV-AUTO -->
+<a class="home-fab" href="../../index.html" title="返回教程总目录">返回 home</a>
+<div class="series-nav">
+<b>本系列</b>　<span class="series-tag">M 系列 · 课本内容速成与补充</span>　
+<a href="m01-c-arrays.html">M01 数组初步</a>
+<a href="m02-c-functions.html">M02 函数初步</a>
+<a href="m03-c-types.html">M03 类型概论</a>
+<a href="m04-c-pointers.html" class="cur">M04 指针初步</a>
+<a href="m05-memory.html">M05 静态、动态内存与内存安全初步</a>
+<a href="m06-class-struct.html">M06 类、结构体</a>
+<a href="m07-scope.html">M07 作用域、全局与局部变量</a>
+<a href="m08-c-strings.html">M08 C 风格字符串</a>
+<a href="m09-vector-and-array.html">M09 vector 和 array <span class="star" title="与本项目施行密切相关">*</span></a>
+</div>
+<div class="series-switch">
+<b>全部系列</b>　
+<a href="t01-mongolian-script-intro.html">理论 · T（3 篇）</a>
+<span class="ss-cur">课本 · M（9 篇）</span>
+<a href="q01-std-and-namespace.html">Qt · Q（1 篇）</a>
+<a href="e01-recursion.html">Extra · E（2 篇）</a>
+<a href="f01-command-prompt.html">File · F（3 篇）</a>
+<span class="ss-empty">相关 · R（0 篇，暂空）</span>
+</div>
+<!-- /NAV-AUTO -->
+<footer>
+UME 项目组内部教程 · M04《指针初步》<br>
+代码示例均以 <b>Consolas</b> 等宽字体呈现；文中所有「运行结果」都经过实际编译运行核对。<br>
+地址的具体数值每次运行都会变化，文中地址仅作示意。
+</footer>
+
+</main>
+</div>
+
+<script>
+/* 目录滚动高亮 */
+(function(){
+  const links = [...document.querySelectorAll('#toc a')];
+  const targets = links.map(a => document.querySelector(a.getAttribute('href'))).filter(Boolean);
+  const setOn = id => links.forEach(a => a.classList.toggle('on', a.getAttribute('href') === '#'+id));
+  const io = new IntersectionObserver(es => {
+    const vis = es.filter(e => e.isIntersecting)
+                  .sort((a,b) => a.boundingClientRect.top - b.boundingClientRect.top);
+    if (vis[0]) setOn(vis[0].target.id);
+  }, { rootMargin:'-8% 0px -72% 0px', threshold:0 });
+  targets.forEach(t => io.observe(t));
+})();
+
+/* 复制按钮 */
+(function(){
+  document.querySelectorAll('.code-wrap').forEach(box => {
+    const btn = box.querySelector('.cp');
+    const pre = box.querySelector('pre');
+    if (!btn || !pre) return;
+    btn.addEventListener('click', async () => {
+      const text = pre.textContent;
+      try { await navigator.clipboard.writeText(text); }
+      catch (e) {
+        const ta = document.createElement('textarea');
+        ta.value = text; document.body.appendChild(ta);
+        ta.select(); document.execCommand('copy'); ta.remove();
+      }
+      const old = btn.textContent;
+      btn.textContent = '已复制 ✓';
+      setTimeout(() => { btn.textContent = old; }, 1200);
+    });
+  });
+})();
+</script>
+<script>
+/* 移动端：生成「目录」按钮，点击呼出/收起侧滑目录 */
+(function(){
+  var toc = document.getElementById('toc');
+  if (!toc) return;
+  var btn = document.createElement('button');
+  btn.id = 'tocToggle';
+  btn.type = 'button';
+  btn.setAttribute('aria-controls','toc');
+  btn.textContent = '目录';
+  document.body.appendChild(btn);
+
+  function setOpen(on){
+    toc.classList.toggle('open', on);
+    document.body.classList.toggle('toc-open', on);
+    btn.setAttribute('aria-expanded', on ? 'true' : 'false');
+    btn.textContent = on ? '收起' : '目录';
+  }
+  btn.addEventListener('click', function(){
+    setOpen(!toc.classList.contains('open'));
+  });
+  /* 点目录里的链接后自动收起；点遮罩（#toc 之外的区域）也收起 */
+  toc.addEventListener('click', function(e){
+    if (e.target.closest('a')) setOpen(false);
+  });
+  document.addEventListener('click', function(e){
+    if (!toc.classList.contains('open')) return;
+    if (e.target === toc || toc.contains(e.target) || e.target === btn) return;
+    setOpen(false);
+  });
+  document.addEventListener('keydown', function(e){
+    if (e.key === 'Escape') setOpen(false);
+  });
+  /* 窄屏进入页面时默认收起，宽屏则清掉状态 */
+  function sync(){ if (window.innerWidth > 980) setOpen(false); }
+  window.addEventListener('resize', sync);
+  sync();
+})();
+</script>
+<script src="assets/series-common.js"></script>
+</body>
+</html>
