@@ -1,0 +1,542 @@
+# -*- coding: utf-8 -*-
+"""生成 _ds_08_C风格字符串.html"""
+import sys
+sys.path.insert(0, r"E:\QKMansion\CSX10\w\UME\tools")
+from tut import build
+
+EXTRA = """
+/* 字符串内存布局示意 */
+.strmem{display:flex;gap:0;flex-wrap:wrap;margin:16px 0;align-items:flex-end}
+.strmem .ch{
+  border:1px solid var(--line-2);border-bottom:3px solid var(--blue);
+  min-width:44px;padding:8px 4px 6px;text-align:center;background:#fff;
+  transition:background .14s,transform .14s,box-shadow .14s;cursor:default;
+}
+.strmem .ch:first-child{border-radius:7px 0 0 7px}
+.strmem .ch:last-child{border-radius:0 7px 7px 0}
+.strmem .ch:hover{background:var(--blue-soft);transform:translateY(-3px);
+  box-shadow:0 5px 14px rgba(31,111,235,.2)}
+.strmem .ch .v{font-family:var(--mono);font-size:16px;font-weight:600}
+.strmem .ch .i{font-family:var(--mono);font-size:11px;color:var(--fg-3);margin-top:3px}
+.strmem .ch.end{border-bottom-color:var(--red);background:var(--red-soft)}
+.strmem .ch.end:hover{background:#fbdcd8;box-shadow:0 5px 14px rgba(192,57,43,.2)}
+.strmem .ch.end .v{color:var(--red)}
+/* sizeof 与 strlen 对照 */
+.vs{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin:18px 0}
+.vs .c{border:1px solid var(--line-2);border-radius:11px;padding:13px 15px;background:#fff;
+  transition:box-shadow .16s,transform .16s}
+.vs .c:hover{box-shadow:0 6px 18px rgba(30,45,70,.12);transform:translateY(-2px)}
+.vs .c .h{font-weight:700;font-size:14px;margin-bottom:6px;font-family:var(--mono)}
+.vs .c.a .h{color:var(--blue)}
+.vs .c.b .h{color:var(--green)}
+.vs .c .note{font-size:13px;color:var(--fg-3);line-height:1.65}
+@media(max-width:700px){.vs{grid-template-columns:1fr}}
+"""
+
+TOC = """  <a href="#s1">1 · C 里的字符串长什么样</a>
+  <a href="#s2">2 · sizeof 与 strlen 的区别</a>
+  <a href="#s3">3 · 两种写法：数组 vs 指针</a>
+  <a href="#s4">4 · 输入：scanf 与 fgets</a>
+  <a href="#s5">5 · 常用函数一览</a>
+  <a href="#s5a" class="sub">5.1 strlen</a>
+  <a href="#s5b" class="sub">5.2 strcpy 与 strncpy</a>
+  <a href="#s5c" class="sub">5.3 strcat</a>
+  <a href="#s5d" class="sub">5.4 strcmp：比较的坑</a>
+  <a href="#s5e" class="sub">5.5 strchr</a>
+  <a href="#s6">6 · 字符就是小整数</a>
+  <a href="#s7">7 · 常见错误</a>
+  <a href="#s8">8 · 一页速查</a>"""
+
+BODY = r"""<h1>C 风格字符串</h1>
+<p class="sub-title">UME 项目组内部教程 · 第八讲 · 面向零编程基础成员</p>
+<p>
+  <span class="tag">已学：数组 / 指针 / 内存</span>
+  <span class="tag">已学：作用域</span>
+  <span class="tag b">本讲：一串文字怎么存</span>
+</p>
+
+<div class="card note">
+  <div class="card-t">这一讲回答四个问题</div>
+  <ul>
+    <li>第五讲里那个 <code>malloc(sizeof(char) * (len + 1))</code>，
+      为什么要 <b><code>+ 1</code></b>？</li>
+    <li>为什么字符串比较不能写 <code>if (s1 == s2)</code>？</li>
+    <li>为什么 <code>strcpy</code> 老被说「不安全」？</li>
+    <li><code>sizeof</code> 和 <code>strlen</code> 到底差在哪？</li>
+  </ul>
+  <p>答案都在同一件事上：<b>C 的字符串没有「字符串类型」，
+  它就是「一串字符 + 一个结束标记」。</b>
+  文中所有「运行结果」均使用 g++ 13.1.0 以 C 风格实际编译运行核对。</p>
+</div>
+
+<!-- ============================================================ -->
+<h2 id="s1"><span class="n">1</span>C 里的字符串长什么样</h2>
+
+<p>别的语言里有专门的字符串类型。C 里<b>没有</b> ——
+C 用<b>字符数组</b>存一串文字，并在最后放一个特殊的字符表示「到此结束」。</p>
+
+<div class="card key">
+  <div class="card-t">C 字符串的完整定义</div>
+  <p><b>字符串 = 一串字符 + 结尾的一个 <code>'\0'</code></b></p>
+  <p><code>'\0'</code> 读作「空字符」，它的<b>数值是 0</b>
+  （不是字符 <code>'0'</code>，那个的数值是 48）。</p>
+</div>
+
+<p>写 <code>char a[] = "Mongol";</code> 之后，内存里是这样：</p>
+
+<div class="strmem">
+  <div class="ch"><div class="v">M</div><div class="i">a[0]</div></div>
+  <div class="ch"><div class="v">o</div><div class="i">a[1]</div></div>
+  <div class="ch"><div class="v">n</div><div class="i">a[2]</div></div>
+  <div class="ch"><div class="v">g</div><div class="i">a[3]</div></div>
+  <div class="ch"><div class="v">o</div><div class="i">a[4]</div></div>
+  <div class="ch"><div class="v">l</div><div class="i">a[5]</div></div>
+  <div class="ch end"><div class="v">\0</div><div class="i">a[6]</div></div>
+</div>
+
+<p>「Mongol」是 <b>6 个字符</b>，但数组占 <b>7 个格子</b> ——
+最后那个格子专门放 <code>'\0'</code>。
+<b>这就是那个 <code>+ 1</code> 的来历。</b></p>
+
+<div class="code-wrap"><div class="bar"><span class="dot r"></span><span class="dot y"></span><span class="dot g"></span><span class="name">sizeof 比 strlen 多 1</span><span class="cp">复制</span></div><pre><span class="hl-p">#include</span> <span class="hl-s">&lt;stdio.h&gt;</span>
+<span class="hl-p">#include</span> <span class="hl-s">&lt;string.h&gt;</span>
+
+<span class="hl-k">int</span> <span class="hl-f">main</span>(<span class="hl-k">void</span>) {
+    <span class="hl-k">char</span> a[] = <span class="hl-s">"Mongol"</span>;
+
+    <span class="hl-f">printf</span>(<span class="hl-s">"内容: %s\n"</span>, a);
+    <span class="hl-f">printf</span>(<span class="hl-s">"sizeof(a) = %d  （占多少字节）\n"</span>, (<span class="hl-k">int</span>)<span class="hl-k">sizeof</span>(a));
+    <span class="hl-f">printf</span>(<span class="hl-s">"strlen(a) = %d  （几个字符）\n"</span>, (<span class="hl-k">int</span>)<span class="hl-f">strlen</span>(a));
+    <span class="hl-f">printf</span>(<span class="hl-s">"差 %d —— 结尾多了一个 '\\0'\n"</span>,
+           (<span class="hl-k">int</span>)(<span class="hl-k">sizeof</span>(a) - <span class="hl-f">strlen</span>(a)));
+    <span class="hl-k">return</span> <span class="hl-n">0</span>;
+}</pre></div>
+
+<div class="out-wrap"><div class="cap">运行结果</div><pre>内容: Mongol
+sizeof(a) = 7  （占多少字节）
+strlen(a) = 6  （几个字符）
+差 1 —— 结尾多了一个 '\0'</pre></div>
+
+<h4>逐字节看真实内容</h4>
+<p>把每个格子的<b>数值</b>打出来，<code>'\0'</code> 就现形了：</p>
+
+<div class="code-wrap"><div class="bar"><span class="dot r"></span><span class="dot y"></span><span class="dot g"></span><span class="name">每个格子的数值</span><span class="cp">复制</span></div><pre><span class="hl-k">char</span> a[] = <span class="hl-s">"Mongol"</span>;
+<span class="hl-k">for</span> (<span class="hl-k">int</span> i = <span class="hl-n">0</span>; i &lt; (<span class="hl-k">int</span>)<span class="hl-k">sizeof</span>(a); i++) {
+    <span class="hl-f">printf</span>(<span class="hl-s">"a[%d] = %d\n"</span>, i, a[i]);
+}</pre></div>
+
+<div class="out-wrap"><div class="cap">运行结果</div><pre>a[0] = 77
+a[1] = 111
+a[2] = 110
+a[3] = 103
+a[4] = 111
+a[5] = 108
+a[6] = 0</pre></div>
+
+<p>最后那个 <code>a[6] = 0</code> 就是 <code>'\0'</code>。
+（<code>77</code>、<code>111</code> 这些是字母的 ASCII 编码，第 6 节会讲。）</p>
+
+<div class="card tip">
+  <div class="card-t">为什么要有结束标记</div>
+  <p>因为光看一块内存，<b>没法知道字符串到哪里结束</b>。</p>
+  <p>数组本身并不知道「我装了 6 个字符」—— 那个 7 是编译时写在程序里的。
+  而一个函数收到 <code>char *s</code> 时，它只知道起点，
+  必须<b>一个字符一个字符往后走，直到遇到 0 才知道停了</b>。</p>
+  <p>这也是 <code>printf("%s", s)</code> 的工作原理：
+  <b>它靠 <code>'\0'</code> 判断什么时候停。</b>
+  所以如果字符串忘了写 <code>'\0'</code>，<code>printf</code>
+  会一直往后读到越界为止 —— 这就是「乱码」甚至崩溃的来源。</p>
+</div>
+
+<!-- ============================================================ -->
+<h2 id="s2"><span class="n">2</span>sizeof 与 strlen 的区别</h2>
+
+<p>这两个经常被混，但问的是完全不同的问题：</p>
+
+<div class="vs">
+  <div class="c a">
+    <div class="h">sizeof(a)</div>
+    <div class="note">
+      <b>问：这块东西占多少字节？</b><br>
+      编译时就算好了，运行时不做任何事。<br>
+      <b>只在「数组名」上有效</b> —— 用在指针上只会得到指针自己的大小。<br>
+      包含 <code>'\0'</code>。
+    </div>
+  </div>
+  <div class="c b">
+    <div class="h">strlen(a)</div>
+    <div class="note">
+      <b>问：从开头数到 <code>'\0'</code>，有几个字符？</b><br>
+      运行时真的一格格数过去。<br>
+      <b>数组和指针都能用。</b><br>
+      不包含 <code>'\0'</code>。
+    </div>
+  </div>
+</div>
+
+<div class="code-wrap"><div class="bar"><span class="dot r"></span><span class="dot y"></span><span class="dot g"></span><span class="name">对数组和指针分别测试</span><span class="cp">复制</span></div><pre><span class="hl-k">char</span> arr[] = <span class="hl-s">"Mongol"</span>;
+<span class="hl-k">char</span> *p = arr;              <span class="hl-c">/* p 指向同一个字符串 */</span>
+
+<span class="hl-f">printf</span>(<span class="hl-s">"sizeof(arr) = %d\n"</span>, (<span class="hl-k">int</span>)<span class="hl-k">sizeof</span>(arr));
+<span class="hl-f">printf</span>(<span class="hl-s">"sizeof(p)   = %d  （只是指针）\n"</span>, (<span class="hl-k">int</span>)<span class="hl-k">sizeof</span>(p));
+<span class="hl-f">printf</span>(<span class="hl-s">"strlen(arr) = %d\n"</span>, (<span class="hl-k">int</span>)<span class="hl-f">strlen</span>(arr));
+<span class="hl-f">printf</span>(<span class="hl-s">"strlen(p)   = %d\n"</span>, (<span class="hl-k">int</span>)<span class="hl-f">strlen</span>(p));</pre></div>
+
+<div class="out-wrap"><div class="cap">运行结果</div><pre>sizeof(arr) = 7
+sizeof(p)   = 8  （只是指针）
+strlen(arr) = 6
+strlen(p)   = 6</pre></div>
+
+<p>关键差别看第二行：<b><code>sizeof(p)</code> 是 8</b>（指针大小），
+不是字符串的长度。这就是第四讲说过的「数组名不是指针变量」在字符串上的体现。</p>
+
+<div class="card key">
+  <div class="card-t">实用结论</div>
+  <p><b>算字符串长度一律用 <code>strlen</code>，不要用 <code>sizeof</code>。</b></p>
+  <p><code>sizeof</code> 只在一种情况下用来算字符串相关的大小：
+  <b>计算缓冲区需要多少字节</b>，例如
+  <code>char buf[sizeof(arr)];</code>，或者<br>
+  <code>malloc(sizeof(char) * (strlen(src) + 1))</code> —— 注意那个 <code>+ 1</code>。</p>
+</div>
+
+<!-- ============================================================ -->
+<h2 id="s3"><span class="n">3</span>两种写法：数组 vs 指针</h2>
+
+<p>下面两种写法看起来很像，但含义不同：</p>
+
+<div class="code-wrap"><div class="bar"><span class="dot r"></span><span class="dot y"></span><span class="dot g"></span><span class="name">两种写法的本质差别</span><span class="cp">复制</span></div><pre><span class="hl-k">char</span> s1[] = <span class="hl-s">"Mongol"</span>;      <span class="hl-c">/* ① 数组：拷贝一份字符，可以改 */</span>
+<span class="hl-k">char</span> *s2  = <span class="hl-s">"Mongol"</span>;      <span class="hl-c">/* ② 指针：指向只读的字符串常量 */</span>
+
+s1[<span class="hl-n">0</span>] = <span class="hl-s">'T'</span>;                <span class="hl-c">/* ✅ 可以改，s1 变成 "Tongol" */</span>
+<span class="hl-c">/* s2[0] = 'T';   ← ❌ 不要这样写！那是只读内存，可能直接崩 */</span></pre></div>
+
+<table>
+<thead><tr><th style="width:22%">写法</th><th>它是什么</th><th>能不能改内容</th></tr></thead>
+<tbody>
+<tr><td class="c">char s[] = "..."</td>
+    <td>一个<b>数组</b>，把字符拷进自己的格子</td>
+    <td><span class="tag g">能改</span></td></tr>
+<tr><td class="c">char *s = "..."</td>
+    <td>一个<b>指针</b>，指向程序里只读的常量区</td>
+    <td><span class="tag r">不能改</span> 改了是未定义行为</td></tr>
+</tbody>
+</table>
+
+<div class="out-wrap"><div class="cap">运行结果</div><pre>改过之后 s1 = Tongol
+s2 = Mongol （不要改 s2[0]，那是只读区）</pre></div>
+
+<div class="card tip">
+  <div class="card-t">怎么选</div>
+  <ul>
+    <li><b>需要修改内容</b>（拼接、替换、当缓冲区）→ 用<b>数组</b>，
+      或 <code>malloc</code> 出来的堆内存。</li>
+    <li><b>只是读一读、当参数传</b> → 用 <code>const char *</code>，
+      明确表示「不会改」。</li>
+  </ul>
+  <p>不确定时，<b><code>const char *</code> 最安全</b> ——
+  写成这样，编译器会替你拦住所有修改尝试。</p>
+</div>
+
+<!-- ============================================================ -->
+<h2 id="s4"><span class="n">4</span>输入：scanf 与 fgets</h2>
+
+<p>读一串文字有两种常见方式，差别很大。</p>
+
+<div class="code-wrap"><div class="bar"><span class="dot r"></span><span class="dot y"></span><span class="dot g"></span><span class="name">两种输入方式</span><span class="cp">复制</span></div><pre><span class="hl-k">char</span> name[<span class="hl-n">20</span>];
+
+<span class="hl-c">/* ① scanf("%s", ...)：读到空格就停 */</span>
+<span class="hl-f">scanf</span>(<span class="hl-s">"%s"</span>, name);           <span class="hl-c">/* 注意：不用写 & */</span>
+
+<span class="hl-c">/* ② fgets：连空格一起读，且限制长度 */</span>
+<span class="hl-f">fgets</span>(name, <span class="hl-k">sizeof</span>(name), stdin);</pre></div>
+
+<table>
+<thead><tr><th style="width:20%"></th><th>scanf("%s", s)</th><th>fgets(s, n, stdin)</th></tr></thead>
+<tbody>
+<tr><td><b>遇到空格</b></td><td><span class="tag r">停</span> 只读到第一个词</td>
+    <td><span class="tag g">不停</span> 整行都读进来</td></tr>
+<tr><td><b>会不会越界</b></td><td><span class="tag r">会</span> 输入太长就写爆数组</td>
+    <td><span class="tag g">不会</span> 有 n 兜着</td></tr>
+<tr><td><b>换行符</b></td><td>留在输入里</td><td><b>会读进去</b>（末尾多一个 <code>\n</code>）</td></tr>
+<tr><td><b>要写 &amp; 吗</b></td><td>不用（数组名已经是地址）</td><td>不用</td></tr>
+</tbody>
+</table>
+
+<div class="card warn">
+  <div class="card-t">为什么 <code>scanf("%s", ...)</code> 危险</div>
+  <p>它<b>不知道你的数组有多大</b>。用户输入 100 个字符，它就往 20 格的数组里写 100 个 ——
+  越界，程序可能崩，也可能被利用来做坏事。</p>
+  <p>想用 <code>scanf</code> 又限制长度，可以写宽度：</p>
+  <pre style="background:#f2f4f8;border:1px solid var(--line);border-radius:8px;padding:10px 12px;font-family:var(--mono);font-size:13px;color:var(--fg);overflow:auto"><span class="hl-f">scanf</span>(<span class="hl-s">"%19s"</span>, name);      <span class="hl-c">/* 最多读 19 个，给 '\0' 留一格 */</span></pre>
+  <p>但更省心的做法是<b>直接用 <code>fgets</code></b>。</p>
+</div>
+
+<div class="card note">
+  <div class="card-t">关于 <code>scanf</code> 里那个 <code>&amp;</code></div>
+  <p>回忆第四讲：<code>scanf("%d", &amp;x)</code> 要写 <code>&amp;</code>，
+  因为要告诉它「往哪个地址放」。</p>
+  <p>那为什么 <code>scanf("%s", s)</code> 不写？因为
+  <b>数组名本身就是首元素的地址</b>，已经是地址了，再加 <code>&amp;</code> 就重复了。</p>
+  <p>这也解释了为什么 <code>scanf("%d", &amp;a[i])</code> 要写 ——
+  <code>a[i]</code> 是<b>一个元素</b>（一个值），不是地址。</p>
+</div>
+
+<!-- ============================================================ -->
+<h2 id="s5"><span class="n">5</span>常用函数一览</h2>
+
+<p>这些函数都在 <code>&lt;string.h&gt;</code> 里，用之前记得
+<code>#include &lt;string.h&gt;</code>。</p>
+
+<h3 id="s5a">5.1 <code>strlen</code>：数长度</h3>
+<div class="code-wrap"><div class="bar"><span class="dot r"></span><span class="dot y"></span><span class="dot g"></span><span class="name">strlen</span><span class="cp">复制</span></div><pre><span class="hl-f">strlen</span>(<span class="hl-s">"Mongol"</span>)         <span class="hl-c">/* 6 */</span>
+<span class="hl-f">strlen</span>(<span class="hl-s">""</span>)               <span class="hl-c">/* 0 —— 空字符串也是合法字符串 */</span></pre></div>
+<p>它<b>不包含</b>结尾的 <code>'\0'</code>。空字符串
+<code>""</code> 占 1 个字节（只有 <code>'\0'</code>），长度是 0。</p>
+
+<h3 id="s5b">5.2 <code>strcpy</code> 与 <code>strncpy</code>：拷贝</h3>
+<div class="code-wrap"><div class="bar"><span class="dot r"></span><span class="dot y"></span><span class="dot g"></span><span class="name">拷贝：注意目标够不够大</span><span class="cp">复制</span></div><pre><span class="hl-k">char</span> buf[<span class="hl-n">32</span>];
+<span class="hl-f">strcpy</span>(buf, <span class="hl-s">"Mongol"</span>);      <span class="hl-c">/* 把 "Mongol" 连 '\0' 一起拷进 buf */</span>
+<span class="hl-f">printf</span>(<span class="hl-s">"%s\n"</span>, buf);        <span class="hl-c">/* Mongol */</span></pre></div>
+<div class="out-wrap"><div class="cap">运行结果</div><pre>strcpy 后: Mongol</pre></div>
+
+<div class="card warn">
+  <div class="card-t"><code>strcpy</code> 为什么不安全</div>
+  <p>它<b>不检查目标缓冲区够不够大</b>。如果源串比目标长，就会写越界。</p>
+  <p>它有个「限制长度」的版本 <code>strncpy</code>：</p>
+  <pre style="background:#f2f4f8;border:1px solid var(--line);border-radius:8px;padding:10px 12px;font-family:var(--mono);font-size:13px;color:var(--fg);overflow:auto"><span class="hl-k">char</span> small[<span class="hl-n">6</span>];
+<span class="hl-f">strncpy</span>(small, <span class="hl-s">"Mongolian"</span>, <span class="hl-k">sizeof</span>(small) - <span class="hl-n">1</span>);   <span class="hl-c">/* 最多拷 5 个 */</span>
+small[<span class="hl-k">sizeof</span>(small) - <span class="hl-n">1</span>] = <span class="hl-s">'\0'</span>;              <span class="hl-c">/* 手动补上结束标记 */</span></pre>
+  <p>实测结果：<code>small = Mongo</code>（被截断到 5 个字符）。</p>
+  <p><b>注意 <code>strncpy</code> 的一个坑</b>：如果源串长度 ≥ 限制长度，
+  它<b>不会自动补 <code>'\0'</code></b>。所以上面那行手动补结束标记<b>不能省</b>。</p>
+</div>
+
+<h3 id="s5c">5.3 <code>strcat</code>：拼接</h3>
+<div class="code-wrap"><div class="bar"><span class="dot r"></span><span class="dot y"></span><span class="dot g"></span><span class="name">接在后面</span><span class="cp">复制</span></div><pre><span class="hl-k">char</span> buf[<span class="hl-n">32</span>];
+<span class="hl-f">strcpy</span>(buf, <span class="hl-s">"Mongol"</span>);
+<span class="hl-f">strcat</span>(buf, <span class="hl-s">" bichig"</span>);     <span class="hl-c">/* 找到 buf 末尾的 '\0'，从那里接着写 */</span>
+<span class="hl-f">printf</span>(<span class="hl-s">"%s\n"</span>, buf);
+<span class="hl-f">printf</span>(<span class="hl-s">"长度 %d\n"</span>, (<span class="hl-k">int</span>)<span class="hl-f">strlen</span>(buf));</pre></div>
+<div class="out-wrap"><div class="cap">运行结果</div><pre>strcat 后: Mongol bichig
+长度 13</pre></div>
+<p><b>前提是 <code>buf</code> 一开始就是个合法的字符串</b>（有 <code>'\0'</code>），
+否则 <code>strcat</code> 找不到该从哪里接。同样要注意别超出目标容量。</p>
+
+<h3 id="s5d">5.4 <code>strcmp</code>：比较的坑</h3>
+
+<p>这是最容易出错的一个。先看为什么不能写 <code>==</code>：</p>
+
+<div class="code-wrap"><div class="bar"><span class="dot r"></span><span class="dot y"></span><span class="dot g"></span><span class="name">== 比的是地址，不是内容</span><span class="cp">复制</span></div><pre><span class="hl-k">char</span> x[] = <span class="hl-s">"abc"</span>;
+<span class="hl-k">char</span> y[] = <span class="hl-s">"abc"</span>;
+<span class="hl-k">char</span> *q = x;
+
+<span class="hl-f">printf</span>(<span class="hl-s">"x == y  ? %d\n"</span>, x == y);              <span class="hl-c">/* 两个不同的数组 */</span>
+<span class="hl-f">printf</span>(<span class="hl-s">"x == q  ? %d\n"</span>, x == q);              <span class="hl-c">/* 同一个数组 */</span>
+<span class="hl-f">printf</span>(<span class="hl-s">"strcmp(x, y) = %d\n"</span>, <span class="hl-f">strcmp</span>(x, y));</pre></div>
+
+<div class="out-wrap"><div class="cap">运行结果</div><pre>x == y  ? 0   （两个不同的数组，地址不同）
+x == q  ? 1   （同一个数组）
+strcmp(x, y) = 0  （0 表示内容相同）</pre></div>
+
+<p><code>x</code> 和 <code>y</code> 内容都是 "abc"，
+但 <code>x == y</code> 给出 <b>0（不相等）</b> ——
+因为它比的是<b>两个数组的地址</b>，而它们当然是不同的数组。</p>
+
+<h4><code>strcmp</code> 的返回值怎么读</h4>
+<p>它<b>不是</b>返回「是否相等」，而是返回「大小关系」：</p>
+
+<table>
+<thead><tr><th style="width:34%">返回值</th><th>含义</th></tr></thead>
+<tbody>
+<tr><td class="c">0</td><td>两个字符串<b>完全相同</b></td></tr>
+<tr><td class="c">负数</td><td>左边<b>小于</b>右边</td></tr>
+<tr><td class="c">正数</td><td>左边<b>大于</b>右边</td></tr>
+</tbody>
+</table>
+
+<div class="code-wrap"><div class="bar"><span class="dot r"></span><span class="dot y"></span><span class="dot g"></span><span class="name">三种情况实测</span><span class="cp">复制</span></div><pre><span class="hl-f">printf</span>(<span class="hl-s">"strcmp(abc,abd) = %d\n"</span>, <span class="hl-f">strcmp</span>(<span class="hl-s">"abc"</span>, <span class="hl-s">"abd"</span>));
+<span class="hl-f">printf</span>(<span class="hl-s">"strcmp(abd,abc) = %d\n"</span>, <span class="hl-f">strcmp</span>(<span class="hl-s">"abd"</span>, <span class="hl-s">"abc"</span>));
+<span class="hl-f">printf</span>(<span class="hl-s">"strcmp(abc,ab)  = %d\n"</span>, <span class="hl-f">strcmp</span>(<span class="hl-s">"abc"</span>, <span class="hl-s">"ab"</span>));</pre></div>
+
+<div class="out-wrap"><div class="cap">运行结果</div><pre>strcmp(abc,abd) = -1
+strcmp(abd,abc) = 1
+strcmp(abc,ab)  = 1</pre></div>
+
+<div class="card key">
+  <div class="card-t">正确用法</div>
+  <pre style="background:#f2f4f8;border:1px solid var(--line);border-radius:8px;padding:10px 12px;font-family:var(--mono);font-size:13px;color:var(--fg);overflow:auto"><span class="hl-k">if</span> (s1 == s2) { }              <span class="hl-c">/* ❌ 比地址 */</span>
+<span class="hl-k">if</span> (<span class="hl-f">strcmp</span>(s1, s2) == <span class="hl-n">0</span>) { }   <span class="hl-c">/* ✅ 比内容 */</span>
+<span class="hl-k">if</span> (<span class="hl-f">strcmp</span>(s1, s2) != <span class="hl-n">0</span>) { }   <span class="hl-c">/* ✅ 不相等 */</span></pre>
+  <p><b>不要写 <code>if (strcmp(s1, s2))</code></b> 来表示「相等」——
+  它把「相等」和「非零」搞反了，是极常见的错误。</p>
+</div>
+
+<div class="card tip">
+  <div class="card-t">为什么 <code>strcmp</code> 不直接返回「是 / 否」</div>
+  <p>因为它还要支持<b>排序</b>。有了「谁大谁小」这个信息，
+  就能直接拿来给字符串数组排序 —— 这也是它在设计上比「只返回是否相等」更有用的地方。</p>
+</div>
+
+<h3 id="s5e">5.5 <code>strchr</code>：找一个字符</h3>
+<p>返回<b>指向第一次出现位置的指针</b>；找不到返回 <code>NULL</code>。</p>
+
+<div class="code-wrap"><div class="bar"><span class="dot r"></span><span class="dot y"></span><span class="dot g"></span><span class="name">找空格并把后半段取出来</span><span class="cp">复制</span></div><pre><span class="hl-k">char</span> text[] = <span class="hl-s">"Mongol bichig"</span>;
+<span class="hl-k">char</span> *found = <span class="hl-f">strchr</span>(text, <span class="hl-s">' '</span>);
+
+<span class="hl-k">if</span> (found != <span class="hl-n">NULL</span>) {
+    <span class="hl-f">printf</span>(<span class="hl-s">"找到空格，位置是下标 %d\n"</span>, (<span class="hl-k">int</span>)(found - text));
+    <span class="hl-f">printf</span>(<span class="hl-s">"空格之后的内容: %s\n"</span>, found + <span class="hl-n">1</span>);
+}
+
+<span class="hl-k">char</span> *none = <span class="hl-f">strchr</span>(text, <span class="hl-s">'z'</span>);
+<span class="hl-f">printf</span>(<span class="hl-s">"找 z：%s\n"</span>, none == <span class="hl-n">NULL</span> ? <span class="hl-s">"没找到"</span> : <span class="hl-s">"找到了"</span>);</pre></div>
+
+<div class="out-wrap"><div class="cap">运行结果</div><pre>找到空格，位置是下标 6
+空格之后的内容: bichig
+找 z：没找到</pre></div>
+
+<p>注意 <code>found - text</code>：两个指针相减，得到<b>相隔几个字符</b>（第四讲学过）。
+这是「字符串里第几个位置」的标准算法。</p>
+
+<!-- ============================================================ -->
+<h2 id="s6"><span class="n">6</span>字符就是小整数</h2>
+
+<p>前面打印时出现过 <code>a[0] = 77</code>。为什么字符会变成数字？</p>
+
+<p>因为<b><code>char</code> 本来就是一个小整数类型</b>（第三讲讲过：占 1 字节，
+能存 -128~127 或 0~255）。字符和数字之间只差一个「编码表」。</p>
+
+<div class="code-wrap"><div class="bar"><span class="dot r"></span><span class="dot y"></span><span class="dot g"></span><span class="name">字符与数字的关系</span><span class="cp">复制</span></div><pre><span class="hl-f">printf</span>(<span class="hl-s">"'A' = %d, 'a' = %d, 差 %d\n"</span>, <span class="hl-s">'A'</span>, <span class="hl-s">'a'</span>, <span class="hl-s">'a'</span> - <span class="hl-s">'A'</span>);
+
+<span class="hl-k">char</span> c = <span class="hl-s">'a'</span>;
+<span class="hl-f">printf</span>(<span class="hl-s">"'a' 转大写: %c\n"</span>, c - <span class="hl-n">32</span>);
+<span class="hl-f">printf</span>(<span class="hl-s">"'a' - 'a' = %d\n"</span>, <span class="hl-s">'a'</span> - <span class="hl-s">'a'</span>);</pre></div>
+
+<div class="out-wrap"><div class="cap">运行结果</div><pre>'A' = 65, 'a' = 97, 差 32
+'a' 转大写: A
+'a' - 'a' = 0</pre></div>
+
+<p>由此能推出几个很有用的规律：</p>
+
+<table>
+<thead><tr><th style="width:40%">表达式</th><th>作用</th></tr></thead>
+<tbody>
+<tr><td class="c">c &gt;= '0' &amp;&amp; c &lt;= '9'</td><td>判断是不是数字字符</td></tr>
+<tr><td class="c">c &gt;= 'a' &amp;&amp; c &lt;= 'z'</td><td>判断是不是小写字母</td></tr>
+<tr><td class="c">c - 'a'</td><td>小写字母在字母表里的序号（a→0, b→1 …）</td></tr>
+<tr><td class="c">c - '0'</td><td>把数字字符转成真正的数（'7'→7）</td></tr>
+<tr><td class="c">c - 32</td><td>小写转大写（仅限英文）</td></tr>
+</tbody>
+</table>
+
+<div class="card warn">
+  <div class="card-t">只对英文字母成立</div>
+  <p>上面这些「减 32 变大写」「减 'a' 得序号」<b>只适用于 ASCII 里的英文</b>。</p>
+  <p>中文、蒙文、日文这些字符<b>不是 1 个字节</b>，也完全不符合这些规律 ——
+  它们要用「编码」来处理，那是第 09-F04 讲的内容。</p>
+  <p><b>不要把处理英文字符的办法套到非英文字符上。</b></p>
+</div>
+
+<!-- ============================================================ -->
+<h2 id="s7"><span class="n">7</span>常见错误</h2>
+
+<h4>错误 1 · 忘了给 <code>'\0'</code> 留位置</h4>
+<div class="code-wrap"><div class="bar"><span class="dot r"></span><span class="dot y"></span><span class="dot g"></span><span class="name">对比</span><span class="cp">复制</span></div><pre><span class="hl-c">/* ❌ 想放 6 个字符，却只给了 6 格 */</span>
+<span class="hl-k">char</span> s[<span class="hl-n">6</span>] = <span class="hl-s">"Mongol"</span>;      <span class="hl-c">/* 没有地方放 '\0' 了 */</span>
+
+<span class="hl-c">/* ✅ 多给一格 */</span>
+<span class="hl-k">char</span> s[<span class="hl-n">7</span>] = <span class="hl-s">"Mongol"</span>;      <span class="hl-c">/* 6 个字符 + 1 个 '\0' */</span>
+
+<span class="hl-c">/* ✅ 或者干脆不写长度，让编译器数 */</span>
+<span class="hl-k">char</span> s[] = <span class="hl-s">"Mongol"</span>;       <span class="hl-c">/* 自动是 7 */</span></pre></div>
+<p>动态分配时同理：<code>malloc(sizeof(char) * (len + 1))</code>，
+那个 <code>+ 1</code> 就是给 <code>'\0'</code> 的。</p>
+
+<h4>错误 2 · 用 <code>==</code> 比较字符串</h4>
+<div class="code-wrap"><div class="bar"><span class="dot r"></span><span class="dot y"></span><span class="dot g"></span><span class="name">对比</span><span class="cp">复制</span></div><pre><span class="hl-k">if</span> (s1 == s2) { }              <span class="hl-c">/* ❌ 比的是地址 */</span>
+<span class="hl-k">if</span> (<span class="hl-f">strcmp</span>(s1, s2) == <span class="hl-n">0</span>) { }   <span class="hl-c">/* ✅ 比内容 */</span></pre></div>
+
+<h4>错误 3 · <code>strcpy</code> 目标太小</h4>
+<div class="code-wrap"><div class="bar"><span class="dot r"></span><span class="dot y"></span><span class="dot g"></span><span class="name">对比</span><span class="cp">复制</span></div><pre><span class="hl-k">char</span> small[<span class="hl-n">4</span>];
+<span class="hl-f">strcpy</span>(small, <span class="hl-s">"Mongolian"</span>);    <span class="hl-c">/* ❌ 写爆了 */</span>
+
+<span class="hl-k">char</span> small[<span class="hl-n">10</span>];
+<span class="hl-f">strncpy</span>(small, <span class="hl-s">"Mongolian"</span>, <span class="hl-k">sizeof</span>(small) - <span class="hl-n">1</span>);
+small[<span class="hl-k">sizeof</span>(small) - <span class="hl-n">1</span>] = <span class="hl-s">'\0'</span>;   <span class="hl-c">/* ✅ 限制长度 + 补结束标记 */</span></pre></div>
+
+<h4>错误 4 · 改字符串常量</h4>
+<div class="code-wrap"><div class="bar"><span class="dot r"></span><span class="dot y"></span><span class="dot g"></span><span class="name">对比</span><span class="cp">复制</span></div><pre><span class="hl-k">char</span> *s = <span class="hl-s">"Mongol"</span>;
+s[<span class="hl-n">0</span>] = <span class="hl-s">'T'</span>;                  <span class="hl-c">/* ❌ 只读内存，可能直接崩 */</span>
+
+<span class="hl-k">char</span> s[] = <span class="hl-s">"Mongol"</span>;       <span class="hl-c">/* ✅ 这是可改的数组 */</span>
+s[<span class="hl-n">0</span>] = <span class="hl-s">'T'</span>;</pre></div>
+
+<h4>错误 5 · 用 <code>sizeof</code> 量字符串长度</h4>
+<div class="code-wrap"><div class="bar"><span class="dot r"></span><span class="dot y"></span><span class="dot g"></span><span class="name">对比</span><span class="cp">复制</span></div><pre><span class="hl-k">char</span> *s = <span class="hl-s">"Mongol"</span>;
+<span class="hl-k">int</span> len = <span class="hl-k">sizeof</span>(s);           <span class="hl-c">/* ❌ 得到 8（指针大小），不是 6 */</span>
+<span class="hl-k">int</span> len = <span class="hl-f">strlen</span>(s);           <span class="hl-c">/* ✅ 得到 6 */</span></pre></div>
+
+<h4>错误 6 · <code>strncpy</code> 之后忘了补 <code>'\0'</code></h4>
+<div class="code-wrap"><div class="bar"><span class="dot r"></span><span class="dot y"></span><span class="dot g"></span><span class="name">对比</span><span class="cp">复制</span></div><pre><span class="hl-k">char</span> small[<span class="hl-n">6</span>];
+<span class="hl-f">strncpy</span>(small, <span class="hl-s">"Mongolian"</span>, <span class="hl-k">sizeof</span>(small) - <span class="hl-n">1</span>);
+<span class="hl-f">printf</span>(<span class="hl-s">"%s\n"</span>, small);        <span class="hl-c">/* ❌ 源串太长时没有 '\0'，会一直读到越界 */</span>
+
+<span class="hl-f">strncpy</span>(small, <span class="hl-s">"Mongolian"</span>, <span class="hl-k">sizeof</span>(small) - <span class="hl-n">1</span>);
+small[<span class="hl-k">sizeof</span>(small) - <span class="hl-n">1</span>] = <span class="hl-s">'\0'</span>;   <span class="hl-c">/* ✅ 手动补上 */</span>
+<span class="hl-f">printf</span>(<span class="hl-s">"%s\n"</span>, small);        <span class="hl-c">/* ✅ Mongo */</span></pre></div>
+
+<!-- ============================================================ -->
+<h2 id="s8"><span class="n">8</span>一页速查</h2>
+
+<table>
+<thead><tr><th style="width:40%">想做的事</th><th>写法</th></tr></thead>
+<tbody>
+<tr><td>包含字符串函数</td><td class="c">#include &lt;string.h&gt;</td></tr>
+<tr><td>声明可改的字符串</td><td class="c">char s[] = "Mongol";</td></tr>
+<tr><td>声明只读的字符串</td><td class="c">const char *s = "Mongol";</td></tr>
+<tr><td>留出 n 个字符的空间</td><td class="c">char s[n + 1];  &nbsp;/* +1 给 '\0' */</td></tr>
+<tr><td>动态分配字符串空间</td><td class="c">malloc(sizeof(char) * (len + 1))</td></tr>
+<tr><td>取长度</td><td class="c">strlen(s)</td></tr>
+<tr><td>拷贝（目标够大时）</td><td class="c">strcpy(dst, src);</td></tr>
+<tr><td>拷贝（限定长度）</td><td class="c">strncpy(dst, src, n - 1); dst[n-1] = '\0';</td></tr>
+<tr><td>拼接</td><td class="c">strcat(dst, src);</td></tr>
+<tr><td>比较内容是否相同</td><td class="c">strcmp(a, b) == 0</td></tr>
+<tr><td>判断大小关系</td><td class="c">strcmp(a, b) &lt; 0 &nbsp;/* a 在前 */</td></tr>
+<tr><td>找字符</td><td class="c">char *p = strchr(s, ' ');</td></tr>
+<tr><td>安全读入一整行</td><td class="c">fgets(buf, sizeof(buf), stdin);</td></tr>
+<tr><td>判断字符类别</td><td class="c">c &gt;= '0' &amp;&amp; c &lt;= '9'</td></tr>
+<tr><td>数字字符转数值</td><td class="c">c - '0'</td></tr>
+</tbody>
+</table>
+
+<div class="card key">
+  <div class="card-t">本讲要记住的五句话</div>
+  <ol>
+    <li><b>C 的字符串 = 一串字符 + 结尾的 <code>'\0'</code></b>，
+      所以放 n 个字符要 n+1 格。</li>
+    <li><b>算长度用 <code>strlen</code></b>，<code>sizeof</code> 只在数组名上才有「整体大小」的意思。</li>
+    <li><b>比较内容用 <code>strcmp(a,b) == 0</code></b>，<code>==</code> 比的是地址。</li>
+    <li><b><code>strcpy</code> / <code>strcat</code> 不检查目标容量</b>，
+      目标不确定够大就用 <code>strncpy</code> 并手动补 <code>'\0'</code>。</li>
+    <li><b>字符就是小整数</b>，差值有规律 —— 但那些规律只对英文字母成立。</li>
+  </ol>
+</div>
+
+<div class="card note">
+  <div class="card-t">下一讲预告</div>
+  <p>这一讲处理的是「一串英文字符」。但我们的项目要处理
+  <b>回鹘蒙文</b> —— 那可不是 1 个字节能装下的。</p>
+  <p>下一讲先讲一个纯编程技巧：<b>递归</b>（函数自己调用自己）。
+  然后进入几篇与项目直接相关的实用文档：命令行、文件路径、
+  编译链接，以及 <b>Unicode 与编码</b> ——
+  那一篇会解释为什么 <code>char</code> 处理不了蒙文，
+  以及为什么 QPainter 里到处都是 <code>QString</code> 而不是 <code>char*</code>。</p>
+</div>
+
+<footer>
+UME 项目组内部教程 · 第八讲《C 风格字符串》<br>
+代码示例均以 <b>Consolas</b> 等宽字体呈现；文中所有「运行结果」
+均使用 g++ 13.1.0 以 C 风格（<code>-x c -std=c99</code>）实际编译运行核对。
+</footer>"""
+
+build("_ds_08_C风格字符串.html", "C 风格 · C 风格字符串", TOC, BODY, EXTRA)

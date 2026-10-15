@@ -1,0 +1,837 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>UME 实现思路 · Process</title>
+<style>
+/* 字体：相对 web/ 定位到 ../font/ */
+@font-face{
+  font-family:"UME Mongolian";
+  src:url("../font/NotoSansMongolian-Regular.ttf") format("truetype");
+  font-weight:400; font-style:normal; font-display:block;
+}
+
+:root{
+  --bg:#ffffff;
+  --bg-soft:#f6f8fb;
+  --bg-code:#f2f4f8;
+  --line:#e2e7ef;
+  --line-2:#cdd6e3;
+  --fg:#161a21;
+  --fg-2:#4a5464;
+  --fg-3:#7b8698;
+  --blue:#1f6feb;
+  --blue-soft:#e7f0fe;
+  --green:#1a7f45;
+  --green-soft:#e6f5ec;
+  --red:#c0392b;
+  --red-soft:#fdecea;
+  --amber:#a86a12;
+  --amber-soft:#fdf3e2;
+  --violet:#6b46c1;
+  --violet-soft:#f1ecfd;
+  --mono:"Cascadia Mono",Consolas,"SF Mono",ui-monospace,monospace;
+}
+*{box-sizing:border-box}
+html{scroll-behavior:smooth}
+body{
+  margin:0;background:var(--bg);color:var(--fg);
+  font:16px/1.75 -apple-system,BlinkMacSystemFont,"Segoe UI","Microsoft YaHei",sans-serif;
+  -webkit-font-smoothing:antialiased;
+}
+
+/* ---------------- 布局：左侧目录 + 正文 ---------------- */
+#shell{display:flex;align-items:flex-start;max-width:1420px;margin:0 auto}
+#toc{
+  position:sticky;top:0;width:264px;flex:0 0 264px;height:100vh;overflow:auto;
+  padding:34px 18px 40px 26px;border-right:1px solid var(--line);background:var(--bg-soft);
+}
+#toc h5{margin:0 0 12px;font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:var(--fg-3)}
+#toc a{
+  display:block;padding:5px 10px;margin:1px 0;border-radius:6px;
+  color:var(--fg-2);text-decoration:none;font-size:13.5px;line-height:1.45;
+}
+#toc a:hover{background:#e9eef7;color:var(--fg)}
+#toc a.sub{padding-left:22px;font-size:12.5px;color:var(--fg-3)}
+#toc a.on{background:var(--blue-soft);color:var(--blue);font-weight:600}
+main{flex:1;min-width:0;padding:44px 54px 140px}
+
+/* ---------------- 排版 ---------------- */
+h1{font-size:33px;line-height:1.25;margin:0 0 6px;letter-spacing:-.02em}
+h2{
+  font-size:23px;margin:64px 0 14px;padding-top:20px;
+  border-top:1px solid var(--line);letter-spacing:-.01em;
+}
+h2 .num{
+  display:inline-block;min-width:30px;height:30px;line-height:30px;text-align:center;
+  background:var(--fg);color:#fff;border-radius:8px;font-size:15px;margin-right:11px;
+  font-variant-numeric:tabular-nums;
+}
+h3{font-size:17px;margin:32px 0 10px}
+h4{font-size:15px;margin:24px 0 8px;color:var(--fg-2)}
+p{margin:12px 0}
+.lead{font-size:17.5px;color:var(--fg-2);line-height:1.85}
+a{color:var(--blue)}
+code{font-family:var(--mono);font-size:.9em;background:var(--bg-code);
+     padding:2px 5px;border-radius:4px;border:1px solid var(--line)}
+pre{
+  background:var(--bg-code);border:1px solid var(--line);border-radius:10px;
+  padding:14px 16px;overflow:auto;font-family:var(--mono);font-size:13px;line-height:1.65;
+}
+pre code{background:none;border:0;padding:0;font-size:inherit}
+.cmt{color:var(--fg-3)}
+.bad{color:var(--red)}
+.good{color:var(--green)}
+
+/* ---------------- 组件 ---------------- */
+.card{
+  border:1px solid var(--line);border-radius:14px;padding:20px 22px;margin:20px 0;
+  background:#fff;
+}
+.card.soft{background:var(--bg-soft)}
+.card.warn{border-color:#f3d3cd;background:var(--red-soft)}
+.card.ok{border-color:#c6e6d3;background:var(--green-soft)}
+.card.info{border-color:#cfe0fb;background:var(--blue-soft)}
+.card h4{margin-top:0}
+.tag{
+  display:inline-block;font-size:11.5px;font-family:var(--mono);
+  padding:2px 8px;border-radius:999px;background:#eef1f6;color:var(--fg-2);
+  border:1px solid var(--line-2);vertical-align:2px;
+}
+.tag.b{background:var(--blue-soft);border-color:#bcd6fa;color:var(--blue)}
+.tag.g{background:var(--green-soft);border-color:#bfe2cd;color:var(--green)}
+.tag.r{background:var(--red-soft);border-color:#f0c8c2;color:var(--red)}
+
+table{border-collapse:collapse;width:100%;margin:16px 0;font-size:14px}
+th,td{border:1px solid var(--line);padding:8px 11px;text-align:left;vertical-align:top}
+th{background:var(--bg-soft);font-weight:600;font-size:13px}
+td.num,th.num{text-align:right;font-variant-numeric:tabular-nums;font-family:var(--mono);font-size:13px}
+tr.hl td{background:var(--amber-soft)}
+
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:18px}
+.grid3{display:grid;grid-template-columns:repeat(3,1fr);gap:16px}
+@media(max-width:1100px){.grid2,.grid3{grid-template-columns:1fr}}
+@media(max-width:900px){#toc{display:none}main{padding:24px}}
+
+.kpi{border:1px solid var(--line);border-radius:12px;padding:14px 16px;background:#fff}
+.kpi .v{font-size:27px;font-weight:680;font-variant-numeric:tabular-nums;letter-spacing:-.02em}
+.kpi .k{font-size:12.5px;color:var(--fg-3);margin-top:2px}
+.kpi.g .v{color:var(--green)}
+.kpi.r .v{color:var(--red)}
+.kpi.b .v{color:var(--blue)}
+
+/* ---------------- 蒙文活体渲染 ---------------- */
+.mn{
+  font-family:"UME Mongolian","Noto Sans Mongolian",serif;
+  font-size:52px;line-height:1.35;
+}
+/* 竖排：列自左向右 */
+.mn-v{writing-mode:vertical-lr;direction:ltr;text-orientation:mixed}
+/* 旋转 90°：外层做旋转 */
+.rotor{position:relative}
+.rotor>.inner{transform-origin:top left;transform:translateX(100%) rotate(90deg)}
+/* 错误干预：强制打开位置特性（复现曾经的 bug） */
+.ffx-bad{font-feature-settings:"rclt" 1,"ccmp" 1,"init" 1,"medi" 1,"fina" 1,"isol" 1,"calt" 1,"liga" 1}
+.ffx-off{font-feature-settings:"rclt" 0,"ccmp" 0,"init" 0,"medi" 0,"fina" 0,"isol" 0,"calt" 0,"liga" 0}
+
+.spec{border:1px dashed var(--line-2);border-radius:10px;padding:14px 16px;background:#fff;
+      overflow:auto;position:relative}
+.spec .cap{font-size:12px;color:var(--fg-3);font-weight:600;
+           display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-bottom:8px}
+.spec .cap .mono{font-family:var(--mono);font-weight:400}
+.specbox{min-height:150px;display:flex;align-items:flex-start}
+
+/* 竖排样例容器 */
+.vbox{height:210px;display:flex;gap:0;align-items:flex-start}
+
+/* ---------------- 流水线示意图 ---------------- */
+.pipe{display:flex;align-items:stretch;gap:0;flex-wrap:wrap;margin:18px 0}
+.step{
+  flex:1 1 150px;min-width:140px;border:1px solid var(--line);border-radius:10px;
+  padding:11px 12px;background:#fff;position:relative;
+}
+.step+.step{margin-left:26px}
+.step+.step::before{
+  content:"→";position:absolute;left:-21px;top:50%;transform:translateY(-50%);
+  color:var(--fg-3);font-size:16px;
+}
+.step .n{font-size:11px;font-family:var(--mono);color:var(--fg-3)}
+.step .t{font-weight:640;font-size:13.5px;margin:2px 0 3px}
+.step .d{font-size:12px;color:var(--fg-3);line-height:1.5}
+.step .mono{font-family:var(--mono);font-size:11px;color:var(--violet);
+            word-break:break-all;margin-top:5px}
+
+/* ---------------- 字形链 ---------------- */
+.glyphs{display:flex;flex-wrap:wrap;gap:8px;margin:10px 0}
+.gl{
+  border:1px solid var(--line);border-radius:9px;padding:7px 9px;background:#fff;text-align:center;
+  min-width:82px;
+}
+.gl .g{font-family:var(--mono);font-size:11px;color:var(--violet);word-break:break-all;
+       line-height:1.35;min-height:30px}
+.gl .cp{font-family:var(--mono);font-size:10.5px;color:var(--fg-3);margin-top:4px}
+.gl .adv{font-family:var(--mono);font-size:10.5px;color:var(--fg-3)}
+.gl.lig{border-color:#c9b6f0;background:var(--violet-soft)}
+.gl.lig .g{color:#5b34b0;font-weight:600}
+.gl .badge{font-size:9.5px;background:var(--violet);color:#fff;border-radius:999px;
+           padding:1px 6px;display:inline-block;margin-top:3px}
+
+/* ---------------- 旋转几何图 ---------------- */
+.geo{display:grid;grid-template-columns:1fr 1fr;gap:22px}
+@media(max-width:900px){.geo{grid-template-columns:1fr}}
+.geo figcaption{font-size:12.5px;color:var(--fg-3);margin-top:7px;text-align:center}
+
+/* 滚动高亮 */
+mark{background:#fff3c4;padding:0 2px;border-radius:3px}
+.hr{height:1px;background:var(--line);margin:34px 0}
+
+.legend{display:flex;gap:16px;flex-wrap:wrap;font-size:12.5px;color:var(--fg-2);margin:10px 0}
+.legend i{display:inline-block;width:12px;height:12px;border-radius:3px;margin-right:5px;
+          vertical-align:-1px;border:1px solid var(--line-2)}
+.cmp{display:grid;grid-template-columns:1fr 1fr;gap:0;border:1px solid var(--line);
+     border-radius:12px;overflow:hidden}
+.cmp>div{padding:16px 18px}
+.cmp>div+div{border-left:1px solid var(--line)}
+.cmp .hd{font-weight:650;font-size:13.5px;margin-bottom:10px;display:flex;
+         align-items:center;gap:8px;flex-wrap:wrap}
+.cmp .ok{background:var(--green-soft)}
+.cmp .no{background:var(--red-soft)}
+.metric{font-family:var(--mono);font-size:13px;color:var(--fg-2);margin-top:9px;line-height:1.7}
+footer{border-top:1px solid var(--line);margin-top:70px;padding-top:20px;
+       font-size:13px;color:var(--fg-3)}
+</style>
+</head>
+<body>
+<div id="shell">
+
+<nav id="toc">
+  <h5>目录</h5>
+  <a href="#s0">0 · 一页速览</a>
+  <a href="#s1">1 · 问题与约束</a>
+  <a href="#s2">2 · 渲染分层</a>
+  <a href="#s3">3 · 三个关键决策</a>
+  <a href="#s3a" class="sub">3.1 竖排取向</a>
+  <a href="#s3b" class="sub">3.2 成形不可干预</a>
+  <a href="#s3c" class="sub">3.3 旋转方案几何</a>
+  <a href="#s4">4 · 逐个坑与修法</a>
+  <a href="#s5">5 · 校验手段</a>
+  <a href="#s6">6 · 文件与复现</a>
+</nav>
+
+<main>
+<h1>UME 实现思路</h1>
+<p class="lead">
+回鹘蒙文编辑器（Uyghur-Mongolian Editor）前端预览的实现记录 ——
+每个决策的依据、走过的弯路，以及可复核的证据。
+</p>
+<p>
+<span class="tag">MNG</span>
+<span class="tag b">Noto Sans Mongolian 3.103</span>
+<span class="tag">UCD 18.0.0</span>
+<span class="tag g">零依赖单文件</span>
+</p>
+
+<!-- ============================================================ -->
+<h2 id="s0"><span class="num">0</span>一页速览</h2>
+
+<p>蒙文排版的难点不在"把字画出来"，而在三件事：<b>列往哪边走</b>、<b>字形由谁决定</b>、
+<b>不要手贱去干预成形</b>。第三条是本次最大的教训。</p>
+
+<div class="grid3">
+  <div class="kpi b"><div class="v">vertical-lr</div><div class="k">蒙文竖排取值（不是 vertical-rl）</div></div>
+  <div class="kpi g"><div class="v">2.90 em</div><div class="k">ᠮᠣᠩᠭᠣᠯ 正确成形的整词宽度</div></div>
+  <div class="kpi r"><div class="v">4.81 em</div><div class="k">错误干预后的宽度（连字丢失）</div></div>
+</div>
+
+<div class="card info">
+<h4>核心结论</h4>
+<ol style="margin:6px 0 0;padding-left:22px">
+  <li><code>writing-mode: vertical-lr</code> 是蒙文正确取向；<code>vertical-rl</code> 是 CJK 用的，会让列序反掉。</li>
+  <li><b>绝对不要写 <code>font-feature-settings</code> 去打开 <code>init/medi/fina/isol</code></b>——
+      会把每个字母钉成孤立形，覆盖 <code>rclt</code> 的上下文连字。默认交给排版引擎即可。</li>
+  <li>"把文本框顺时针旋转 90°"是等效方案，但旋转后的包围盒落在负坐标区，需要
+      <code>translateX(100%)</code> 校正，且文本 <code>width</code> 要取容器<b>高度</b>。</li>
+  <li>可靠性来自<b>可量化的判据</b>（整词宽度 em 值、HarfBuzz 字形名对拍），不是肉眼。</li>
+</ol>
+</div>
+
+<!-- ============================================================ -->
+<h2 id="s1"><span class="num">1</span>问题与约束</h2>
+
+<p>目标：一个能在浏览器里输入、显示、核对蒙文的预览工具，并且能验证字体自身的连字能力。
+约束几乎全部来自蒙文本身的特性。</p>
+
+<table>
+<thead><tr><th style="width:190px">约束</th><th>内容</th><th style="width:300px">对实现的直接影响</th></tr></thead>
+<tbody>
+<tr><td><b>竖排、列自左向右</b></td>
+    <td>传统蒙文自上而下书写，新列出现在右侧</td>
+    <td>CSS 用 <code>vertical-lr</code>；且必须显式 <code>direction:ltr</code></td></tr>
+<tr><td><b>字形由上下文决定</b></td>
+    <td>同一码位在词首/词中/词尾/单独是四个不同字形</td>
+    <td>不能按码位画图，必须交给 GSUB；编辑器不得插手</td></tr>
+<tr><td><b>连字是常态</b></td>
+    <td>字体有 1944 个连字；<code>rclt</code> 以 44 条链式上下文规则驱动连写</td>
+    <td>关掉 <code>rclt</code> 蒙文立刻变错</td></tr>
+<tr><td><b>不用空格分词</b></td>
+    <td>字母 <code>LB=AL</code>，<code>AL × AL</code> 禁止断行</td>
+    <td>长词在竖排中是不可断整体，换列算法要处理</td></tr>
+<tr><td><b>不可见控制符</b></td>
+    <td>FVS1–4、U+180E 等 <code>Default_Ignorable</code></td>
+    <td>渲染不可见却改变前一字形，面板要标出来</td></tr>
+<tr><td><b>字体无竖排度量</b></td>
+    <td>缺 <code>vhea</code>/<code>vmtx</code></td>
+    <td>不能依赖字体竖排度量，须由浏览器/旋转负责</td></tr>
+</tbody>
+</table>
+
+<div class="card soft">
+<h4>为什么要"零依赖单文件"</h4>
+<p style="margin:0">只用 <code>file://</code> 双击打开就能跑：字体经 <code>@font-face</code> 以相对路径
+<code>../font/NotoSansMongolian-Regular.ttf</code> 加载，无构建、无包管理、无服务器。
+这样它既是预览工具，也是可长期保存的最小可运行样本。</p>
+</div>
+
+<!-- ============================================================ -->
+<h2 id="s2"><span class="num">2</span>渲染分层：谁负责什么</h2>
+
+<p>蒙文从键盘到屏幕要穿过四层。搞清楚<b>每层的职责边界</b>，才知道哪些事该自己做、
+哪些事必须放手 —— 我最初的错误正是越界干预了第 ③ 层。</p>
+
+<div class="pipe">
+  <div class="step">
+    <div class="n">① 输入</div>
+    <div class="t">Unicode 码位序列</div>
+    <div class="d">文本的"真身"。面板按码位插入，输入法只产出码位。</div>
+    <div class="mono">182E 1823 1829 …</div>
+  </div>
+  <div class="step">
+    <div class="n">② 分段</div>
+    <div class="t">字素簇 / 断行</div>
+    <div class="d">UAX #29 定光标与退格单位；UAX #14 定换行点。</div>
+    <div class="mono">FVS 黏附前一字母<br>AL×AL 禁断</div>
+  </div>
+  <div class="step">
+    <div class="n">③ 成形</div>
+    <div class="t">OpenType / GSUB</div>
+    <div class="d"><b>排版引擎的领地。</b>按上下文选形、合并连字。<br>编辑器只应"不干预"。</div>
+    <div class="mono">rclt · ccmp<br>init·medi·fina·isol</div>
+  </div>
+  <div class="step">
+    <div class="n">④ 排版</div>
+    <div class="t">列方向与旋转</div>
+    <div class="d"><code>vertical-lr</code> 交给引擎，或自己旋转 90°。</div>
+    <div class="mono">vertical-lr<br>rotate(90deg)</div>
+  </div>
+</div>
+
+<div class="card warn">
+<h4>越界的代价</h4>
+<p style="margin:0">第 ③ 层的规则是"上下文驱动"的：某个字母取哪个字形，取决于它<b>前后是谁</b>。
+如果你在第 ③ 层外面用 CSS 强行指定"请使用首形/中形/尾形"，等于把上下文信息扔掉，
+引擎只能退回孤立形。这就是后来连字全丢的根因。</p>
+</div>
+
+<!-- ============================================================ -->
+<h2 id="s3"><span class="num">3</span>三个关键决策</h2>
+
+<h3 id="s3a">3.1 竖排取向：<code>vertical-lr</code></h3>
+
+<p>依据 <a href="https://www.w3.org/International/articles/vertical-text/index.en" target="_blank" rel="noopener">W3C i18n《Styling vertical Chinese, Japanese, Korean and Mongolian text》</a>：</p>
+<blockquote style="margin:14px 0;padding:12px 18px;border-left:4px solid var(--blue);
+                   background:var(--blue-soft);border-radius:0 8px 8px 0;font-size:15px">
+  use <code>vertical-rl</code> for Chinese/Japanese/Korean (lines top-to-bottom; columns progress right-to-left)
+  and <b><code>vertical-lr</code> for Mongolian (columns progress left-to-right)</b>
+</blockquote>
+
+<p>关键区别在<b>列的增长方向</b>。下图是同一段文字在两种取值下的实际渲染
+（每列从左到右依次是 <span class="tag">ᠮᠣᠩᠭᠣᠯ</span>
+<span class="tag">ᠪᠢᠴᠢᠭ</span> <span class="tag">ᠤᠨ</span>
+<span class="tag">ᠲᠣᠯᠢ</span>）：</p>
+
+<div class="grid2">
+  <div class="spec">
+    <div class="cap"><span class="tag g">正确</span> writing-mode: vertical-lr
+      <span class="mono">— 列自左向右</span></div>
+    <div class="specbox vbox">
+      <!-- nowrap：蒙文 AL×AL 禁断行，若任其换行会在字母中间断开，看不出列序 -->
+      <div class="mn mn-v" style="height:200px;white-space:nowrap">ᠮᠣᠩᠭᠣᠯ ᠪᠢᠴᠢᠭ ᠤᠨ ᠲᠣᠯᠢ</div>
+    </div>
+  </div>
+  <div class="spec">
+    <div class="cap"><span class="tag r">错误</span> writing-mode: vertical-rl
+      <span class="mono">— 列自右向左（CJK 取向）</span></div>
+    <div class="specbox vbox">
+      <div class="mn" style="writing-mode:vertical-rl;direction:ltr;height:200px;white-space:nowrap">ᠮᠣᠩᠭᠣᠯ ᠪᠢᠴᠢᠭ ᠤᠨ ᠲᠣᠯᠢ</div>
+    </div>
+  </div>
+</div>
+<p style="font-size:13.5px;color:var(--fg-3);margin-top:8px">
+两者字形相同，差别只在列的生长方向：<code>vertical-lr</code> 第一列在最左，
+<code>vertical-rl</code> 第一列在最右 —— 后者会让蒙文阅读顺序整体倒转。
+</p>
+
+<div class="card">
+<h4>配套的两点</h4>
+<ul style="margin:6px 0 0;padding-left:22px">
+  <li><b>必须显式写 <code>direction: ltr</code></b>：否则在 RTL 上下文里继承 rtl，列序会被再翻一次。</li>
+  <li><b>不要设 <code>text-orientation: upright</code></b>：U+1800–U+18AA 全部 171 个码位的
+      <code>Vertical_Orientation</code> 属性都是 <code>R</code>（rotated），
+      浏览器会自动顺时针转 90°，保持默认 <code>mixed</code> 即可。</li>
+</ul>
+</div>
+
+<h3 id="s3b">3.2 成形不可干预 —— 最贵的一课</h3>
+
+<p>我最初写下这行"保险"代码，结果把整个成形毁掉了：</p>
+
+<pre><code><span class="cmt">/* ❌ 曾经的错误写法 */</span>
+<span class="bad">font-feature-settings:"rclt" 1,"ccmp" 1,"init" 1,"medi" 1,"fina" 1,"isol" 1;</span>
+
+<span class="cmt">/* ✅ 正确做法：什么都不写 */</span></code></pre>
+
+<p>看起来只是"确保特性被启用"，实际相反。下面是 HarfBuzz 对同一个 <code>ᠮᠣᠩᠭᠣᠯ</code>
+在两种设置下选出的真实字形（数据由 <code>tools/extract_process_data.py</code> 从字体导出）：</p>
+
+<div id="shape-demo"></div>
+
+<div class="cmp" style="margin-top:22px">
+  <div class="ok">
+    <div class="hd"><span class="tag g">默认（正确）</span></div>
+    <div class="spec" style="background:#fff">
+      <div class="mn" style="font-size:58px">ᠮᠣᠩᠭᠣᠯ</div>
+    </div>
+    <div class="metric">
+      5 个字形 / 6 个码位<br>
+      总宽 <b>2900</b> 单位 = <b>2.90 em</b><br>
+      含连字 <span style="color:var(--violet)">u182D_u1823.GO.medi</span>
+    </div>
+  </div>
+  <div class="no">
+    <div class="hd"><span class="tag r">强制打开位置特性</span></div>
+    <div class="spec" style="background:#fff">
+      <div class="mn ffx-bad" style="font-size:58px">ᠮᠣᠩᠭᠣᠯ</div>
+    </div>
+    <div class="metric">
+      6 个字形（无连字）<br>
+      总宽 <b>4810</b> 单位 = <b>4.81 em</b><br>
+      全部退化为 <span style="color:var(--red)">.init._isol</span> 孤立形
+    </div>
+  </div>
+</div>
+<p style="font-size:13.5px;color:var(--fg-3);margin-top:8px">
+<b>宽度差 66%</b>：连字丢失后每个字母各自成形，整词被拉长。这里用浏览器现场渲染字体，
+上面两栏的差异是真实的（右栏通过 <code>.ffx-bad</code> 类复现当年的 bug）。</p>
+
+<h4>为什么会这样</h4>
+<p>蒙文的连写形态由 <code>rclt</code>（Required Contextual Ligatures）<b>按上下文逐段判定</b>。
+把 <code>init</code>/<code>medi</code>/<code>fina</code>/<code>isol</code> 强制置 <code>1</code>，
+等于告诉引擎"每个字母都按孤立形处理"，<code>rclt</code> 的链式上下文规则被覆盖，
+连字（如 <code>ᠭ</code>+<code>ᠣ</code> → <code>u182D_u1823.GO.medi</code>）全部丢失。</p>
+
+<div class="card ok">
+<h4>正确姿势</h4>
+<p style="margin:0">HarfBuzz 对 <code>script=mong</code> <b>默认已启用正确的特性集合</b>。
+CSS 里不写 <code>font-feature-settings</code>，浏览器解析值为 <code>normal</code>，
+成形就是对的。需要对照排查时，才用类去<b>关闭</b>特性（本页与编辑器都保留了这个开关）。</p>
+</div>
+
+<h3 id="s3c">3.3 旋转方案（<code>rotate(90deg)</code>）的几何</h3>
+
+<p>"把文本框顺时针旋转 90°"是等效且直观的做法。它与 <code>vertical-lr</code> 输出一致 ——
+实测两者墨迹像素数完全相同（<b>78,954</b>）。但旋转有三个容易踩的几何问题。</p>
+
+<h4>问题一：旋转后包围盒落在负坐标区</h4>
+
+<p>设元素横排时宽 <code>w</code>、高 <code>h</code>。以 <code>transform-origin: top left</code>
+顺时针转 90°，局部点 <code>(x,y)</code> 映射为 <code>(−y, x)</code>，于是包围盒落在：</p>
+
+<pre><code>x ∈ [<span class="bad">−h, 0</span>]      <span class="cmt">← x 是负的，内容跑到容器左侧外面，被裁掉</span>
+y ∈ [0,  w]</code></pre>
+
+<p>修正办法是再补一次 <code>translateX(100%)</code>。这里的 <code>100%</code> 指元素<b>自身宽度</b>，
+而对旋转后的盒子来说它就是 <code>h</code>，正好把内容推回 <code>x ≥ 0</code>。
+CSS 变换从右往左作用，所以写成：</p>
+
+<pre><code><span class="cmt">/* 先 rotate，再 translateX —— rotate 写在右边 */</span>
+transform: <span class="good">translateX(100%) rotate(90deg)</span>;
+transform-origin: top left;</code></pre>
+
+<p>下图是对应的坐标示意（左：直接旋转 → 被裁；右：补 translateX → 落回容器）：</p>
+
+<div class="geo">
+  <figure style="margin:0">
+    <svg viewBox="0 0 460 250" width="100%" style="border:1px solid var(--line);border-radius:10px;background:#fff">
+      <defs>
+        <marker id="ah" markerWidth="9" markerHeight="9" refX="7" refY="3" orient="auto">
+          <path d="M0,0 L7,3 L0,6 z" fill="#7b8698"/>
+        </marker>
+      </defs>
+      <!-- 容器 -->
+      <rect x="150" y="30" width="250" height="180" fill="#f6f8fb" stroke="#cdd6e3" stroke-dasharray="5 4"/>
+      <text x="275" y="224" font-size="11.5" fill="#7b8698" text-anchor="middle">容器（overflow:hidden）</text>
+      <!-- 轴 -->
+      <line x1="150" y1="120" x2="410" y2="120" stroke="#cdd6e3" marker-end="url(#ah)"/>
+      <text x="414" y="124" font-size="11" fill="#7b8698">x</text>
+      <!-- 落在外面的内容 -->
+      <rect x="30" y="45" width="120" height="150" fill="#fdecea" stroke="#e0b4ad"/>
+      <text x="90" y="112" font-size="12" fill="#c0392b" text-anchor="middle">内容</text>
+      <text x="90" y="130" font-size="12" fill="#c0392b" text-anchor="middle">x&lt;0</text>
+      <!-- 基点 -->
+      <circle cx="150" cy="45" r="4" fill="#1f6feb"/>
+      <text x="157" y="42" font-size="11" fill="#1f6feb">原点 top-left</text>
+      <!-- 裁剪示意 -->
+      <path d="M150,30 L150,210" stroke="#c0392b" stroke-width="2"/>
+      <text x="30" y="24" font-size="12" fill="#c0392b" font-weight="600">✗ 直接 rotate(90deg) 被裁掉</text>
+    </svg>
+    <figcaption>包围盒落在 <code>x ∈ [−h, 0]</code>，左侧部分全部不可见</figcaption>
+  </figure>
+
+  <figure style="margin:0">
+    <svg viewBox="0 0 460 250" width="100%" style="border:1px solid var(--line);border-radius:10px;background:#fff">
+      <rect x="150" y="30" width="250" height="180" fill="#f6f8fb" stroke="#cdd6e3" stroke-dasharray="5 4"/>
+      <text x="275" y="224" font-size="11.5" fill="#7b8698" text-anchor="middle">容器（overflow:hidden）</text>
+      <line x1="150" y1="120" x2="410" y2="120" stroke="#cdd6e3" marker-end="url(#ah)"/>
+      <text x="414" y="124" font-size="11" fill="#7b8698">x</text>
+      <!-- 平移箭头 -->
+      <line x1="90" y1="112" x2="146" y2="112" stroke="#1a7f45" stroke-width="2" marker-end="url(#ah)"/>
+      <text x="118" y="104" font-size="10.5" fill="#1a7f45" text-anchor="middle">translateX(100%)</text>
+      <!-- 落回来的内容 -->
+      <rect x="152" y="45" width="120" height="150" fill="#e6f5ec" stroke="#a9d7bd"/>
+      <text x="212" y="112" font-size="12" fill="#1a7f45" text-anchor="middle">内容</text>
+      <text x="212" y="130" font-size="12" fill="#1a7f45" text-anchor="middle">x≥0</text>
+      <circle cx="150" cy="45" r="4" fill="#1f6feb"/>
+      <text x="152" y="24" font-size="12" fill="#1a7f45" font-weight="600">✓ translateX(100%) rotate(90deg)</text>
+    </svg>
+    <figcaption>包围盒平移到 <code>x ∈ [0, h]</code>，完整落在容器内</figcaption>
+  </figure>
+</div>
+
+<h4>问题二：文本的 <code>width</code> 要取容器的<u>高度</u></h4>
+
+<p>元素的 <code>width</code> 决定"一行有多长"。转 90° 之后，这一维变成屏幕的<b>纵向</b>，
+所以它应当等于容器的高度，而不是宽度。取错会让文字横着溢出容器。</p>
+
+<h4>问题三：滚动区要显式撑开</h4>
+
+<p>旋转<b>不改变布局盒</b>，所以容器算出来的滚动范围仍然按未旋转的尺寸算。
+需要额外放一个占位元素，把滚动区设成旋转后的实际跨度 <code>h × w</code>，
+否则长文的后续列会被裁掉。</p>
+
+<h4>与引擎 A 的一致性</h4>
+<p>修复后两种引擎输出一致，实测：</p>
+<table>
+<thead><tr><th>指标</th><th class="num">vertical-lr</th><th class="num">rotate(90deg)</th></tr></thead>
+<tbody>
+<tr><td>墨迹像素数</td><td class="num">78,954</td><td class="num">78,954</td></tr>
+<tr><td>墨迹包围盒高度</td><td class="num">1,974 px</td><td class="num">1,974 px</td></tr>
+<tr><td>列间距</td><td class="num">164 px</td><td class="num">164 px</td></tr>
+</tbody>
+</table>
+<p style="font-size:13.5px;color:var(--fg-3)">
+墨迹像素数<b>一位不差</b>，说明两者选出的字形完全一致 —— 它们是同一结果的两条路径。</p>
+
+<!-- ============================================================ -->
+<h2 id="s4"><span class="num">4</span>逐个坑与修法</h2>
+
+<p>以下都是实际发生并被修掉的缺陷，附判据。</p>
+
+<table>
+<thead><tr><th style="width:34px">#</th><th style="width:230px">症状</th><th>根因</th><th style="width:250px">修法 / 判据</th></tr></thead>
+<tbody>
+<tr class="hl">
+  <td>1</td>
+  <td><b>连字全部丢失</b>，字形退化为孤立形</td>
+  <td>CSS 里显式打开 <code>init/medi/fina/isol</code>，
+      覆盖 <code>rclt</code> 的上下文判定</td>
+  <td>删除该声明。判据：整词宽度 <b>2.90 em</b>（错则 4.81 em）</td>
+</tr>
+<tr>
+  <td>2</td>
+  <td>旋转后文字不可见</td>
+  <td>包围盒落在 <code>x ∈ [−h, 0]</code>，
+      先后误用 <code>translateY</code>、<code>translateX(−h)</code></td>
+  <td><code>translateX(100%) rotate(90deg)</code></td>
+</tr>
+<tr>
+  <td>3</td>
+  <td>旋转后文字横向溢出容器</td>
+  <td>把 <code>width</code> 当成了容器的宽度</td>
+  <td><code>width = 容器高 − padding</code></td>
+</tr>
+<tr>
+  <td>4</td>
+  <td>旋转后后续列被裁</td>
+  <td>旋转不改变布局盒，滚动区按未旋转尺寸计算</td>
+  <td>加占位元素撑出 <code>h × w</code></td>
+</tr>
+<tr>
+  <td>5</td>
+  <td>左栏蒙文显示成「豆腐块」</td>
+  <td>等宽字体链末尾没有蒙文字体，回退到无字形的字体</td>
+  <td>字体链末尾补 <code>"UME Mongolian"</code></td>
+</tr>
+<tr>
+  <td>6</td>
+  <td>整页 JS 报错、编辑器空白</td>
+  <td>改顶栏时误删三个按钮，<code>$("btn-clear")</code> 取到 null</td>
+  <td>补回元素；新增启动异常捕获（CDP 监听 <code>Runtime.exceptionThrown</code>）</td>
+</tr>
+<tr>
+  <td>7</td>
+  <td>字符面板漏掉 15 个满文阿礼嘎礼字母</td>
+  <td>字符表手工分组时遗漏</td>
+  <td>测试断言覆盖 1800–18AA <b>每一个</b>已分配码位</td>
+</tr>
+<tr>
+  <td>8</td>
+  <td><code>U+1806</code> 断行判定错误</td>
+  <td>把 <code>BB</code>（Break Before）的"其后不可断"写成了"禁止在此断行"</td>
+  <td>用 UCD <code>LineBreakTest.txt</code> 成对判定对拍</td>
+</tr>
+<tr>
+  <td>9</td>
+  <td><code>ZWNJ</code> 字素簇计数错</td>
+  <td>未建模其 <code>GCB=Extend</code> 属性</td>
+  <td>显式建模；断言 12 码位 → 11 簇</td>
+</tr>
+<tr>
+  <td>10</td>
+  <td>缺 <code>CP × AL</code> 禁断规则（LB30）</td>
+  <td>规则集不完整</td>
+  <td>补 LB30；对拍后涉及蒙文的成对判定 15/15 一致</td>
+</tr>
+</tbody>
+</table>
+
+<div class="card warn">
+<h4>方法论上的教训</h4>
+<p style="margin:0">第 1 条我曾"验证"过：用浏览器像素差异证明连字在变化，得到 28,688 像素差异、
+IoU 0.678，于是判定成形正常。<b>但那组差异测的是"正确成形 vs 我的错误干预"</b>——
+我把干预当成了证据。教训是：<b>验证要拿独立地面真相（HarfBuzz 直接读字体），
+而不是拿自己的输出前后对比</b>。</p>
+</div>
+
+<!-- ============================================================ -->
+<h2 id="s5"><span class="num">5</span>校验手段</h2>
+
+<p>三个层次，从最硬到最直观。前两个不依赖浏览器，可离线跑。</p>
+
+<div class="grid3">
+  <div class="card" style="margin:0">
+    <h4>① HarfBuzz 地面真相</h4>
+    <p style="font-size:13.5px">直接读字体，列出每个上下文选中的字形名与宽度。</p>
+    <pre style="font-size:11.5px"><code>MA 词首 → u182E.M.init
+MA 词中 → u182E.M.medi
+MA 词尾 → u182E.M.fina</code></pre>
+    <p style="font-size:12.5px;color:var(--fg-3);margin:0">
+      <code>tools/harfbuzz_ground_truth.py</code><br>
+      <code>tools/harfbuzz_features_compare.py</code></p>
+  </div>
+  <div class="card" style="margin:0">
+    <h4>② 官方一致性对拍</h4>
+    <p style="font-size:13.5px">用 UCD 自带的 <code>LineBreakTest.txt</code> 对拍断行实现。</p>
+    <pre style="font-size:11.5px"><code>涉及蒙文的成对判定
+  15 / 15 一致</code></pre>
+    <p style="font-size:12.5px;color:var(--fg-3);margin:0">
+      <code>tools/run_linebreak_conformance.ps1</code></p>
+  </div>
+  <div class="card" style="margin:0">
+    <h4>③ 浏览器端量宽度</h4>
+    <p style="font-size:13.5px">最省事的自查：量整词排版宽度。</p>
+    <pre style="font-size:11.5px"><code>ᠮᠣᠩᠭᠣᠯ → 2.90 em ✓
+（若得 4.81 em 则连字已丢）</code></pre>
+    <p style="font-size:12.5px;color:var(--fg-3);margin:0">
+      <code>tools/cdp_verify_shaping.js</code></p>
+  </div>
+</div>
+
+<div class="card info">
+<h4>一个反直觉的坑：不要用 canvas 测成形</h4>
+<p style="margin:0">Chromium <b>从未实现</b> <code>ctx.fontFeatureSettings</code>
+（实测 <code>'fontFeatureSettings' in ctx === false</code>）。
+用它测量会得到"两种设置完全相同"的假结论，从而误判成形正常。
+只有 DOM + CSS 渲染路径才反映真实成形。</p>
+</div>
+
+<!-- ============================================================ -->
+<h2 id="s6"><span class="num">6</span>文件与复现</h2>
+
+<table>
+<thead><tr><th style="width:290px">文件</th><th>作用</th></tr></thead>
+<tbody>
+<tr><td><code>web/UME.html</code></td><td>编辑器预览本体（单文件、零依赖，双击可开）</td></tr>
+<tr><td><code>web/process.html</code></td><td>本文档</td></tr>
+<tr><td><code>font/NotoSansMongolian-Regular.ttf</code></td><td>正文字体，Noto Sans Mongolian 3.103</td></tr>
+<tr><td><code>report/harfbuzz-ground-truth.txt</code></td><td>各上下文的字形选择证据</td></tr>
+<tr><td><code>report/harfbuzz-features-compare.txt</code></td><td>默认 vs 强制特性的逐字形对比</td></tr>
+<tr><td><code>report/unicode-1800-18AF.txt</code></td><td>蒙文码区 176 个码位逐位属性表</td></tr>
+<tr><td><code>report/process-data.json</code></td><td>本文档图形所用的真实数据</td></tr>
+<tr><td><code>FONT_ANALYSIS.md</code></td><td>字体与 Unicode 完整分析报告</td></tr>
+</tbody>
+</table>
+
+<h4>复现关键结论</h4>
+<pre><code><span class="cmt"># 字形选择地面真相（不需浏览器）</span>
+python tools/harfbuzz_ground_truth.py
+python tools/harfbuzz_features_compare.py
+
+<span class="cmt"># 断行实现与 UCD 官方测试对拍</span>
+powershell -ExecutionPolicy Bypass -File tools/run_linebreak_conformance.ps1
+
+<span class="cmt"># 编辑器逻辑回归（字符表完整性 / 字素簇 / 断行 / 属性表）</span>
+powershell -ExecutionPolicy Bypass -File tools/run_ume_tests.ps1</code></pre>
+
+<footer>
+UME · Uyghur-Mongolian Editor ｜ 实现思路文档 ｜
+字形与宽度数据由 <code>tools/extract_process_data.py</code> 经 HarfBuzz 从
+<code>NotoSansMongolian-Regular.ttf</code> 导出，本页图形均为浏览器现场渲染。
+</footer>
+
+</main>
+</div>
+
+<!-- 数据由 tools/extract_process_data.py 生成。
+     用 <script src> 而不是 fetch：file:// 协议下 fetch/XHR 读同级 JSON 会被 CORS 拦，
+     而 <script src> 不受限制 —— 这样文档双击即可打开。 -->
+<script src="../report/process-data.js"></script>
+<script>
+/* ==================================================================
+   把 HarfBuzz 导出的真实数据渲染成「码位 → 字形」对照图。
+   数据见 report/process-data.js（由 extract_process_data.py 生成）。
+   ================================================================== */
+const DATA = window.UME_PROCESS_DATA;
+
+const esc = s => String(s).replace(/[&<>"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+
+/* 一个词的分栏：码位 → 字形（含连字标注）
+   判定连字用 cluster 是否跳号，而不是看字形名里有没有下划线：
+   名字里带下划线只是字体的命名习惯，真正合并了几个码位要看 cluster。 */
+function wordBlock(w){
+  const goodGls = w.good.map((g, i) => {
+    const next = w.good[i + 1];
+    /* 该字形吃掉了多少个码位：到下一个字形的 cluster 之间的跨度 */
+    const span = next ? (next.cluster - g.cluster) : (totalCpsOf(w) - g.cluster);
+    const isLig = span > 1;
+    return `<div class="gl${isLig?' lig':''}">
+      <div class="g">${esc(g.name)}</div>
+      <div class="cp">cluster ${g.cluster}${isLig ? ` · 合并 ${span} 个码位` : ''}</div>
+      <div class="adv">${g.adv}</div>
+      ${isLig?'<div class="badge">连字</div>':''}
+    </div>`;
+  }).join('');
+
+  const lignames = w.good.filter((g, i) => {
+    const next = w.good[i + 1];
+    const span = next ? (next.cluster - g.cluster) : (totalCpsOf(w) - g.cluster);
+    return span > 1;
+  }).map(g => g.name);
+
+  const badGls = w.bad.map(g => `<div class="gl">
+      <div class="g">${esc(g.name)}</div>
+      <div class="cp">cluster ${g.cluster}</div>
+      <div class="adv">${g.adv}</div>
+    </div>`).join('');
+
+  const totalCps = totalCpsOf(w);
+
+  return `
+  <div style="margin:26px 0 8px;display:flex;align-items:baseline;gap:12px;flex-wrap:wrap">
+    <span class="tag b">${esc(w.key)}</span>
+    <span style="font-size:13.5px;color:var(--fg-3)">${esc(w.gloss)} ·
+      ${totalCps} 个码位</span>
+    <span class="mn" style="font-size:30px">${esc(w.text)}</span>
+  </div>
+  <div style="font-size:12.5px;color:var(--fg-3);font-family:var(--mono);margin-bottom:6px">
+    ${w.codepoints.join(' ')}
+  </div>
+
+  <div class="grid2" style="gap:16px;align-items:start">
+    <div>
+      <div class="hd" style="font-size:13px;font-weight:650;color:var(--green);margin-bottom:2px">
+        默认（正确）— ${w.good.length} 个字形，总宽 ${w.goodTotal} = ${(w.goodTotal/DATA.upem).toFixed(2)} em
+      </div>
+      <div class="glyphs">${goodGls}</div>
+    </div>
+    <div>
+      <div class="hd" style="font-size:13px;font-weight:650;color:var(--red);margin-bottom:2px">
+        强制打开位置特性 — ${w.bad.length} 个字形，总宽 ${w.badTotal} = ${(w.badTotal/DATA.upem).toFixed(2)} em
+      </div>
+      <div class="glyphs">${badGls}</div>
+    </div>
+  </div>
+  ${lignames.length ? `<p style="font-size:13px;color:var(--violet);margin:8px 0 0">
+      连字：<code>${lignames.map(esc).join('</code> <code>')}</code>
+      —— ${w.good.length} 个字形对应 ${totalCps} 个码位，差额即被合并掉的码位。</p>`
+    : `<p style="font-size:13px;color:var(--fg-3);margin:8px 0 0">（此词无跨码位连字，差异体现在形位选择上）</p>`}
+  <div class="hr" style="margin:22px 0"></div>`;
+}
+
+function totalCpsOf(w){
+  if (w._n == null) w._n = [...w.text].length;
+  return w._n;
+}
+
+function renderShaping(){
+  document.getElementById('shape-demo').innerHTML =
+    DATA.words.map(wordBlock).join('');
+
+  /* 位置形位体系表 */
+  const rows = DATA.positions.map(p => {
+    const gs = p.glyphs.map(g =>
+      `<div class="gl"><div class="g">${esc(g.name)}</div>
+       <div class="adv">${g.adv}</div></div>`).join('');
+    return `<tr>
+      <td style="white-space:nowrap"><b>${esc(p.label)}</b></td>
+      <td><span class="mn" style="font-size:30px">${esc(p.text)}</span></td>
+      <td><div class="glyphs" style="margin:0">${gs}</div></td>
+    </tr>`;
+  }).join('');
+  document.getElementById('shape-demo').insertAdjacentHTML('beforeend', `
+    <h4 style="margin-top:8px">同一个码位，四种上下文 → 四个不同字形</h4>
+    <p style="font-size:14px">以 <code>U+182E</code>（MONGOLIAN LETTER MA）为例，
+       它取哪个字形完全由前后字符决定：</p>
+    <table><thead><tr><th style="width:100px">上下文</th>
+      <th style="width:110px">文本</th><th>选中的字形</th></tr></thead>
+      <tbody>${rows}</tbody></table>
+    <p style="font-size:13.5px;color:var(--fg-3)">
+      这正是<b>不能按码位静态画图</b>的原因，也是<b>不能用 CSS 强行指定形位</b>的原因 ——
+      指定了就等于放弃上表第一列的上下文信息。</p>`);
+}
+
+(function init(){
+  const host = document.getElementById('shape-demo');
+  if (!DATA || !DATA.words){
+    host.innerHTML = `<div class="card warn" style="margin:0">
+      <h4>未能加载 report/process-data.js</h4>
+      <p style="margin:0;font-size:13.5px">该文件由
+      <code>python tools/extract_process_data.py</code> 生成。
+      请确认它存在于 <code>report/</code> 目录下。</p></div>`;
+    return;
+  }
+  try{
+    renderShaping();
+  }catch(err){
+    host.innerHTML = `<div class="card warn" style="margin:0">
+      <h4>渲染数据失败</h4><p style="margin:0;font-size:13.5px">${esc(err.message)}</p></div>`;
+  }
+})();
+
+/* ==================================================================
+   目录滚动高亮
+   ================================================================== */
+(function(){
+  const links = [...document.querySelectorAll('#toc a')];
+  const targets = links.map(a => document.querySelector(a.getAttribute('href'))).filter(Boolean);
+  const setOn = id => links.forEach(a => a.classList.toggle('on', a.getAttribute('href') === '#'+id));
+  const io = new IntersectionObserver(es => {
+    const vis = es.filter(e => e.isIntersecting)
+                  .sort((a,b) => a.boundingClientRect.top - b.boundingClientRect.top);
+    if (vis[0]) setOn(vis[0].target.id);
+  }, { rootMargin:'-10% 0px -70% 0px', threshold:0 });
+  targets.forEach(t => io.observe(t));
+})();
+</script>
+</body>
+</html>

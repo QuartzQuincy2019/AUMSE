@@ -1,0 +1,43 @@
+================================================================================================
+HarfBuzz 对拍：默认整形 vs UME 显式特性
+================================================================================================
+
+用例         默认（不传 features）                                UME 显式特性
+------------------------------------------------------------------------------------------------
+mongol     u182E.M.init u1823.O.medi u1829.AG.medi u182D_u1823.GO.medi u182F.L.fina u182E.M.init._isol u1823.AO.isol u1829.AG.medi._isol u182D.Hx.init._isol u1823.AO.isol u182F.L.init._isol
+           492 573 614 838 383                            632 932 754 928 932 632
+sayin      u1830.S.init u1820.A.medi u1836.Y.medi u1822.I.medi u1828.A.fina u1830.S.init._isol u1820.AA.isol u1836.Y.init._isol u1822.AI.isol u1828.N.init._isol
+           681 284 361 361 427                            821 919 561 993 632
+bichig     u182A_u1822.BI.init u1834.Ch.medi u1822.I.medi u182D.G.fina u182A.B.init._isol u1822.AI.isol u1834.Ch.init._isol u1822.AI.isol u182D.Hx.init._isol
+           917 530 361 668                                697 993 832 993 928
+MA 单独      u182E.M.init._isol                             u182E.M.init._isol
+MA 词首      u182E.M.init u1823.O.fina                      u182E.M.init._isol u1823.AO.isol
+           492 440                                        632 932
+MA 词中      u1820.AA.init u182E.M.medi u1820.A.fina        u1820.AA.isol u182E.M.init._isol u1820.AA.isol
+           776 284 427                                    919 632 919
+MA 词尾      u1820.AA.init u182E.M.fina                     u1820.AA.isol u182E.M.init._isol
+           776 455                                        919 632
+
+默认 == UME 显式 : 否 —— 两者选了不同字形！
+
+-- 若只关掉 rclt，会丢什么 --
+用例         rclt=0                                         默认
+------------------------------------------------------------------------------------------------
+mongol     u182E.M.init u1823.O.medi u1829.AG.medi u182D.G.medi u1823.O.medi u182F.L.fina u182E.M.init u1823.O.medi u1829.AG.medi u182D_u1823.GO.medi u182F.L.fina
+sayin      u1830.S.init u1820.A.medi u1836.Y.medi u1822.I.medi u1828.A.fina u1830.S.init u1820.A.medi u1836.Y.medi u1822.I.medi u1828.A.fina
+bichig     u182A.B.init u1822.I.medi u1834.Ch.medi u1822.I.medi u182D.G.fina u182A_u1822.BI.init u1834.Ch.medi u1822.I.medi u182D.G.fina
+MA 单独      u182E.M.init._isol                             u182E.M.init._isol
+MA 词首      u182E.M.init u1823.U.fina                      u182E.M.init u1823.O.fina
+MA 词中      u1820.AA.init u182E.M.medi u1820.A.fina        u1820.AA.init u182E.M.medi u1820.A.fina
+MA 词尾      u1820.AA.init u182E.M.fina                     u1820.AA.init u182E.M.fina
+
+-- 关掉全部位置特性 --
+用例         init/medi/fina/isol=0                          默认
+------------------------------------------------------------------------------------------------
+mongol     uni182E uni1823 uni1829 uni182D uni1823 uni182F u182E.M.init u1823.O.medi u1829.AG.medi u182D_u1823.GO.medi u182F.L.fina
+sayin      uni1830 uni1820 uni1836 uni1822 uni1828        u1830.S.init u1820.A.medi u1836.Y.medi u1822.I.medi u1828.A.fina
+bichig     uni182A uni1822 uni1834 uni1822 uni182D        u182A_u1822.BI.init u1834.Ch.medi u1822.I.medi u182D.G.fina
+MA 单独      uni182E                                        u182E.M.init._isol
+MA 词首      uni182E uni1823                                u182E.M.init u1823.O.fina
+MA 词中      uni1820 uni182E uni1820                        u1820.AA.init u182E.M.medi u1820.A.fina
+MA 词尾      uni1820 uni182E                                u1820.AA.init u182E.M.fina

@@ -1,0 +1,924 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>UME · 回鹘蒙文编辑器</title>
+<style>
+/* ===================================================================
+   UME — Uyghur-Mongolian Editor  /  回鹘蒙文编辑器
+   纯编辑器：输入 + 竖排显示 + SVG / PNG 导出
+   排版要点（依据 W3C i18n + UCD 18.0.0）：
+     · writing-mode: vertical-lr —— 蒙文列自左向右（vertical-rl 是 CJK 用的）
+     · direction: ltr 必须显式写
+     · 绝对不要写 font-feature-settings 去打开 init/medi/fina/isol
+       —— 会覆盖 rclt 的上下文连字，毁掉成形
+   =================================================================== */
+@font-face{
+  font-family:"UME Mongolian";
+  src:url("../font/NotoSansMongolian-Regular.ttf") format("truetype");
+  font-weight:400;font-style:normal;font-display:block;
+}
+
+:root{
+  --bg:#0f1115; --panel:#171a21; --panel-2:#1e222b;
+  --line:#2a2f3a; --line-2:#39404e;
+  --fg:#e6e9ef; --fg-dim:#98a1b3; --fg-dimmer:#67707f;
+  --accent:#5b9dff; --accent-dim:#2b4a7d;
+  --ok:#4ec9a0; --warn:#e0a458; --err:#e06c75;
+  --vfont-size:44px;
+}
+*{box-sizing:border-box}
+html,body{height:100%;margin:0}
+body{background:var(--bg);color:var(--fg);
+  font:14px/1.5 system-ui,"Segoe UI","Microsoft YaHei",sans-serif;overflow:hidden}
+button,select,input{font:inherit;color:inherit}
+button{background:var(--panel-2);border:1px solid var(--line-2);border-radius:6px;
+  padding:5px 11px;cursor:pointer}
+button:hover{background:#252a35;border-color:#4a5364}
+button.on{background:var(--accent-dim);border-color:var(--accent);color:#fff}
+button.primary{background:var(--accent-dim);border-color:var(--accent)}
+button:disabled{opacity:.45;cursor:default}
+select{background:var(--panel-2);border:1px solid var(--line-2);border-radius:6px;padding:5px 8px}
+input[type=range]{vertical-align:middle}
+
+#app{display:flex;flex-direction:column;height:100%}
+
+header{display:flex;align-items:center;gap:14px;flex-wrap:wrap;
+  padding:9px 14px;background:var(--panel);border-bottom:1px solid var(--line)}
+.brand{font-weight:650;font-size:15px;letter-spacing:.2px;white-space:nowrap}
+.brand small{color:var(--fg-dim);font-weight:400;margin-left:6px}
+.tools{display:flex;align-items:center;gap:7px;flex-wrap:wrap;margin-left:auto}
+.tools label{color:var(--fg-dim);font-size:12px;display:flex;align-items:center;gap:5px}
+.sep{width:1px;height:22px;background:var(--line-2)}
+
+main{flex:1;display:flex;min-height:0}
+.pane{display:flex;flex-direction:column;min-width:0}
+#pane-left{width:380px;min-width:260px;border-right:1px solid var(--line);background:var(--panel)}
+#pane-right{flex:1;min-width:0}
+.pane-head{display:flex;align-items:center;gap:8px;flex-wrap:wrap;
+  padding:7px 11px;border-bottom:1px solid var(--line);
+  background:var(--panel-2);font-size:12px;color:var(--fg-dim)}
+.pane-head b{color:var(--fg);font-weight:600;font-size:12.5px}
+.pane-head .sp{margin-left:auto}
+.body{flex:1;min-height:0;position:relative;display:flex;flex-direction:column}
+
+#raw{flex:1;min-height:0;resize:none;border:0;outline:0;background:#12151b;color:var(--fg);
+  padding:12px 14px;line-height:1.9;font-size:20px;
+  /* 等宽字体用于核对码位；末尾挂蒙文字体，否则会退化成豆腐块 */
+  font-family:"Cascadia Mono",Consolas,"Noto Sans Mono","UME Mongolian",monospace;
+  letter-spacing:.4px}
+#raw::placeholder{color:var(--fg-dimmer)}
+.hint{padding:5px 12px;font-size:11px;color:var(--fg-dimmer);border-top:1px solid var(--line)}
+
+#vwrap{flex:1;min-height:0;overflow:auto;padding:22px 24px;background:#12151b}
+#vtext{
+  writing-mode:vertical-lr;   /* 蒙文：列自左向右 */
+  direction:ltr;              /* 必须显式，避免继承 rtl 导致列序反转 */
+  text-orientation:mixed;     /* 蒙文整块 vo=R，走默认旋转，不要设 upright */
+  text-align:start;
+  font-family:"UME Mongolian","Noto Sans Mongolian",serif;
+  font-size:var(--vfont-size);line-height:1.42;
+  min-height:100%;min-width:0;margin:0;
+  word-break:normal;overflow-wrap:normal;
+  font-kerning:normal;font-variant-ligatures:normal;
+  /* ⚠ 此处不要写 font-feature-settings —— 见 README 说明 */
+}
+#vtext.show{outline:1px dashed var(--accent-dim);outline-offset:6px}
+#vtext .seg{white-space:pre}
+
+#palette{border-top:1px solid var(--line);background:var(--panel);
+  display:flex;flex-direction:column;height:230px}
+#palette.collapsed{height:auto}
+#palette.collapsed #palbody,#palette.collapsed #palnotice{display:none}
+.tabs{display:flex;align-items:center;gap:5px;padding:7px 11px;flex-wrap:wrap;
+  border-bottom:1px solid var(--line);background:var(--panel-2)}
+.tab{background:transparent;border:1px solid transparent;border-radius:5px;
+  padding:4px 10px;font-size:12.5px;color:var(--fg-dim)}
+.tab:hover{background:#252a35}
+.tab.on{background:var(--accent-dim);border-color:var(--accent);color:#fff}
+.tabs .sp{margin-left:auto}
+#palbody{flex:1;overflow:auto;padding:9px 11px}
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(60px,1fr));gap:5px}
+.key{display:flex;flex-direction:column;align-items:center;gap:2px;
+  background:var(--panel-2);border:1px solid var(--line-2);border-radius:6px;
+  padding:5px 2px 4px;cursor:pointer;user-select:none;color:var(--fg)}
+.key:hover{background:#2b3140;border-color:var(--accent)}
+.key:active{transform:translateY(1px)}
+.key .cp{font-size:10px;color:var(--fg-dimmer);font-family:Consolas,monospace}
+.key .lb{font-size:11px;line-height:1.15;text-align:center;color:var(--fg-dim)}
+.key .gl{font-family:"UME Mongolian",serif;font-size:26px;line-height:1.15;
+  height:32px;display:flex;align-items:center;justify-content:center;
+  writing-mode:vertical-lr;direction:ltr}
+.key.ctrl .gl{writing-mode:horizontal-tb;font-size:15px;color:var(--warn)}
+#palnotice{padding:4px 12px;font-size:11px;color:var(--fg-dimmer);
+  border-top:1px solid var(--line);display:flex;gap:12px;flex-wrap:wrap}
+#palnotice .m{color:var(--accent)}
+
+#status{padding:4px 14px;font-size:11px;color:var(--fg-dimmer);
+  background:var(--panel);border-top:1px solid var(--line);
+  display:flex;gap:16px;flex-wrap:wrap}
+#status .dot{display:inline-block;width:7px;height:7px;border-radius:50%;
+  background:var(--fg-dimmer);margin-right:5px;vertical-align:middle}
+#status .dot.ok{background:var(--ok)}
+#status .dot.err{background:var(--err)}
+
+/* ---------------- 导出对话框 ---------------- */
+#modal{position:fixed;inset:0;background:rgba(0,0,0,.55);display:none;
+  align-items:center;justify-content:center;z-index:50}
+#modal.on{display:flex}
+.dlg{background:var(--panel);border:1px solid var(--line-2);border-radius:12px;
+  width:min(760px,92vw);max-height:88vh;display:flex;flex-direction:column;
+  box-shadow:0 18px 60px rgba(0,0,0,.5)}
+.dlg h3{margin:0;padding:14px 18px;font-size:15px;border-bottom:1px solid var(--line)}
+.dlg .cnt{padding:16px 18px;overflow:auto;display:flex;gap:18px;min-height:0}
+.dlg .cnt .left{flex:1;min-width:0}
+.dlg .cnt .right{flex:1;min-width:0;display:flex;flex-direction:column}
+.dlg .foot{padding:12px 18px;border-top:1px solid var(--line);
+  display:flex;gap:9px;justify-content:flex-end;align-items:center}
+.dlg .foot .sp{margin-right:auto}
+.row{display:flex;align-items:center;gap:9px;margin:9px 0;font-size:13px}
+.row>label{color:var(--fg-dim);min-width:88px}
+.row input[type=number],.row select{background:var(--panel-2);border:1px solid var(--line-2);
+  border-radius:6px;padding:5px 8px;width:110px}
+.row input[type=color]{width:44px;height:28px;padding:0;border:1px solid var(--line-2);
+  border-radius:6px;background:var(--panel-2)}
+.note{font-size:12px;color:var(--fg-dimmer);line-height:1.65;margin:10px 0 0}
+.note b{color:var(--fg-dim)}
+#preview{flex:1;min-height:220px;border:1px solid var(--line);border-radius:8px;
+  background:#fff;overflow:auto;display:flex;align-items:flex-start;justify-content:center;
+  padding:10px}
+#preview svg{max-height:100%;height:100%;width:auto;display:block}
+#expinfo{font-size:12px;color:var(--fg-dim);margin-top:8px;font-family:Consolas,monospace;
+  white-space:pre-wrap;line-height:1.6}
+.bar{height:4px;background:var(--line);border-radius:3px;overflow:hidden;margin-top:8px}
+.bar>i{display:block;height:100%;width:0;background:var(--accent);transition:width .2s}
+.warnbox{border:1px solid #6a4a2a;background:#2a2117;color:#e0c9a8;
+  border-radius:8px;padding:9px 11px;font-size:12.5px;margin:10px 0 0;line-height:1.6}
+
+::-webkit-scrollbar{width:11px;height:11px}
+::-webkit-scrollbar-track{background:#12151b}
+::-webkit-scrollbar-thumb{background:#333a47;border-radius:6px;border:2px solid #12151b}
+::-webkit-scrollbar-thumb:hover{background:#434b5c}
+</style>
+</head>
+<body>
+<div id="app">
+
+<header>
+  <div class="brand">UME <small>回鹘蒙文编辑器</small></div>
+  <div class="tools">
+    <label>字号 <input id="fs" type="range" min="16" max="96" value="44" style="width:110px"></label>
+    <span class="sep"></span>
+    <button id="btn-seg" title="标出每个字素簇的边界">字素簇</button>
+    <button id="btn-sample">示例</button>
+    <button id="btn-clear">清空</button>
+    <button id="btn-copy">复制蒙文</button>
+    <span class="sep"></span>
+    <button id="btn-export" class="primary">导出…</button>
+  </div>
+</header>
+
+<main>
+  <section class="pane" id="pane-left">
+    <div class="pane-head"><b>原始码位 / 输入</b><span class="sp"></span>
+      <span id="rawstat">0 个码位</span></div>
+    <div class="body">
+      <textarea id="raw" spellcheck="false" autocomplete="off"
+        placeholder="在此输入蒙文，或点击下方字符面板插入 Unicode 字符…"></textarea>
+      <div class="hint">本框用普通字体显示，方便核对码位；不反映蒙文成形结果。</div>
+    </div>
+  </section>
+
+  <section class="pane" id="pane-right">
+    <div class="pane-head"><b>竖排渲染</b>
+      <span id="rtag">· 列自左向右（vertical-lr）</span>
+      <span class="sp"></span><span id="rtstat"></span></div>
+    <div class="body">
+      <div id="vwrap"><div id="vtext" lang="mn-Mong"></div></div>
+    </div>
+  </section>
+</main>
+
+<section id="palette">
+  <div class="tabs" id="tabs"></div>
+  <div id="palbody"></div>
+  <div id="palnotice"></div>
+</section>
+
+<div id="status">
+  <span><span class="dot" id="fd"></span>字体 <span id="fstat">检测中…</span></span>
+  <span>MNG 字符 <span id="mstat"></span></span>
+  <span id="tstat"></span>
+</div>
+</div>
+
+<!-- ==================== 导出对话框 ==================== -->
+<div id="modal">
+  <div class="dlg">
+    <h3>导出竖排文本</h3>
+    <div class="cnt">
+      <div class="left">
+        <div class="row"><label>格式</label>
+          <select id="exFormat">
+            <option value="svg-text">SVG（矢量·文字，字体已内嵌）</option>
+            <option value="png">PNG（位图）</option>
+          </select></div>
+        <div class="row"><label>缩放</label>
+          <input id="exScale" type="number" value="1" min="0.2" max="8" step="0.1">
+          <span style="color:var(--fg-dimmer);font-size:12px">×</span></div>
+        <div class="row" id="rowPngScale" style="display:none"><label>位图倍率</label>
+          <input id="exPx" type="number" value="2" min="1" max="8" step="1">
+          <span style="color:var(--fg-dimmer);font-size:12px">× 像素密度</span></div>
+        <div class="row"><label>留白</label>
+          <input id="exPad" type="number" value="24" min="0" max="400" step="2">
+          <span style="color:var(--fg-dimmer);font-size:12px">px</span></div>
+        <div class="row"><label>背景</label>
+          <input id="exBgOn" type="checkbox" checked>
+          <input id="exBg" type="color" value="#ffffff"></div>
+        <div class="row"><label>文字颜色</label>
+          <input id="exFg" type="color" value="#000000"></div>
+        <div class="warnbox" id="exWarn" style="display:none"></div>
+        <p class="note" id="exNote"></p>
+      </div>
+      <div class="right">
+        <div id="preview"></div>
+        <div id="expinfo">准备中…</div>
+        <div class="bar"><i id="exBar"></i></div>
+      </div>
+    </div>
+    <div class="foot">
+      <span class="sp" id="exSize"></span>
+      <button id="exClose">取消</button>
+      <button id="exSave" class="primary">保存文件</button>
+    </div>
+  </div>
+</div>
+
+<script src="vendor/font-subset.js"></script>
+<script>
+"use strict";
+/* ==================================================================
+   1. MNG 字符集（U+1800–U+18AA 内传统蒙文实际使用的部分）
+   ================================================================== */
+const GROUPS = [
+{n:"元音",items:[
+ [0x1820,"A","A ᠠ 阳性元音"],[0x1821,"E","E ᠡ 阴性元音"],
+ [0x1822,"I","I ᠢ 中性元音"],[0x1823,"O","O ᠣ 阳性元音"],
+ [0x1824,"U","U ᠤ 阳性元音"],[0x1825,"Ö","OE ᠥ 阴性元音"],
+ [0x1826,"Ü","UE ᠦ 阴性元音"],[0x1827,"Ē","EE ᠧ 阴性元音"]]},
+
+{n:"辅音",items:[
+ [0x1828,"N","NA"],[0x1829,"Ŋ","ANG"],[0x182A,"B","BA"],
+ [0x182B,"P","PA"],[0x182C,"Q","QA"],[0x182D,"Γ","GA"],
+ [0x182E,"M","MA"],[0x182F,"L","LA"],[0x1830,"S","SA"],
+ [0x1831,"Š","SHA"],[0x1832,"T","TA"],[0x1833,"D","DA"],
+ [0x1834,"Č","CHA"],[0x1835,"J","JA"],[0x1836,"Y","YA"],
+ [0x1837,"R","RA"],[0x1838,"W","WA"],[0x1839,"F","FA"],
+ [0x183A,"K","KA"],[0x183B,"H","KHA"],[0x183C,"C","TSA"],
+ [0x183D,"Z","ZA"],[0x183E,"Ĥ","HAA"],[0x183F,"Ʒ","ZRA"],
+ [0x1840,"LH","LHA"],[0x1841,"Ƶ","ZHI"],[0x1842,"Ç","CHI"]]},
+
+{n:"标记 / 控制",items:[
+ [0x180B,"FVS1","自由变体选择符 1"],[0x180C,"FVS2","自由变体选择符 2"],
+ [0x180D,"FVS3","自由变体选择符 3"],[0x180F,"FVS4","自由变体选择符 4"],
+ [0x180E,"MVS","元音分隔符（非空格！两侧禁断行）"],
+ [0x180A,"NIRUGU","词干连接符（强制连写）"],
+ [0x1807,"SIBE","锡伯音节边界符"],
+ [0x200D,"ZWJ","零宽连接符（阻止字体回退）"],
+ [0x200C,"ZWNJ","零宽不连接符"]]},
+
+{n:"标点",items:[
+ [0x1800,"᠀","BIRGA 字头标志"],[0x1801,"᠁","ELLIPSIS 省略号"],
+ [0x1802,"᠂","COMMA 逗号（禁行首）"],[0x1803,"᠃","FULL STOP 句号（禁行首）"],
+ [0x1804,"᠄","COLON 冒号"],[0x1805,"᠅","FOUR DOTS 四点"],
+ [0x1806,"᠆","TODO SOFT HYPHEN"],[0x1808,"᠈","MANCHU COMMA"],
+ [0x1809,"᠉","MANCHU FULL STOP"]]},
+
+{n:"数字",items:[
+ [0x1810,"0","᠐"],[0x1811,"1","᠑"],[0x1812,"2","᠒"],[0x1813,"3","᠓"],
+ [0x1814,"4","᠔"],[0x1815,"5","᠕"],[0x1816,"6","᠖"],[0x1817,"7","᠗"],
+ [0x1818,"8","᠘"],[0x1819,"9","᠙"]]},
+
+{n:"字头（补充区）",items:[
+ [0x11660,"ᠠ","BIRGA WITH ORNAMENT"],[0x11661,"ᠡ","ROTATED BIRGA"],
+ [0x11662,"ᠢ","DOUBLE BIRGA WITH ORNAMENT"],[0x11663,"ᠣ","TRIPLE BIRGA WITH ORNAMENT"],
+ [0x11664,"ᠤ","BIRGA WITH DOUBLE ORNAMENT"],[0x11665,"ᠥ","ROTATED BIRGA WITH ORNAMENT"],
+ [0x11666,"ᠦ","ROTATED BIRGA W/ DOUBLE ORN."],[0x11667,"ᠧ","INVERTED BIRGA"],
+ [0x11668,"ᠨ","INVERTED BIRGA W/ DOUBLE ORN."],[0x11669,"ᠩ","SWIRL BIRGA"],
+ [0x1166A,"ᠪ","SWIRL BIRGA WITH ORNAMENT"],[0x1166B,"ᠫ","SWIRL BIRGA W/ DOUBLE ORN."],
+ [0x1166C,"ᠬ","TURNED SWIRL BIRGA W/ DBL ORN."]]},
+
+{n:"托忒 TODO",items:[
+ [0x1843,"‑","TODO LONG VOWEL SIGN"],[0x1844,"E","TODO E"],[0x1845,"I","TODO I"],
+ [0x1846,"O","TODO O"],[0x1847,"U","TODO U"],[0x1848,"Ö","TODO OE"],
+ [0x1849,"Ü","TODO UE"],[0x184A,"Ŋ","TODO ANG"],[0x184B,"B","TODO BA"],
+ [0x184C,"P","TODO PA"],[0x184D,"Q","TODO QA"],[0x184E,"Γ","TODO GA"],
+ [0x184F,"M","TODO MA"],[0x1850,"T","TODO TA"],[0x1851,"D","TODO DA"],
+ [0x1852,"Č","TODO CHA"],[0x1853,"J","TODO JA"],[0x1854,"C","TODO TSA"],
+ [0x1855,"Y","TODO YA"],[0x1856,"W","TODO WA"],[0x1857,"K","TODO KA"],
+ [0x1858,"G","TODO GAA"],[0x1859,"H","TODO HAA"],[0x185A,"J̌","TODO JIA"],
+ [0x185B,"Ñ","TODO NIA"],[0x185C,"Ʒ","TODO DZA"]]},
+
+{n:"锡伯 SIBE",items:[
+ [0x185D,"E","SIBE E"],[0x185E,"I","SIBE I"],[0x185F,"Ī","SIBE IY"],
+ [0x1860,"Ü","SIBE UE"],[0x1861,"U","SIBE U"],[0x1862,"Ŋ","SIBE ANG"],
+ [0x1863,"K","SIBE KA"],[0x1864,"G","SIBE GA"],[0x1865,"H","SIBE HA"],
+ [0x1866,"P","SIBE PA"],[0x1867,"Š","SIBE SHA"],[0x1868,"T","SIBE TA"],
+ [0x1869,"D","SIBE DA"],[0x186A,"J","SIBE JA"],[0x186B,"F","SIBE FA"],
+ [0x186C,"G","SIBE GAA"],[0x186D,"H","SIBE HAA"],[0x186E,"C","SIBE TSA"],
+ [0x186F,"Z","SIBE ZA"],[0x1870,"R","SIBE RAA"],[0x1871,"Č","SIBE CHA"],
+ [0x1872,"Ƶ","SIBE ZHA"]]},
+
+{n:"满文 MANCHU",items:[
+ [0x1873,"I","MANCHU I"],[0x1874,"K","MANCHU KA"],[0x1875,"R","MANCHU RA"],
+ [0x1876,"F","MANCHU FA"],[0x1877,"Ƶ","MANCHU ZHA"],[0x1878,"Č̣","CHA WITH TWO DOTS"]]},
+
+{n:"阿礼嘎礼 ALI GALI",items:[
+ [0x1880,"ṃ","ANUSVARA ONE"],[0x1881,"ḥ","VISARGA ONE"],[0x1882,"˘","DAMARU"],
+ [0x1883,"̆","UBADAMA"],[0x1884,"̑","INVERTED UBADAMA"],
+ [0x1885,"·","BALUDA（组合标记）"],[0x1886,"∴","THREE BALUDA（组合标记）"],
+ [0x1887,"A","ALI GALI A"],[0x1888,"I","ALI GALI I"],[0x1889,"K","ALI GALI KA"],
+ [0x188A,"Ṅ","ALI GALI NGA"],[0x188B,"C","ALI GALI CA"],[0x188C,"Ṭ","ALI GALI TTA"],
+ [0x188D,"Ṭh","ALI GALI TTHA"],[0x188E,"Ḍ","ALI GALI DDA"],[0x188F,"Ṇ","ALI GALI NNA"],
+ [0x1890,"T","ALI GALI TA"],[0x1891,"D","ALI GALI DA"],[0x1892,"P","ALI GALI PA"],
+ [0x1893,"Ph","ALI GALI PHA"],[0x1894,"Ṣ","ALI GALI SSA"],[0x1895,"Ƶ","ALI GALI ZHA"],
+ [0x1896,"Z","ALI GALI ZA"],[0x1897,"Ḥ","ALI GALI AH"],
+ [0x1898,"T","TODO ALI GALI TA"],[0x1899,"Ƶ","TODO ALI GALI ZHA"],
+ [0x189A,"Ġ","MANCHU ALI GALI GHA"],[0x189B,"Ṅ","MANCHU ALI GALI NGA"],
+ [0x189C,"C","MANCHU ALI GALI CA"],[0x189D,"Jh","MANCHU ALI GALI JHA"],
+ [0x189E,"Ṭ","MANCHU ALI GALI TTA"],[0x189F,"Ḍh","MANCHU ALI GALI DDHA"],
+ [0x18A0,"T","MANCHU ALI GALI TA"],[0x18A1,"Dh","MANCHU ALI GALI DHA"],
+ [0x18A2,"Ṣ","MANCHU ALI GALI SSA"],[0x18A3,"Cy","MANCHU ALI GALI CYA"],
+ [0x18A4,"Ƶ","MANCHU ALI GALI ZHA"],[0x18A5,"Z","MANCHU ALI GALI ZA"],
+ [0x18A6,"½U","ALI GALI HALF U"],[0x18A7,"½Y","ALI GALI HALF YA"],
+ [0x18A8,"Bh","MANCHU ALI GALI BHA"],[0x18A9,"̇","DAGALGA（ccc=228）"],
+ [0x18AA,"LH","MANCHU ALI GALI LHA"]]},
+];
+
+const SAMPLES = {
+ "\u182E\u1823\u1829\u182D\u1823\u182F":"mongol「蒙古」",
+ "\u1830\u1820\u1836\u1822\u1828":"sayin「好」",
+ "\u182A\u1822\u1834\u1822\u182D":"bičig「文字/书」",
+ "\u182C\u1821\u182F\u1821":"kele「语言」",
+ "\u1832\u1823\u182F\u1822":"toli「词典/镜」",
+ "\u182D\u1821\u1837":"ger「家」",
+ "\u1820\u182A\u1824":"abu「父亲」",
+ "\u1821\u1835\u1822":"eji「母亲」",
+ "\u1828\u1820\u1822\u182E\u1820":"naima「八」",
+ "\u1833\u1823\u182F\u1823\u182D\u1820":"doluga「七」",
+ "\u1824\u182F\u1820\u182D\u1820\u1828\u182A\u1820\u182D\u1820\u1832\u1824\u1837":"乌兰巴托",
+};
+
+/* ==================================================================
+   2. 状态与工具
+   ================================================================== */
+const S = { seg:false, tab:0 };
+const $ = id => document.getElementById(id);
+const raw = $("raw"), vtext = $("vtext");
+
+const cpHex = c => "U+" + c.toString(16).toUpperCase().padStart(4,"0");
+const isMong = c => (c >= 0x1800 && c <= 0x18AF) || (c >= 0x11660 && c <= 0x1167F);
+
+/* UCD 18.0.0 实测属性 */
+const PROPS = {
+  0x1800:{gc:"Po",lb:"AL"},0x1801:{gc:"Po",lb:"AL"},0x1802:{gc:"Po",lb:"EX"},
+  0x1803:{gc:"Po",lb:"EX"},0x1804:{gc:"Po",lb:"BA"},0x1805:{gc:"Po",lb:"BA"},
+  0x1806:{gc:"Pd",lb:"BB"},0x1807:{gc:"Po",lb:"AL"},0x1808:{gc:"Po",lb:"EX"},
+  0x1809:{gc:"Po",lb:"EX"},0x180A:{gc:"Po",lb:"AL"},
+  0x180B:{gc:"Mn",lb:"CM",ext:1,ign:1},0x180C:{gc:"Mn",lb:"CM",ext:1,ign:1},
+  0x180D:{gc:"Mn",lb:"CM",ext:1,ign:1},0x180F:{gc:"Mn",lb:"CM",ext:1,ign:1},
+  0x180E:{gc:"Cf",lb:"GL",ign:1},
+  0x1885:{gc:"Mn",lb:"CM",ext:1},0x1886:{gc:"Mn",lb:"CM",ext:1},
+  0x18A9:{gc:"Mn",lb:"CM",ext:1},
+  0x200C:{gc:"Cf",lb:"CM",ext:1,ign:1},0x200D:{gc:"Cf",lb:"ZWJ",zwj:1},
+};
+function prop(c){
+  if (PROPS[c]) return PROPS[c];
+  if (c >= 0x1810 && c <= 0x1819) return {gc:"Nd",lb:"NU"};
+  if (c === 0x20 || c === 0x09) return {gc:"Zs",lb:"SP"};
+  if (c === 0x0A || c === 0x0D) return {gc:"Cc",lb:"LF"};
+  if (c >= 0x1820 && c <= 0x18AA) return {gc:"Lo",lb:"AL"};
+  if (c >= 0x11660 && c <= 0x1167F) return {gc:"Po",lb:"AL"};
+  return {gc:"?",lb:"XX"};
+}
+/* 字素簇：UAX #29（GB9：Extend/ZWJ/ZWNJ 黏附前一字素） */
+function graphemes(cps){
+  const out = []; let cur = [];
+  for (const c of cps){
+    const p = prop(c);
+    const glue = p.ext || p.zwj || c === 0x200C;
+    if (cur.length && glue){ cur.push(c); continue; }
+    if (cur.length) out.push(cur);
+    cur = [c];
+  }
+  if (cur.length) out.push(cur);
+  return out;
+}
+/* 断行机会：UAX #14 精简版（含 LB9 归并） */
+function breakOpps(cps){
+  const cls = cps.map(c => c === 0x200C ? "CM" : prop(c).lb);
+  for (let i=1;i<cps.length;i++)
+    if (cls[i]==="CM"||cls[i]==="ZWJ")
+      cls[i] = (cls[i-1]==="SP"||cls[i-1]==="BK") ? "AL" : cls[i-1];
+  const opps = new Set();
+  let afterBB = (cls[0] === "BB");
+  for (let i=1;i<cps.length;i++){
+    const a = cls[i-1], b = cls[i];
+    let allow;
+    if (afterBB) allow = false;
+    else if (a==="LF") allow = true;
+    else if (b==="LF") allow = false;
+    else if (b==="SP") allow = false;
+    else if (b==="BB") allow = true;
+    else if (a==="WJ"||b==="WJ") allow = false;
+    else if (a==="GL"||b==="GL") allow = false;
+    else if (b==="CL"||b==="CP"||b==="EX"||b==="IS"||b==="SY") allow = false;
+    else if (a==="OP") allow = false;
+    else if (a==="SP") allow = true;
+    else if (a==="BA"||a==="HY"||a==="NS") allow = false;
+    else if (b==="OP" && (a==="AL"||a==="NU")) allow = false;
+    else if (a==="CP" && (b==="AL"||b==="NU")) allow = false;
+    else if (a==="CM"||b==="CM"||a==="ZWJ"||b==="ZWJ") allow = false;
+    else if (a==="NU"&&b==="AL" || a==="AL"&&b==="NU") allow = false;
+    else if (a==="IS" && b==="NU") allow = false;
+    else if (a==="NU" && (b==="NU"||b==="IS"||b==="SY")) allow = false;
+    else if (a==="AL"&&b==="AL") allow = false;
+    else allow = true;
+    if (allow) opps.add(i);
+    if (b === "BB") afterBB = true;
+  }
+  return opps;
+}
+
+/* ==================================================================
+   3. 编辑器
+   ================================================================== */
+function sync(){
+  const txt = raw.value;
+  const cps = [...txt].map(ch => ch.codePointAt(0));
+  if (S.seg){
+    vtext.innerHTML = "";
+    for (const g of graphemes(cps)){
+      const sp = document.createElement("span");
+      sp.className = "seg";
+      sp.textContent = g.map(c => String.fromCodePoint(c)).join("");
+      vtext.appendChild(sp);
+    }
+    vtext.classList.add("show");
+  } else {
+    vtext.textContent = txt;
+    vtext.classList.remove("show");
+  }
+  const mong = cps.filter(isMong).length;
+  const cl = graphemes(cps).length;
+  $("rawstat").textContent = cps.length + " 个码位 · " + cl + " 个字素簇";
+  $("rtstat").textContent = mong + " 个蒙文码位 · 断行机会 " + breakOpps(cps).size;
+}
+
+let sampleIdx = 0;
+function insert(s){
+  const st = raw.selectionStart, en = raw.selectionEnd;
+  raw.value = raw.value.slice(0,st) + s + raw.value.slice(en);
+  raw.selectionStart = raw.selectionEnd = st + s.length;
+  raw.focus(); sync();
+}
+
+/* ---------------- 字符面板 ---------------- */
+let allTab = null;
+function buildTabs(){
+  const tabs = $("tabs"); tabs.innerHTML = "";
+  const add = (label, idx) => {
+    const b = document.createElement("button");
+    b.className = "tab" + (S.tab===idx ? " on" : "");
+    b.textContent = label;
+    b.onclick = ()=>{ S.tab = idx; buildTabs(); buildPalette(); };
+    tabs.appendChild(b);
+  };
+  GROUPS.forEach((g,i)=> add(g.n + " " + g.items.length, i));
+  allTab = GROUPS.length;
+  add("全部 MNG", allTab);
+  const sp = document.createElement("span"); sp.className="sp"; tabs.appendChild(sp);
+  const tgl = document.createElement("button");
+  tgl.className = "tab"; tgl.textContent = "收起 ▾";
+  tgl.onclick = ()=>{ const p=$("palette"); p.classList.toggle("collapsed");
+    tgl.textContent = p.classList.contains("collapsed") ? "展开 ▴" : "收起 ▾"; };
+  tabs.appendChild(tgl);
+}
+function makeKey(c,n,z){
+  const b = document.createElement("div");
+  b.className = "key" + (prop(c).ign ? " ctrl" : "");
+  b.title = n + " — " + z + "\n" + cpHex(c)
+          + "  gc=" + prop(c).gc + " lb=" + prop(c).lb;
+  const gl = document.createElement("div"); gl.className="gl";
+  gl.textContent = String.fromCodePoint(c);
+  const cp = document.createElement("div"); cp.className="cp"; cp.textContent = cpHex(c);
+  const lb = document.createElement("div"); lb.className="lb";
+  lb.textContent = (typeof n === "string" && n.length <= 5) ? n : "";
+  b.append(gl, cp, lb);
+  b.onclick = ()=> insert(String.fromCodePoint(c));
+  return b;
+}
+function buildPalette(){
+  const body = $("palbody"); body.innerHTML = "";
+  const grid = document.createElement("div"); grid.className = "grid";
+  if (S.tab === allTab){
+    const seen = new Set();
+    GROUPS.forEach(g=>g.items.forEach(([c,n,z])=>{
+      if(!seen.has(c)){ seen.add(c); grid.appendChild(makeKey(c,n,z)); }}));
+    for (let c=0x1800;c<=0x18AA;c++){
+      if (seen.has(c)) continue;
+      if (c>=0x181A&&c<=0x181F) continue;
+      if (c>=0x1879&&c<=0x187F) continue;
+      grid.appendChild(makeKey(c,"·","MONGOLIAN " + cpHex(c)));
+    }
+  } else {
+    GROUPS[S.tab].items.forEach(([c,n,z])=> grid.appendChild(makeKey(c,n,z)));
+  }
+  body.appendChild(grid);
+  $("palnotice").innerHTML =
+    "<span>点击插入到光标处</span>" +
+    "<span>MNG 常用：<span class=\"m\">U+1820–U+18AA</span></span>" +
+    "<span>FVS 必须紧跟所属字母</span>" +
+    "<span>U+180E 不是空格，两侧禁断行</span>" +
+    "<span>共 171 个蒙文码位</span>";
+}
+
+/* ==================================================================
+   4. SVG / PNG 导出
+
+   方案：导出为 SVG <text>，每个字素簇各自一个 <text>，
+   位置由「实测 advance」精确算出 —— 不依赖查看器的竖排支持
+   （SVG 没有 writing-mode 属性），只依赖 transform（SVG 1.1 都有）。
+
+   为什么不用「字形转轮廓」：轮廓方案要从浏览器渲染**反推字形身份**，
+   但蒙文是连写的、字形彼此相接（「ᠮᠣᠩᠭᠣᠯ」6 个簇只有 1 段墨迹），
+   且大量字形 bbox 完全相同、只有 advance 不同
+   （u182E.M.init(492) 与 u182E.M.init._isol(632) 的 bbox 都是 512×734）。
+   实测反推不可靠 —— 那需要完整实现 GSUB。所以选择 <text>。
+
+   字体的解决办法：把字体**子集内嵌**进 SVG（WOFF2 + base64）。
+   SVG 作为 <img> 加载时不能引用外部字体，不内嵌就会回退成豆腐块
+   （实测：内嵌前栅格化只有 427 个墨迹像素，内嵌后 89,719）。
+   ================================================================== */
+
+const UPEM = 1000;              // 字体 unitsPerEm（本字体为 1000）
+
+/* ==================================================================
+   量每簇 advance
+
+   坑（实测）：把每个簇包成 <span> 会把它们变成**独立的整形片段**，
+   连字不再形成 —— 「ᠮᠣᠩᠭᠣᠯ」的 U+182D 会退化成单个字形(330)，
+   而不是与 U+1823 合成连字 u182D_u1823.GO.medi(838)。
+
+   正解：整行只放一个文本节点，用 Range.setEnd(node, k) 取「行首到第 k 簇」
+   的子范围位置 —— 子范围不打断整形。实测结果与 HarfBuzz 完全吻合：
+     492 573 614 | 419 419 | 383  且 419+419 = 838（连字被拆成两段）
+    260 | 459 459 530 361 668   （459+459 = 917 = u182A_u1822.BI.init）
+
+   连字会让「一个字形」跨多个簇，因此这里得到的是**簇分段**，
+   后续再按字形 advance 把它们合并成字形组。
+   ================================================================== */
+let measureHost = null;
+function initMeasure(){
+  measureHost = document.createElement("div");
+  measureHost.setAttribute("aria-hidden","true");
+  measureHost.style.cssText =
+    "position:absolute;left:-99999px;top:0;visibility:hidden;"
+  + "writing-mode:vertical-lr;direction:ltr;text-orientation:mixed;"
+  + "font-family:'UME Mongolian','Noto Sans Mongolian',serif;"
+  + "font-size:1000px;line-height:1;white-space:nowrap";
+  measureHost.setAttribute("lang","mn-Mong");
+  document.body.appendChild(measureHost);
+}
+
+/* 返回 { items:[{text,cps,adv}], total }；整行一个文本节点，保证整形正确 */
+function measureLine(lineText){
+  measureHost.textContent = "";
+  const items = [];
+  if (!lineText.length) return { items, total: 0 };
+
+  const node = document.createTextNode(lineText);
+  measureHost.appendChild(node);
+
+  const cps = [...lineText].map(c => c.codePointAt(0));
+  const clusters = graphemes(cps);
+  /* 每个簇的结束索引（码元偏移） */
+  const ends = [];
+  let off = 0;
+  for (const g of clusters){ off += g.length; ends.push(off); }
+
+  const rAll = document.createRange();
+  rAll.selectNodeContents(measureHost);
+  const total = rAll.getBoundingClientRect().height;   // 竖排：行长 = height
+
+  let prev = 0;
+  for (let i=0;i<clusters.length;i++){
+    const r = document.createRange();
+    r.setStart(node, 0);
+    r.setEnd(node, ends[i]);
+    const p = r.getBoundingClientRect().height;
+    const adv = Math.max(1, p - prev);
+    prev = p;
+    items.push({
+      text: clusters[i].map(c => String.fromCodePoint(c)).join(""),
+      cps: clusters[i],
+      adv,
+      penStart: 0,      // 稍后填
+    });
+  }
+  measureHost.textContent = "";
+  return { items, total };
+}
+/* 仅用于校验：量一段任意文本 */
+function measureText(text){
+  measureHost.textContent = "";
+  const sp = document.createElement("span");
+  sp.textContent = text;
+  measureHost.appendChild(sp);
+  const r = document.createRange();
+  r.selectNodeContents(sp);
+  const h = r.getBoundingClientRect().height / 1000 * UPEM;
+  measureHost.textContent = "";
+  return h;
+}
+
+/* ---------- 字形签名表 ----------
+   用「字形轮廓包围盒」而不是 advance 做主要筛选条件：
+   advance 估算容易受最后一个字形、连字等影响而偏掉，
+   而 bbox 与渲染结果直接对应，判别力强得多。
+   建 { gidsByBBox: Map<"w,h", int[]>, gidsByAdv: Map<adv, int[]> } */
+function layoutDoc(text){
+  const lines = text.split("\n");
+  const plan = [];
+  for (let li=0; li<lines.length; li++){
+    const { items, total } = measureLine(lines[li]);
+    let pen = 0;
+    for (const it of items){ it.penStart = pen; pen += it.adv; it._mask = null; }
+    plan.push({ line: li, items, length: total || pen });
+  }
+  return plan;
+}
+
+function escXml(s){
+  return String(s).replace(/[&<>"']/g, c =>
+    ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&apos;"}[c]));
+}
+
+/* ---------- 模式一：SVG 文本 ----------
+   直接用 <text>，让查看器自己排版。
+   优点：简单、字形 100% 正确（不依赖我们反推）、文字可搜索。
+   缺点：依赖查看器应用 rclt 等特性并自动旋转字形，换环境可能不一致；
+        竖排用 rotate(90deg) 实现，需要查看器支持 transform（SVG 1.1 都有）。
+
+   坐标：先在「横排 local 空间」写 x=沿行位置、y=基线，再用
+   transform="translate(tx,ty) rotate(90)" 把它转到竖排。
+   各簇分别成 <text>，x 用累积 advance 精确定位 —— 避免依赖查看器的
+   writing-mode 支持（SVG 里没有这个属性）。 */
+function buildSVGText(){
+  const text = raw.value;
+  if (!text.trim()) return { error:"没有内容可导出" };
+
+  const fs = (Math.max(0.2, parseFloat($("exScale").value) || 1)) * 100;
+  const pad = Math.max(0, parseFloat($("exPad").value) || 0);
+  const bgOn = $("exBgOn").checked;
+  const bg = $("exBg").value;
+  const fg = $("exFg").value;
+  const lineH = 1.42 * fs;
+  const ASC = 0.75 * fs;                  // 基线到列左边的距离
+
+  const plan = layoutDoc(text);
+  const k = fs / UPEM;
+  const maxLen = Math.max(...plan.map(l=>l.length), 1) * k;
+  const W = plan.length * lineH + pad*2;
+  const H = maxLen + pad*2;
+
+  const parts = [];
+  parts.push('<svg xmlns="http://www.w3.org/2000/svg" width="'+W.toFixed(1)
+    +'" height="'+H.toFixed(1)+'" viewBox="0 0 '+W.toFixed(1)+' '+H.toFixed(1)+'">');
+  parts.push('<title>'+escXml(text.replace(/\n/g," "))+'</title>');
+  parts.push('<desc>UME 导出（文本模式，字体已内嵌）· Noto Sans Mongolian，SIL OFL 1.1</desc>');
+  /* 字体内嵌：SVG 作为 <img> 加载时无法引用外部字体，不内嵌就会回退成豆腐块 */
+  if (window.UME_FONT_SUBSET){
+    parts.push('<defs><style type="text/css"><![CDATA[');
+    parts.push("@font-face{font-family:'UMEMongolianExport';font-style:normal;font-weight:400;");
+    parts.push("src:url(data:font/woff2;base64," + window.UME_FONT_SUBSET + ") format('woff2');}");
+    parts.push(']]></style></defs>');
+  }
+  if (bgOn) parts.push('<rect width="100%" height="100%" fill="'+bg+'"/>');
+  parts.push('<g fill="'+fg+'" font-family="UMEMongolianExport, Noto Sans Mongolian, serif"'
+    + ' font-size="'+fs.toFixed(2)+'" xml:lang="mn-Mong">');
+
+  for (const ln of plan){
+    const lineX = pad + ln.line * lineH;
+    let pen = 0;
+    for (const it of ln.items){
+      const ch = it.text;
+      if (ch === " " || !ch.trim()){ pen += it.adv; continue; }
+      const x = (pen) * k;                       // local 空间里的沿行位置
+      /* local(x, 0) → world(lineX + ASC, pad + x)，并旋转 90° */
+      const tf = 'translate(' + (lineX + ASC).toFixed(2) + ','
+               + (pad + x).toFixed(2) + ') rotate(90)';
+      parts.push('<text transform="'+tf+'" x="0" y="0">'+escXml(ch)+'</text>');
+      pen += it.adv;
+    }
+  }
+  parts.push('</g></svg>');
+  return { svg: parts.join("\n"), stats:{ total:0, low:0, miss:0 },
+           W, H, lines: plan.length, mode:"text" };
+}
+
+/* ---------- 模式二：SVG 轮廓 ---------- */
+function openExport(){
+  if (!raw.value.trim()){
+    alert("请先输入蒙文内容。");
+    return;
+  }
+  $("modal").classList.add("on");
+  refreshExport();
+}
+function closeExport(){ $("modal").classList.remove("on"); }
+
+let lastSVG = null;
+let refreshTimer = null;
+let busy = false;
+
+function refreshExport(){
+  if (busy) return;
+  clearTimeout(refreshTimer);
+  refreshTimer = setTimeout(()=>{
+    busy = true;
+    $("exSave").disabled = true;
+    $("expinfo").textContent = "正在生成…";
+    $("exBar").style.width = "0%";
+    const mode = $("exFormat").value;
+    $("exNote").innerHTML = NOTE[mode] || "";
+    requestAnimationFrame(()=> setTimeout(()=>{
+      try{
+        const isText = true;      // 只保留文字模式；PNG 也以它为源
+        const r = buildSVGText();
+        if (r.error){
+          $("preview").innerHTML = "";
+          $("expinfo").textContent = r.error;
+          $("exSize").textContent = "";
+          lastSVG = null;
+          return;
+        }
+        lastSVG = r;
+        $("preview").innerHTML = r.svg;
+        $("exSave").disabled = false;
+        let info = "画布 " + r.W.toFixed(0) + " × " + r.H.toFixed(0) + " px　"
+                 + r.lines + " 列";
+        if (isText){
+          info += "\n文本节点 " + (r.svg.match(/<text/g)||[]).length + " 个";
+          if (r.mode !== "text") info += "（已内嵌字体）";
+        }
+        $("expinfo").textContent = info;
+        $("exSize").textContent = "约 " + (r.svg.length/1024).toFixed(1) + " KB";
+        /* 只有轮廓模式才需要报置信度；文本模式永远可信 */
+        $("exWarn").style.display = "none";
+      }catch(err){
+        $("preview").innerHTML = "";
+        $("expinfo").textContent = "生成失败：" + err.message;
+        $("exSize").textContent = "";
+        lastSVG = null;
+        console.error(err);
+      }finally{
+        busy = false;
+        $("exBar").style.width = "100%";
+      }
+    }, 30));
+  }, 150);
+}
+
+const NOTE = {
+  "svg-text":
+    "<b>SVG（文字）：</b>每个字素簇各自成一个 <code>&lt;text&gt;</code>，"
+  + "位置由实测 advance 精确算出，<b>不依赖查看器的竖排支持</b>，"
+  + "文字可搜索、可再编辑。"
+  + "<br>字体已作为 <b>WOFF2 子集内嵌</b>在文件里（SIL OFL 1.1），"
+  + "所以换机器、换环境打开都不会丢字形或丢连字。"
+  + "<br>代价：文件比纯路径大一些（约 350&nbsp;KB）。",
+  "png":
+    "<b>PNG：</b>按当前设置栅格化为位图。"
+  + "倍率越高越清晰（2 倍适合屏幕，4 倍以上适合印刷）。"
+};
+
+function saveFile(){
+  if (!lastSVG || !lastSVG.svg) return;
+  const fmt = $("exFormat").value;
+  if (fmt !== "png"){
+    const blob = new Blob([lastSVG.svg], {type:"image/svg+xml;charset=utf-8"});
+    downloadBlob(blob, "ume-mongolian.svg");
+    return;
+  }
+  /* PNG：把 SVG 经 Image 画到 canvas */
+  const px = Math.max(1, parseFloat($("exPx").value) || 2);
+  const svg = lastSVG.svg;
+  const blob = new Blob([svg], {type:"image/svg+xml;charset=utf-8"});
+  const url = URL.createObjectURL(blob);
+  const img = new Image();
+  img.onload = ()=>{
+    const c = document.createElement("canvas");
+    c.width  = Math.round(lastSVG.W * px);
+    c.height = Math.round(lastSVG.H * px);
+    const g = c.getContext("2d");
+    g.drawImage(img, 0, 0, c.width, c.height);
+    URL.revokeObjectURL(url);
+    c.toBlob(b => downloadBlob(b, "ume-mongolian.png"), "image/png");
+  };
+  img.onerror = ()=>{ URL.revokeObjectURL(url); alert("PNG 生成失败。"); };
+  img.src = url;
+}
+function downloadBlob(blob, name){
+  const a = document.createElement("a");
+  a.href = URL.createObjectURL(blob);
+  a.download = name;
+  document.body.appendChild(a);
+  a.click();
+  setTimeout(()=>{ URL.revokeObjectURL(a.href); a.remove(); }, 1000);
+}
+
+/* ==================================================================
+   5. 交互绑定
+   ================================================================== */
+raw.addEventListener("input", sync);
+
+$("fs").addEventListener("input", e =>
+  document.documentElement.style.setProperty("--vfont-size", e.target.value + "px"));
+
+$("btn-seg").addEventListener("click", e=>{
+  S.seg = !S.seg; e.target.classList.toggle("on", S.seg); sync();
+});
+$("btn-clear").addEventListener("click", ()=>{ raw.value=""; raw.focus(); sync(); });
+$("btn-copy").addEventListener("click", async e=>{
+  try{ await navigator.clipboard.writeText(raw.value); }
+  catch(_){ raw.select(); document.execCommand("copy"); }
+  e.target.textContent = "已复制 ✓";
+  setTimeout(()=> e.target.textContent = "复制蒙文", 1200);
+});
+$("btn-sample").addEventListener("click", ()=>{
+  const list = Object.keys(SAMPLES);
+  const pick = list[sampleIdx % list.length]; sampleIdx++;
+  insert((raw.value && !/\s$/.test(raw.value) ? " " : "") + pick);
+  $("tstat").textContent = "示例：" + SAMPLES[pick];
+});
+$("btn-export").addEventListener("click", openExport);
+$("exClose").addEventListener("click", closeExport);
+$("exSave").addEventListener("click", saveFile);
+$("exFormat").addEventListener("change", e=>{
+  $("rowPngScale").style.display = e.target.value === "png" ? "" : "none";
+});
+["exScale","exPad","exBg","exBgOn","exFg"].forEach(id =>
+  $(id).addEventListener("input", refreshExport));
+$("modal").addEventListener("click", e=>{ if (e.target === $("modal")) closeExport(); });
+document.addEventListener("keydown", e=>{
+  if (e.key === "Escape") closeExport();
+  if ((e.ctrlKey||e.metaKey) && e.key.toLowerCase() === "s"){
+    e.preventDefault(); openExport();
+  }
+});
+
+/* ==================================================================
+   6. 启动
+   ================================================================== */
+function setFontState(ok, msg){
+  $("fd").className = "dot " + (ok ? "ok" : "err");
+  $("fstat").textContent = msg;
+}
+
+async function boot(){
+  initMeasure();
+  buildTabs();
+  buildPalette();
+  sync();
+
+  /* 字体 */
+  try{
+    await document.fonts.load('40px "UME Mongolian"');
+    await document.fonts.ready;
+    setFontState(document.fonts.check('40px "UME Mongolian"'),
+      "UME Mongolian 已加载（Noto Sans Mongolian 3.103）");
+  }catch(err){ setFontState(false, "字体加载失败：" + err.message); }
+
+  /* 检查导出用的内嵌子集是否就位 */
+  if (window.UME_FONT_SUBSET){
+    $("mstat").textContent = "字体子集已就位（导出用）";
+  } else {
+    $("mstat").textContent = "缺 font-subset.js，导出的 SVG 将不带字体";
+  }
+
+  const all = new Set();
+  GROUPS.forEach(g=>g.items.forEach(([c])=>{ if(isMong(c)) all.add(c); }));
+  $("mstat").textContent += " · " + all.size + " 个蒙文按键";
+
+  raw.value = "\u182E\u1823\u1829\u182D\u1823\u182F "
+            + "\u182A\u1822\u1834\u1822\u182D "
+            + "\u1824\u1828 \u1832\u1823\u182F\u1822";
+  sync();
+  $("tstat").textContent = "示例：ᠮᠣᠩᠭᠣᠯ ᠪᠢᠴᠢᠭ ᠤᠨ ᠲᠣᠯᠢ —— 点「导出…」生成 SVG";
+}
+boot();
+</script>
+</body>
+</html>

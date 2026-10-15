@@ -1,0 +1,92 @@
+# ============================================================
+#  UME · 回鹘蒙文编辑器 —— 忽略规则
+# ============================================================
+
+# ---------- 0. 不上传的内部资料 ----------
+# 项目说明、分工等内部文档留在本地；教程（tutorials/）照常上传
+SharingGroup/messages/
+
+# ---------- 1. 编译产物与本地校验工作区 ----------
+# tools/_c_check、tools/_vs_check 是为了「验证教程里的输出」临时建的，
+# 里面全是编译器产物。源码（.c/.cpp/.h）会保留，只排除产物。
+*.exe
+*.obj
+*.o
+*.lib
+*.dll
+*.exp
+*.pdb
+*.ilk
+*.idb
+*.tlog
+*.iobj
+*.ipdb
+*.lastbuildstate
+*.recipe
+*.log
+*.FileListAbsolute.txt
+
+# Visual Studio 中间目录（VS 会在这里堆一大堆东西）
+[xX]64/
+[Dd]ebug/
+[Rr]elease/
+*.VC.db
+*.VC.opendb
+.vs/
+
+# ---------- 2. Python ----------
+__pycache__/
+*.py[cod]
+*.egg-info/
+.pytest_cache/
+.venv/
+venv/
+env/
+
+# ---------- 3. Node ----------
+node_modules/
+npm-debug.log*
+yarn-error.log*
+package-lock.json.bak
+
+# ---------- 4. 编辑器 / IDE ----------
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+\#*\#
+.\#*
+
+# ---------- 5. 操作系统 ----------
+Thumbs.db
+ehthumbs.db
+Desktop.ini
+$RECYCLE.BIN/
+.DS_Store
+._*
+
+# ---------- 6. 临时文件与备份 ----------
+*.tmp
+*.bak
+*.orig
+*.rej
+*.old
+*.part
+*~
+
+# ============================================================
+#  以下这些「看起来该忽略、但故意要上传」的，说明一下：
+#
+#  · report/ucd/*.txt   —— Unicode 官方数据，6 MB。
+#                          虽然大，但 unicode_block_report.py 和
+#                          extract_ttf_basics.py 直接读本地缓存，
+#                          不带就会跑不起来。属于「数据依赖」。
+#
+#  · web/vendor/*.js    —— 内嵌的 Noto Sans Mongolian 子集（WOFF2），
+#                          SIL OFL 1.1 授权，可以随项目分发。
+#
+#  · SharingGroup/tutorials/*.html —— 15 篇教程成品，是要交给成员的。
+#
+#  · font/*.ttf         —— SIL OFL 1.1，可再分发。
+# ============================================================

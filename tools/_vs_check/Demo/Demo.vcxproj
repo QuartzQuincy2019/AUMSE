@@ -1,0 +1,87 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- 最小 .vcxproj：只用来把 MSBuild 属性打印出来，确认 $(...) 到底是什么 -->
+<Project DefaultTargets="Show" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+
+  <ItemGroup Label="ProjectConfigurations">
+    <ProjectConfiguration Include="Debug|x64">
+      <Configuration>Debug</Configuration>
+      <Platform>x64</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="Release|x64">
+      <Configuration>Release</Configuration>
+      <Platform>x64</Platform>
+    </ProjectConfiguration>
+  </ItemGroup>
+
+  <PropertyGroup Label="Globals">
+    <ProjectGuid>{11111111-2222-3333-4444-555555555555}</ProjectGuid>
+    <RootNamespace>Demo</RootNamespace>
+  </PropertyGroup>
+
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
+
+  <PropertyGroup Condition="'$(Configuration)'=='Debug'" Label="Configuration">
+    <ConfigurationType>Application</ConfigurationType>
+    <PlatformToolset>v143</PlatformToolset>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)'=='Release'" Label="Configuration">
+    <ConfigurationType>Application</ConfigurationType>
+    <PlatformToolset>v143</PlatformToolset>
+  </PropertyGroup>
+
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.props" />
+  <ImportGroup Label="PropertySheets">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props"
+            Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')"
+            Label="LocalAppDataPlatform" />
+  </ImportGroup>
+
+  <PropertyGroup>
+    <OutDir>$(SolutionDir)$(Platform)\$(Configuration)\</OutDir>
+    <IntDir>$(Platform)\$(Configuration)\</IntDir>
+    <IncludePath>$(SolutionDir)include;$(IncludePath)</IncludePath>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ClCompile Include="src\main.c" />
+  </ItemGroup>
+
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
+
+  <!-- 自定义目标：把关心的宏逐个打印出来 -->
+  <Target Name="Show">
+    <Message Importance="high" Text="===== 目录类宏 =====" />
+    <Message Importance="high" Text="SolutionDir    = [$(SolutionDir)]" />
+    <Message Importance="high" Text="SolutionPath   = [$(SolutionPath)]" />
+    <Message Importance="high" Text="SolutionName   = [$(SolutionName)]" />
+    <Message Importance="high" Text="ProjectDir     = [$(ProjectDir)]" />
+    <Message Importance="high" Text="ProjectPath    = [$(ProjectPath)]" />
+    <Message Importance="high" Text="ProjectName    = [$(ProjectName)]" />
+    <Message Importance="high" Text="ProjectExt     = [$(ProjectExt)]" />
+    <Message Importance="high" Text="ProjectFileName= [$(ProjectFileName)]" />
+    <Message Importance="high" Text="===== 配置类宏 =====" />
+    <Message Importance="high" Text="Configuration  = [$(Configuration)]" />
+    <Message Importance="high" Text="Platform       = [$(Platform)]" />
+    <Message Importance="high" Text="PlatformShortName = [$(PlatformShortName)]" />
+    <Message Importance="high" Text="PlatformToolset= [$(PlatformToolset)]" />
+    <Message Importance="high" Text="===== 输出类宏 =====" />
+    <Message Importance="high" Text="OutDir（上面那串展开后） = [$(OutDir)]" />
+    <Message Importance="high" Text="IntDir                    = [$(IntDir)]" />
+    <Message Importance="high" Text="TargetDir                 = [$(TargetDir)]" />
+    <Message Importance="high" Text="TargetPath                = [$(TargetPath)]" />
+    <Message Importance="high" Text="TargetName                = [$(TargetName)]" />
+    <Message Importance="high" Text="TargetExt                 = [$(TargetExt)]" />
+    <Message Importance="high" Text="===== 附加包含目录 =====" />
+    <Message Importance="high" Text="IncludePath(前两项) = [$(IncludePath)]" />
+    <Message Importance="high" Text="===== 环境变量也能读 =====" />
+    <Message Importance="high" Text="PATH 前 60 字 = [$(PATH.Substring(0,60))]" />
+    <Message Importance="high" Text="TEMP          = [$(TEMP)]" />
+    <Message Importance="high" Text="USERPROFILE   = [$(USERPROFILE)]" />
+    <Message Importance="high" Text="===== VS 安装类宏 =====" />
+    <Message Importance="high" Text="VCTargetsPath = [$(VCTargetsPath)]" />
+    <Message Importance="high" Text="VisualStudioVersion = [$(VisualStudioVersion)]" />
+    <Message Importance="high" Text="MSBuildToolsVersion = [$(MSBuildToolsVersion)]" />
+    <Message Importance="high" Text="===== 未定义的宏会怎样 =====" />
+    <Message Importance="high" Text="不存在的宏 = [$(NO_SUCH_MACRO_XYZ)]" />
+  </Target>
+</Project>

@@ -1,0 +1,368 @@
+# -*- coding: utf-8 -*-
+"""生成 _ds_08_F01_命令提示符初步.html（F 系列：短小精悍）"""
+import sys
+sys.path.insert(0, r"E:\QKMansion\CSX10\w\UME\tools")
+from tut import build
+
+EXTRA = """
+/* 终端窗口示意 */
+.term{
+  margin:16px 0;border-radius:10px;overflow:hidden;border:1px solid #2c3444;
+  background:#0c1116;transition:box-shadow .18s,transform .18s;
+}
+.term:hover{box-shadow:0 6px 22px rgba(20,30,50,.22);transform:translateY(-1px)}
+.term .tbar{display:flex;align-items:center;gap:7px;padding:7px 11px;background:#151b22;
+  border-bottom:1px solid #232c38;font-family:var(--mono);font-size:11.5px;color:#7f8f9f}
+.term .tbar .d{width:9px;height:9px;border-radius:50%;background:#3c4658}
+.term .tbar .d.r{background:#e06c75}.term .tbar .d.y{background:#e5c07b}
+.term .tbar .d.g{background:#98c379}
+.term pre{margin:0;padding:12px 14px;font-family:var(--mono);font-size:13.5px;
+  line-height:1.7;color:#c9e6d5;overflow:auto;white-space:pre}
+.term .pr{color:#7ee787;font-weight:700}     /* 提示符 */
+.term .cmd{color:#e6edf3}                     /* 你敲的命令 */
+.term .out{color:#9fb3c8}                     /* 输出 */
+.term .warn{color:#ffcb6b}                    /* 警告/提示 */
+.term .err{color:#ff8a80}                     /* 错误 */
+
+/* 命令小卡 */
+.cmds{display:grid;grid-template-columns:repeat(auto-fit,minmax(230px,1fr));gap:12px;margin:16px 0}
+.cmds .c{border:1px solid var(--line-2);border-radius:10px;padding:11px 13px;background:#fff;
+  transition:box-shadow .15s,transform .15s,border-color .15s}
+.cmds .c:hover{box-shadow:0 5px 16px rgba(30,45,70,.12);transform:translateY(-2px);
+  border-color:var(--blue)}
+.cmds .c .n{font-family:var(--mono);font-weight:700;font-size:14px;color:var(--blue);
+  margin-bottom:4px}
+.cmds .c .d{font-size:12.5px;color:var(--fg-3);line-height:1.6}
+.cmds .c .e{font-family:var(--mono);font-size:12px;color:var(--fg-2);margin-top:6px;
+  background:#f2f4f8;border:1px solid var(--line);border-radius:5px;padding:4px 7px;
+  overflow:auto;white-space:pre}
+"""
+
+TOC = """  <a href="#s1">1 · 它是什么、为什么要用</a>
+  <a href="#s2">2 · 怎么打开</a>
+  <a href="#s3">3 · 基本约定</a>
+  <a href="#s4">4 · 最该先会的几条命令</a>
+  <a href="#s5">5 · 一个完整流程</a>
+  <a href="#s6">6 · 常见问题</a>"""
+
+BODY = r"""<h1>命令提示符（cmd）初步</h1>
+<p class="sub-title">UME 项目组内部教程 · 08-F01（File）· 磁盘操作系统（DOS）的后代</p>
+<p>
+  <span class="tag">不需要前置知识</span>
+  <span class="tag b">本讲：在命令行里干活</span>
+</p>
+
+<div class="card note">
+  <div class="card-t">为什么项目里要会这个</div>
+  <p>图形界面点几下就能做的事，命令行往往更快，而且<b>能写进脚本自动化</b>。</p>
+  <p>更重要的是：<b>编译程序、看编译错误、运行带参数的程序</b>，
+  这些事在命令行里做最直接。这一篇只讲最少必要的那一部分，很短。</p>
+  <p>所有命令都在 Windows 10 / 11 的 cmd 里实际验证过。</p>
+</div>
+
+<!-- ============================================================ -->
+<h2 id="s1"><span class="n">1</span>它是什么、为什么要用</h2>
+
+<p><b>命令提示符</b>（cmd）是一个黑底白字的窗口。你<b>打字</b>告诉它做什么，
+它做完把结果<b>打印</b>出来。</p>
+
+<div class="card key">
+  <div class="card-t">它和 DOS 的关系</div>
+  <p>cmd 是 <b>MS-DOS 的后代</b>。DOS 是早期个人电脑的操作系统，
+  那时<b>没有图形界面</b>，一切操作都靠敲命令。</p>
+  <p>Windows 出来后，图形界面取代了日常操作，但命令行
+  <b>保留了下来并且一直在用</b> —— 因为对某些任务它更高效。
+  cmd 的命令语法就是从 DOS 继承的。</p>
+  <p>还有更新的 PowerShell（更强）和 Windows Terminal（更好用的窗口）。
+  <b>先把 cmd 学会</b>，其余的都是它的超集。</p>
+</div>
+
+<table>
+<thead><tr><th style="width:34%">图形界面</th><th>命令行</th></tr></thead>
+<tbody>
+<tr><td>双击打开文件夹</td><td class="c">cd 文件夹名</td></tr>
+<tr><td>右键 → 复制 / 粘贴</td><td class="c">copy / move</td></tr>
+<tr><td>看文件列表</td><td class="c">dir</td></tr>
+<tr><td>双击 exe 运行</td><td class="c">程序名</td></tr>
+<tr><td>把步骤记下来手动重复</td><td><b>写成脚本，一键重跑</b></td></tr>
+</tbody>
+</table>
+
+<div class="card tip">
+  <div class="card-t">命令行真正的优势</div>
+  <p>不是「更快」，而是<b>「可重复、可记录、可自动化」</b>。</p>
+  <p>图形界面的操作留不下痕迹，下次还得重新点一遍；
+  命令行里你敲过什么清清楚楚，复制粘贴就能重来，还能存成
+  <code>.bat</code> 脚本让电脑自己跑。</p>
+</div>
+
+<!-- ============================================================ -->
+<h2 id="s2"><span class="n">2</span>怎么打开</h2>
+
+<p>四种办法，按方便程度排：</p>
+
+<div class="cmds">
+  <div class="c">
+    <div class="n">Win + R</div>
+    <div class="d">按 <b>Win 键 + R</b>，输入 <code>cmd</code>，回车。最快。</div>
+    <div class="e">cmd</div>
+  </div>
+  <div class="c">
+    <div class="n">开始菜单</div>
+    <div class="d">开始菜单搜「命令提示符」或 <code>cmd</code>。</div>
+  </div>
+  <div class="c">
+    <div class="n">地址栏</div>
+    <div class="d">在资源管理器的<b>地址栏</b>里直接输入 <code>cmd</code> 回车 ——
+      <b>会直接在当前文件夹打开</b>，非常实用。</div>
+  </div>
+  <div class="c">
+    <div class="n">Shift + 右键</div>
+    <div class="d">在文件夹空白处 <b>Shift + 右键</b> →
+      「在此处打开 PowerShell 窗口」。</div>
+  </div>
+</div>
+
+<div class="card tip">
+  <div class="card-t">最省事的做法</div>
+  <p>资源管理器先<b>进入你想要的文件夹</b>，然后点地址栏、输入
+  <code>cmd</code>、回车。<b>省掉后面 cd 找目录的麻烦。</b></p>
+</div>
+
+<!-- ============================================================ -->
+<h2 id="s3"><span class="n">3</span>基本约定</h2>
+
+<p>打开后你会看到一行提示符：</p>
+
+<div class="term">
+  <div class="tbar"><span class="d r"></span><span class="d y"></span><span class="d g"></span>
+    <span>命令提示符</span></div>
+<pre><span class="out">Microsoft Windows [版本 10.0.19045.3803]</span>
+<span class="out">(c) Microsoft Corporation。保留所有权利。</span>
+
+<span class="pr">C:\Users\lenovo&gt;</span><span class="cmd">_</span></pre>
+</div>
+
+<p><code>C:\Users\lenovo&gt;</code> 这个就叫<b>提示符</b>，它告诉你两件事：</p>
+<ul>
+  <li><b>你现在在哪个目录</b>（这里是 <code>C:\Users\lenovo</code>）</li>
+  <li><b>可以开始打字了</b>（那条闪烁的横线是光标）</li>
+</ul>
+
+<table>
+<thead><tr><th style="width:30%">约定</th><th>说明</th></tr></thead>
+<tbody>
+<tr><td><b>回车执行</b></td><td>打完命令按回车才生效</td></tr>
+<tr><td><b>大小写不敏感</b></td><td><code>DIR</code> 和 <code>dir</code> 一样</td></tr>
+<tr><td><b>↑ / ↓ 翻历史</b></td><td>调出以前敲过的命令，<b>非常常用</b></td></tr>
+<tr><td><b>Tab 补全</b></td><td>打一半按 Tab，自动补全文件名</td></tr>
+<tr><td><b>Ctrl + C</b></td><td>中断当前正在跑的命令</td></tr>
+<tr><td><b>路径用反斜杠</b></td><td><code>C:\Users\lenovo</code>（不是正斜杠）</td></tr>
+<tr><td><b>右击即粘贴</b></td><td>cmd 里 Ctrl+V 不一定灵，<b>直接右键就粘贴</b></td></tr>
+</tbody>
+</table>
+
+<div class="card warn">
+  <div class="card-t">一个高频坑：路径里有空格</div>
+  <p>如果路径含空格（比如 <code>C:\Program Files</code>），
+  <b>必须用双引号包起来</b>，否则 cmd 会以为空格后面是另一个参数：</p>
+  <div class="term">
+    <div class="tbar"><span class="d r"></span><span class="d y"></span><span class="d g"></span>
+      <span>空格的处理</span></div>
+<pre><span class="pr">C:\&gt;</span><span class="cmd">cd C:\Program Files</span>
+<span class="err">系统找不到指定的路径。</span>
+
+<span class="pr">C:\&gt;</span><span class="cmd">cd "C:\Program Files"</span>
+<span class="out">C:\Program Files&gt;</span></pre>
+  </div>
+  <p>所以<b>凡是路径，一律加引号最省心</b>。</p>
+</div>
+
+<!-- ============================================================ -->
+<h2 id="s4"><span class="n">4</span>最该先会的几条命令</h2>
+
+<div class="cmds">
+  <div class="c">
+    <div class="n">dir</div>
+    <div class="d">列出当前目录里的文件。</div>
+    <div class="e">dir
+dir *.cpp     只看 cpp 文件
+dir /b        只列名字</div>
+  </div>
+  <div class="c">
+    <div class="n">cd</div>
+    <div class="d">切换目录（change directory）。
+      <code>cd ..</code> 回上一级，<code>cd \</code> 回根目录。</div>
+    <div class="e">cd 项目\src
+cd ..
+cd \</div>
+  </div>
+  <div class="c">
+    <div class="n">cls</div>
+    <div class="d">清屏，把窗口擦干净。</div>
+    <div class="e">cls</div>
+  </div>
+  <div class="c">
+    <div class="n">type</div>
+    <div class="d">把文本文件内容打印出来（相当于记事本只读）。</div>
+    <div class="e">type readme.txt</div>
+  </div>
+  <div class="c">
+    <div class="n">mkdir / md</div>
+    <div class="d">新建文件夹。</div>
+    <div class="e">mkdir build</div>
+  </div>
+  <div class="c">
+    <div class="n">copy / move / del</div>
+    <div class="d">复制、移动、删除文件。
+      <b>del 删掉就进回收站之外了，小心。</b></div>
+    <div class="e">copy a.txt b.txt
+move a.txt ..\bak\
+del temp.txt</div>
+  </div>
+  <div class="c">
+    <div class="n">echo</div>
+    <div class="d">打印一行字。写脚本时常用。</div>
+    <div class="e">echo hello
+echo %PATH%</div>
+  </div>
+  <div class="c">
+    <div class="n">where</div>
+    <div class="d"><b>查一个程序装在哪</b> —— 排查环境问题特别好用。</div>
+    <div class="e">where g++
+where python</div>
+  </div>
+</div>
+
+<h4>运行程序</h4>
+<p>直接敲程序名就行。<b>如果程序在当前目录，要写 <code>.\</code></b>：</p>
+
+<div class="term">
+  <div class="tbar"><span class="d r"></span><span class="d y"></span><span class="d g"></span>
+    <span>运行程序</span></div>
+<pre><span class="pr">C:\proj&gt;</span><span class="cmd">hello.exe</span>
+<span class="warn">'hello.exe' 不是内部或外部命令，也不是可运行的程序或批处理文件。</span>
+
+<span class="pr">C:\proj&gt;</span><span class="cmd">.\hello.exe</span>
+<span class="out">Hello</span></pre>
+</div>
+
+<div class="card key">
+  <div class="card-t">为什么要加 <code>.\</code></div>
+  <p>出于安全考虑，cmd <b>默认不会在当前目录找程序</b>，
+  只会在系统 <code>PATH</code> 环境变量列出的目录里找。</p>
+  <p><code>.\</code> 的意思是「<b>当前目录</b>」，加上它就等于告诉 cmd
+  「就在这儿，运行它」。</p>
+  <p>同理 <code>..\tool.exe</code> 是「上一级目录里的 tool.exe」。</p>
+</div>
+
+<!-- ============================================================ -->
+<h2 id="s5"><span class="n">5</span>一个完整流程</h2>
+
+<p>把上面的命令串起来：<b>进到一个 C++ 源文件所在目录，编译它，再运行。</b></p>
+
+<div class="term">
+  <div class="tbar"><span class="d r"></span><span class="d y"></span><span class="d g"></span>
+    <span>C:\Users\lenovo&gt;cmd</span></div>
+<pre><span class="pr">C:\Users\lenovo&gt;</span><span class="cmd">cd E:\QKMansion\demo</span>
+
+<span class="pr">E:\QKMansion\demo&gt;</span><span class="cmd">dir /b</span>
+<span class="out">main.cpp</span>
+
+<span class="pr">E:\QKMansion\demo&gt;</span><span class="cmd">g++ -std=c++17 main.cpp -o main.exe</span>
+
+<span class="pr">E:\QKMansion\demo&gt;</span><span class="cmd">dir /b</span>
+<span class="out">main.cpp</span>
+<span class="out">main.exe</span>
+
+<span class="pr">E:\QKMansion\demo&gt;</span><span class="cmd">.\main.exe</span>
+<span class="out">Hello, UME!</span></pre>
+</div>
+
+<p>看一下每一步在做什么：</p>
+<table>
+<thead><tr><th class="c" style="width:36%">命令</th><th>作用</th></tr></thead>
+<tbody>
+<tr><td class="c">cd E:\QKMansion\demo</td><td>切到源文件所在目录</td></tr>
+<tr><td class="c">dir /b</td><td>确认文件在（<code>/b</code> 精简输出）</td></tr>
+<tr><td class="c">g++ -std=c++17 main.cpp -o main.exe</td>
+    <td>编译；<code>-o</code> 指定输出的 exe 名字</td></tr>
+<tr><td class="c">.\main.exe</td><td>运行刚编译出来的程序</td></tr>
+</tbody>
+</table>
+
+<div class="card tip">
+  <div class="card-t">编译有错时会怎样</div>
+  <p>错误信息会<b>直接打印在窗口里</b>，格式是
+  <code>文件名:行号:错误说明</code>。例如：</p>
+  <div class="term">
+    <div class="tbar"><span class="d r"></span><span class="d y"></span><span class="d g"></span>
+      <span>编译错误</span></div>
+<pre><span class="pr">E:\QKMansion\demo&gt;</span><span class="cmd">g++ -std=c++17 main.cpp -o main.exe</span>
+<span class="err">main.cpp: In function 'int main()':</span>
+<span class="err">main.cpp:5:12: error: 'cout' was not declared in this scope</span>
+<span class="err">    5 |     cout &lt;&lt; "Hello";</span>
+<span class="err">      |     ^~~~</span></pre>
+  </div>
+  <p>读法：<b>打开 main.cpp，跳到第 5 行，第 12 列附近</b>。
+  这就是为什么命令行编译比点按钮更好用 ——
+  错误定位信息完整、能复制、能搜索。</p>
+</div>
+
+<!-- ============================================================ -->
+<h2 id="s6"><span class="n">6</span>常见问题</h2>
+
+<h4>「不是内部或外部命令」怎么办</h4>
+<p>三种原因，按顺序排查：</p>
+<table>
+<thead><tr><th style="width:34%">原因</th><th>解决办法</th></tr></thead>
+<tbody>
+<tr><td>程序不在当前目录</td><td>加 <code>.\</code>，或写完整路径</td></tr>
+<tr><td>程序没装 / 名字拼错</td><td>用 <code>where 名字</code> 查一下</td></tr>
+<tr><td>装了但不在 <code>PATH</code> 里</td>
+    <td>写完整路径；或改用「开始菜单里那个专用命令行」
+      （比如 Qt 自带的，它会自动配好环境）</td></tr>
+</tbody>
+</table>
+
+<h4>中文显示成乱码</h4>
+<p>cmd 默认用 GBK 编码。如果程序输出 UTF-8 就会乱码。可以临时切换：</p>
+<div class="term">
+  <div class="tbar"><span class="d r"></span><span class="d y"></span><span class="d g"></span>
+    <span>切换编码</span></div>
+<pre><span class="pr">C:\&gt;</span><span class="cmd">chcp 65001</span>
+<span class="out">Active code page: 65001</span>
+<span class="warn">（65001 = UTF-8；想切回简体中文用 chcp 936）</span></pre>
+</div>
+<p>编码这个话题在 <b>09-F04《Unicode 和编码》</b>里会专门讲。</p>
+
+<h4>想复制窗口里的内容</h4>
+<p>在窗口里<b>用鼠标拖选</b>，然后<b>右键</b>（或回车）就复制了。
+不要用 Ctrl+C —— 那个是中断命令。</p>
+
+<div class="card key">
+  <div class="card-t">这一篇要记住的四件事</div>
+  <ol>
+    <li><b>cmd 是 DOS 的后代</b>，用打字代替点鼠标，好处是<b>可重复、可自动化</b>。</li>
+    <li><b>最快打开方式</b>：在资源管理器地址栏里输入 <code>cmd</code>。</li>
+    <li><b><code>dir</code> 看文件、<code>cd</code> 切目录、<code>.\程序名</code> 运行</b> ——
+      这三条覆盖大部分日常。</li>
+    <li><b>路径一律加引号</b>，能省掉空格带来的麻烦。</li>
+  </ol>
+</div>
+
+<div class="card note">
+  <div class="card-t">下一步</div>
+  <p>会用命令行之后，下一个自然的问题是：
+  <b>「<code>.\main.exe</code> 里的 <code>.\</code> 到底是什么意思？」</b>
+  <code>cd ..</code> 里的 <code>..</code> 又是什么？</p>
+  <p>08-F02《相对文件路径与宏》就讲这个 ——
+  它是读文件、写文件、配置 Qt 工程的基础。</p>
+</div>
+
+<footer>
+UME 项目组内部教程 · 08-F01（File）《命令提示符（cmd）初步》<br>
+命令在 Windows 10 / 11 的 cmd 中实际验证；代码示例以 <b>Consolas</b> 等宽字体呈现。
+</footer>"""
+
+build("_ds_08_F01_命令提示符初步.html", "实用 · 命令提示符（cmd）初步", TOC, BODY, EXTRA)

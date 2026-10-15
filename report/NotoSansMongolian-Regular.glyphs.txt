@@ -1,0 +1,293 @@
+==============================================================================
+UME 字形分布与上下文形位分析 (glyph-level)
+==============================================================================
+
+-- 字形命名后缀分布 (共 3715 字形) --
+  medi                 927  (25.0%)
+  init                 812  (21.9%)
+  fina                 687  (18.5%)
+  (无后缀/基字形)            520  (14.0%)
+  isol                 509  (13.7%)
+  _isol                136  (3.7%)
+  _fina                 58  (1.6%)
+  vert                  25  (0.7%)
+  _init                  9  (0.2%)
+  ignored                8  (0.2%)
+  mvs                    4  (0.1%)
+  valid                  4  (0.1%)
+  _medi                  3  (0.1%)
+  fvs1                   2  (0.1%)
+  narrow                 1  (0.0%)
+  Wp_                    1  (0.0%)
+  mark                   1  (0.0%)
+  nominal                1  (0.0%)
+  feminine               1  (0.0%)
+  initial                1  (0.0%)
+  masculine              1  (0.0%)
+  false                  1  (0.0%)
+  true                   1  (0.0%)
+  wide                   1  (0.0%)
+  extend                 1  (0.0%)
+
+-- 同词干多形位字形 (即需要上下文选形的字母) --
+  有多个形位的词干数 : 1018
+  形位字形合计       : 2733
+  Top 30 形位最多的词干:
+      mvs               4 形 -> narrow, nominal, ignored, wide
+      _A                4 形 -> isol, init, medi, fina
+      _I                4 形 -> isol, init, medi, fina
+      _BE               4 形 -> isol, init, medi, fina
+      _BI               4 形 -> isol, init, medi, fina
+      _BIp              4 形 -> isol, init, medi, fina
+      _BO               4 形 -> isol, init, medi, fina
+      _BOb              4 形 -> isol, init, medi, fina
+      _BOh              4 形 -> isol, init, medi, fina
+      _BOp              4 形 -> isol, init, medi, fina
+      _BOt              4 形 -> isol, init, medi, fina
+      _BW               4 形 -> isol, init, medi, fina
+      _BcI              4 形 -> isol, init, medi, fina
+      _BcO              4 形 -> isol, init, medi, fina
+      _BcOh             4 形 -> isol, init, medi, fina
+      _BgI              4 形 -> isol, init, medi, fina
+      _BgO              4 形 -> isol, init, medi, fina
+      _BgOh             4 形 -> isol, init, medi, fina
+      _BgW              4 形 -> isol, init, medi, fina
+      _BhE              4 形 -> isol, init, medi, fina
+      _BhIp             4 形 -> isol, init, medi, fina
+      _BhO              4 形 -> isol, init, medi, fina
+      _BhOb             4 形 -> isol, init, medi, fina
+      _FI               4 形 -> isol, init, medi, fina
+      _FO               4 形 -> isol, init, medi, fina
+      _FW               4 形 -> isol, init, medi, fina
+      _GE               4 形 -> isol, init, medi, fina
+      _GI               4 形 -> isol, init, medi, fina
+      _GIp              4 形 -> isol, init, medi, fina
+      _GO               4 形 -> isol, init, medi, fina
+
+-- 字形可达性 --
+  被 cmap 直接引用的字形 : 517
+  仅由 GSUB 间接产生的字形: 3198
+  (后者即上下文形位/连字/变体，必须靠排版引擎生成)
+
+-- 蒙文码位 -> 基础字形 (cmap 直接映射) --
+  码位        字   名称                                     字形名
+  U+1800    ᠀   MONGOLIAN BIRGA                        uni1800
+  U+1801    ᠁   MONGOLIAN ELLIPSIS                     uni1801
+  U+1802    ᠂   MONGOLIAN COMMA                        uni1802
+  U+1803    ᠃   MONGOLIAN FULL STOP                    uni1803
+  U+1804    ᠄   MONGOLIAN COLON                        uni1804
+  U+1805    ᠅   MONGOLIAN FOUR DOTS                    uni1805
+  U+1806    ᠆   MONGOLIAN TODO SOFT HYPHEN             uni1806
+  U+1807    ᠇   MONGOLIAN SIBE SYLLABLE BOUNDARY MARKER uni1807
+  U+1808    ᠈   MONGOLIAN MANCHU COMMA                 uni1808
+  U+1809    ᠉   MONGOLIAN MANCHU FULL STOP             uni1809
+  U+180A    ᠊   MONGOLIAN NIRUGU                       uni180A
+  U+180B    ᠋   MONGOLIAN FREE VARIATION SELECTOR ONE  uni180B
+  U+180C    ᠌   MONGOLIAN FREE VARIATION SELECTOR TWO  uni180C
+  U+180D    ᠍   MONGOLIAN FREE VARIATION SELECTOR THREE uni180D
+  U+180E    ᠎   MONGOLIAN VOWEL SEPARATOR              uni180E
+  U+180F    ᠏   MONGOLIAN FREE VARIATION SELECTOR FOUR fvs4
+  U+1810    ᠐   MONGOLIAN DIGIT ZERO                   uni1810
+  U+1811    ᠑   MONGOLIAN DIGIT ONE                    uni1811
+  U+1812    ᠒   MONGOLIAN DIGIT TWO                    uni1812
+  U+1813    ᠓   MONGOLIAN DIGIT THREE                  uni1813
+  U+1814    ᠔   MONGOLIAN DIGIT FOUR                   uni1814
+  U+1815    ᠕   MONGOLIAN DIGIT FIVE                   uni1815
+  U+1816    ᠖   MONGOLIAN DIGIT SIX                    uni1816
+  U+1817    ᠗   MONGOLIAN DIGIT SEVEN                  uni1817
+  U+1818    ᠘   MONGOLIAN DIGIT EIGHT                  uni1818
+  U+1819    ᠙   MONGOLIAN DIGIT NINE                   uni1819
+  U+1820    ᠠ   MONGOLIAN LETTER A                     uni1820
+  U+1821    ᠡ   MONGOLIAN LETTER E                     uni1821
+  U+1822    ᠢ   MONGOLIAN LETTER I                     uni1822
+  U+1823    ᠣ   MONGOLIAN LETTER O                     uni1823
+  U+1824    ᠤ   MONGOLIAN LETTER U                     uni1824
+  U+1825    ᠥ   MONGOLIAN LETTER OE                    uni1825
+  U+1826    ᠦ   MONGOLIAN LETTER UE                    uni1826
+  U+1827    ᠧ   MONGOLIAN LETTER EE                    uni1827
+  U+1828    ᠨ   MONGOLIAN LETTER NA                    uni1828
+  U+1829    ᠩ   MONGOLIAN LETTER ANG                   uni1829
+  U+182A    ᠪ   MONGOLIAN LETTER BA                    uni182A
+  U+182B    ᠫ   MONGOLIAN LETTER PA                    uni182B
+  U+182C    ᠬ   MONGOLIAN LETTER QA                    uni182C
+  U+182D    ᠭ   MONGOLIAN LETTER GA                    uni182D
+  U+182E    ᠮ   MONGOLIAN LETTER MA                    uni182E
+  U+182F    ᠯ   MONGOLIAN LETTER LA                    uni182F
+  U+1830    ᠰ   MONGOLIAN LETTER SA                    uni1830
+  U+1831    ᠱ   MONGOLIAN LETTER SHA                   uni1831
+  U+1832    ᠲ   MONGOLIAN LETTER TA                    uni1832
+  U+1833    ᠳ   MONGOLIAN LETTER DA                    uni1833
+  U+1834    ᠴ   MONGOLIAN LETTER CHA                   uni1834
+  U+1835    ᠵ   MONGOLIAN LETTER JA                    uni1835
+  U+1836    ᠶ   MONGOLIAN LETTER YA                    uni1836
+  U+1837    ᠷ   MONGOLIAN LETTER RA                    uni1837
+  U+1838    ᠸ   MONGOLIAN LETTER WA                    uni1838
+  U+1839    ᠹ   MONGOLIAN LETTER FA                    uni1839
+  U+183A    ᠺ   MONGOLIAN LETTER KA                    uni183A
+  U+183B    ᠻ   MONGOLIAN LETTER KHA                   uni183B
+  U+183C    ᠼ   MONGOLIAN LETTER TSA                   uni183C
+  U+183D    ᠽ   MONGOLIAN LETTER ZA                    uni183D
+  U+183E    ᠾ   MONGOLIAN LETTER HAA                   uni183E
+  U+183F    ᠿ   MONGOLIAN LETTER ZRA                   uni183F
+  U+1840    ᡀ   MONGOLIAN LETTER LHA                   uni1840
+  U+1841    ᡁ   MONGOLIAN LETTER ZHI                   uni1841
+  U+1842    ᡂ   MONGOLIAN LETTER CHI                   uni1842
+  U+1843    ᡃ   MONGOLIAN LETTER TODO LONG VOWEL SIGN  uni1843
+  U+1844    ᡄ   MONGOLIAN LETTER TODO E                uni1844
+  U+1845    ᡅ   MONGOLIAN LETTER TODO I                uni1845
+  U+1846    ᡆ   MONGOLIAN LETTER TODO O                uni1846
+  U+1847    ᡇ   MONGOLIAN LETTER TODO U                uni1847
+  U+1848    ᡈ   MONGOLIAN LETTER TODO OE               uni1848
+  U+1849    ᡉ   MONGOLIAN LETTER TODO UE               uni1849
+  U+184A    ᡊ   MONGOLIAN LETTER TODO ANG              uni184A
+  U+184B    ᡋ   MONGOLIAN LETTER TODO BA               uni184B
+  U+184C    ᡌ   MONGOLIAN LETTER TODO PA               uni184C
+  U+184D    ᡍ   MONGOLIAN LETTER TODO QA               uni184D
+  U+184E    ᡎ   MONGOLIAN LETTER TODO GA               uni184E
+  U+184F    ᡏ   MONGOLIAN LETTER TODO MA               uni184F
+  U+1850    ᡐ   MONGOLIAN LETTER TODO TA               uni1850
+  U+1851    ᡑ   MONGOLIAN LETTER TODO DA               uni1851
+  U+1852    ᡒ   MONGOLIAN LETTER TODO CHA              uni1852
+  U+1853    ᡓ   MONGOLIAN LETTER TODO JA               uni1853
+  U+1854    ᡔ   MONGOLIAN LETTER TODO TSA              uni1854
+  U+1855    ᡕ   MONGOLIAN LETTER TODO YA               uni1855
+  U+1856    ᡖ   MONGOLIAN LETTER TODO WA               uni1856
+  U+1857    ᡗ   MONGOLIAN LETTER TODO KA               uni1857
+  U+1858    ᡘ   MONGOLIAN LETTER TODO GAA              uni1858
+  U+1859    ᡙ   MONGOLIAN LETTER TODO HAA              uni1859
+  U+185A    ᡚ   MONGOLIAN LETTER TODO JIA              uni185A
+  U+185B    ᡛ   MONGOLIAN LETTER TODO NIA              uni185B
+  U+185C    ᡜ   MONGOLIAN LETTER TODO DZA              uni185C
+  U+185D    ᡝ   MONGOLIAN LETTER SIBE E                uni185D
+  U+185E    ᡞ   MONGOLIAN LETTER SIBE I                uni185E
+  U+185F    ᡟ   MONGOLIAN LETTER SIBE IY               uni185F
+  U+1860    ᡠ   MONGOLIAN LETTER SIBE UE               uni1860
+  U+1861    ᡡ   MONGOLIAN LETTER SIBE U                uni1861
+  U+1862    ᡢ   MONGOLIAN LETTER SIBE ANG              uni1862
+  U+1863    ᡣ   MONGOLIAN LETTER SIBE KA               uni1863
+  U+1864    ᡤ   MONGOLIAN LETTER SIBE GA               uni1864
+  U+1865    ᡥ   MONGOLIAN LETTER SIBE HA               uni1865
+  U+1866    ᡦ   MONGOLIAN LETTER SIBE PA               uni1866
+  U+1867    ᡧ   MONGOLIAN LETTER SIBE SHA              uni1867
+  U+1868    ᡨ   MONGOLIAN LETTER SIBE TA               uni1868
+  U+1869    ᡩ   MONGOLIAN LETTER SIBE DA               uni1869
+  U+186A    ᡪ   MONGOLIAN LETTER SIBE JA               uni186A
+  U+186B    ᡫ   MONGOLIAN LETTER SIBE FA               uni186B
+  U+186C    ᡬ   MONGOLIAN LETTER SIBE GAA              uni186C
+  U+186D    ᡭ   MONGOLIAN LETTER SIBE HAA              uni186D
+  U+186E    ᡮ   MONGOLIAN LETTER SIBE TSA              uni186E
+  U+186F    ᡯ   MONGOLIAN LETTER SIBE ZA               uni186F
+  U+1870    ᡰ   MONGOLIAN LETTER SIBE RAA              uni1870
+  U+1871    ᡱ   MONGOLIAN LETTER SIBE CHA              uni1871
+  U+1872    ᡲ   MONGOLIAN LETTER SIBE ZHA              uni1872
+  U+1873    ᡳ   MONGOLIAN LETTER MANCHU I              uni1873
+  U+1874    ᡴ   MONGOLIAN LETTER MANCHU KA             uni1874
+  U+1875    ᡵ   MONGOLIAN LETTER MANCHU RA             uni1875
+  U+1876    ᡶ   MONGOLIAN LETTER MANCHU FA             uni1876
+  U+1877    ᡷ   MONGOLIAN LETTER MANCHU ZHA            uni1877
+  U+1878    ᡸ   MONGOLIAN LETTER CHA WITH TWO DOTS     u1878
+  U+1880    ᢀ   MONGOLIAN LETTER ALI GALI ANUSVARA ONE uni1880
+  U+1881    ᢁ   MONGOLIAN LETTER ALI GALI VISARGA ONE  uni1881
+  U+1882    ᢂ   MONGOLIAN LETTER ALI GALI DAMARU       uni1882
+  U+1883    ᢃ   MONGOLIAN LETTER ALI GALI UBADAMA      uni1883
+  U+1884    ᢄ   MONGOLIAN LETTER ALI GALI INVERTED UBADAMA uni1884
+  U+1885    ᢅ   MONGOLIAN LETTER ALI GALI BALUDA       uni1885
+  U+1886    ᢆ   MONGOLIAN LETTER ALI GALI THREE BALUDA uni1886
+  U+1887    ᢇ   MONGOLIAN LETTER ALI GALI A            uni1887
+  U+1888    ᢈ   MONGOLIAN LETTER ALI GALI I            uni1888
+  U+1889    ᢉ   MONGOLIAN LETTER ALI GALI KA           uni1889
+  U+188A    ᢊ   MONGOLIAN LETTER ALI GALI NGA          uni188A
+  U+188B    ᢋ   MONGOLIAN LETTER ALI GALI CA           uni188B
+  U+188C    ᢌ   MONGOLIAN LETTER ALI GALI TTA          uni188C
+  U+188D    ᢍ   MONGOLIAN LETTER ALI GALI TTHA         uni188D
+  U+188E    ᢎ   MONGOLIAN LETTER ALI GALI DDA          uni188E
+  U+188F    ᢏ   MONGOLIAN LETTER ALI GALI NNA          uni188F
+  U+1890    ᢐ   MONGOLIAN LETTER ALI GALI TA           uni1890
+  U+1891    ᢑ   MONGOLIAN LETTER ALI GALI DA           uni1891
+  U+1892    ᢒ   MONGOLIAN LETTER ALI GALI PA           uni1892
+  U+1893    ᢓ   MONGOLIAN LETTER ALI GALI PHA          uni1893
+  U+1894    ᢔ   MONGOLIAN LETTER ALI GALI SSA          uni1894
+  U+1895    ᢕ   MONGOLIAN LETTER ALI GALI ZHA          uni1895
+  U+1896    ᢖ   MONGOLIAN LETTER ALI GALI ZA           uni1896
+  U+1897    ᢗ   MONGOLIAN LETTER ALI GALI AH           uni1897
+  U+1898    ᢘ   MONGOLIAN LETTER TODO ALI GALI TA      uni1898
+  U+1899    ᢙ   MONGOLIAN LETTER TODO ALI GALI ZHA     uni1899
+  U+189A    ᢚ   MONGOLIAN LETTER MANCHU ALI GALI GHA   uni189A
+  U+189B    ᢛ   MONGOLIAN LETTER MANCHU ALI GALI NGA   uni189B
+  U+189C    ᢜ   MONGOLIAN LETTER MANCHU ALI GALI CA    uni189C
+  U+189D    ᢝ   MONGOLIAN LETTER MANCHU ALI GALI JHA   uni189D
+  U+189E    ᢞ   MONGOLIAN LETTER MANCHU ALI GALI TTA   uni189E
+  U+189F    ᢟ   MONGOLIAN LETTER MANCHU ALI GALI DDHA  uni189F
+  U+18A0    ᢠ   MONGOLIAN LETTER MANCHU ALI GALI TA    uni18A0
+  U+18A1    ᢡ   MONGOLIAN LETTER MANCHU ALI GALI DHA   uni18A1
+  U+18A2    ᢢ   MONGOLIAN LETTER MANCHU ALI GALI SSA   uni18A2
+  U+18A3    ᢣ   MONGOLIAN LETTER MANCHU ALI GALI CYA   uni18A3
+  U+18A4    ᢤ   MONGOLIAN LETTER MANCHU ALI GALI ZHA   uni18A4
+  U+18A5    ᢥ   MONGOLIAN LETTER MANCHU ALI GALI ZA    uni18A5
+  U+18A6    ᢦ   MONGOLIAN LETTER ALI GALI HALF U       uni18A6
+  U+18A7    ᢧ   MONGOLIAN LETTER ALI GALI HALF YA      uni18A7
+  U+18A8    ᢨ   MONGOLIAN LETTER MANCHU ALI GALI BHA   uni18A8
+  U+18A9    ᢩ   MONGOLIAN LETTER ALI GALI DAGALGA      uni18A9
+  U+18AA    ᢪ   MONGOLIAN LETTER MANCHU ALI GALI LHA   uni18AA
+
+-- GSUB 特性按脚本 --
+  DFLT   aalt, ccmp, fina, init, isol, medi, ordn, rclt, vert
+  cyrl   BGR :aalt, BGR :ccmp, BGR :ordn, MKD :aalt, MKD :ccmp, MKD :ordn, SRB :aalt, SRB :ccmp, SRB :ordn, aalt, ccmp, ordn
+  grek   APPH:aalt, APPH:ccmp, APPH:ordn, IPPH:aalt, IPPH:ccmp, IPPH:ordn, aalt, ccmp, ordn
+  latn   APPH:aalt, APPH:ccmp, APPH:ordn, CAT :aalt, CAT :ccmp, CAT :ordn, IPPH:aalt, IPPH:ccmp, IPPH:ordn, MAH :aalt, MAH :ccmp, MAH :ordn, MOL :aalt, MOL :ccmp, MOL :locl, MOL :ordn, NAV :aalt, NAV :ccmp, NAV :ordn, ROM :aalt, ROM :ccmp, ROM :locl, ROM :ordn, aalt, ccmp, ordn
+  mong   MCH :aalt, MCH :ccmp, MCH :fina, MCH :init, MCH :isol, MCH :medi, MCH :ordn, MCH :rclt, MCH :vert, MNG :aalt, MNG :ccmp, MNG :fina, MNG :init, MNG :isol, MNG :medi, MNG :ordn, MNG :rclt, MNG :vert, SIB :aalt, SIB :ccmp, SIB :fina, SIB :init, SIB :isol, SIB :medi, SIB :ordn, SIB :rclt, SIB :vert, TOD :aalt, TOD :ccmp, TOD :fina, TOD :init, TOD :isol, TOD :medi, TOD :ordn, TOD :rclt, TOD :vert, aalt, ccmp, fina, init, isol, medi, ordn, rclt, vert
+
+-- GSUB 特性总览 (特性 -> 引用 lookup 数 / 替换条目数) --
+  aalt   lookups=1    替换条目=6
+  ccmp   lookups=2    替换条目=8
+  fina   lookups=1    替换条目=124
+  init   lookups=1    替换条目=125
+  isol   lookups=1    替换条目=123
+  locl   lookups=2    替换条目=4
+  medi   lookups=1    替换条目=125
+  ordn   lookups=1    替换条目=0
+  rclt   lookups=149  替换条目=1639
+  vert   lookups=1    替换条目=25
+
+-- GSUB lookup 类型分布 --
+  type 1  Single 单字替换                113
+  type 2  Multiple 一字拆多              10
+  type 4  Ligature 连字合并              13
+  type 5  Context 上下文                11
+  type 6  Chaining 链式上下文             54
+  type 8  ReverseChaining 反向链式       1
+
+-- 单字替换(glyph -> variants) 抽样：蒙文字母的形位体系 --
+  单字替换映射总数: 592
+  i    -> dotlessi
+
+-- 连字合并 (Ligature) --
+  连字总数: 1944
+    mvs.wide + mvs.wide -> uni180E
+    u1820.A.fina + marker.masculine -> u1820.A.fina
+    u1820.A.medi + marker.masculine -> u1820.A.medi
+    u1820.AA.init + marker.masculine -> u1820.AA.init
+    u1822.AI.init + marker.masculine -> u1822.AI.init
+    u1822.I.fina + marker.masculine -> u1822.I.fina
+    u1822.I.medi + marker.masculine -> u1822.I.medi
+    u1823.AO.init + marker.masculine -> u1823.AO.init
+    u1823.O.medi + marker.masculine -> u1823.O.medi
+    u1823.U.fina + marker.masculine -> u1823.U.fina
+    u1824.AO.init + marker.masculine -> u1824.AO.init
+    u1824.O.medi + marker.masculine -> u1824.O.medi
+    u1824.U.fina + marker.masculine -> u1824.U.fina
+    u1828.A.fina + marker.masculine -> u1828.A.fina
+    u1828.A.medi + marker.masculine -> u1828.A.medi
+
+-- 垂直排版支持 --
+  GSUB 'vert' 特性: 有
+  vhea/vmtx 表    : 无
+  → 蒙文为竖排书写，若缺 vhea/vmtx，竖排需由排版引擎做 90° 旋转
+
+-- 西文/符号覆盖（编辑器界面与混排需要） --
+  ASCII 可打印         95 /  95
+  Latin-1 补充        84 /  96
+  Latin 扩展-A        89 / 128
+  组合附加符号            14 / 112
+  常用标点              17 / 112
+  CJK 标点            11 /  64

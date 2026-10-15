@@ -1,0 +1,51 @@
+============================================================================================
+HarfBuzz 地面真相：Noto Sans Mongolian 在蒙文上下文中的字形选择
+============================================================================================
+upem = 1000
+
+-- 默认（guess_segment_properties）--
+用例                   script    dir       字形序列                       x_advance
+--------------------------------------------------------------------------------------------
+MA 单独                Mong      ltr       u182E.M.init._isol         632
+MA 词首 (MA+A)         Mong      ltr       u182E.M.init u1823.O.fina  492 440
+MA 词中 (A+MA+A)       Mong      ltr       u1820.AA.init u182E.M.medi u1820.A.fina 776 284 427
+MA 词尾 (A+MA)         Mong      ltr       u1820.AA.init u182E.M.fina 776 455
+mongol 整词            Mong      ltr       u182E.M.init u1823.O.medi u1829.AG.medi u182D_u1823.GO.medi u182F.L.fina 492 573 614 838 383
+MA 空格 MA             Mong      ltr       u182E.M.init._isol space u182E.M.init._isol 632 260 632
+A 单独                 Mong      ltr       u1820.AA.isol              919
+A 词首 (A+MA)          Mong      ltr       u1820.AA.init u182E.M.fina 776 455
+A 词中 (MA+A+MA)       Mong      ltr       u182E.M.init u1820.A.medi u182E.M.fina 492 284 455
+A 词尾 (MA+A)          Mong      ltr       u182E.M.init u1820.A.fina  492 427
+
+-- 显式指定 script=mong, lang=MNG --
+用例                   字形序列                       x_advance
+--------------------------------------------------------------------------------------------
+MA 单独                u182E.M.init._isol         632
+MA 词首 (MA+A)         u182E.M.init u1823.O.fina  492 440
+MA 词中 (A+MA+A)       u1820.AA.init u182E.M.medi u1820.A.fina 776 284 427
+MA 词尾 (A+MA)         u1820.AA.init u182E.M.fina 776 455
+mongol 整词            u182E.M.init u1823.O.medi u1829.AG.medi u182D_u1823.GO.medi u182F.L.fina 492 573 614 838 383
+MA 空格 MA             u182E.M.init._isol space u182E.M.init._isol 632 260 632
+A 单独                 u1820.AA.isol              919
+A 词首 (A+MA)          u1820.AA.init u182E.M.fina 776 455
+A 词中 (MA+A+MA)       u182E.M.init u1820.A.medi u182E.M.fina 492 284 455
+A 词尾 (MA+A)          u182E.M.init u1820.A.fina  492 427
+
+-- 关键判定：MA 的词首形与单独形是否不同？ --
+  MA 单独  -> u182E.M.init._isol
+  MA 词首  -> u182E.M.init u1823.O.fina
+  首字形不同: 是 —— HarfBuzz 确实会按位置换形
+
+  注：若两者字形名不同，则任何「整形正常工作的渲染器」都应显示出差异；
+      若浏览器两者像素一致，说明浏览器没有应用该字体的位置形位特性。
+
+-- 关闭位置特性后 --
+  MA+A (init/medi/fina/isol/rclt=0) -> uni182E uni1823
+
+-- 只关 rclt --
+  MA+A (rclt=0) -> u182E.M.init u1823.U.fina
+
+-- 蒙文常用词整体成形 --
+  mongol   u182E.M.init u1823.O.medi u1829.AG.medi u182D_u1823.GO.medi u182F.L.fina
+  sayin    u1830.S.init u1820.A.medi u1836.Y.medi u1822.I.medi u1828.A.fina
+  bichig   u182A_u1822.BI.init u1834.Ch.medi u1822.I.medi u182D.G.fina

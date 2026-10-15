@@ -1,0 +1,1789 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>实用 · 相对文件路径与宏</title>
+<style>
+/* ===================================================================
+   UME 项目组内部教程 · 相对文件路径与宏（File）
+   约定：所有代码与输出都用 Consolas 等宽字体
+   =================================================================== */
+:root{
+  --bg:#ffffff; --bg-soft:#f7f9fc; --bg-code:#1e2430; --bg-out:#0f1419;
+  --line:#e3e8f0; --line-2:#ccd5e3;
+  --fg:#1a1f28; --fg-2:#4b5563; --fg-3:#8b95a5;
+  --blue:#1f6feb; --blue-soft:#e8f1fe;
+  --green:#17864a; --green-soft:#e7f6ee;
+  --red:#c0392b; --red-soft:#fdeceb;
+  --amber:#a4690d; --amber-soft:#fdf4e3;
+  --violet:#6b46c1; --violet-soft:#f2ecfd;
+  --teal:#0d7d7d; --teal-soft:#e4f5f5;
+  --mono:"Consolas","Cascadia Mono","Courier New",monospace;
+  --sans:"Microsoft YaHei","PingFang SC","Hiragino Sans GB",system-ui,sans-serif;
+}
+*{box-sizing:border-box}
+html{scroll-behavior:smooth}
+body{margin:0;background:var(--bg);color:var(--fg);
+  font:16px/1.8 var(--sans);-webkit-font-smoothing:antialiased}
+#shell{display:flex;align-items:flex-start;max-width:1400px;margin:0 auto}
+
+#toc{position:sticky;top:0;width:274px;flex:0 0 274px;height:100vh;overflow:auto;
+  padding:32px 16px 40px 24px;border-right:1px solid var(--line);background:var(--bg-soft)}
+#toc h5{margin:0 0 12px;font-size:11px;letter-spacing:.16em;color:var(--fg-3);
+        text-transform:uppercase;font-weight:600}
+#toc a{display:block;padding:5px 10px;margin:1px 0;border-radius:6px;font-size:13.5px;
+  color:var(--fg-2);text-decoration:none;line-height:1.5;
+  border-left:2px solid transparent;transition:background .13s,color .13s,border-color .13s}
+#toc a:hover{background:#e9eef7;color:var(--fg);border-left-color:var(--line-2)}
+#toc a.sub{padding-left:24px;font-size:12.5px;color:var(--fg-3)}
+#toc a.on{background:var(--blue-soft);color:var(--blue);font-weight:600;border-left-color:var(--blue)}
+#toc .sep{height:1px;background:var(--line);margin:12px 0}
+
+main{flex:1;min-width:0;padding:44px 52px 140px}
+
+h1{font-size:32px;line-height:1.25;margin:0 0 8px;letter-spacing:-.01em}
+.sub-title{color:var(--fg-3);font-size:15px;margin:0 0 6px}
+h2{font-size:22px;margin:58px 0 14px;padding-top:18px;border-top:1px solid var(--line);
+   display:flex;align-items:center;gap:11px}
+h2 .n{flex:0 0 auto;width:30px;height:30px;line-height:30px;text-align:center;
+  background:var(--fg);color:#fff;border-radius:8px;font-size:15px;
+  font-family:var(--mono);font-weight:600}
+h3{font-size:17px;margin:30px 0 8px}
+h4{font-size:15px;margin:22px 0 6px;color:var(--fg-2)}
+p{margin:11px 0}
+ul,ol{margin:10px 0;padding-left:24px}
+li{margin:5px 0}
+a{color:var(--blue)}
+
+code{font-family:var(--mono);font-size:.9em;background:#eef2f8;color:#0d3a7a;
+  padding:1.5px 5px;border-radius:4px;border:1px solid #dbe4f0}
+.k{font-family:var(--mono);font-size:.9em;background:#f2ecfd;color:#5b34b0;
+  padding:1.5px 5px;border-radius:4px;border:1px solid #ded0f7;
+  cursor:help;transition:background .12s,box-shadow .12s}
+.k:hover{background:#e6dbfb;box-shadow:0 0 0 3px rgba(107,70,193,.13)}
+
+.code-wrap{margin:16px 0;border:1px solid #2c3444;border-radius:10px;overflow:hidden;
+  background:var(--bg-code);position:relative;
+  transition:box-shadow .18s,border-color .18s,transform .18s}
+.code-wrap:hover{border-color:#3d4a60;box-shadow:0 6px 22px rgba(20,30,50,.18);transform:translateY(-1px)}
+.code-wrap .bar{display:flex;align-items:center;gap:8px;padding:7px 12px;
+  background:#171d27;border-bottom:1px solid #2c3444;
+  font-family:var(--mono);font-size:11.5px;color:#8296b0}
+.code-wrap .bar .dot{width:9px;height:9px;border-radius:50%;background:#3c4658}
+.code-wrap .bar .dot.r{background:#e06c75}.code-wrap .bar .dot.y{background:#e5c07b}
+.code-wrap .bar .dot.g{background:#98c379}
+.code-wrap .bar .name{margin-left:4px}
+.code-wrap .bar .cp{margin-left:auto;cursor:pointer;border:1px solid #333d4f;background:#222a37;
+  color:#9fb0c7;border-radius:5px;padding:1px 9px;font:11.5px var(--mono);
+  transition:background .13s,color .13s,border-color .13s}
+.code-wrap .bar .cp:hover{background:#2d3849;color:#dbe6f5;border-color:#4a586f}
+.code-wrap pre{margin:0;padding:14px 16px;overflow:auto;
+  font-family:var(--mono);font-size:13.5px;line-height:1.72;color:#d7e0ee}
+/* 箭头高亮：本讲重点 */
+.arw{color:#ffcb6b;font-weight:700}
+.arw2{color:#82aaff;font-weight:700}
+
+.out-wrap{margin:12px 0 20px;border:1px solid #d9e2ee;border-left:4px solid var(--green);
+  border-radius:0 9px 9px 0;background:var(--bg-out);overflow:hidden;
+  transition:box-shadow .18s,border-left-color .18s}
+.out-wrap:hover{box-shadow:0 5px 18px rgba(20,30,50,.16);border-left-color:#22a35c}
+.out-wrap .cap{padding:6px 13px;background:#151b22;border-bottom:1px solid #232c38;
+  font-family:var(--mono);font-size:11.5px;color:#7f8f9f}
+.out-wrap pre{margin:0;padding:13px 16px;overflow:auto;
+  font-family:var(--mono);font-size:13.5px;line-height:1.7;color:#c9e6d5}
+
+.hl-k{color:#c792ea}.hl-n{color:#f78c6c}.hl-s{color:#c3e88d}
+.hl-c{color:#6a7a8c;font-style:italic}.hl-f{color:#82aaff}.hl-p{color:#89ddff}
+.hl-bad{color:#ff6b6b;font-weight:700}.hl-ok{color:#7ee787;font-weight:700}
+
+.card{border:1px solid var(--line);border-radius:12px;padding:16px 20px;margin:18px 0;
+  background:#fff;transition:box-shadow .18s,transform .18s,border-color .18s}
+.card:hover{box-shadow:0 5px 20px rgba(30,45,70,.09);transform:translateY(-1px)}
+.card h4{margin-top:0}
+.card.tip{border-color:#c6e6d3;background:var(--green-soft)}
+.card.warn{border-color:#f2d2ce;background:var(--red-soft)}
+.card.note{border-color:#cfe0fb;background:var(--blue-soft)}
+.card.key{border-color:#ded0f7;background:var(--violet-soft)}
+.card.teal{border-color:#bfe4e4;background:var(--teal-soft)}
+.card .card-t{font-weight:700;font-size:14.5px;margin-bottom:6px;display:flex;gap:7px;align-items:center}
+.card.tip .card-t{color:var(--green)}
+.card.warn .card-t{color:var(--red)}
+.card.note .card-t{color:var(--blue)}
+.card.key .card-t{color:var(--violet)}
+.card.teal .card-t{color:var(--teal)}
+.card p:last-child,.card ul:last-child,.card ol:last-child{margin-bottom:0}
+
+table{border-collapse:collapse;width:100%;margin:16px 0;font-size:14px}
+th,td{border:1px solid var(--line);padding:8px 12px;text-align:left;vertical-align:top}
+th{background:var(--bg-soft);font-weight:600;font-size:13px}
+tbody tr{transition:background .12s}
+tbody tr:hover{background:#f4f8fd}
+td.c,th.c{font-family:var(--mono);font-size:13px}
+
+/* 指针关系图：变量盒 + 箭头 */
+.ptr-demo{
+  display:flex;align-items:center;gap:0;flex-wrap:wrap;margin:18px 0;
+  padding:16px;border:1px solid var(--line-2);border-radius:12px;background:#fcfdff;
+}
+.ptr-demo .n{width:100%;font-size:12.5px;color:var(--fg-3);margin-bottom:10px}
+.box{
+  border:1px solid var(--line-2);border-radius:10px;padding:10px 14px;background:#fff;
+  min-width:120px;transition:box-shadow .16s,transform .16s,border-color .16s;cursor:default;
+}
+.box:hover{box-shadow:0 6px 18px rgba(30,45,70,.13);transform:translateY(-2px);border-color:var(--blue)}
+.box .nm{font-family:var(--mono);font-size:12px;color:var(--fg-3);margin-bottom:5px}
+.box .vl{font-family:var(--mono);font-size:16px;font-weight:600}
+.box.p{border-color:#bcd6fa;background:var(--blue-soft)}
+.box.p .vl{color:var(--blue)}
+.box.p:hover{border-color:var(--blue)}
+.link{
+  font-family:var(--mono);font-size:15px;color:var(--amber);padding:0 12px;
+  white-space:nowrap;transition:transform .16s,color .16s;
+}
+.link:hover{transform:scale(1.14);color:#c99400}
+.link.b{color:var(--blue)}
+.link.b:hover{color:var(--blue)}
+
+/* 地址表 */
+.addr{
+  display:grid;grid-template-columns:auto auto auto 1fr;gap:0;margin:16px 0;
+  border:1px solid var(--line-2);border-radius:10px;overflow:hidden;
+  font-family:var(--mono);font-size:13px;
+}
+.addr>div{padding:7px 12px;border-bottom:1px solid var(--line)}
+.addr>div:nth-child(4n+1){background:var(--bg-soft);color:var(--fg-3)}
+.addr>div:nth-child(4n+2){background:#fff;color:var(--fg-2)}
+.addr>div:nth-child(4n+3){background:#fff}
+.addr>div:nth-child(4n){background:#fff}
+.addr>div:last-child,.addr>div:nth-last-child(2),
+.addr>div:nth-last-child(3),.addr>div:nth-last-child(4){border-bottom:0}
+.addr .hi{color:var(--blue);font-weight:700;transition:background .14s}
+.addr .hi:hover{background:var(--blue-soft)}
+.addr .hd{font-weight:700;color:var(--fg-2);background:#eef2f8 !important}
+
+.flow{display:flex;flex-wrap:wrap;gap:0;margin:16px 0;align-items:stretch}
+.flow .s{flex:1 1 126px;border:1px solid var(--line);border-radius:9px;padding:10px 12px;
+  background:#fff;position:relative;transition:box-shadow .15s,transform .15s,border-color .15s}
+.flow .s:hover{box-shadow:0 5px 16px rgba(30,45,70,.1);transform:translateY(-2px);border-color:var(--line-2)}
+.flow .s+.s{margin-left:24px}
+.flow .s+.s::before{content:"→";position:absolute;left:-19px;top:50%;transform:translateY(-50%);
+  color:var(--fg-3);font-size:15px;font-family:var(--mono)}
+.flow .s .t{font-weight:650;font-size:13.5px;margin-bottom:2px}
+.flow .s .d{font-size:12px;color:var(--fg-3);line-height:1.55}
+
+.mnemonic{border-left:4px solid var(--amber);background:var(--amber-soft);
+  border-radius:0 9px 9px 0;padding:12px 18px;margin:16px 0;font-size:15px}
+.mnemonic b{color:var(--amber)}
+.hr{height:1px;background:var(--line);margin:34px 0}
+.tag{display:inline-block;font-family:var(--mono);font-size:11.5px;padding:1.5px 8px;
+  border-radius:999px;background:#eef1f6;color:var(--fg-2);border:1px solid var(--line-2);
+  vertical-align:2px}
+.tag.g{background:var(--green-soft);border-color:#bfe2cd;color:var(--green)}
+.tag.r{background:var(--red-soft);border-color:#f0c8c2;color:var(--red)}
+.tag.b{background:var(--blue-soft);border-color:#bcd6fa;color:var(--blue)}
+.tag.v{background:var(--violet-soft);border-color:#ded0f7;color:var(--violet)}
+
+/* 问答式疑难块 */
+.qa{border:1px solid var(--line);border-radius:12px;margin:16px 0;overflow:hidden;
+  transition:box-shadow .18s,border-color .18s}
+.qa:hover{box-shadow:0 5px 20px rgba(30,45,70,.1);border-color:var(--line-2)}
+.qa .q{
+  padding:11px 18px;background:var(--violet-soft);border-bottom:1px solid #ded0f7;
+  font-weight:700;font-size:14.5px;color:var(--violet);
+}
+.qa .a{padding:12px 18px;background:#fff}
+.qa .a p:first-child{margin-top:0}
+.qa .a p:last-child{margin-bottom:0}
+footer{border-top:1px solid var(--line);margin-top:70px;padding-top:18px;font-size:13px;color:var(--fg-3)}
+@media(max-width:980px){#toc{display:none}main{padding:24px}}
+@media print{#toc{display:none}main{padding:0}.code-wrap,.out-wrap{break-inside:avoid}body{font-size:12pt}}
+/* ===== 移动端增强 (mobile) ===== */
+/* 桌面端不显示抽屉按钮（只在窄屏呼出）。这条本身不设 display，避免
+   与窄屏里的 #tocToggle 规则打架；#shell{display:flex} 正好把它藏起来。 */
+@media (min-width:981px){#tocToggle{display:none}}
+#toc{scrollbar-width:thin}
+
+/* ---------- 平板及以下：收紧留白 ---------- */
+@media (max-width:980px){
+  #shell{display:block;max-width:none}
+  main{padding:56px 18px 110px}
+  h1{font-size:25px}
+  h2{font-size:19px;margin:42px 0 12px;gap:9px}
+  h2 .n{width:26px;height:26px;line-height:26px;font-size:13px;border-radius:7px}
+  h3{font-size:16px;margin:26px 0 8px}
+  h4{font-size:14.5px}
+
+  /* 代码与输出：手机上要看得清 */
+  .code-wrap pre{font-size:14px;line-height:1.68;padding:12px 13px;
+    -webkit-overflow-scrolling:touch}
+  .out-wrap pre{font-size:14px;line-height:1.66;padding:12px 13px;
+    -webkit-overflow-scrolling:touch}
+  .code-wrap .bar,.out-wrap .cap{font-size:11px;padding:6px 10px}
+  .code-wrap .bar .cp{padding:3px 10px;font-size:11px}
+
+  /* 表格单独横向滚动，不再撑破版心 */
+  main>table, main .card>table{
+    display:block;width:100%;overflow-x:auto;-webkit-overflow-scrolling:touch;
+    white-space:nowrap;font-size:13.5px
+  }
+  main>table th, main>table td{white-space:nowrap}
+
+  /* 各类示意图允许横向滚动 */
+  .bits,.bitrow,.bytes,.cells,.addr,.anat,.flow,.ptr-demo{
+    overflow-x:auto;-webkit-overflow-scrolling:touch
+  }
+  .bits,.bytes,.cells{flex-wrap:nowrap}
+  .anat .row{min-width:max-content}
+  .ptr-demo .link{white-space:nowrap}
+
+  /* 卡片与行内代码 */
+  .card{padding:13px 15px;border-radius:11px}
+  code{word-break:break-word}
+  .mnemonic{padding:11px 14px;font-size:14.5px}
+
+  /* 目录：变成可呼出的抽屉，不再直接藏掉 */
+  /* 基础样式里这条断点写了 #toc{display:none}，这里必须显式恢复，
+     否则目录会变成 0×0 的隐形元素 —— 按钮点了也没反应。
+     用 !important 是因为 display:none 与我们的 display:block 选择器
+     优先级相同，靠后写不一定稳。 */
+  #toc{
+    display:block !important;
+    position:fixed;top:0;left:0;bottom:0;z-index:60;
+    width:min(80vw,308px);height:100vh;max-height:100vh;
+    background:#fff;border-right:1px solid var(--line);
+    box-shadow:0 0 44px rgba(15,25,45,.20);
+    padding:66px 12px 40px 16px;
+    transform:translateX(-102%);
+    transition:transform .25s ease;
+    overscroll-behavior:contain
+  }
+  #toc.open{transform:translateX(0)}
+  #toc a{padding:9px 11px;font-size:15px}
+  #toc a.sub{padding-left:26px;font-size:13.5px}
+  body.toc-open{overflow:hidden}
+
+  /* 遮罩：用 body.toc-open 的伪元素生成，而不是挂在 #toc 上。
+     挂在 #toc 上时它会与抽屉同一个层叠上下文，层级很难既压住正文
+     又不盖住抽屉自己的文字。挂在 body 上则天然在抽屉（z-index:60）之下、
+     正文之上，层级干净。点击关闭由脚本的 document 监听处理。 */
+  body.toc-open::after{
+    content:"";position:fixed;inset:0;z-index:55;
+    background:rgba(18,26,40,.42);
+    opacity:1;transition:opacity .25s
+  }
+
+  #tocToggle{
+    position:fixed;top:11px;left:11px;z-index:70;
+    padding:7px 14px;border-radius:999px;cursor:pointer;
+    background:#fff;color:var(--fg);border:1px solid var(--line-2);
+    font:600 13px/1 var(--sans);box-shadow:0 2px 10px rgba(20,30,50,.14);
+    -webkit-tap-highlight-color:transparent;
+    opacity:.72;transition:opacity .18s,background .18s,color .18s,transform .12s
+  }
+  #tocToggle:hover,#tocToggle:focus-visible{opacity:1}
+  #tocToggle:active{transform:scale(.96)}
+  body.toc-open #tocToggle{background:var(--fg);color:#fff;border-color:var(--fg)}
+  html{scroll-padding-top:64px}
+}
+
+/* ---------- 手机：进一步压缩 ---------- */
+@media (max-width:560px){
+  main{padding:54px 13px 100px}
+  h1{font-size:22px}
+  h2{font-size:17.5px;margin:36px 0 10px}
+  .sub-title{font-size:14px}
+  .tag{font-size:11px;padding:1.5px 7px}
+  body{font-size:15.5px;line-height:1.75}
+
+  /* 流程条改成竖向排列，箭头朝下 */
+  .flow{display:block}
+  .flow .s+.s{margin:20px 0 0}
+  .flow .s+.s::before{content:"↓";left:50%;top:-19px;transform:translateX(-50%)}
+
+  .code-wrap,.out-wrap{border-radius:9px}
+  .code-wrap pre,.out-wrap pre{font-size:13.5px;padding:11px 11px}
+  .code-wrap .bar .name{max-width:56vw;overflow:hidden;text-overflow:ellipsis;
+    white-space:nowrap}
+  .card{padding:12px 13px;margin:15px 0}
+  .qa .q,.qa .a{padding:11px 13px}
+  .qa .q{font-size:14px}
+  blockquote{margin:12px 0;padding:10px 13px}
+
+  .bits .b{width:22px;height:28px;line-height:28px;font-size:13px}
+  .bits .b.w{width:27px}
+  .bits-lg .b{width:17px;height:22px;line-height:22px;font-size:11px}
+  .byte{min-width:64px;padding:7px 5px 5px}
+  .cell{min-width:56px}
+  .addr{font-size:12px}
+  .addr>div{padding:6px 10px}
+  .ptr-demo{padding:12px}
+  .ptr-demo .box{min-width:100px;padding:8px 11px}
+  .flow .s+.s{margin-left:20px}
+  .flow .s+.s::before{left:-16px}
+
+  #tocToggle{top:9px;left:9px;padding:6px 12px;font-size:12.5px}
+  #toc{width:min(86vw,300px);padding-top:58px}
+}
+
+/* ---------- 打印时保持干净 ---------- */
+@media print{
+  #tocToggle{display:none !important}
+  body.toc-open::after{display:none !important}
+}
+</style>
+<style>
+/* 目录树 */
+.tree{margin:16px 0;font-family:var(--mono);font-size:13.5px;line-height:1.85;
+  background:var(--bg-soft);border:1px solid var(--line-2);border-radius:10px;
+  padding:13px 16px;overflow:auto;color:var(--fg)}
+.tree .d{color:var(--blue);font-weight:600}
+.tree .f{color:var(--fg-2)}
+.tree .c{color:var(--fg-3)}
+.tree .me{background:var(--amber-soft);border-radius:4px;padding:0 4px;font-weight:600}
+
+/* 路径解析示意 */
+.resolve{margin:16px 0;border:1px solid var(--line-2);border-radius:10px;
+  overflow:hidden;background:#fff}
+.resolve .row{display:flex;align-items:baseline;gap:10px;padding:9px 14px;
+  border-bottom:1px solid var(--line);font-family:var(--mono);font-size:13px;
+  transition:background .14s}
+.resolve .row:last-child{border-bottom:0}
+.resolve .row:hover{background:var(--blue-soft)}
+.resolve .row .k{color:var(--fg-3);font-family:var(--sans);font-size:12.5px;
+  min-width:96px;flex:0 0 auto}
+.resolve .row .v{color:var(--fg);word-break:break-all}
+.resolve .row .v b{color:var(--blue)}
+</style>
+<style>
+/* ===== F 系列主题：与本项目施行密切相关的实用文档 ===== */
+body.fseries{
+  --f-bg:#eef3f9;
+  --f-grid:rgba(31,111,235,.055);
+  background-color:var(--f-bg);
+  background-image:
+    linear-gradient(var(--f-grid) 1px,transparent 1px),
+    linear-gradient(90deg,var(--f-grid) 1px,transparent 1px);
+  background-size:26px 26px;
+}
+body.fseries #toc{background:#e4ecf6;border-right-color:#c8d8ea}
+body.fseries main{padding-top:52px}
+/* 顶部一条明显的标记，说明这是 F 系列 */
+body.fseries::before{
+  content:"F 系列 · 与本项目施行密切相关";
+  position:fixed;top:0;left:0;right:0;z-index:80;
+  padding:5px 14px;font:600 12px/1.5 var(--sans);
+  color:#fff;background:#1f6feb;letter-spacing:.02em;
+  box-shadow:0 1px 6px rgba(31,111,235,.28);
+}
+body.fseries h1{margin-top:6px}
+body.fseries h2 .n{background:#1f6feb}
+/* 正文与卡片：在网格背景上给一层白，保证可读性 */
+body.fseries main>.card,
+body.fseries main>.code-wrap,
+body.fseries main>.out-wrap,
+body.fseries main>table,
+body.fseries main>.mnemonic,
+body.fseries main>.flow,
+body.fseries main>.qa{
+  background-color:#fff;
+}
+body.fseries .card.note{background-color:var(--blue-soft)}
+body.fseries .card.tip{background-color:var(--green-soft)}
+body.fseries .card.warn{background-color:var(--red-soft)}
+body.fseries .card.key{background-color:var(--violet-soft)}
+body.fseries .card.teal{background-color:var(--teal-soft)}
+body.fseries .mnemonic{background-color:var(--amber-soft)}
+body.fseries .code-wrap{background-color:var(--bg-code)}
+body.fseries .out-wrap{background-color:var(--bg-out)}
+/* 移动端：顶部条会挡住目录按钮，把按钮下移 */
+@media (max-width:980px){
+  body.fseries::before{font-size:11px;padding:4px 10px}
+  body.fseries #tocToggle{top:34px}
+  body.fseries main{padding-top:72px}
+  body.fseries #toc{padding-top:80px}
+  body.fseries html{scroll-padding-top:96px}
+}
+@media print{
+  body.fseries{background:#fff}
+  body.fseries::before{position:static;display:block;background:#fff;color:#000;
+    border-bottom:1px solid #999}
+}
+</style>
+<style></style>
+<style>/* ===== 移动端：长路径字符串断行 =====
+/* 长且无空格的串（路径、命令、变量名）在窄屏上必须允许内部断行，
+   否则会把表格和终端块撑得比视口还宽。 */
+@media (max-width:980px){
+  main table th,
+  main table td,
+  main table td code,
+  main table th code,
+  main table td .c,
+  main td,
+  main th{
+    overflow-wrap:anywhere;
+    word-break:break-word;
+  }
+  /* 表头文字允许换行 */
+  main table th{white-space:normal}
+
+  /* 终端块里的提示符与输出 */
+  .term pre,
+  .term .pr,
+  .term .cmd,
+  .term .out,
+  .term .warn,
+  .term .err{
+    overflow-wrap:anywhere;
+    word-break:break-word;
+    white-space:pre-wrap;
+  }
+  /* 行内 code 也别撑宽 */
+  main p code,
+  main li code,
+  main td code,
+  .card code{
+    overflow-wrap:anywhere;
+    word-break:break-word;
+  }
+}
+</style>
+<style>
+/* 星标：标记与本项目施行密切相关的篇目 */
+h1 .star{color:#e0a800;font-size:.62em;vertical-align:super;margin-left:6px;
+  font-weight:700;cursor:help}
+</style>
+<style>/* ===== F 系列：代码区配色（深底亮字 + 高饱和高亮）===== */
+/* ---- 代码块：近黑底，把「这是代码」和浅蓝网格彻底分开 ----
+   注意：F 系列主题里有一条
+     body.fseries main>.code-wrap{background-color:#fff}   (0,2,2)
+   它的优先级高于 body.fseries .code-wrap            (0,2,1)，
+   所以这里必须把选择器写成同样带 main> 的形式，否则白底会赢。 */
+body.fseries main>.code-wrap,
+body.fseries .card .code-wrap,
+body.fseries .code-wrap{
+  background-color:#010409;
+  border:1px solid #33486b;
+  border-left:5px solid #4d8dfb;
+  box-shadow:0 2px 10px rgba(8,15,30,.22);
+}
+body.fseries main>.code-wrap:hover,
+body.fseries .card .code-wrap:hover,
+body.fseries .code-wrap:hover{
+  border-color:#45608f;
+  border-left-color:#7db0ff;
+  box-shadow:0 10px 30px rgba(8,15,30,.34);
+}
+body.fseries .code-wrap .bar{
+  background-color:#0d1526;
+  border-bottom:1px solid #26364f;
+  color:#c6d4e8;
+}
+body.fseries .code-wrap .bar .cp{
+  background-color:#1a2740;border-color:#3a5378;color:#dce8f8;
+}
+body.fseries .code-wrap .bar .cp:hover{
+  background-color:#243454;color:#ffffff;border-color:#5b7cae;
+}
+
+/* ---- 正文：近纯白，和小字号的灰拉开 ---- */
+body.fseries .code-wrap pre{color:#f8fbff;font-weight:500}
+
+/* ---- 高亮色板：全部提到高饱和、高亮 ---- */
+body.fseries .code-wrap pre .hl-k{color:#e2b8ff}   /* 关键字  紫 */
+body.fseries .code-wrap pre .hl-f{color:#8fc4ff}   /* 函数    蓝 */
+body.fseries .code-wrap pre .hl-n{color:#ffb066}   /* 数字    橙 */
+body.fseries .code-wrap pre .hl-s{color:#95f2a8}   /* 字符串  绿 */
+body.fseries .code-wrap pre .hl-p{color:#7ee7ff}   /* 预处理  青 */
+body.fseries .code-wrap pre .hl-c{color:#9fb0c9}   /* 注释    灰蓝 */
+body.fseries .code-wrap pre .hl-b{color:#ff9ec4}   /* 加粗    粉 */
+body.fseries .code-wrap pre .arw{color:#ffd75e}
+body.fseries .code-wrap pre .arw2{color:#8fc4ff}
+body.fseries .code-wrap pre .hl-bad{color:#ff8f8f;font-weight:700}
+body.fseries .code-wrap pre .hl-ok{color:#8dfab0;font-weight:700}
+
+/* ---- 运行结果：比代码再深一档，绿色边条更实 ----
+   同样要带 main> ，压过主题里那条白色的 main>.out-wrap */
+body.fseries main>.out-wrap,
+body.fseries .card .out-wrap,
+body.fseries .out-wrap{
+  background-color:#000206;
+  border:1px solid #26364f;
+  border-left:5px solid #34e07a;
+  box-shadow:0 2px 10px rgba(8,15,30,.20);
+}
+body.fseries main>.out-wrap:hover,
+body.fseries .card .out-wrap:hover,
+body.fseries .out-wrap:hover{
+  border-left-color:#5cf59a;
+  box-shadow:0 10px 26px rgba(8,15,30,.30);
+}
+body.fseries main>.out-wrap .cap,
+body.fseries .out-wrap .cap{
+  background-color:#071019;border-bottom-color:#26364f;color:#9db0c8;
+}
+body.fseries main>.out-wrap pre,
+body.fseries .card .out-wrap pre,
+body.fseries .out-wrap pre{color:#c9f7dc}
+
+/* ---- 终端窗口：同样保证深底（它也可能嵌在 .card 里）---- */
+body.fseries .term,
+body.fseries .card .term,
+body.fseries main>.term{
+  background-color:#010409;
+  border:1px solid #33486b;
+  border-left:5px solid #4d8dfb;
+}
+body.fseries .term:hover,
+body.fseries .card .term:hover{border-left-color:#7db0ff}
+body.fseries .term .tbar,
+body.fseries .card .term .tbar{
+  background-color:#0d1526;border-bottom-color:#26364f;color:#c6d4e8;
+  font-family:var(--mono);font-size:11.5px;
+}
+body.fseries .term pre,
+body.fseries .card .term pre{
+  color:#f8fbff !important;
+  font-family:var(--mono) !important;
+  font-size:13.5px !important;
+  line-height:1.7 !important;
+  background-color:transparent !important;
+  border:0 !important;
+  padding:12px 14px !important;
+  margin:0 !important;
+}
+body.fseries .term .pr{color:#7cf59a}
+body.fseries .term .cmd{color:#ffffff;font-weight:600}
+body.fseries .term .out{color:#cfe0f2}
+body.fseries .term .warn{color:#ffd75e}
+body.fseries .term .err{color:#ff9090}
+
+/* ---- 内嵌小代码片（卡片里的 pre）同步用深底亮字 ---- */
+body.fseries .card pre,
+body.fseries .mnemonic pre,
+body.fseries p pre,
+body.fseries .qa pre,
+body.fseries .cpp-note pre{
+  background-color:#010409 !important;
+  border:1px solid #33486b !important;
+  color:#f8fbff !important;
+}
+body.fseries .card pre .hl-k,
+body.fseries .mnemonic pre .hl-k,
+body.fseries .qa pre .hl-k,
+body.fseries .cpp-note pre .hl-k{color:#e2b8ff}
+body.fseries .card pre .hl-f,
+body.fseries .mnemonic pre .hl-f,
+body.fseries .qa pre .hl-f,
+body.fseries .cpp-note pre .hl-f{color:#8fc4ff}
+body.fseries .card pre .hl-s,
+body.fseries .mnemonic pre .hl-s,
+body.fseries .qa pre .hl-s,
+body.fseries .cpp-note pre .hl-s{color:#95f2a8}
+body.fseries .card pre .hl-c,
+body.fseries .mnemonic pre .hl-c,
+body.fseries .qa pre .hl-c,
+body.fseries .cpp-note pre .hl-c{color:#9fb0c9}
+body.fseries .card pre .hl-n,
+body.fseries .mnemonic pre .hl-n,
+body.fseries .qa pre .hl-n,
+body.fseries .cpp-note pre .hl-n{color:#ffb066}
+body.fseries .card pre .hl-p,
+body.fseries .mnemonic pre .hl-p,
+body.fseries .qa pre .hl-p,
+body.fseries .cpp-note pre .hl-p{color:#7ee7ff}
+
+/* ---- 行内 code：浅底上加深，别发灰 ---- */
+body.fseries code{
+  background:#dbe8f8;border-color:#b6cdea;color:#06357a;font-weight:600;
+}
+
+/* ---- 命令卡片里的小代码片（F01 用的 div.e，不是 pre）---- */
+body.fseries .cmds .c .e{
+  background-color:#010409;border:1px solid #33486b;color:#f8fbff;
+  font-weight:500;
+}
+</style>
+</head>
+<body class="fseries">
+<div id="shell">
+
+<nav id="toc">
+  <h5>目录</h5>
+  <a href="#s1">1 · 绝对路径与相对路径</a>
+  <a href="#s2">2 · 三个特殊符号</a>
+  <a href="#s3">3 · 相对路径「相对于谁」</a>
+  <a href="#s4">4 · 什么是环境变量</a>
+  <a href="#s4b" class="sub">4.1 它和「编译器宏」不是一回事</a>
+  <a href="#s4c" class="sub">4.2 它是怎么工作的</a>
+  <a href="#s5">5 · 最常用的几个环境变量</a>
+  <a href="#s5a" class="sub">5.1 PATH：为什么命令能直接敲</a>
+  <a href="#s5b" class="sub">5.2 TEMP / USERPROFILE：临时文件与个人目录</a>
+  <a href="#s5c" class="sub">5.3 %~dp0：批处理里最重要的一个</a>
+  <a href="#s6">6 · 怎么设置环境变量</a>
+  <a href="#s7">7 · 常见坑</a>
+  <a href="#s8">8 · 另一种宏：VS 的 <code>$(...)</code></a>
+  <a href="#s8a" class="sub">8.1 输出目录里的那串是什么</a>
+  <a href="#s8b" class="sub">8.2 附加包含目录里的 $(SolutionDir)</a>
+  <a href="#s8c" class="sub">8.3 常用属性宏一览</a>
+  <a href="#s8d" class="sub">8.4 和 %环境变量% 的关系</a>
+</nav>
+
+<main>
+<h1>相对文件路径与宏<span class="star" title="与本项目施行密切相关">*</span></h1>
+<p class="sub-title">UME 项目组内部教程 · 08-F02（File）· 与本项目施行密切相关</p>
+<p>
+  <span class="tag">已学：cmd 初步</span>
+  <span class="tag">已学：字符串</span>
+  <span class="tag b">本讲：文件放在哪、怎么找到它</span>
+</p>
+
+<div class="card note">
+  <div class="card-t">为什么这一篇对本项目重要</div>
+  <p>UME 要<b>读取字体文件</b>、加载配置、导出 SVG —— 这些都涉及「文件在哪」。</p>
+  <p>而实际开发中最常遇到的一类怪事就是：</p>
+  <p style="margin-left:14px"><b>「我在 IDE 里跑得好好的，双击 exe 就找不到字体了。」</b></p>
+  <p>原因几乎总是<b>相对路径</b>。这一篇把它讲清楚，很短。</p>
+  <p>文中所有演示均在 Windows 上实际运行核对。</p>
+</div>
+
+<!-- ============================================================ -->
+<h2 id="s1"><span class="n">1</span>绝对路径与相对路径</h2>
+
+<table>
+<thead><tr><th style="width:24%"></th><th>绝对路径</th><th>相对路径</th></tr></thead>
+<tbody>
+<tr><td><b>长相</b></td>
+    <td class="c" style="font-size:12.5px">D:\Path\To\UME\font\NotoSansMongolian-Regular.ttf</td>
+    <td class="c" style="font-size:12.5px">font\NotoSansMongolian-Regular.ttf</td></tr>
+<tr><td><b>含不含盘符</b></td><td>含，从磁盘根开始</td><td>不含</td></tr>
+<tr><td><b>唯一吗</b></td><td><b>唯一</b>，写死了</td><td><b>不唯一</b>，要看你在哪</td></tr>
+<tr><td><b>换台机器</b></td><td><span class="tag r">会失效</span>（盘符可能不同）</td>
+    <td><span class="tag g">通常还能用</span></td></tr>
+<tr><td><b>适合</b></td><td>临时调试、写脚本</td><td><b>项目里正式使用</b></td></tr>
+</tbody>
+</table>
+
+<div class="card key">
+  <div class="card-t">为什么项目里要用相对路径</div>
+  <p>因为绝对路径会写死「你机器上的位置」。同事 clone 到
+  <code>D:\Path\To\UME</code>，你的 <code>D:\Path\To\project</code> 就全废了。</p>
+  <p>相对路径描述的是<b>「相对于项目根目录的位置」</b>，
+  只要项目内部结构不变，换到谁机器上都能用。</p>
+</div>
+
+<!-- ============================================================ -->
+<h2 id="s2"><span class="n">2</span>三个特殊符号</h2>
+
+<p>假设项目结构是这样，你正站在 <code>UME</code> 目录里：</p>
+
+<div class="tree">
+<span class="d">D:\Path\To\UME\</span>          <span class="c">← 当前目录（CWD）</span>
+├─ <span class="d">font\</span>
+│   └─ <span class="f">NotoSansMongolian-Regular.ttf</span>
+├─ <span class="d">web\</span>
+│   └─ <span class="f">UME.html</span>
+├─ <span class="d">report\</span>
+└─ <span class="f">FONT_ANALYSIS.md</span>
+</div>
+
+<div class="resolve">
+  <div class="row"><span class="k">.\ 或 什么都不写</span>
+    <span class="v"><b>当前目录</b> —— <code>font\Noto....ttf</code>
+      等于 <code>.\font\Noto....ttf</code></span></div>
+  <div class="row"><span class="k">..\</span>
+    <span class="v"><b>上一级目录</b> —— <code>..\</code> 就是
+      <code>D:\Path\To\</code></span></div>
+  <div class="row"><span class="k">. （单个点）</span>
+    <span class="v">就是「当前目录」本身</span></div>
+  <div class="row"><span class="k">\ （开头一个反斜杠）</span>
+    <span class="v">当前盘符的<b>根目录</b> —— <code>\Windows</code> 指
+      <code>D:\Windows</code></span></div>
+</div>
+
+<p>所以 <code>..\..\font\x.ttf</code> 的意思是
+「往上两级，再进 font 目录，找 x.ttf」。</p>
+
+<div class="card warn">
+  <div class="card-t">千万别把 <code>\</code> 和 <code>.\</code> 搞混</div>
+  <table style="margin:8px 0 0">
+  <tbody>
+  <tr><td class="c" style="width:26%">.\font\a.ttf</td>
+      <td>当前目录下的 <code>font</code> 文件夹里 → <b>你要的</b></td></tr>
+  <tr><td class="c">\font\a.ttf</td>
+      <td><b>当前盘符根目录</b>下的 <code>font</code> → 通常是
+        <code>D:\font\a.ttf</code>，<b>不是你要的</b></td></tr>
+  </tbody></table>
+  <p style="margin-top:10px">少了那个点，位置会跑到磁盘根目录去 ——
+  这是很难一眼看出的错误。</p>
+</div>
+
+<!-- ============================================================ -->
+<h2 id="s3"><span class="n">3</span>相对路径「相对于谁」</h2>
+
+<p>这是本篇最重要的一点。</p>
+
+<div class="card key">
+  <div class="card-t">结论</div>
+  <p><b>相对路径是相对于「当前工作目录」（CWD），
+  不是相对于 exe 文件所在的位置。</b></p>
+  <p>而 CWD 是<b>「你敲命令时待在哪个目录」</b>。</p>
+</div>
+
+<p>下面这个实验能一次说清。程序只做一件事：打印 CWD 和它自己的路径。</p>
+
+<div class="code-wrap"><div class="bar"><span class="dot r"></span><span class="dot y"></span><span class="dot g"></span><span class="name">打印 CWD 与程序自身路径</span><span class="cp">复制</span></div><pre><span class="hl-p">#include</span> <span class="hl-s">&lt;stdio.h&gt;</span>
+<span class="hl-p">#include</span> <span class="hl-s">&lt;direct.h&gt;</span>       <span class="hl-c">/* Windows 下的 _getcwd */</span>
+
+<span class="hl-k">int</span> <span class="hl-f">main</span>(<span class="hl-k">int</span> argc, <span class="hl-k">char</span> *argv[]) {
+    <span class="hl-k">char</span> buf[<span class="hl-n">4096</span>];
+    <span class="hl-f">_getcwd</span>(buf, <span class="hl-k">sizeof</span>(buf));
+
+    <span class="hl-f">printf</span>(<span class="hl-s">"当前工作目录 (CWD) = %s\n"</span>, buf);
+    <span class="hl-f">printf</span>(<span class="hl-s">"程序自己的路径     = %s\n"</span>, argc &gt; <span class="hl-n">0</span> ? argv[<span class="hl-n">0</span>] : <span class="hl-s">"?"</span>);
+    <span class="hl-k">return</span> <span class="hl-n">0</span>;
+}</pre></div>
+
+<p>把编译出的 <code>path1.exe</code> 放到 <code>build\</code> 里，
+然后在<b>两个不同的目录</b>各运行一次：</p>
+
+<div class="term">
+  <div class="tbar"><span class="d r"></span><span class="d y"></span><span class="d g"></span>
+    <span>在 build 目录里运行</span></div>
+<pre><span class="pr">D:\Path\To\project\build&gt;</span><span class="cmd">path1.exe</span>
+<span class="out">当前工作目录 (CWD) = D:\Path\To\project\build</span>
+<span class="out">程序自己的路径     = D:\Path\To\project\build\path1.exe</span></pre>
+</div>
+
+<div class="term">
+  <div class="tbar"><span class="d r"></span><span class="d y"></span><span class="d g"></span>
+    <span>在上一级目录里运行同一个 exe</span></div>
+<pre><span class="pr">D:\Path\To\project&gt;</span><span class="cmd">build\path1.exe</span>
+<span class="out">当前工作目录 (CWD) = D:\Path\To\project</span>
+<span class="out">程序自己的路径     = D:\Path\To\project\build\path1.exe</span></pre>
+</div>
+
+<p>两次的<b>程序路径一样</b>，但 <b>CWD 不同</b>。
+这说明：CWD 由「你从哪运行」决定，与 exe 放哪无关。</p>
+
+<h4>这会导致什么后果</h4>
+<p>写一个只做一件事的程序：用相对路径打开 <code>data.txt</code>。</p>
+
+<div class="code-wrap"><div class="bar"><span class="dot r"></span><span class="dot y"></span><span class="dot g"></span><span class="name">用相对路径读文件</span><span class="cp">复制</span></div><pre><span class="hl-p">#include</span> <span class="hl-s">&lt;stdio.h&gt;</span>
+
+<span class="hl-k">int</span> <span class="hl-f">main</span>(<span class="hl-k">void</span>) {
+    FILE *fp = <span class="hl-f">fopen</span>(<span class="hl-s">"data.txt"</span>, <span class="hl-s">"r"</span>);      <span class="hl-c">/* 相对路径 */</span>
+    <span class="hl-k">if</span> (fp != <span class="hl-n">NULL</span>) {
+        <span class="hl-k">char</span> line[<span class="hl-n">256</span>];
+        <span class="hl-f">printf</span>(<span class="hl-s">"打开成功，内容:\n"</span>);
+        <span class="hl-k">while</span> (<span class="hl-f">fgets</span>(line, <span class="hl-k">sizeof</span>(line), fp) != <span class="hl-n">NULL</span>) {
+            <span class="hl-f">printf</span>(<span class="hl-s">"  %s"</span>, line);
+        }
+        <span class="hl-f">fclose</span>(fp);
+    } <span class="hl-k">else</span> {
+        <span class="hl-f">printf</span>(<span class="hl-s">"打开 data.txt 失败（当前目录里没有它）\n"</span>);
+    }
+    <span class="hl-k">return</span> <span class="hl-n">0</span>;
+}</pre></div>
+
+<p>把 <code>pathread.exe</code> 放进 <code>build\</code>，
+<code>data.txt</code> 也放在 <code>build\</code>，然后做三次实验：</p>
+
+<div class="term">
+  <div class="tbar"><span class="d r"></span><span class="d y"></span><span class="d g"></span>
+    <span>A · 在 build 目录里运行（data.txt 就在旁边）</span></div>
+<pre><span class="pr">D:\Path\To\project\build&gt;</span><span class="cmd">pathread.exe</span>
+<span class="out">打开成功，内容:</span>
+<span class="out">  hello from build dir</span></pre>
+</div>
+
+<div class="term">
+  <div class="tbar"><span class="d r"></span><span class="d y"></span><span class="d g"></span>
+    <span>B · 在上一级目录里运行同一个 exe（那里没有 data.txt）</span></div>
+<pre><span class="pr">D:\Path\To\project&gt;</span><span class="cmd">build\pathread.exe</span>
+<span class="out">打开 data.txt 失败（当前目录里没有它）</span></pre>
+</div>
+
+<div class="term">
+  <div class="tbar"><span class="d r"></span><span class="d y"></span><span class="d g"></span>
+    <span>C · 把 data.txt 也放到上一级，再在上一级运行同一个 exe</span></div>
+<pre><span class="pr">D:\Path\To\project&gt;</span><span class="cmd">build\pathread.exe</span>
+<span class="out">打开成功，内容:</span>
+<span class="out">  hello from parent dir</span></pre>
+</div>
+
+<div class="card key">
+  <div class="card-t">三次实验说明了什么</div>
+  <p><b>完全相同的 exe，读到的文件却不一样</b> ——
+  因为 <code>"data.txt"</code> 这个相对路径每次都从 <b>CWD</b> 开始找。</p>
+  <p>这正好解释了那个经典现象：</p>
+  <ul>
+    <li><b>IDE 里运行正常</b> —— IDE 通常把 CWD 设成项目目录</li>
+    <li><b>双击 exe 就找不到文件</b> —— CWD 变成了 exe 所在目录</li>
+    <li><b>从命令行运行有时行有时不行</b> —— 取决于你在哪敲命令</li>
+  </ul>
+</div>
+
+<div class="card tip">
+  <div class="card-t">怎么避免</div>
+  <p>三条实用做法：</p>
+  <ol>
+    <li><b>资源文件跟着 exe 一起放</b>（比如统一放 <code>assets\</code>），
+      并约定「程序从自己的目录找资源」。</li>
+    <li><b>Qt 里用资源系统</b>：把文件写进 <code>.qrc</code>，
+      用 <code>:/font/x.ttf</code> 访问。
+      <b>资源被编译进 exe，彻底没有路径问题</b> —— 这是 Qt 项目最省心的做法。</li>
+    <li><b>需要时自己算绝对路径</b>：
+      用 <code>QCoreApplication::applicationDirPath()</code> 拿到 exe 所在目录，
+      再拼上资源子路径。</li>
+  </ol>
+</div>
+
+<!-- ============================================================ -->
+<h2 id="s4"><span class="n">4</span>什么是环境变量</h2>
+
+<div class="card key">
+  <div class="card-t">定义</div>
+  <p><b>环境变量（environment variable）是操作系统为每个程序准备的一批
+  「名字 = 值」的小纸条。</b></p>
+  <p>程序启动时，系统把这一叠纸条交给它；程序想知道什么，
+  就按<b>名字</b>去查<b>值</b>。</p>
+  <p>在 cmd 里，用 <code>%名字%</code> 就能取到值。例如
+  <code>%TEMP%</code> → <code>C:\Users\Your_Username\AppData\Local\Temp</code>。</p>
+</div>
+
+<h4>具体一点：它长什么样</h4>
+<p>在 cmd 里敲 <code>set</code>，会看到几十行「名字=值」，那就是全部环境变量：</p>
+
+<div class="term">
+  <div class="tbar"><span class="d r"></span><span class="d y"></span><span class="d g"></span>
+    <span>set：列出全部</span></div>
+<pre><span class="pr">C:\&gt;</span><span class="cmd">set</span>
+<span class="out">ALLUSERSPROFILE=C:\ProgramData</span>
+<span class="out">APPDATA=C:\Users\Your_Username\AppData\Roaming</span>
+<span class="out">COMPUTERNAME=MY-PC</span>
+<span class="out">PATH=C:\Windows\system32;C:\Windows;...</span>
+<span class="out">TEMP=C:\Users\Your_Username\AppData\Local\Temp</span>
+<span class="out">USERNAME=Your_Username</span>
+<span class="out">...</span>
+
+<span class="pr">C:\&gt;</span><span class="cmd">set TEMP</span>
+<span class="out">TEMP=C:\Users\Your_Username\AppData\Local\Temp</span></pre>
+</div>
+
+<h4>三个关键性质</h4>
+<table>
+<thead><tr><th style="width:22%">性质</th><th>含义</th><th style="width:34%">为什么重要</th></tr></thead>
+<tbody>
+<tr><td><b>① 是「名字→值」的对照</b></td>
+    <td>名字固定，值可以变</td>
+    <td>代码里写名字，就<b>不依赖具体路径</b></td></tr>
+<tr><td><b>② 由系统 / 用户设置</b></td>
+    <td>不在代码里，在系统里</td>
+    <td>换台电脑只改系统设置，<b>代码一个字不用动</b></td></tr>
+<tr><td><b>③ 程序启动时读入</b></td>
+    <td>启动后再改系统设置，<b>已经跑着的程序不知道</b></td>
+    <td>这就是「改了 PATH 必须重开 cmd」的原因</td></tr>
+</tbody>
+</table>
+
+<div class="card tip">
+  <div class="card-t">用一句话说清它的价值</div>
+  <p><b>环境变量是「把会变的东西从代码里搬出去」的标准做法。</b></p>
+  <p>你的程序要用临时目录 —— 不要写死 <code>C:\Users\张三\AppData\...</code>，
+  因为同事的用户名不叫张三。写 <code>%TEMP%</code>，
+  <b>系统会替你填上对的那个</b>。</p>
+</div>
+
+<h3 id="s4b">4.1 它和「编译器宏」不是一回事</h3>
+
+<p>「宏」这个词在不同场合指不同的东西，这是最容易混的地方：</p>
+
+<table>
+<thead><tr><th style="width:24%">场合</th><th>「宏」指的是</th><th style="width:22%">写法</th><th style="width:20%">谁替换它</th></tr></thead>
+<tbody>
+<tr><td><b>命令行 / 操作系统</b></td>
+    <td><b>环境变量</b></td>
+    <td class="c">%PATH%</td>
+    <td>cmd（执行命令前）</td></tr>
+<tr><td><b>Visual Studio（本篇第 8 节）</b></td>
+    <td><b>属性宏</b></td>
+    <td class="c">$(SolutionDir)</td>
+    <td>MSBuild（生成时）</td></tr>
+<tr><td>编译器预处理</td>
+    <td><code>#define</code> 的文本替换</td>
+    <td class="c">#define MAX 100</td>
+    <td>预处理器（编译前）</td></tr>
+</tbody>
+</table>
+
+<div class="card key">
+  <div class="card-t">它们共同的思路</div>
+  <p><b>都是「用一小段符号，代表一段会变的内容」。</b>
+  但<b>由谁替换、什么时候替换、在哪里能写</b>完全不同 ——
+  不能互相通用。</p>
+  <p>本节的 <code>%...%</code> 只在<b>命令行</b>里由 cmd 替换；
+  <code>$(...)</code> 只在 <b>VS 的工程配置</b>里由 MSBuild 替换
+  （见第 8 节）；<code>#define</code> 只在<b>源文件</b>里由预处理器替换。</p>
+</div>
+
+<h3 id="s4c">4.2 它是怎么工作的</h3>
+
+<p>把「设置 → 启动 → 读取 → 替换」这条链走一遍，很多现象就都解释得通了。</p>
+
+<div class="lifecycle">
+  <div class="st"><div class="t">① 设置</div>
+    <div class="d">在「环境变量」对话框里，<br>或 <code>set X=Y</code> 临时设</div></div>
+  <div class="st"><div class="t">② 启动程序</div>
+    <div class="d">你打开 cmd（或 IDE、<br>双击 exe）</div></div>
+  <div class="st"><div class="t">③ 复制一份</div>
+    <div class="d">系统把当时的全部变量<br><b>拷进这个进程</b></div></div>
+  <div class="st"><div class="t">④ 读取 / 替换</div>
+    <div class="d">程序或 cmd 按名字取值<br>（<code>%X%</code> 被替换成值）</div></div>
+</div>
+
+<div class="card key">
+  <div class="card-t">第 ③ 步解释了几乎所有「环境变量怪现象」</div>
+  <ul>
+    <li><b>改了系统设置，已经开着的窗口不生效</b> ——
+      它在第 ② 步就已经把旧的那份拷走了。<b>必须重开。</b></li>
+    <li><b>在窗口里 <code>set X=Y</code>，别的窗口看不到</b> ——
+      只改了当前进程自己那份副本，没写回系统。</li>
+    <li><b>IDE 里能编、命令行不能（或反过来）</b> ——
+      两者是不同时间启动的进程，拿到的可能是不同的两份。</li>
+    <li><b>子进程能继承父进程的环境变量</b> ——
+      cmd 里启动的程序，会拿到 cmd 那一份（加上你临时 set 的）。</li>
+  </ul>
+</div>
+
+<h4>「临时设」与「永久设」的区别</h4>
+<table>
+<thead><tr><th style="width:26%"></th><th>临时（<code>set X=Y</code>）</th><th>永久（对话框里改）</th></tr></thead>
+<tbody>
+<tr><td><b>存在哪</b></td><td>当前进程的内存里</td><td>注册表（系统或用户）</td></tr>
+<tr><td><b>影响范围</b></td><td><b>只有这个窗口</b>及其子进程</td><td>以后所有新进程</td></tr>
+<tr><td><b>关掉窗口后</b></td><td><span class="tag r">消失</span></td><td><span class="tag g">还在</span></td></tr>
+<tr><td><b>适合</b></td><td>试一下能不能跑通</td><td>真正配置开发环境</td></tr>
+</tbody>
+</table>
+
+<h4>程序里怎么读它</h4>
+<p>三种语言读环境变量的写法，可以对照着记：</p>
+
+<div class="code-wrap"><div class="bar"><span class="dot r"></span><span class="dot y"></span><span class="dot g"></span><span class="name">读取环境变量</span><span class="cp">复制</span></div><pre><span class="hl-c">/* C：用 getenv，取不到返回 NULL */</span>
+<span class="hl-k">const</span> <span class="hl-k">char</span> *tmp = <span class="hl-f">getenv</span>(<span class="hl-s">"TEMP"</span>);
+<span class="hl-k">if</span> (tmp != <span class="hl-n">NULL</span>) <span class="hl-f">printf</span>(<span class="hl-s">"临时目录: %s\n"</span>, tmp);
+
+<span class="hl-c">/* cmd 批处理 */</span>
+<span class="hl-f">echo</span> 临时目录: %TEMP%
+
+<span class="hl-c">/* Python */</span>
+<span class="hl-k">import</span> os
+<span class="hl-f">print</span>(os.environ.<span class="hl-f">get</span>(<span class="hl-s">"TEMP"</span>))</pre></div>
+
+<div class="card tip">
+  <div class="card-t">注意 <code>getenv</code> 可能返回 <code>NULL</code></div>
+  <p>这个变量<b>不一定存在</b> —— 别的机器上可能没设。
+  所以一定要判断，否则后面用这个指针就会崩。</p>
+  <p>这和第五讲「<code>malloc</code> 之后要判 <code>NULL</code>」是同一条原则：
+  <b>凡是「可能拿不到」的东西，都要先检查再使用。</b></p>
+</div>
+
+<h4>再看一眼效果</h4>
+<p>在 cmd 里敲这几条，看它替换成什么：</p>
+
+<table>
+<thead><tr><th style="width:26%">场合</th><th>「宏」指的是</th><th>例子</th></tr></thead>
+<tbody>
+<tr><td><b>命令行 / 系统</b></td>
+    <td><b>环境变量</b>：用 <code>%名字%</code> 取它的值</td>
+    <td class="c">%PATH%&nbsp;&nbsp;%TEMP%</td></tr>
+<tr><td>编译器预处理</td>
+    <td><code>#define</code> 定义的文本替换</td>
+    <td class="c">#define MAX_HP 100</td></tr>
+<tr><td>Office / 游戏</td>
+    <td>录好的一串操作，一键重放</td>
+    <td>「宏病毒」说的就是这个</td></tr>
+</tbody>
+</table>
+
+<div class="card key">
+  <div class="card-t">这一篇只讲第一种</div>
+  <p><b>命令行里的「宏」= 环境变量，写法是 <code>%名字%</code>。</b></p>
+  <p>它的核心思想和编译器的宏一样：<b>用一小段符号，
+  代表一段会变的内容</b>。你写 <code>%TEMP%</code>，
+  cmd 会把它替换成实际的临时目录路径。</p>
+  <p>怎么配开发环境、怎么让命令行找到你装的工具 —— 全靠它。</p>
+</div>
+
+<h4>先看一眼效果</h4>
+<p>在 cmd 里敲这几条，看它替换成什么：</p>
+
+<div class="term">
+  <div class="tbar"><span class="d r"></span><span class="d y"></span><span class="d g"></span>
+    <span>看环境变量的实际值</span></div>
+<pre><span class="pr">C:\&gt;</span><span class="cmd">echo %USERPROFILE%</span>
+<span class="out">C:\Users\Your_Username</span>
+
+<span class="pr">C:\&gt;</span><span class="cmd">echo %TEMP%</span>
+<span class="out">C:\Users\Your_Username\AppData\Local\Temp</span>
+
+<span class="pr">C:\&gt;</span><span class="cmd">echo %USERNAME%</span>
+<span class="out">Your_Username</span>
+
+<span class="pr">C:\&gt;</span><span class="cmd">echo %COMPUTERNAME%</span>
+<span class="out">MY-PC</span></pre>
+</div>
+
+<p><code>echo</code> 的作用就是「把后面那串东西打印出来」，
+而 <code>%...%</code> 会先被<b>替换</b>掉，然后才打印。
+所以这个命令最好用来确认「某个变量现在到底是什么」。</p>
+
+<div class="card tip">
+  <div class="card-t">和「相对路径」有什么关系</div>
+  <p>环境变量给的是<b>绝对路径</b>，而且<b>人人不同、换台机器就不同</b>。</p>
+  <p>所以写脚本、写配置时，想引用「我的临时目录」「我装工具的地方」，
+  就<b>用环境变量而不是把路径写死</b> —— 这样换台机器也能跑。
+  这和前面讲的「用相对路径代替绝对路径」是同一个目的：
+  <b>让位置可以变，而代码不用改。</b></p>
+</div>
+
+<!-- ============================================================ -->
+<h2 id="s5"><span class="n">5</span>最常用的几个环境变量</h2>
+
+<table>
+<thead><tr><th style="width:26%">变量</th><th>含义</th><th style="width:30%">典型值</th></tr></thead>
+<tbody>
+<tr><td class="c">%PATH%</td><td><b>去哪找可执行程序</b></td>
+    <td class="c">C:\Windows\system32;...</td></tr>
+<tr><td class="c">%TEMP%</td><td>临时文件目录</td>
+    <td class="c">C:\Users\你\AppData\Local\Temp</td></tr>
+<tr><td class="c">%USERPROFILE%</td><td>当前用户的个人目录</td>
+    <td class="c">C:\Users\Your_Username</td></tr>
+<tr><td class="c">%USERNAME%</td><td>当前用户名</td><td class="c">Your_Username</td></tr>
+<tr><td class="c">%APPDATA%</td><td>程序存配置的地方（漫游）</td>
+    <td class="c">C:\Users\你\AppData\Roaming</td></tr>
+<tr><td class="c">%COMPUTERNAME%</td><td>电脑名</td><td class="c">MY-PC</td></tr>
+<tr><td class="c">%CD%</td><td><b>当前目录</b></td><td class="c">D:\Path\To\project</td></tr>
+</tbody>
+</table>
+
+<h3 id="s5a">5.1 <code>%PATH%</code>：为什么命令能直接敲</h3>
+
+<p>你能直接敲 <code>dir</code>、<code>notepad</code>、<code>python</code>，
+是因为它们<b>在 <code>%PATH%</code> 列出的某个目录里</b>。</p>
+
+<div class="term">
+  <div class="tbar"><span class="d r"></span><span class="d y"></span><span class="d g"></span>
+    <span>PATH 长什么样</span></div>
+<pre><span class="pr">C:\&gt;</span><span class="cmd">echo %PATH%</span>
+<span class="out">C:\Windows\system32;C:\Windows;C:\Windows\System32\Wbem;...</span>
+<span class="warn">↑ 若干条路径，用分号 ; 隔开</span></pre>
+</div>
+
+<p>cmd 收到一个命令名时，会<b>按 <code>%PATH%</code> 里的顺序逐个目录去找</b>
+有没有这个 <code>.exe</code>。找到就运行，全找完都没有就报那句老朋友：</p>
+
+<div class="term">
+  <div class="tbar"><span class="d r"></span><span class="d y"></span><span class="d g"></span>
+    <span>找不到命令时</span></div>
+<pre><span class="pr">C:\&gt;</span><span class="cmd">gcc --version</span>
+<span class="err">'gcc' 不是内部或外部命令，也不是可运行的程序或批处理文件。</span>
+
+<span class="warn">（这通常不是「没装」，而是「装了但没加进 PATH」）</span></pre>
+</div>
+
+<div class="card key">
+  <div class="card-t">这就是配置环境变量的典型场景</div>
+  <p>装了 MinGW / Python / Qt 之后要做的「配置环境变量」，
+  <b>十有八九就是往 <code>%PATH%</code> 里加一条</b> ——
+  让命令行知道「工具装在这儿」。</p>
+  <p>加完<b>必须新开一个 cmd 窗口</b>才生效，见第 7 节的坑。</p>
+</div>
+
+<h4>临时加一条 <code>%PATH%</code></h4>
+<div class="term">
+  <div class="tbar"><span class="d r"></span><span class="d y"></span><span class="d g"></span>
+    <span>只在当前窗口生效</span></div>
+<pre><span class="pr">C:\&gt;</span><span class="cmd">set PATH=D:\Path\To\mingw64\bin;%PATH%</span>
+<span class="warn">         ↑ 新目录放在最前面（优先找到）   ↑ 保留原来的，别忘了 </span>
+
+<span class="pr">C:\&gt;</span><span class="cmd">gcc --version</span>
+<span class="out">gcc (x86_64-posix-seh-rev1, Built by MinGW-Builds project) 13.1.0</span></pre>
+</div>
+
+<div class="card warn">
+  <div class="card-t">注意 <code>;%PATH%</code> 不能漏</div>
+  <p><code>set PATH=D:\...\bin</code> 会<b>把整个 PATH 替换掉</b>，
+  于是 <code>dir</code>、<code>cd</code> 这些也找不到，窗口基本废了。</p>
+  <p><b>想追加就必须写 <code>;%PATH%</code></b> ——
+  在原有值后面接上新的。</p>
+</div>
+
+<h3 id="s5b">5.2 <code>%TEMP%</code> / <code>%USERPROFILE%</code></h3>
+
+<p>这两个在写脚本时特别常用 —— 它们让脚本<b>不依赖具体用户名</b>。</p>
+
+<div class="term">
+  <div class="tbar"><span class="d r"></span><span class="d y"></span><span class="d g"></span>
+    <span>把文件放到临时目录</span></div>
+<pre><span class="pr">C:\&gt;</span><span class="cmd">copy output.log %TEMP%\</span>
+<span class="out">        1 个文件已复制。</span>
+
+<span class="pr">C:\&gt;</span><span class="cmd">cd %USERPROFILE%\Desktop</span>
+<span class="out">（切到当前用户的桌面 —— 不管用户名是什么都对）</span></pre>
+</div>
+
+<table>
+<thead><tr><th style="width:46%">不要这样写</th><th>应该这样写</th></tr></thead>
+<tbody>
+<tr><td class="c">cd C:\Users\Your_Username\Desktop</td>
+    <td class="c">cd %USERPROFILE%\Desktop</td></tr>
+<tr><td class="c">copy a.log C:\Users\你\AppData\Local\Temp\</td>
+    <td class="c">copy a.log %TEMP%\</td></tr>
+</tbody>
+</table>
+
+<p><b>理由一样：把会变的部分（用户名）交给环境变量。</b>
+同事拿到你的脚本，不用改一个字就能跑。</p>
+
+<h3 id="s5c">5.3 <code>%~dp0</code>：批处理里最重要的一个</h3>
+
+<p>写 <code>.bat</code> 脚本时，最难的是「<b>怎么知道脚本自己放在哪</b>」——
+因为用户可能在<b>任何目录</b>下双击运行它。</p>
+
+<p><code>%~dp0</code> 就是答案：<b>它替换成「这个脚本所在的目录」</b>。</p>
+
+<table>
+<thead><tr><th style="width:22%">写法</th><th>替换成</th></tr></thead>
+<tbody>
+<tr><td class="c">%0</td><td>脚本的完整路径</td></tr>
+<tr><td class="c">%~dp0</td><td><b>脚本所在的目录</b>（结尾自带反斜杠）</td></tr>
+<tr><td class="c">%CD%</td><td><b>当前</b>工作目录（不是脚本所在目录！）</td></tr>
+</tbody>
+</table>
+
+<div class="code-wrap"><div class="bar"><span class="dot r"></span><span class="dot y"></span><span class="dot g"></span><span class="name">build.bat：把「脚本所在目录」当成项目根</span><span class="cp">复制</span></div><pre>@echo off
+<span class="hl-c">rem %~dp0 是「本脚本所在目录」—— 不管从哪里运行都对</span>
+<span class="hl-k">cd</span> /d <span class="hl-s">"%~dp0"</span>
+
+<span class="hl-f">echo</span> 项目根目录: %CD%
+<span class="hl-f">gcc</span> -std=c99 src\main.c -o build\app.exe</pre></div>
+
+<div class="out-wrap"><div class="cap">运行结果（从别的目录运行也没问题）</div><pre>项目根目录: D:\Path\To\project
+（编译成功）</pre></div>
+
+<div class="card key">
+  <div class="card-t">为什么这比 <code>%CD%</code> 好</div>
+  <p>用户可能在 <code>C:\</code> 下敲 <code>D:\Path\To\project\build.bat</code>，
+  这时 <code>%CD%</code> 是 <code>C:\</code>，
+  而 <code>%~dp0</code> 仍然是 <code>D:\Path\To\project\</code>。</p>
+  <p>脚本里的相对路径要相对于谁？<b>几乎总是「脚本自己」</b>。
+  所以开头加一句 <code>cd /d "%~dp0"</code> 是批处理的标准起手式 ——
+  这样后面的相对路径就都有了明确基准。</p>
+</div>
+
+<div class="card tip">
+  <div class="card-t">这一段和前面第 3 节连上了</div>
+  <p>第 3 节说过：相对路径相对于<b>当前工作目录（CWD）</b>，
+  而 CWD 是「你在哪敲的命令」，不是「脚本在哪」。</p>
+  <p><code>cd /d "%~dp0"</code> 的作用就是<b>把 CWD 强制设成脚本目录</b>，
+  于是所有相对路径都有了确定的基准。这是最常用的解法。</p>
+</div>
+
+<!-- ============================================================ -->
+<h2 id="s6"><span class="n">6</span>怎么设置环境变量</h2>
+
+<p>两种方式，用途不同。</p>
+
+<h4>① 只在当前窗口生效（临时调试用）</h4>
+<div class="term">
+  <div class="tbar"><span class="d r"></span><span class="d y"></span><span class="d g"></span>
+    <span>set：只影响这个窗口</span></div>
+<pre><span class="pr">C:\&gt;</span><span class="cmd">set MY_ROOT=D:\Path\To\project</span>
+<span class="pr">C:\&gt;</span><span class="cmd">echo %MY_ROOT%</span>
+<span class="out">D:\Path\To\project</span>
+
+<span class="warn">（关掉窗口就没了 —— 适合试一下能不能跑通）</span></pre>
+</div>
+
+<h4>② 永久生效（真正「配置环境变量」）</h4>
+<ol>
+  <li>Win 键搜索「<b>环境变量</b>」→ 选「编辑系统环境变量」</li>
+  <li>点「环境变量」按钮</li>
+  <li>上半部分是<b>当前用户</b>的，下半部分是<b>整台机器</b>的 ——
+    <b>优先改上半部分</b>（不需要管理员权限，也只影响你自己）</li>
+  <li>找到 <code>Path</code>，双击 → 「新建」→ 填目录 → 确定</li>
+</ol>
+
+<div class="card tip">
+  <div class="card-t">建议：把 UME 用到的工具都加进 Path</div>
+  <p>Qt / MinGW 装好后，通常要把它们（或者 Qt 自带的那个
+  「命令提示符」快捷方式）配好。判断标准很简单：</p>
+  <div class="term" style="margin-top:10px">
+    <div class="tbar"><span class="d r"></span><span class="d y"></span><span class="d g"></span>
+      <span>验证是否配好</span></div>
+<pre><span class="pr">C:\&gt;</span><span class="cmd">where gcc</span>
+<span class="out">D:\Path\To\mingw64\bin\gcc.exe</span>
+<span class="warn">（能印出路径就说明 PATH 配对了；印不出来就是没配或没重开窗口）</span></pre>
+  </div>
+</div>
+
+<h4>③ 在脚本里临时设置</h4>
+<div class="code-wrap"><div class="bar"><span class="dot r"></span><span class="dot y"></span><span class="dot g"></span><span class="name">脚本内自己配好环境再干活</span><span class="cp">复制</span></div><pre>@echo off
+<span class="hl-c">rem 只在本脚本运行期间生效，不会污染系统设置</span>
+<span class="hl-f">set</span> PATH=D:\Path\To\mingw64\bin;%PATH%
+<span class="hl-f">set</span> UME_ROOT=%~dp0
+
+<span class="hl-f">gcc</span> -std=c99 "%UME_ROOT%src\main.c" -o "%UME_ROOT%build\app.exe"</pre></div>
+
+<div class="out-wrap"><div class="cap">运行结果</div><pre>（编译成功，退出后 PATH 恢复原样）</pre></div>
+
+<div class="card key">
+  <div class="card-t">为什么项目脚本要自己设 PATH</div>
+  <p>因为<b>不能假设每个同事都配好了环境变量</b>。
+  脚本开头自己设一遍，就「自带环境」了 ——
+  谁拿到都能跑，不用先看一堆配置说明。</p>
+  <p>这也是排查「我这儿能编，他那儿编不了」这类问题的常用手段。</p>
+</div>
+
+<!-- ============================================================ -->
+<h2 id="s7"><span class="n">7</span>常见坑</h2>
+
+<h4>坑 1 · 以为相对路径是相对 exe</h4>
+<div class="code-wrap"><div class="bar"><span class="dot r"></span><span class="dot y"></span><span class="dot g"></span><span class="name">对比</span><span class="cpp-badge">含 C++</span><span class="cp">复制</span></div><pre><span class="hl-c">/* ❌ 想当然：以为从 exe 所在目录找 */</span>
+FILE *fp = <span class="hl-f">fopen</span>(<span class="hl-s">"data.txt"</span>, <span class="hl-s">"r"</span>);   <span class="hl-c">/* 实际是从 CWD 找！ */</span>
+
+<span class="hl-c">/* ✅ 明确从 exe 所在目录找（下面这行是 Qt / C++） */</span>
+QString dir = QCoreApplication::<span class="hl-f">applicationDirPath</span>();
+FILE *fp2 = <span class="hl-f">fopen</span>((dir + <span class="hl-s">"/data.txt"</span>).<span class="hl-f">toUtf8</span>().<span class="hl-f">constData</span>(), <span class="hl-s">"r"</span>);</pre></div>
+
+<h4>坑 2 · 反斜杠被当成转义符</h4>
+<div class="code-wrap"><div class="bar"><span class="dot r"></span><span class="dot y"></span><span class="dot g"></span><span class="name">对比</span><span class="cp">复制</span></div><pre><span class="hl-c">/* ❌ C++ 字符串里 \f 是转义符（换页），\n 是换行 */</span>
+<span class="hl-k">const</span> <span class="hl-k">char</span> *p = <span class="hl-s">"font\NotoSans.ttf"</span>;    <span class="hl-c">/* \N 不是合法转义，\f 是换页！ */</span>
+
+<span class="hl-c">/* ✅ 三种正确写法 */</span>
+<span class="hl-k">const</span> <span class="hl-k">char</span> *a = <span class="hl-s">"font\\NotoSans.ttf"</span>;   <span class="hl-c">/* 双反斜杠 */</span>
+<span class="hl-k">const</span> <span class="hl-k">char</span> *b = <span class="hl-s">"font/NotoSans.ttf"</span>;    <span class="hl-c">/* 正斜杠，Windows 也认 */</span>
+<span class="hl-k">const</span> <span class="hl-k">char</span> *c = <span class="hl-s">R"(font\NotoSans.ttf)"</span>;  <span class="hl-c">/* 原始字符串，C++11 */</span></pre></div>
+<p><b>实用建议：代码里的路径统一用正斜杠 <code>/</code></b>。
+Windows 和 Linux 都认，而且不用转义。</p>
+
+<h4>坑 3 · 改了环境变量但没重开窗口</h4>
+<div class="term">
+  <div class="tbar"><span class="d r"></span><span class="d y"></span><span class="d g"></span>
+    <span>最常见的困惑</span></div>
+<pre><span class="out">（在「环境变量」对话框里加了 Path，点确定）</span>
+<span class="pr">C:\&gt;</span><span class="cmd">gcc --version</span>
+<span class="err">'gcc' 不是内部或外部命令...</span>
+<span class="warn">↑ 明明加了，怎么还不行？</span></pre>
+</div>
+<p><b>原因是：环境变量是 cmd 启动时读进去的，之后就一直用内存里那份。</b>
+你改了系统设置，<b>已经开着的窗口不知道</b>。</p>
+<p><b>解决：关掉 cmd，重新开一个。</b>
+（IDE 也一样 —— 改完环境变量要把 IDE 也重启。）</p>
+
+<h4>坑 4 · 追加 PATH 时忘了 <code>;%PATH%</code></h4>
+<div class="code-wrap"><div class="bar"><span class="dot r"></span><span class="dot y"></span><span class="dot g"></span><span class="name">对比</span><span class="cp">复制</span></div><pre><span class="hl-c">rem ❌ 把整个 PATH 覆盖了，dir / cd 都找不到了</span>
+<span class="hl-f">set</span> PATH=D:\Path\To\mingw64\bin
+
+<span class="hl-c">rem ✅ 追加：旧值放后面，用分号隔开</span>
+<span class="hl-f">set</span> PATH=D:\Path\To\mingw64\bin;%PATH%</pre></div>
+<p><b>记法：<code>set 变量=新值;%变量%</code> 才是「在前面插一条」。</b></p>
+
+<h4>坑 5 · 路径里有空格没加引号</h4>
+<div class="code-wrap"><div class="bar"><span class="dot r"></span><span class="dot y"></span><span class="dot g"></span><span class="name">对比</span><span class="cp">复制</span></div><pre><span class="hl-c">rem ❌ C:\Program Files 里的空格会被当成参数分隔</span>
+<span class="hl-k">cd</span> C:\Program Files\MyTool
+
+<span class="hl-c">rem ✅ 加引号</span>
+<span class="hl-k">cd</span> <span class="hl-s">"C:\Program Files\MyTool"</span>
+
+<span class="hl-c">rem ✅ 环境变量也一样，整体加引号</span>
+<span class="hl-k">cd</span> <span class="hl-s">"%USERPROFILE%\My Documents"</span></pre></div>
+<p>和第一部分讲的路径规则是同一条：<b>只要路径可能含空格，就加引号。</b></p>
+
+<h4>坑 6 · <code>%</code> 忘了配对</h4>
+<div class="code-wrap"><div class="bar"><span class="dot r"></span><span class="dot y"></span><span class="dot g"></span><span class="name">对比</span><span class="cp">复制</span></div><pre><span class="hl-f">echo</span> %TEMP          <span class="hl-c">rem ❌ 只写了一半，cmd 会原样打出来</span>
+<span class="hl-f">echo</span> %TEMP%         <span class="hl-c">rem ✅ 前后都要有 %</span>
+
+<span class="hl-f">echo</span> %%~dp0         <span class="hl-c">rem 在 .bat 里想要「字面的 %」就写两个</span></pre></div>
+
+<h2 id="s8"><span class="n">8</span>另一种宏：VS 的 <code>$(...)</code></h2>
+
+<div class="card note">
+  <div class="card-t">这一节解决两个具体问题</div>
+  <ol>
+    <li>Visual Studio 里 <b>项目 → 属性 → 输出目录</b> 默认写着
+      <code>$(SolutionDir)$(Platform)\$(Configuration)\</code> ——
+      这一串 <code>$(...)$</code> 到底是什么？</li>
+    <li>要包含自己写的头文件，在
+      <b>配置属性 → C/C++ → 附加包含目录</b> 里写的
+      <code>$(SolutionDir)</code> 又是什么？</li>
+  </ol>
+  <p>答案：它们是 <b>MSBuild 的「属性宏」</b> ——
+  和第 4 节的环境变量是<b>同一个思路</b>，但<b>换了一套记号和替换者</b>。</p>
+  <p>本节所有展开结果，都用本机的
+  <b>MSBuild</b>（Visual Studio Community 2026 · 18.10.3）实际跑出来核对。</p>
+</div>
+
+<h3 id="s8a">8.1 输出目录里的那串是什么</h3>
+
+<p>先看 VS 里那个默认值：</p>
+
+<div class="code-wrap"><div class="bar"><span class="dot r"></span><span class="dot y"></span><span class="dot g"></span><span class="name">项目属性 → 输出目录（默认值）</span><span class="cp">复制</span></div><pre><span class="hl-n">$(SolutionDir)$(Platform)\$(Configuration)\</span></pre></div>
+
+<p>它<b>不是</b>一条真实路径，而是<b>四个宏拼起来的式子</b>。
+MSBuild 在生成时把它们各自替换成实际值，拼出一条真路径。</p>
+
+<p>假设解决方案放在 <code>D:\Path\To\UME\</code>，里面有个项目
+<code>UME.vcxproj</code>，当前选的是 <b>Debug | x64</b>。逐个展开：</p>
+
+<table>
+<thead><tr><th style="width:26%">宏</th><th style="width:44%">展开成</th><th>含义</th></tr></thead>
+<tbody>
+<tr><td class="c">$(SolutionDir)</td>
+    <td class="c" style="font-size:12.5px">D:\Path\To\UME\</td>
+    <td><b>解决方案（.sln）所在目录</b>，<b>结尾带反斜杠</b></td></tr>
+<tr><td class="c">$(Platform)</td>
+    <td class="c">x64</td>
+    <td>目标平台（<code>x64</code> / <code>Win32</code> / <code>ARM64</code>）</td></tr>
+<tr><td class="c">$(Configuration)</td>
+    <td class="c">Debug</td>
+    <td>生成配置（<code>Debug</code> / <code>Release</code>）</td></tr>
+<tr><td colspan="3" style="background:#f7f9fc"><b>四个拼起来就是</b> →</td></tr>
+<tr><td class="c">整串展开</td>
+    <td class="c" style="font-size:12.5px">D:\Path\To\UME\x64\Debug\</td>
+    <td><b>这就是 exe 会被放到的目录</b></td></tr>
+</tbody>
+</table>
+
+<div class="out-wrap"><div class="cap">本机实测：把这四个宏交给 MSBuild 打印出来</div><pre>SolutionDir    = [D:\Path\To\UME\]
+Platform       = [x64]
+Configuration  = [Debug]
+OutDir（那串展开后） = [D:\Path\To\UME\x64\Debug\]
+TargetPath           = [D:\Path\To\UME\x64\Debug\UME.exe]</pre></div>
+
+<div class="card key">
+  <div class="card-t">为什么要费劲拼，而不直接写死</div>
+  <p>因为<b>一个项目要同时支持好几种组合</b>：
+  Debug / Release × x64 / Win32，就是 4 种。</p>
+  <p>写死的话得为每种组合各配一遍，改一处要改四处。
+  用宏之后<b>一套式子自动适配所有组合</b>：</p>
+  <table style="margin:8px 0 0">
+  <thead><tr><th style="width:30%">当前选的是</th><th>输出目录自动变成</th></tr></thead>
+  <tbody>
+  <tr><td class="c">Debug | x64</td><td class="c" style="font-size:12.5px">D:\Path\To\UME\x64\Debug\</td></tr>
+  <tr><td class="c">Release | x64</td><td class="c" style="font-size:12.5px">D:\Path\To\UME\x64\Release\</td></tr>
+  <tr><td class="c">Debug | Win32</td><td class="c" style="font-size:12.5px">D:\Path\To\UME\Win32\Debug\</td></tr>
+  </tbody></table>
+  <p style="margin-top:10px"><b>这正是环境变量的那套理由</b>：
+  把会变的部分（配置名、平台名）换成符号，式子就不用改。</p>
+</div>
+
+<div class="card tip">
+  <div class="card-t">实测确认：换个配置，输出目录真的跟着变</div>
+  <p>同一个工程，只把生成配置从 Debug 换成 Release：</p>
+  <table style="margin:8px 0 0">
+  <thead><tr><th style="width:24%">配置</th><th>MSBuild 展开出的 OutDir</th></tr></thead>
+  <tbody>
+  <tr><td class="c">Debug</td><td class="c" style="font-size:12.5px">…\x64\Debug\</td></tr>
+  <tr><td class="c">Release</td><td class="c" style="font-size:12.5px">…\x64\Release\</td></tr>
+  </tbody></table>
+  <p style="margin-top:10px">式子一个字没改，输出目录自己就换了 ——
+  这就是宏的意义。</p>
+</div>
+
+<h4>VS 界面上在哪里改</h4>
+<p><b>顶部菜单 → 项目 → 属性</b>（或右键项目 → 属性），打开属性页：</p>
+<pre style="background:#f2f4f8;border:1px solid var(--line);border-radius:8px;padding:11px 14px;font-family:var(--mono);font-size:12.5px;color:var(--fg);overflow:auto">配置属性
+ └─ 常规
+     ├─ 输出目录            ← $(SolutionDir)$(Platform)\$(Configuration)\
+     └─ 中间目录            ← $(Platform)\$(Configuration)\
+ └─ C/C++
+     └─ 常规
+         └─ 附加包含目录     ← 在这里加 $(SolutionDir)include</pre>
+
+<div class="card warn">
+  <div class="card-t">两个容易踩的点</div>
+  <p><b>① 注意左上角的「配置」下拉框。</b>
+  属性页顶部有 <b>配置</b> 和 <b>平台</b> 两个下拉框，
+  默认可能是「所有配置」。改的时候要想清楚：
+  <b>是只改 Debug，还是所有配置都改？</b>
+  选「所有配置」改一处，四个组合一起生效 —— 通常这才是你要的。</p>
+  <p><b>② 结尾那个反斜杠不能丢。</b>
+  <code>$(SolutionDir)</code> <b>自带</b>结尾反斜杠，
+  所以写 <code>$(SolutionDir)include</code> 就对了；
+  写成 <code>$(SolutionDir)\include</code> 会变成两个反斜杠
+  （Windows 一般能容忍，但不该这么写）。</p>
+</div>
+
+<!-- ============================================================ -->
+<h3 id="s8b">8.2 附加包含目录里的 $(SolutionDir)</h3>
+
+<p>现在回答第二个问题：<b>要包含自己写的头文件，那个 <code>$(SolutionDir)</code> 是什么？</b></p>
+
+<p>它就是<b>上一节那个 <code>$(SolutionDir)</code></b> ——
+解决方案所在目录。<b>同一个宏，在不同地方写，含义完全一样。</b></p>
+
+<h4>先看没有它会怎样</h4>
+<p>假设项目结构是这样：</p>
+
+<div class="tree">
+<span class="d">D:\Path\To\UME\</span>            <span class="c">← 解决方案目录（$(SolutionDir)）</span>
+├─ <span class="f">UME.sln</span>
+├─ <span class="d">UME\</span>                      <span class="c">← 项目目录（$(ProjectDir)）</span>
+│   ├─ <span class="f">UME.vcxproj</span>
+│   └─ <span class="f">main.c</span>
+└─ <span class="d">include\</span>                  <span class="c">← 自己写的头文件放这里</span>
+    └─ <span class="f">font.h</span>
+</div>
+
+<p>在 <code>UME\main.c</code> 里写 <code>#include "font.h"</code>，
+编译器会去<b>哪几个目录</b>找 <code>font.h</code>？</p>
+
+<ul>
+  <li><b>先找 <code>main.c</code> 自己所在的目录</b>，也就是 <code>UME\</code> ——
+    但 <code>font.h</code> 在 <code>include\</code> 里，<b>找不到</b></li>
+  <li>再找「附加包含目录」里列的目录 —— <b>还没配，是空的</b></li>
+  <li>再找系统头文件目录 —— 更不会有</li>
+  <li><b>结果</b>：报 <code>fatal error C1083: 无法打开包括文件: "font.h"</code></li>
+</ul>
+
+<h4>配上它就解决了</h4>
+<div class="code-wrap"><div class="bar"><span class="dot r"></span><span class="dot y"></span><span class="dot g"></span><span class="name">附加包含目录里填</span><span class="cp">复制</span></div><pre><span class="hl-n">$(SolutionDir)include</span>
+
+<span class="hl-c">/* 展开后 = D:\Path\To\UME\include  ← font.h 就在这里 */</span></pre></div>
+
+<div class="out-wrap"><div class="cap">本机实测：MSBuild 展开出的 IncludePath 前两项</div><pre>D:\Path\To\UME\include;  ← 我加的那一条（= $(SolutionDir)include）
+D:\MicrosoftVisualStudio\Community\VC\Tools\MSVC\...\include;  ← VS 自带
+...（后面一串 Windows SDK 的目录）</pre></div>
+
+<p>看第一项：<code>$(SolutionDir)include</code>
+被替换成了 <code>…\_vs_check\include</code>，
+正是解决方案目录下的 <code>include</code> 文件夹。<b>配对了。</b></p>
+
+<div class="card key">
+  <div class="card-t">为什么用 <code>$(SolutionDir)</code> 而不是相对路径</div>
+  <p>因为「附加包含目录」里的<b>相对路径是相对于项目文件（.vcxproj）</b>，
+  不是相对于解决方案。<b>这个基准很难记住，而且换个位置就错。</b></p>
+  <p>用 <code>$(SolutionDir)</code> 之后，<b>基准写明白了、一眼能看懂</b>，
+  而且项目挪到别的盘、别的机器上依然正确。</p>
+  <p>它的作用和第 3 节讲的 <code>%~dp0</code> 是同一招：
+  <b>把「相对于谁」这件事显式写出来，不靠默认约定。</b></p>
+</div>
+
+<h4>要加多个目录怎么写</h4>
+<div class="code-wrap"><div class="bar"><span class="dot r"></span><span class="dot y"></span><span class="dot g"></span><span class="name">用分号隔开</span><span class="cp">复制</span></div><pre><span class="hl-n">$(SolutionDir)include;$(SolutionDir)src\core;D:\third_party\zlib\include</span>
+
+<span class="hl-c">/* 在 VS 界面里：双击那一行 → 点右侧的「...」→ 一行一个目录 → 确定
+   VS 会自动帮你拼成分号分隔的形式，不用手打分号 */</span></pre></div>
+
+<div class="card tip">
+  <div class="card-t">改完要重新生成</div>
+  <p>改「附加包含目录」之后，<b>已经编译过的 .obj 不会自动重编</b> ——
+  因为 VS 不认为「头文件搜索路径变了」算源文件变了。</p>
+  <p>所以改完包含目录，习惯性做一次
+  <b>生成 → 重新生成解决方案</b>，别只点「生成」。</p>
+  <p>否则会出现「明明改对了却还是报找不到头文件」的假象。</p>
+</div>
+
+<!-- ============================================================ -->
+<h3 id="s8c">8.3 常用属性宏一览</h3>
+
+<p>下面这些值全部是<b>本机 MSBuild 实际展开</b>出来的，
+用同一个演示工程（解决方案在 <code>…\_vs_check\</code>，
+项目在 <code>…\_vs_check\Demo\</code>，配置 Debug | x64）。</p>
+
+<h4>目录与文件名</h4>
+<table>
+<thead><tr><th style="width:24%">宏</th><th style="width:46%">实测展开</th><th>含义</th></tr></thead>
+<tbody>
+<tr><td class="c">$(SolutionDir)</td>
+    <td class="c" style="font-size:12px">…\_vs_check\</td>
+    <td><b>.sln 所在目录</b>（结尾带 <code>\</code>）</td></tr>
+<tr><td class="c">$(SolutionPath)</td>
+    <td class="c" style="font-size:12px">…\_vs_check\Demo.sln</td>
+    <td>.sln 的完整路径</td></tr>
+<tr><td class="c">$(SolutionName)</td>
+    <td class="c">Demo</td><td>.sln 的文件名（不含扩展名）</td></tr>
+<tr><td class="c">$(ProjectDir)</td>
+    <td class="c" style="font-size:12px">…\_vs_check\Demo\</td>
+    <td><b>.vcxproj 所在目录</b>（结尾带 <code>\</code>）</td></tr>
+<tr><td class="c">$(ProjectPath)</td>
+    <td class="c" style="font-size:12px">…\_vs_check\Demo\Demo.vcxproj</td>
+    <td>项目文件的完整路径</td></tr>
+<tr><td class="c">$(ProjectName)</td>
+    <td class="c">Demo</td><td>项目名</td></tr>
+<tr><td class="c">$(ProjectFileName)</td>
+    <td class="c">Demo.vcxproj</td><td>项目文件名（含扩展名）</td></tr>
+<tr><td class="c">$(ProjectExt)</td>
+    <td class="c">.vcxproj</td><td>项目文件扩展名</td></tr>
+</tbody>
+</table>
+
+<h4>配置与平台</h4>
+<table>
+<thead><tr><th style="width:24%">宏</th><th style="width:46%">实测展开</th><th>含义</th></tr></thead>
+<tbody>
+<tr><td class="c">$(Configuration)</td><td class="c">Debug</td>
+    <td>当前生成配置（<code>Debug</code> / <code>Release</code>）</td></tr>
+<tr><td class="c">$(Platform)</td><td class="c">x64</td>
+    <td>当前平台（<code>x64</code> / <code>Win32</code> / <code>ARM64</code>）</td></tr>
+<tr><td class="c">$(PlatformShortName)</td><td class="c">x64</td>
+    <td>平台短名（和 <code>$(Platform)</code> 多数情况一样）</td></tr>
+<tr><td class="c">$(PlatformToolset)</td><td class="c">v143</td>
+    <td>用哪套编译工具（VS 2022 是 v143）</td></tr>
+</tbody>
+</table>
+
+<h4>输出</h4>
+<table>
+<thead><tr><th style="width:24%">宏</th><th style="width:46%">实测展开</th><th>含义</th></tr></thead>
+<tbody>
+<tr><td class="c">$(OutDir)</td>
+    <td class="c" style="font-size:12px">…\_vs_check\x64\Debug\</td>
+    <td><b>最终产物放哪</b>（就是 8.1 那串）</td></tr>
+<tr><td class="c">$(IntDir)</td>
+    <td class="c" style="font-size:12px">x64\Debug\</td>
+    <td>中间文件（<code>.obj</code>）放哪</td></tr>
+<tr><td class="c">$(TargetDir)</td>
+    <td class="c" style="font-size:12px">…\_vs_check\x64\Debug\</td>
+    <td>目标文件所在目录</td></tr>
+<tr><td class="c">$(TargetPath)</td>
+    <td class="c" style="font-size:12px">…\x64\Debug\Demo.exe</td>
+    <td><b>目标文件的完整路径</b></td></tr>
+<tr><td class="c">$(TargetName)</td><td class="c">Demo</td>
+    <td>目标文件名（不含扩展名）</td></tr>
+<tr><td class="c">$(TargetExt)</td><td class="c">.exe</td>
+    <td>目标文件扩展名</td></tr>
+</tbody>
+</table>
+
+<h4>VS 自己的位置</h4>
+<table>
+<thead><tr><th style="width:24%">宏</th><th style="width:46%">实测展开</th><th>含义</th></tr></thead>
+<tbody>
+<tr><td class="c">$(VCTargetsPath)</td>
+    <td class="c" style="font-size:12px">D:\…\MSBuild\Microsoft\VC\v180\</td>
+    <td>VS 的 C++ 生成规则放在哪</td></tr>
+<tr><td class="c">$(VisualStudioVersion)</td><td class="c">18.0</td>
+    <td>VS 主版本号</td></tr>
+<tr><td class="c">$(MSBuildToolsVersion)</td><td class="c">Current</td>
+    <td>MSBuild 工具集版本</td></tr>
+</tbody>
+</table>
+
+<h4>两个必须知道的行为</h4>
+
+<div class="card key">
+  <div class="card-t">① 没有的宏会展开成「空」，不会报错</div>
+  <p>实测：写一个不存在的 <code>$(NO_SUCH_MACRO_XYZ)</code>，
+  MSBuild 不报错，直接替换成<b>空字符串</b>：</p>
+  <div class="out-wrap" style="margin-top:10px"><div class="cap">实测</div><pre>不存在的宏 = []</pre></div>
+  <p style="margin-top:10px"><b>这很危险</b>：如果宏名打错了，
+  路径会静默地少一段，你只会看到「找不到文件」，
+  而不会看到「宏名拼错」。</p>
+  <p><b>所以路径拼不对时，第一件事是怀疑宏名拼写。</b>
+  VS 属性页里有个「宏 &gt;&gt;」按钮，可以列出所有可用宏、
+  并显示当前值 —— 拿它对照最省事。</p>
+</div>
+
+<div class="card key">
+  <div class="card-t">② 没有 .sln 时，$(SolutionDir) 会退化成项目目录</div>
+  <p>实测：直接用 MSBuild 生成单个 <code>.vcxproj</code>（没有 <code>.sln</code>）时：</p>
+  <table style="margin:8px 0 0">
+  <thead><tr><th style="width:34%">情况</th><th>$(SolutionDir)</th></tr></thead>
+  <tbody>
+  <tr><td>有 .sln</td>
+      <td class="c" style="font-size:12px">…\_vs_check\&nbsp;&nbsp;<span class="tag b">.sln 所在</span></td></tr>
+  <tr><td>没有 .sln</td>
+      <td class="c" style="font-size:12px">…\_vs_check\Demo\&nbsp;&nbsp;<span class="tag y">退化成项目目录</span></td></tr>
+  </tbody></table>
+  <p style="margin-top:10px">所以<b>在 VS 里正常打开解决方案时它是可靠的</b>；
+  但如果你绕过 .sln 单独编译项目，含义就变了 ——
+  这时要用 <code>$(ProjectDir)</code> 才稳。</p>
+</div>
+
+<div class="card warn">
+  <div class="card-t">顺带一个会遇到的报错</div>
+  <p>如果你在命令行用 MSBuild 指定了一个<b>解决方案里没配置过</b>的平台，
+  会直接失败（本机实测）：</p>
+  <div class="out-wrap" style="margin-top:10px"><div class="cap">实测</div><pre>error MSB4126: 指定的解决方案配置"Debug|Win32"无效。
+请使用 Configuration 和 Platform 属性指定有效的解决方案配置。</pre></div>
+  <p style="margin-top:10px">意思是「<b>这个解决方案里没有 Debug|Win32 这个组合</b>」。
+  在 VS 里对应的是顶部工具栏那两个下拉框 ——
+  配置管理器里没建的组合，命令行也编不了。</p>
+</div>
+
+<!-- ============================================================ -->
+<h3 id="s8d">8.4 它和 <code>%环境变量%</code> 的关系</h3>
+
+<p>这两套宏最容易混。一张表看清：</p>
+
+<table>
+<thead><tr><th style="width:20%"></th><th><code>%名字%</code></th><th><code>$(名字)</code></th></tr></thead>
+<tbody>
+<tr><td><b>叫什么</b></td><td>环境变量</td><td>MSBuild 属性宏</td></tr>
+<tr><td><b>谁替换</b></td><td>cmd</td><td>MSBuild</td></tr>
+<tr><td><b>什么时候</b></td><td>敲命令执行前</td><td>生成项目时</td></tr>
+<tr><td><b>在哪写有效</b></td><td>cmd 里、<code>.bat</code> 里</td>
+    <td><b>VS 属性页、<code>.vcxproj</code> 里</b></td></tr>
+<tr><td><b>典型例子</b></td><td class="c">%PATH%</td><td class="c">$(SolutionDir)</td></tr>
+<tr><td><b>互相能换吗</b></td>
+    <td colspan="2"><span class="tag r">不能</span> ——
+      在 cmd 里 <code>%SolutionDir%</code> 是空的；
+      在 VS 属性页里 <code>$(PATH)</code> 也取不到你想的那个 PATH</td></tr>
+</tbody>
+</table>
+
+<div class="card key">
+  <div class="card-t">但有一处它们确实相通</div>
+  <p><b>MSBuild 能读环境变量</b>。实测：在 <code>.vcxproj</code> 里写
+  <code>$(TEMP)</code>、<code>$(PATH)</code>，MSBuild 会把它们
+  <b>当成属性名去找</b> —— 找不到同名属性时，就<b>去环境变量里取</b>：</p>
+  <div class="out-wrap" style="margin-top:10px"><div class="cap">实测</div><pre>PATH 前 60 字 = [C:\Windows\system32;C:\Windows;C:\Windows\System32\Wbem;C:\W]
+TEMP          = [C:\Users\Your_Username\AppData\Local\Temp]
+USERPROFILE   = [C:\Users\Your_Username]</pre></div>
+  <p style="margin-top:10px">所以<b>环境变量是一种「兜底的宏」</b>：
+  实在没有同名属性时，MSBuild 会去环境里找。</p>
+  <p><b>实用价值</b>：如果你想让工程配置跟着一个环境变量走
+  （比如团队里每个人把第三方库放在不同地方），
+  可以设一个 <code>UME_ROOT</code>，然后在属性页里写
+  <code>$(UME_ROOT)include</code> —— 每个人各自设自己的，工程文件不用改。</p>
+</div>
+
+<div class="card tip">
+  <div class="card-t">怎么快速查一个宏现在是什么值</div>
+  <p>VS 属性页里改「附加包含目录」这类字段时，
+  输入框<b>右侧有个「宏 &gt;&gt;」按钮</b>。</p>
+  <p>点开它会列出<b>所有可用宏 + 当前展开值</b>，
+  还可以双击插入。想确认 <code>$(SolutionDir)</code>
+  在你机器上到底是什么，这是最快的办法。</p>
+  <p>另外，改完属性页 <b>VS 会立刻把宏展开显示在下方预览里</b>，
+  不用编译就能看到结果。</p>
+</div>
+
+<h4>本节的结论，压成三条</h4>
+<div class="card key">
+  <ol>
+    <li><b><code>$(...)</code> 是 MSBuild 的属性宏，不是环境变量。</b>
+      在 VS 的工程配置里用，由 MSBuild 在生成时替换。</li>
+    <li><b><code>$(SolutionDir)</code> = .sln 所在目录（自带结尾反斜杠）。</b>
+      输出目录那串靠它 + <code>$(Platform)</code> +
+      <code>$(Configuration)</code> 拼出「哪个配置放哪」；
+      附加包含目录靠它把「自己写的头文件在哪」写清楚。</li>
+    <li><b>宏名写错不报错，只会静默变成空串</b> ——
+      路径找不到时，先用属性页的「宏 &gt;&gt;」核对拼写。</li>
+  </ol>
+</div>
+
+<div class="card key">
+  <div class="card-t">这一篇要记住的四件事</div>
+  <ol>
+    <li><b>相对路径相对于「当前工作目录」（CWD）</b>，
+      不是相对于 exe 所在位置 —— 这是大多数「找不到文件」的根因。</li>
+    <li><b><code>.\</code> 是当前目录，<code>..\</code> 是上一级</b>；
+      别把 <code>\font</code> 当成 <code>.\font</code>。</li>
+    <li><b>代码里的路径用正斜杠 <code>/</code></b>，
+      不用转义，跨平台都能认。</li>
+    <li><b>命令行里的「宏」就是环境变量</b>（<code>%PATH%</code>、<code>%TEMP%</code>），
+      用它代替写死的路径；<code>%~dp0</code> 是脚本里最重要那个。</li>
+  </ol>
+</div>
+
+<div class="card note">
+  <div class="card-t">下一步</div>
+  <p>你已经会敲命令、也知道文件在哪了。下一个问题是：</p>
+  <p><b>「<code>g++ main.cpp -o main.exe</code> 这一行，到底做了什么？」</b>
+  为什么有时候报 <code>undefined reference</code>？
+  <code>#include</code> 是把文件内容粘进来吗？
+  为什么头文件里不能写函数体？</p>
+  <p>08-F03《编译与链接、头文件与库》就讲这些 ——
+  理解了它，编译报错就不再是天书。</p>
+</div>
+
+<footer>
+UME 项目组内部教程 · 08-F02（File）《相对文件路径与宏》<br>
+路径演示中的 CWD 行为、文件打开成败、环境变量取值与 <code>%~dp0</code> 替换均在 Windows 上实际运行核对；
+代码示例以 <b>Consolas</b> 等宽字体呈现。
+</footer>
+</main>
+</div>
+
+<script>
+/* 目录滚动高亮 */
+(function(){
+  const links = [...document.querySelectorAll('#toc a')];
+  const targets = links.map(a => document.querySelector(a.getAttribute('href'))).filter(Boolean);
+  const setOn = id => links.forEach(a => a.classList.toggle('on', a.getAttribute('href') === '#'+id));
+  const io = new IntersectionObserver(es => {
+    const vis = es.filter(e => e.isIntersecting)
+                  .sort((a,b) => a.boundingClientRect.top - b.boundingClientRect.top);
+    if (vis[0]) setOn(vis[0].target.id);
+  }, { rootMargin:'-8% 0px -72% 0px', threshold:0 });
+  targets.forEach(t => io.observe(t));
+})();
+
+/* 复制按钮 */
+(function(){
+  document.querySelectorAll('.code-wrap').forEach(box => {
+    const btn = box.querySelector('.cp');
+    const pre = box.querySelector('pre');
+    if (!btn || !pre) return;
+    btn.addEventListener('click', async () => {
+      const text = pre.textContent;
+      try { await navigator.clipboard.writeText(text); }
+      catch (e) {
+        const ta = document.createElement('textarea');
+        ta.value = text; document.body.appendChild(ta);
+        ta.select(); document.execCommand('copy'); ta.remove();
+      }
+      const old = btn.textContent;
+      btn.textContent = '已复制 ✓';
+      setTimeout(() => { btn.textContent = old; }, 1200);
+    });
+  });
+})();
+</script>
+<script>
+/* 移动端：生成「目录」按钮，点击呼出/收起侧滑目录 */
+(function(){
+  var toc = document.getElementById('toc');
+  if (!toc) return;
+  var btn = document.createElement('button');
+  btn.id = 'tocToggle';
+  btn.type = 'button';
+  btn.setAttribute('aria-controls','toc');
+  btn.textContent = '目录';
+  document.body.appendChild(btn);
+
+  function setOpen(on){
+    toc.classList.toggle('open', on);
+    document.body.classList.toggle('toc-open', on);
+    btn.setAttribute('aria-expanded', on ? 'true' : 'false');
+    btn.textContent = on ? '收起' : '目录';
+  }
+  btn.addEventListener('click', function(){
+    setOpen(!toc.classList.contains('open'));
+  });
+  /* 点目录里的链接后自动收起；点遮罩（#toc 之外的区域）也收起 */
+  toc.addEventListener('click', function(e){
+    if (e.target.closest('a')) setOpen(false);
+  });
+  document.addEventListener('click', function(e){
+    if (!toc.classList.contains('open')) return;
+    if (e.target === toc || toc.contains(e.target) || e.target === btn) return;
+    setOpen(false);
+  });
+  document.addEventListener('keydown', function(e){
+    if (e.key === 'Escape') setOpen(false);
+  });
+  /* 窄屏进入页面时默认收起，宽屏则清掉状态 */
+  function sync(){ if (window.innerWidth > 980) setOpen(false); }
+  window.addEventListener('resize', sync);
+  sync();
+})();
+</script>
+</body>
+</html>

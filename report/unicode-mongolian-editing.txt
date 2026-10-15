@@ -1,0 +1,237 @@
+================================================================================================
+蒙文 U+1800–U+18AF 编辑行为验证（严格实现 UAX #29 / UAX #14）
+================================================================================================
+规则数据: UCD 18.0.0  GraphemeBreakProperty / LineBreak / DerivedJoiningType
+
+-- 第 1 部分：UAX #29 字素簇（光标/退格/选取的最小单位） --
+用例                      码位数      字素簇  字素簇切分
+------------------------------------------------------------------------------------------------
+纯字母词 mongol               6        6  [逐码位] 182E | 1823 | 1829 | 182D | 1823 | 182F
+FVS1 附于词尾                 7        6  [合并] 182E | 1823 | 1829 | 182D | 1823 | 182F+180B
+FVS1 夹在词中                 7        6  [合并] 182E+180B | 1823 | 1829 | 182D | 1823 | 182F
+FVS2 夹在词中                 7        6  [合并] 182E+180C | 1823 | 1829 | 182D | 1823 | 182F
+FVS4 夹在词中                 7        6  [合并] 182E+180F | 1823 | 1829 | 182D | 1823 | 182F
+NIRUGU 连接两词              12       12  [逐码位] 182E | 1823 | 1829 | 182D | 1823 | 182F | 180A | 1830 | 1820 | 1836 | 1822 | 1828
+MVS 元音分隔                 12       12  [逐码位] 182E | 1823 | 1829 | 182D | 1823 | 182F | 180E | 1830 | 1820 | 1836 | 1822 | 1828
+空格分隔两词                   12       12  [逐码位] 182E | 1823 | 1829 | 182D | 1823 | 182F | 0020 | 1830 | 1820 | 1836 | 1822 | 1828
+蒙文逗号 U+1802              12       12  [逐码位] 182E | 1823 | 1829 | 182D | 1823 | 182F | 1802 | 1830 | 1820 | 1836 | 1822 | 1828
+蒙文句号 U+1803              12       12  [逐码位] 182E | 1823 | 1829 | 182D | 1823 | 182F | 1803 | 1830 | 1820 | 1836 | 1822 | 1828
+蒙文冒号 U+1804              12       12  [逐码位] 182E | 1823 | 1829 | 182D | 1823 | 182F | 1804 | 1830 | 1820 | 1836 | 1822 | 1828
+Sibe 边界符 U+1807          12       12  [逐码位] 182E | 1823 | 1829 | 182D | 1823 | 182F | 1807 | 1830 | 1820 | 1836 | 1822 | 1828
+蒙文数字                      3        3  [逐码位] 1810 | 1811 | 1812
+字母+数字                     8        8  [逐码位] 182E | 1823 | 1829 | 182D | 1823 | 182F | 1810 | 1811
+Baluda 组合                 2        1  [合并] 1887+1885
+Dagalga(ccc228)           2        1  [合并] 1889+18A9
+ZWNJ 分隔                  12       11  [合并] 182E | 1823 | 1829 | 182D | 1823 | 182F+200C | 1830 | 1820 | 1836 | 1822 | 1828
+
+-- 第 2 部分：UAX #14 断行机会（竖排列宽换行点） --
+用例                      码位数       断行机会  断行点（码位索引）
+------------------------------------------------------------------------------------------------
+纯字母词 mongol               6          0  无
+FVS1 附于词尾                 7          0  无
+FVS1 夹在词中                 7          0  无
+FVS2 夹在词中                 7          0  无
+FVS4 夹在词中                 7          0  无
+NIRUGU 连接两词              12          0  无
+MVS 元音分隔                 12          0  无
+空格分隔两词                   12          1  7
+蒙文逗号 U+1802              12          1  7
+蒙文句号 U+1803              12          1  7
+蒙文冒号 U+1804              12          1  6
+Sibe 边界符 U+1807          12          0  无
+蒙文数字                      3          0  无
+字母+数字                     8          0  无
+Baluda 组合                 2          0  无
+Dagalga(ccc228)           2          0  无
+ZWNJ 分隔                  12          0  无
+
+================================================================================================
+-- 第 3 部分：U+1800–U+18AF 的 LineBreak / GCB 属性全表（非 Other 者） --
+================================================================================================
+码位         名称                                     gc   jt   LB   GCB           编辑含义
+------------------------------------------------------------------------------------------------
+U+1800     BIRGA                                  Po   U    AL   Other         LB=AL：视作字母，其后可断
+U+1801     ELLIPSIS                               Po   U    AL   Other         LB=AL
+U+1802     COMMA                                  Po   U    EX   Other         LB=EX：行首禁止（禁则处理）
+U+1803     FULL STOP                              Po   U    EX   Other         LB=EX：行首禁止
+U+1804     COLON                                  Po   U    BA   Other         LB=BA：其后可断
+U+1805     FOUR DOTS                              Po   U    BA   Other         LB=BA：其后可断
+U+1806     TODO SOFT HYPHEN                       Pd   U    BB   Other         LB=BB：其前可断
+U+1807     SIBE SYLLABLE BOUNDARY MARKER          Po   D    AL   Other         LB=AL 且 JT=D：参与连写，标点但不断行
+U+1808     MANCHU COMMA                           Po   U    EX   Other         LB=EX：行首禁止
+U+1809     MANCHU FULL STOP                       Po   U    EX   Other         LB=EX：行首禁止
+U+180A     NIRUGU                                 Po   C    AL   Other         LB=AL 且 JT=C：引起连接，强制前后连写
+U+180B     FREE VARIATION SELECTOR ONE            Mn   T    CM   Extend        LB=CM 且 JT=T：黏附前字，不占位，光标应跳过
+U+180C     FREE VARIATION SELECTOR TWO            Mn   T    CM   Extend        LB=CM 且 JT=T：同上
+U+180D     FREE VARIATION SELECTOR THREE          Mn   T    CM   Extend        LB=CM 且 JT=T：同上
+U+180E     VOWEL SEPARATOR                        Cf   U    GL   Control       LB=GL：不换行黏合，两侧均不得断行；GCB=Control
+U+180F     FREE VARIATION SELECTOR FOUR           Mn   T    CM   Extend        LB=CM 且 JT=T：同上
+U+1810     DIGIT ZERO                             Nd   U    NU   Other         LB=NU：数字，与相邻字母/数字不断行
+U+1811     DIGIT ONE                              Nd   U    NU   Other         
+U+1812     DIGIT TWO                              Nd   U    NU   Other         
+U+1813     DIGIT THREE                            Nd   U    NU   Other         
+U+1814     DIGIT FOUR                             Nd   U    NU   Other         
+U+1815     DIGIT FIVE                             Nd   U    NU   Other         
+U+1816     DIGIT SIX                              Nd   U    NU   Other         
+U+1817     DIGIT SEVEN                            Nd   U    NU   Other         
+U+1818     DIGIT EIGHT                            Nd   U    NU   Other         
+U+1819     DIGIT NINE                             Nd   U    NU   Other         
+U+1820     LETTER A                               Lo   D    AL   Other         
+U+1821     LETTER E                               Lo   D    AL   Other         
+U+1822     LETTER I                               Lo   D    AL   Other         
+U+1823     LETTER O                               Lo   D    AL   Other         
+U+1824     LETTER U                               Lo   D    AL   Other         
+U+1825     LETTER OE                              Lo   D    AL   Other         
+U+1826     LETTER UE                              Lo   D    AL   Other         
+U+1827     LETTER EE                              Lo   D    AL   Other         
+U+1828     LETTER NA                              Lo   D    AL   Other         
+U+1829     LETTER ANG                             Lo   D    AL   Other         
+U+182A     LETTER BA                              Lo   D    AL   Other         
+U+182B     LETTER PA                              Lo   D    AL   Other         
+U+182C     LETTER QA                              Lo   D    AL   Other         
+U+182D     LETTER GA                              Lo   D    AL   Other         
+U+182E     LETTER MA                              Lo   D    AL   Other         
+U+182F     LETTER LA                              Lo   D    AL   Other         
+U+1830     LETTER SA                              Lo   D    AL   Other         
+U+1831     LETTER SHA                             Lo   D    AL   Other         
+U+1832     LETTER TA                              Lo   D    AL   Other         
+U+1833     LETTER DA                              Lo   D    AL   Other         
+U+1834     LETTER CHA                             Lo   D    AL   Other         
+U+1835     LETTER JA                              Lo   D    AL   Other         
+U+1836     LETTER YA                              Lo   D    AL   Other         
+U+1837     LETTER RA                              Lo   D    AL   Other         
+U+1838     LETTER WA                              Lo   D    AL   Other         
+U+1839     LETTER FA                              Lo   D    AL   Other         
+U+183A     LETTER KA                              Lo   D    AL   Other         
+U+183B     LETTER KHA                             Lo   D    AL   Other         
+U+183C     LETTER TSA                             Lo   D    AL   Other         
+U+183D     LETTER ZA                              Lo   D    AL   Other         
+U+183E     LETTER HAA                             Lo   D    AL   Other         
+U+183F     LETTER ZRA                             Lo   D    AL   Other         
+U+1840     LETTER LHA                             Lo   D    AL   Other         
+U+1841     LETTER ZHI                             Lo   D    AL   Other         
+U+1842     LETTER CHI                             Lo   D    AL   Other         
+U+1843     LETTER TODO LONG VOWEL SIGN            Lm   D    AL   Other         
+U+1844     LETTER TODO E                          Lo   D    AL   Other         
+U+1845     LETTER TODO I                          Lo   D    AL   Other         
+U+1846     LETTER TODO O                          Lo   D    AL   Other         
+U+1847     LETTER TODO U                          Lo   D    AL   Other         
+U+1848     LETTER TODO OE                         Lo   D    AL   Other         
+U+1849     LETTER TODO UE                         Lo   D    AL   Other         
+U+184A     LETTER TODO ANG                        Lo   D    AL   Other         
+U+184B     LETTER TODO BA                         Lo   D    AL   Other         
+U+184C     LETTER TODO PA                         Lo   D    AL   Other         
+U+184D     LETTER TODO QA                         Lo   D    AL   Other         
+U+184E     LETTER TODO GA                         Lo   D    AL   Other         
+U+184F     LETTER TODO MA                         Lo   D    AL   Other         
+U+1850     LETTER TODO TA                         Lo   D    AL   Other         
+U+1851     LETTER TODO DA                         Lo   D    AL   Other         
+U+1852     LETTER TODO CHA                        Lo   D    AL   Other         
+U+1853     LETTER TODO JA                         Lo   D    AL   Other         
+U+1854     LETTER TODO TSA                        Lo   D    AL   Other         
+U+1855     LETTER TODO YA                         Lo   D    AL   Other         
+U+1856     LETTER TODO WA                         Lo   D    AL   Other         
+U+1857     LETTER TODO KA                         Lo   D    AL   Other         
+U+1858     LETTER TODO GAA                        Lo   D    AL   Other         
+U+1859     LETTER TODO HAA                        Lo   D    AL   Other         
+U+185A     LETTER TODO JIA                        Lo   D    AL   Other         
+U+185B     LETTER TODO NIA                        Lo   D    AL   Other         
+U+185C     LETTER TODO DZA                        Lo   D    AL   Other         
+U+185D     LETTER SIBE E                          Lo   D    AL   Other         
+U+185E     LETTER SIBE I                          Lo   D    AL   Other         
+U+185F     LETTER SIBE IY                         Lo   D    AL   Other         
+U+1860     LETTER SIBE UE                         Lo   D    AL   Other         
+U+1861     LETTER SIBE U                          Lo   D    AL   Other         
+U+1862     LETTER SIBE ANG                        Lo   D    AL   Other         
+U+1863     LETTER SIBE KA                         Lo   D    AL   Other         
+U+1864     LETTER SIBE GA                         Lo   D    AL   Other         
+U+1865     LETTER SIBE HA                         Lo   D    AL   Other         
+U+1866     LETTER SIBE PA                         Lo   D    AL   Other         
+U+1867     LETTER SIBE SHA                        Lo   D    AL   Other         
+U+1868     LETTER SIBE TA                         Lo   D    AL   Other         
+U+1869     LETTER SIBE DA                         Lo   D    AL   Other         
+U+186A     LETTER SIBE JA                         Lo   D    AL   Other         
+U+186B     LETTER SIBE FA                         Lo   D    AL   Other         
+U+186C     LETTER SIBE GAA                        Lo   D    AL   Other         
+U+186D     LETTER SIBE HAA                        Lo   D    AL   Other         
+U+186E     LETTER SIBE TSA                        Lo   D    AL   Other         
+U+186F     LETTER SIBE ZA                         Lo   D    AL   Other         
+U+1870     LETTER SIBE RAA                        Lo   D    AL   Other         
+U+1871     LETTER SIBE CHA                        Lo   D    AL   Other         
+U+1872     LETTER SIBE ZHA                        Lo   D    AL   Other         
+U+1873     LETTER MANCHU I                        Lo   D    AL   Other         
+U+1874     LETTER MANCHU KA                       Lo   D    AL   Other         
+U+1875     LETTER MANCHU RA                       Lo   D    AL   Other         
+U+1876     LETTER MANCHU FA                       Lo   D    AL   Other         
+U+1877     LETTER MANCHU ZHA                      Lo   D    AL   Other         
+U+1878     LETTER CHA WITH TWO DOTS               Lo   D    AL   Other         
+U+1880     LETTER ALI GALI ANUSVARA ONE           Lo   U    AL   Other         
+U+1881     LETTER ALI GALI VISARGA ONE            Lo   U    AL   Other         
+U+1882     LETTER ALI GALI DAMARU                 Lo   U    AL   Other         
+U+1883     LETTER ALI GALI UBADAMA                Lo   U    AL   Other         
+U+1884     LETTER ALI GALI INVERTED UBADAMA       Lo   U    AL   Other         
+U+1885     LETTER ALI GALI BALUDA                 Mn   T    CM   Extend        LB=CM：黏附前字
+U+1886     LETTER ALI GALI THREE BALUDA           Mn   T    CM   Extend        LB=CM：黏附前字
+U+1887     LETTER ALI GALI A                      Lo   D    AL   Other         
+U+1888     LETTER ALI GALI I                      Lo   D    AL   Other         
+U+1889     LETTER ALI GALI KA                     Lo   D    AL   Other         
+U+188A     LETTER ALI GALI NGA                    Lo   D    AL   Other         
+U+188B     LETTER ALI GALI CA                     Lo   D    AL   Other         
+U+188C     LETTER ALI GALI TTA                    Lo   D    AL   Other         
+U+188D     LETTER ALI GALI TTHA                   Lo   D    AL   Other         
+U+188E     LETTER ALI GALI DDA                    Lo   D    AL   Other         
+U+188F     LETTER ALI GALI NNA                    Lo   D    AL   Other         
+U+1890     LETTER ALI GALI TA                     Lo   D    AL   Other         
+U+1891     LETTER ALI GALI DA                     Lo   D    AL   Other         
+U+1892     LETTER ALI GALI PA                     Lo   D    AL   Other         
+U+1893     LETTER ALI GALI PHA                    Lo   D    AL   Other         
+U+1894     LETTER ALI GALI SSA                    Lo   D    AL   Other         
+U+1895     LETTER ALI GALI ZHA                    Lo   D    AL   Other         
+U+1896     LETTER ALI GALI ZA                     Lo   D    AL   Other         
+U+1897     LETTER ALI GALI AH                     Lo   D    AL   Other         
+U+1898     LETTER TODO ALI GALI TA                Lo   D    AL   Other         
+U+1899     LETTER TODO ALI GALI ZHA               Lo   D    AL   Other         
+U+189A     LETTER MANCHU ALI GALI GHA             Lo   D    AL   Other         
+U+189B     LETTER MANCHU ALI GALI NGA             Lo   D    AL   Other         
+U+189C     LETTER MANCHU ALI GALI CA              Lo   D    AL   Other         
+U+189D     LETTER MANCHU ALI GALI JHA             Lo   D    AL   Other         
+U+189E     LETTER MANCHU ALI GALI TTA             Lo   D    AL   Other         
+U+189F     LETTER MANCHU ALI GALI DDHA            Lo   D    AL   Other         
+U+18A0     LETTER MANCHU ALI GALI TA              Lo   D    AL   Other         
+U+18A1     LETTER MANCHU ALI GALI DHA             Lo   D    AL   Other         
+U+18A2     LETTER MANCHU ALI GALI SSA             Lo   D    AL   Other         
+U+18A3     LETTER MANCHU ALI GALI CYA             Lo   D    AL   Other         
+U+18A4     LETTER MANCHU ALI GALI ZHA             Lo   D    AL   Other         
+U+18A5     LETTER MANCHU ALI GALI ZA              Lo   D    AL   Other         
+U+18A6     LETTER ALI GALI HALF U                 Lo   D    AL   Other         
+U+18A7     LETTER ALI GALI HALF YA                Lo   D    AL   Other         
+U+18A8     LETTER MANCHU ALI GALI BHA             Lo   D    AL   Other         
+U+18A9     LETTER ALI GALI DAGALGA                Mn   T    CM   Extend        LB=CM 且 ccc=228：黏附前字并参与正规化排序
+U+18AA     LETTER MANCHU ALI GALI LHA             Lo   D    AL   Other         
+
+共列出 158 个具有非默认 LineBreak 属性的码位
+
+================================================================================================
+-- 第 4 部分：结论 --
+================================================================================================
+1) 字素簇：
+   - 蒙文字母本身 Lo/Other，彼此不合并 -> 一词 N 个字母 = N 个光标位。
+     这与拉丁文一致，光标可落在字母之间（字母本身是独立字素）。
+   - FVS1-4（U+180B-D/180F）GCB=Extend -> 黏附前一字母，编辑器中
+     绝不能单独删除/移动光标到 FVS 与字母之间，否则破坏字形选择。
+   - Baluda(U+1885/6)、Dagalga(U+18A9) 同为 Extend，须与其基字符合并处理。
+   - U+180E GCB=Control -> 是唯一会“切断”字素簇的蒙文控制符。
+
+2) 断行：
+   - 蒙文字母 LB=AL，AL x AL 禁止断行 -> 连续字母串内部没有断行点。
+     传统蒙文不用空格分词，因此一个长词就是一个不可断的整体。
+   - U+180E LB=GL（不换行黏合）-> 其两侧一律不得断行，
+     说明它在标准中就是“词内”分隔符，不是词间分隔符。
+   - U+1802/1803/1808/1809 LB=EX -> 依禁则不得出现在行首。
+   - U+1804/1805 LB=BA -> 其后允许断行。
+   - U+1806 LB=BB -> 其前允许断行。
+   - 唯一自然断行点是 ASCII 空格（LB=SP）与上述标点。
+
+3) 连接类型（蒙文独有）：
+   - 125 个码位 JT=Dual_Joining、U+180A JT=Join_Causing、7 个 JT=Transparent。
+   - 这是 Unicode 为蒙古文专门定义的连接模型，与阿拉伯文同机制但取值独立。

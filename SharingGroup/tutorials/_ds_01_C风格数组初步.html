@@ -1,0 +1,1279 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>C 风格 · 数组初步</title>
+<style>
+/* ===================================================================
+   UME 项目组内部教程 · 数组初步
+   约定：所有代码与输出都用 Consolas 等宽字体
+   =================================================================== */
+:root{
+  --bg:#ffffff; --bg-soft:#f7f9fc; --bg-code:#1e2430; --bg-out:#0f1419;
+  --line:#e3e8f0; --line-2:#ccd5e3;
+  --fg:#1a1f28; --fg-2:#4b5563; --fg-3:#8b95a5;
+  --blue:#1f6feb; --blue-soft:#e8f1fe;
+  --green:#17864a; --green-soft:#e7f6ee;
+  --red:#c0392b; --red-soft:#fdeceb;
+  --amber:#a4690d; --amber-soft:#fdf4e3;
+  --violet:#6b46c1; --violet-soft:#f2ecfd;
+  --mono:"Consolas","Cascadia Mono","Courier New",monospace;
+  --sans:"Microsoft YaHei","PingFang SC","Hiragino Sans GB",system-ui,sans-serif;
+}
+*{box-sizing:border-box}
+html{scroll-behavior:smooth}
+body{
+  margin:0;background:var(--bg);color:var(--fg);
+  font:16px/1.8 var(--sans);-webkit-font-smoothing:antialiased;
+}
+#shell{display:flex;align-items:flex-start;max-width:1400px;margin:0 auto}
+
+/* ---------------- 目录 ---------------- */
+#toc{
+  position:sticky;top:0;width:270px;flex:0 0 270px;height:100vh;overflow:auto;
+  padding:32px 16px 40px 24px;border-right:1px solid var(--line);background:var(--bg-soft);
+}
+#toc h5{margin:0 0 12px;font-size:11px;letter-spacing:.16em;color:var(--fg-3);
+        text-transform:uppercase;font-weight:600}
+#toc a{
+  display:block;padding:5px 10px;margin:1px 0;border-radius:6px;font-size:13.5px;
+  color:var(--fg-2);text-decoration:none;line-height:1.5;
+  border-left:2px solid transparent;transition:background .13s,color .13s,border-color .13s;
+}
+#toc a:hover{background:#e9eef7;color:var(--fg);border-left-color:var(--line-2)}
+#toc a.sub{padding-left:24px;font-size:12.5px;color:var(--fg-3)}
+#toc a.on{background:var(--blue-soft);color:var(--blue);font-weight:600;border-left-color:var(--blue)}
+#toc .sep{height:1px;background:var(--line);margin:12px 0}
+
+main{flex:1;min-width:0;padding:44px 52px 140px}
+
+/* ---------------- 标题与正文 ---------------- */
+h1{font-size:32px;line-height:1.25;margin:0 0 8px;letter-spacing:-.01em}
+.sub-title{color:var(--fg-3);font-size:15px;margin:0 0 6px}
+h2{
+  font-size:22px;margin:58px 0 14px;padding-top:18px;border-top:1px solid var(--line);
+  display:flex;align-items:center;gap:11px;
+}
+h2 .n{
+  flex:0 0 auto;width:30px;height:30px;line-height:30px;text-align:center;
+  background:var(--fg);color:#fff;border-radius:8px;font-size:15px;
+  font-family:var(--mono);font-weight:600;
+}
+h3{font-size:17px;margin:30px 0 8px}
+h4{font-size:15px;margin:22px 0 6px;color:var(--fg-2)}
+p{margin:11px 0}
+ul,ol{margin:10px 0;padding-left:24px}
+li{margin:5px 0}
+a{color:var(--blue)}
+
+/* 行内代码 */
+code{
+  font-family:var(--mono);font-size:.9em;background:#eef2f8;color:#0d3a7a;
+  padding:1.5px 5px;border-radius:4px;border:1px solid #dbe4f0;
+}
+/* 术语/关键字：悬停高亮 */
+.k{
+  font-family:var(--mono);font-size:.9em;background:#f2ecfd;color:#5b34b0;
+  padding:1.5px 5px;border-radius:4px;border:1px solid #ded0f7;
+  cursor:help;transition:background .12s,box-shadow .12s;
+}
+.k:hover{background:#e6dbfb;box-shadow:0 0 0 3px rgba(107,70,193,.13)}
+
+/* ---------------- 代码块：Consolas + 悬停反馈 ---------------- */
+.code-wrap{
+  margin:16px 0;border:1px solid #2c3444;border-radius:10px;overflow:hidden;
+  background:var(--bg-code);position:relative;
+  transition:box-shadow .18s,border-color .18s,transform .18s;
+}
+.code-wrap:hover{
+  border-color:#3d4a60;box-shadow:0 6px 22px rgba(20,30,50,.18);transform:translateY(-1px);
+}
+.code-wrap .bar{
+  display:flex;align-items:center;gap:8px;padding:7px 12px;
+  background:#171d27;border-bottom:1px solid #2c3444;
+  font-family:var(--mono);font-size:11.5px;color:#8296b0;
+}
+.code-wrap .bar .dot{width:9px;height:9px;border-radius:50%;background:#3c4658}
+.code-wrap .bar .dot.r{background:#e06c75}.code-wrap .bar .dot.y{background:#e5c07b}
+.code-wrap .bar .dot.g{background:#98c379}
+.code-wrap .bar .name{margin-left:4px}
+.code-wrap .bar .cp{
+  margin-left:auto;cursor:pointer;border:1px solid #333d4f;background:#222a37;
+  color:#9fb0c7;border-radius:5px;padding:1px 9px;font:11.5px var(--mono);
+  transition:background .13s,color .13s,border-color .13s;
+}
+.code-wrap .bar .cp:hover{background:#2d3849;color:#dbe6f5;border-color:#4a586f}
+.code-wrap pre{
+  margin:0;padding:14px 16px;overflow:auto;
+  font-family:var(--mono);font-size:13.5px;line-height:1.72;color:#d7e0ee;
+}
+/* 输出块：与代码区分开 */
+.out-wrap{
+  margin:12px 0 20px;border:1px solid #d9e2ee;border-left:4px solid var(--green);
+  border-radius:0 9px 9px 0;background:var(--bg-out);overflow:hidden;
+  transition:box-shadow .18s,border-left-color .18s;
+}
+.out-wrap:hover{box-shadow:0 5px 18px rgba(20,30,50,.16);border-left-color:#22a35c}
+.out-wrap .cap{
+  padding:6px 13px;background:#151b22;border-bottom:1px solid #232c38;
+  font-family:var(--mono);font-size:11.5px;color:#7f8f9f;letter-spacing:.02em;
+}
+.out-wrap pre{
+  margin:0;padding:13px 16px;overflow:auto;
+  font-family:var(--mono);font-size:13.5px;line-height:1.7;color:#c9e6d5;
+}
+/* 行内高亮 */
+.hl-k{color:#c792ea}.hl-n{color:#f78c6c}.hl-s{color:#c3e88d}
+.hl-c{color:#6a7a8c;font-style:italic}.hl-f{color:#82aaff}.hl-p{color:#89ddff}
+.hl-bad{color:#ff6b6b;font-weight:700}.hl-ok{color:#7ee787;font-weight:700}
+
+/* ---------------- 卡片 ---------------- */
+.card{
+  border:1px solid var(--line);border-radius:12px;padding:16px 20px;margin:18px 0;
+  background:#fff;transition:box-shadow .18s,transform .18s,border-color .18s;
+}
+.card:hover{box-shadow:0 5px 20px rgba(30,45,70,.09);transform:translateY(-1px)}
+.card h4{margin-top:0}
+.card.tip{border-color:#c6e6d3;background:var(--green-soft)}
+.card.warn{border-color:#f2d2ce;background:var(--red-soft)}
+.card.note{border-color:#cfe0fb;background:var(--blue-soft)}
+.card.key{border-color:#ded0f7;background:var(--violet-soft)}
+.card .card-t{font-weight:700;font-size:14.5px;margin-bottom:6px;display:flex;gap:7px;align-items:center}
+.card.tip .card-t{color:var(--green)}
+.card.warn .card-t{color:var(--red)}
+.card.note .card-t{color:var(--blue)}
+.card.key .card-t{color:var(--violet)}
+.card p:last-child,.card ul:last-child,.card ol:last-child{margin-bottom:0}
+
+/* ---------------- 表格 ---------------- */
+table{border-collapse:collapse;width:100%;margin:16px 0;font-size:14px}
+th,td{border:1px solid var(--line);padding:8px 12px;text-align:left;vertical-align:top}
+th{background:var(--bg-soft);font-weight:600;font-size:13px}
+tbody tr{transition:background .12s}
+tbody tr:hover{background:#f4f8fd}
+td.c,th.c{font-family:var(--mono);font-size:13px}
+
+/* 记忆图：内存格子 */
+.cells{display:flex;gap:0;margin:14px 0;flex-wrap:wrap;align-items:flex-end}
+.cell{
+  border:1px solid var(--line-2);border-bottom:3px solid var(--blue);
+  min-width:64px;padding:8px 6px 6px;text-align:center;background:#fff;
+  transition:background .14s,transform .14s,box-shadow .14s;cursor:default;
+}
+.cell:first-child{border-radius:7px 0 0 7px}
+.cell:last-child{border-radius:0 7px 7px 0}
+.cell:hover{background:var(--blue-soft);transform:translateY(-3px);
+            box-shadow:0 5px 14px rgba(31,111,235,.2)}
+.cell .v{font-family:var(--mono);font-size:16px;font-weight:600;color:var(--fg)}
+.cell .i{font-family:var(--mono);font-size:11px;color:var(--fg-3);margin-top:3px}
+.cells-cap{font-size:12.5px;color:var(--fg-3);margin:-6px 0 16px}
+
+/* 流程条 */
+.flow{display:flex;flex-wrap:wrap;gap:0;margin:16px 0;align-items:stretch}
+.flow .s{
+  flex:1 1 130px;border:1px solid var(--line);border-radius:9px;padding:10px 12px;
+  background:#fff;position:relative;transition:box-shadow .15s,transform .15s,border-color .15s;
+}
+.flow .s:hover{box-shadow:0 5px 16px rgba(30,45,70,.1);transform:translateY(-2px);border-color:var(--line-2)}
+.flow .s+.s{margin-left:24px}
+.flow .s+.s::before{content:"→";position:absolute;left:-19px;top:50%;transform:translateY(-50%);
+                    color:var(--fg-3);font-size:15px;font-family:var(--mono)}
+.flow .s .t{font-weight:650;font-size:13.5px;margin-bottom:2px}
+.flow .s .d{font-size:12px;color:var(--fg-3);line-height:1.55}
+
+.hr{height:1px;background:var(--line);margin:34px 0}
+.tag{
+  display:inline-block;font-family:var(--mono);font-size:11.5px;padding:1.5px 8px;
+  border-radius:999px;background:#eef1f6;color:var(--fg-2);border:1px solid var(--line-2);
+  vertical-align:2px;
+}
+.tag.g{background:var(--green-soft);border-color:#bfe2cd;color:var(--green)}
+.tag.r{background:var(--red-soft);border-color:#f0c8c2;color:var(--red)}
+.tag.b{background:var(--blue-soft);border-color:#bcd6fa;color:var(--blue)}
+
+/* 口诀条 */
+.mnemonic{
+  border-left:4px solid var(--amber);background:var(--amber-soft);
+  border-radius:0 9px 9px 0;padding:12px 18px;margin:16px 0;font-size:15px;
+}
+.mnemonic b{color:var(--amber)}
+
+footer{border-top:1px solid var(--line);margin-top:70px;padding-top:18px;
+       font-size:13px;color:var(--fg-3)}
+@media(max-width:980px){#toc{display:none}main{padding:24px}}
+@media print{
+  #toc{display:none}main{padding:0}
+  .code-wrap,.out-wrap{break-inside:avoid}
+  body{font-size:12pt}
+}
+/* ===== 移动端增强 (mobile) ===== */
+/* 桌面端不显示抽屉按钮（只在窄屏呼出）。这条本身不设 display，避免
+   与窄屏里的 #tocToggle 规则打架；#shell{display:flex} 正好把它藏起来。 */
+@media (min-width:981px){#tocToggle{display:none}}
+#toc{scrollbar-width:thin}
+
+/* ---------- 平板及以下：收紧留白 ---------- */
+@media (max-width:980px){
+  #shell{display:block;max-width:none}
+  main{padding:56px 18px 110px}
+  h1{font-size:25px}
+  h2{font-size:19px;margin:42px 0 12px;gap:9px}
+  h2 .n{width:26px;height:26px;line-height:26px;font-size:13px;border-radius:7px}
+  h3{font-size:16px;margin:26px 0 8px}
+  h4{font-size:14.5px}
+
+  /* 代码与输出：手机上要看得清 */
+  .code-wrap pre{font-size:14px;line-height:1.68;padding:12px 13px;
+    -webkit-overflow-scrolling:touch}
+  .out-wrap pre{font-size:14px;line-height:1.66;padding:12px 13px;
+    -webkit-overflow-scrolling:touch}
+  .code-wrap .bar,.out-wrap .cap{font-size:11px;padding:6px 10px}
+  .code-wrap .bar .cp{padding:3px 10px;font-size:11px}
+
+  /* 表格单独横向滚动，不再撑破版心 */
+  main>table, main .card>table{
+    display:block;width:100%;overflow-x:auto;-webkit-overflow-scrolling:touch;
+    white-space:nowrap;font-size:13.5px
+  }
+  main>table th, main>table td{white-space:nowrap}
+
+  /* 各类示意图允许横向滚动 */
+  .bits,.bitrow,.bytes,.cells,.addr,.anat,.flow,.ptr-demo{
+    overflow-x:auto;-webkit-overflow-scrolling:touch
+  }
+  .bits,.bytes,.cells{flex-wrap:nowrap}
+  .anat .row{min-width:max-content}
+  .ptr-demo .link{white-space:nowrap}
+
+  /* 卡片与行内代码 */
+  .card{padding:13px 15px;border-radius:11px}
+  code{word-break:break-word}
+  .mnemonic{padding:11px 14px;font-size:14.5px}
+
+  /* 目录：变成可呼出的抽屉，不再直接藏掉 */
+  /* 基础样式里这条断点写了 #toc{display:none}，这里必须显式恢复，
+     否则目录会变成 0×0 的隐形元素 —— 按钮点了也没反应。
+     用 !important 是因为 display:none 与我们的 display:block 选择器
+     优先级相同，靠后写不一定稳。 */
+  #toc{
+    display:block !important;
+    position:fixed;top:0;left:0;bottom:0;z-index:60;
+    width:min(80vw,308px);height:100vh;max-height:100vh;
+    background:#fff;border-right:1px solid var(--line);
+    box-shadow:0 0 44px rgba(15,25,45,.20);
+    padding:66px 12px 40px 16px;
+    transform:translateX(-102%);
+    transition:transform .25s ease;
+    overscroll-behavior:contain
+  }
+  #toc.open{transform:translateX(0)}
+  #toc a{padding:9px 11px;font-size:15px}
+  #toc a.sub{padding-left:26px;font-size:13.5px}
+  body.toc-open{overflow:hidden}
+
+  /* 遮罩：用 body.toc-open 的伪元素生成，而不是挂在 #toc 上。
+     挂在 #toc 上时它会与抽屉同一个层叠上下文，层级很难既压住正文
+     又不盖住抽屉自己的文字。挂在 body 上则天然在抽屉（z-index:60）之下、
+     正文之上，层级干净。点击关闭由脚本的 document 监听处理。 */
+  body.toc-open::after{
+    content:"";position:fixed;inset:0;z-index:55;
+    background:rgba(18,26,40,.42);
+    opacity:1;transition:opacity .25s
+  }
+
+  #tocToggle{
+    position:fixed;top:11px;left:11px;z-index:70;
+    padding:7px 14px;border-radius:999px;cursor:pointer;
+    background:#fff;color:var(--fg);border:1px solid var(--line-2);
+    font:600 13px/1 var(--sans);box-shadow:0 2px 10px rgba(20,30,50,.14);
+    -webkit-tap-highlight-color:transparent;
+    opacity:.72;transition:opacity .18s,background .18s,color .18s,transform .12s
+  }
+  #tocToggle:hover,#tocToggle:focus-visible{opacity:1}
+  #tocToggle:active{transform:scale(.96)}
+  body.toc-open #tocToggle{background:var(--fg);color:#fff;border-color:var(--fg)}
+  html{scroll-padding-top:64px}
+}
+
+/* ---------- 手机：进一步压缩 ---------- */
+@media (max-width:560px){
+  main{padding:54px 13px 100px}
+  h1{font-size:22px}
+  h2{font-size:17.5px;margin:36px 0 10px}
+  .sub-title{font-size:14px}
+  .tag{font-size:11px;padding:1.5px 7px}
+  body{font-size:15.5px;line-height:1.75}
+
+  /* 流程条改成竖向排列，箭头朝下 */
+  .flow{display:block}
+  .flow .s+.s{margin:20px 0 0}
+  .flow .s+.s::before{content:"↓";left:50%;top:-19px;transform:translateX(-50%)}
+
+  .code-wrap,.out-wrap{border-radius:9px}
+  .code-wrap pre,.out-wrap pre{font-size:13.5px;padding:11px 11px}
+  .code-wrap .bar .name{max-width:56vw;overflow:hidden;text-overflow:ellipsis;
+    white-space:nowrap}
+  .card{padding:12px 13px;margin:15px 0}
+  .qa .q,.qa .a{padding:11px 13px}
+  .qa .q{font-size:14px}
+  blockquote{margin:12px 0;padding:10px 13px}
+
+  .bits .b{width:22px;height:28px;line-height:28px;font-size:13px}
+  .bits .b.w{width:27px}
+  .bits-lg .b{width:17px;height:22px;line-height:22px;font-size:11px}
+  .byte{min-width:64px;padding:7px 5px 5px}
+  .cell{min-width:56px}
+  .addr{font-size:12px}
+  .addr>div{padding:6px 10px}
+  .ptr-demo{padding:12px}
+  .ptr-demo .box{min-width:100px;padding:8px 11px}
+  .flow .s+.s{margin-left:20px}
+  .flow .s+.s::before{left:-16px}
+
+  #tocToggle{top:9px;left:9px;padding:6px 12px;font-size:12.5px}
+  #toc{width:min(86vw,300px);padding-top:58px}
+}
+
+/* ---------- 打印时保持干净 ---------- */
+@media print{
+  #tocToggle{display:none !important}
+  body.toc-open::after{display:none !important}
+}
+</style>
+<style>/* ===== 移动端：长路径字符串断行 =====
+/* 长且无空格的串（路径、命令、变量名）在窄屏上必须允许内部断行，
+   否则会把表格和终端块撑得比视口还宽。 */
+@media (max-width:980px){
+  main table th,
+  main table td,
+  main table td code,
+  main table th code,
+  main table td .c,
+  main td,
+  main th{
+    overflow-wrap:anywhere;
+    word-break:break-word;
+  }
+  /* 表头文字允许换行 */
+  main table th{white-space:normal}
+
+  /* 终端块里的提示符与输出 */
+  .term pre,
+  .term .pr,
+  .term .cmd,
+  .term .out,
+  .term .warn,
+  .term .err{
+    overflow-wrap:anywhere;
+    word-break:break-word;
+    white-space:pre-wrap;
+  }
+  /* 行内 code 也别撑宽 */
+  main p code,
+  main li code,
+  main td code,
+  .card code{
+    overflow-wrap:anywhere;
+    word-break:break-word;
+  }
+}
+</style>
+</head>
+<body>
+<div id="shell">
+
+<nav id="toc">
+  <h5>目录</h5>
+  <a href="#s1">1 · 为什么需要数组</a>
+  <a href="#s2">2 · 声明一个数组</a>
+  <a href="#s3">3 · 下标从 0 开始</a>
+  <a href="#s4">4 · 访问与修改元素</a>
+  <a href="#s5">5 · 用循环遍历</a>
+  <a href="#s6">6 · 初始化写法大全</a>
+  <a href="#s7">7 · 读入一批数据</a>
+  <div class="sep"></div>
+  <a href="#s8">8 · 六个常用套路</a>
+  <a href="#s8a" class="sub">8.1 求和与平均</a>
+  <a href="#s8b" class="sub">8.2 最大值与最小值</a>
+  <a href="#s8c" class="sub">8.3 计数</a>
+  <a href="#s8d" class="sub">8.4 查找</a>
+  <a href="#s8e" class="sub">8.5 逆序</a>
+  <a href="#s8f" class="sub">8.6 统计频次</a>
+  <div class="sep"></div>
+  <a href="#s9">9 · 常见错误</a>
+  <a href="#s10">10 · 一页速查</a>
+</nav>
+
+<main>
+<h1>数组初步</h1>
+<p class="sub-title">UME 项目组内部教程 · 第一讲 · 面向零编程基础成员</p>
+<p>
+  <span class="tag">已学：输入输出</span>
+  <span class="tag">已学：选择 if / switch</span>
+  <span class="tag">已学：循环 for / while</span>
+  <span class="tag b">本讲：数组</span>
+</p>
+
+<div class="card note">
+  <div class="card-t">怎么用这份文档</div>
+  <p>每个知识点都是「<b>先讲清楚，再给代码，代码后面紧跟运行结果</b>」。
+  建议对着代码自己敲一遍，再看输出对不对得上。
+  带紫色边框的词是术语，鼠标移上去会高亮。</p>
+  <p>本讲只需要你已经会 <code>printf</code>、<code>scanf</code>、<code>if</code>、<code>for</code>。
+  <b>不涉及任何指针内容</b>，可以放心看。</p>
+</div>
+
+<!-- ============================================================ -->
+<h2 id="s1"><span class="n">1</span>为什么需要数组</h2>
+
+<p>假设要存一个班的 5 个成绩，用你已经会的方法，得开 5 个变量：</p>
+
+<div class="code-wrap"><div class="bar"><span class="dot r"></span><span class="dot y"></span><span class="dot g"></span><span class="name">5 个独立变量</span><span class="cp">复制</span></div><pre><span class="hl-k">int</span> s1, s2, s3, s4, s5;
+s1 = <span class="hl-n">88</span>;
+s2 = <span class="hl-n">92</span>;
+s3 = <span class="hl-n">79</span>;
+s4 = <span class="hl-n">95</span>;
+s5 = <span class="hl-n">61</span>;</pre></div>
+
+<p>5 个还行。那 50 个呢？500 个呢？而且想「把所有成绩加起来」，
+你没法写一个循环，只能老老实实 <code>s1 + s2 + s3 + ...</code> 一路写下去 —— 这显然不行。</p>
+
+<p>问题出在：这 5 个变量<b>互相没有关系</b>，程序没法用「第几个」去指代它们。</p>
+
+<p><b>数组</b>解决的就是这件事：把<b>一批同类型的值排成一队</b>，
+从左到右编上号，然后就可以用「第几号」来访问任意一个，
+于是循环也就用得上了。</p>
+
+<div class="card key">
+  <div class="card-t">一句话定义</div>
+  <p><b>数组 = 一排同类型的格子，每格有编号，编号从 0 开始。</b></p>
+  <p>你只要记住三件事：<b>一排</b>、<b>同类型</b>、<b>编号从 0 起</b>。</p>
+</div>
+
+<h4>数组在脑子里长什么样</h4>
+<p>写 <code>int a[5] = {88, 92, 79, 95, 61};</code> 之后，可以想象成 5 个挨着的格子：</p>
+
+<div class="cells">
+  <div class="cell"><div class="v">88</div><div class="i">a[0]</div></div>
+  <div class="cell"><div class="v">92</div><div class="i">a[1]</div></div>
+  <div class="cell"><div class="v">79</div><div class="i">a[2]</div></div>
+  <div class="cell"><div class="v">95</div><div class="i">a[3]</div></div>
+  <div class="cell"><div class="v">61</div><div class="i">a[4]</div></div>
+</div>
+<p class="cells-cap">上面是格子里的值，下面是它的编号（下标）。把鼠标移到格子上看看。</p>
+
+<div class="card warn">
+  <div class="card-t">最容易错的一点</div>
+  <p>5 个格子，编号是 <code>0 1 2 3 4</code>，<b>没有 <code>a[5]</code></b>。
+  「长度是 5」和「最大下标是 4」是两件事，差 1。</p>
+</div>
+
+<!-- ============================================================ -->
+<h2 id="s2"><span class="n">2</span>声明一个数组</h2>
+
+<p>语法和普通变量几乎一样，只多了一对方括号：</p>
+
+<div class="code-wrap"><div class="bar"><span class="dot r"></span><span class="dot y"></span><span class="dot g"></span><span class="name">声明语法</span><span class="cp">复制</span></div><pre><span class="hl-k">类型名</span> <span class="hl-f">数组名</span>[<span class="hl-n">长度</span>];</pre></div>
+
+<p>对照着看就明白了：</p>
+
+<table>
+<thead><tr><th style="width:38%">普通变量</th><th style="width:38%">数组</th><th>含义</th></tr></thead>
+<tbody>
+<tr><td class="c">int score;</td><td class="c">int score[5];</td><td>一个整数 &nbsp;/&nbsp; 一排 5 个整数</td></tr>
+<tr><td class="c">double h;</td><td class="c">double h[10];</td><td>一个小数 &nbsp;/&nbsp; 一排 10 个小数</td></tr>
+<tr><td class="c">char c;</td><td class="c">char c[20];</td><td>一个字符 &nbsp;/&nbsp; 一排 20 个字符</td></tr>
+</tbody>
+</table>
+
+<div class="code-wrap"><div class="bar"><span class="dot r"></span><span class="dot y"></span><span class="dot g"></span><span class="name">声明并查看长度</span><span class="cp">复制</span></div><pre><span class="hl-p">#include</span> <span class="hl-s">&lt;stdio.h&gt;</span>
+
+<span class="hl-k">int</span> <span class="hl-f">main</span>(<span class="hl-k">void</span>) {
+    <span class="hl-k">int</span> a[<span class="hl-n">5</span>];        <span class="hl-c">/* 5 个整数格子 */</span>
+    <span class="hl-k">double</span> d[<span class="hl-n">3</span>];     <span class="hl-c">/* 3 个小数格子 */</span>
+    <span class="hl-k">char</span> s[<span class="hl-n">20</span>];      <span class="hl-c">/* 20 个字符格子，常用来放一串文字 */</span>
+
+    <span class="hl-c">/* sizeof 能问出「这个数组一共占多少字节」 */</span>
+    <span class="hl-f">printf</span>(<span class="hl-s">"a 占 %d 字节\n"</span>, (<span class="hl-k">int</span>)<span class="hl-f">sizeof</span>(a));
+    <span class="hl-f">printf</span>(<span class="hl-s">"d 占 %d 字节\n"</span>, (<span class="hl-k">int</span>)<span class="hl-f">sizeof</span>(d));
+    <span class="hl-f">printf</span>(<span class="hl-s">"s 占 %d 字节\n"</span>, (<span class="hl-k">int</span>)<span class="hl-f">sizeof</span>(s));
+
+    <span class="hl-c">/* 用「总字节数 ÷ 单个元素的字节数」就能算出元素个数 */</span>
+    <span class="hl-f">printf</span>(<span class="hl-s">"a 有 %d 个元素\n"</span>, (<span class="hl-k">int</span>)(<span class="hl-f">sizeof</span>(a) / <span class="hl-f">sizeof</span>(a[<span class="hl-n">0</span>])));
+    <span class="hl-k">return</span> <span class="hl-n">0</span>;
+}</pre></div>
+
+<div class="out-wrap"><div class="cap">运行结果</div><pre>a 占 20 字节
+d 占 24 字节
+s 占 20 字节
+a 有 5 个元素</pre></div>
+
+<p>解读：一个 <code>int</code> 占 4 字节，5 个就是 20 字节；一个 <code>double</code> 占 8 字节，3 个就是 24 字节；
+一个 <code>char</code> 占 1 字节，20 个就是 20 字节。
+所以 <code>20 ÷ 4 = 5</code>，就算出了元素个数。</p>
+
+<div class="card note">
+  <div class="card-t">关于长度</div>
+  <p>方括号里的长度必须是<b>编译时就能确定的整数</b>。下面第一种写法可以，第二种不行：</p>
+  <ul>
+    <li><code>int a[10];</code> <span class="tag g">可以</span></li>
+    <li><code>int n = 10; int a[n];</code> <span class="tag r">不要这样写</span> —— 换编译器可能报错</li>
+  </ul>
+  <p>本讲统一用固定长度的写法，比如 <code>a[100]</code>，
+  够用就行，实际用几个由后面循环里的 <code>n</code> 决定。</p>
+</div>
+
+<!-- ============================================================ -->
+<h2 id="s3"><span class="n">3</span>下标从 0 开始</h2>
+
+<p>这是初学者最不适应的一点，但记住就好：<b>第一个元素的编号是 0，不是 1。</b></p>
+
+<div class="code-wrap"><div class="bar"><span class="dot r"></span><span class="dot y"></span><span class="dot g"></span><span class="name">编号对照</span><span class="cp">复制</span></div><pre><span class="hl-k">int</span> a[<span class="hl-n">5</span>] = {<span class="hl-n">88</span>, <span class="hl-n">92</span>, <span class="hl-n">79</span>, <span class="hl-n">95</span>, <span class="hl-n">61</span>};
+
+<span class="hl-c">/* 元素：   88    92    79    95    61   */</span>
+<span class="hl-c">/* 下标：  a[0]  a[1]  a[2]  a[3]  a[4] */</span>
+<span class="hl-c">/* 第几个：  1     2     3     4     5   */</span></pre></div>
+
+<p>为什么设计成从 0 开始？现在不必深究，
+只要接受这个事实：<b>下标 = 「第几个」减 1</b>。</p>
+
+<div class="mnemonic">
+  <b>口诀：</b>长度 n 的数组，合法下标是 <code>0</code> 到 <code>n-1</code>。
+  写循环时条件一定是 <code>i &lt; n</code>，<b>不是</b> <code>i &lt;= n</code>。
+</div>
+
+<div class="card warn">
+  <div class="card-t">越界会怎样</div>
+  <p>如果你写了 <code>a[5]</code>（长度 5 的数组），C 语言<b>不会拦你</b>，
+  程序可能照常跑、也可能乱跳、也可能直接崩。
+  这类错误最难查 —— 因为报错的地方常常不是出错的地方。</p>
+  <p>所以：<b>循环边界要反复检查。</b>后面第 9 节有专门的对照例子。</p>
+</div>
+
+<!-- ============================================================ -->
+<h2 id="s4"><span class="n">4</span>访问与修改元素</h2>
+
+<p>写法是 <code>数组名[下标]</code>。它可以<b>当普通变量用</b>：
+能读出来、能赋值、能参与运算、能塞进 <code>printf</code>。</p>
+
+<div class="code-wrap"><div class="bar"><span class="dot r"></span><span class="dot y"></span><span class="dot g"></span><span class="name">读、写、算</span><span class="cp">复制</span></div><pre><span class="hl-p">#include</span> <span class="hl-s">&lt;stdio.h&gt;</span>
+
+<span class="hl-k">int</span> <span class="hl-f">main</span>(<span class="hl-k">void</span>) {
+    <span class="hl-k">int</span> a[<span class="hl-n">5</span>] = {<span class="hl-n">3</span>, <span class="hl-n">1</span>, <span class="hl-n">4</span>, <span class="hl-n">1</span>, <span class="hl-n">5</span>};
+
+    <span class="hl-c">/* ① 读出来 */</span>
+    <span class="hl-f">printf</span>(<span class="hl-s">"a[0]=%d  a[2]=%d  a[4]=%d\n"</span>, a[<span class="hl-n">0</span>], a[<span class="hl-n">2</span>], a[<span class="hl-n">4</span>]);
+
+    <span class="hl-c">/* ② 改掉某一格 */</span>
+    a[<span class="hl-n">0</span>] = <span class="hl-n">100</span>;
+    <span class="hl-f">printf</span>(<span class="hl-s">"改完 a[0]=%d\n"</span>, a[<span class="hl-n">0</span>]);
+
+    <span class="hl-c">/* ③ 用元素参与运算，结果存回元素 */</span>
+    a[<span class="hl-n">4</span>] = a[<span class="hl-n">0</span>] + a[<span class="hl-n">1</span>];
+    <span class="hl-f">printf</span>(<span class="hl-s">"a[4] = a[0]+a[1] = %d\n"</span>, a[<span class="hl-n">4</span>]);
+
+    <span class="hl-c">/* ④ 整个数组现在的样子 */</span>
+    <span class="hl-f">printf</span>(<span class="hl-s">"%d %d %d %d %d\n"</span>, a[<span class="hl-n">0</span>], a[<span class="hl-n">1</span>], a[<span class="hl-n">2</span>], a[<span class="hl-n">3</span>], a[<span class="hl-n">4</span>]);
+    <span class="hl-k">return</span> <span class="hl-n">0</span>;
+}</pre></div>
+
+<div class="out-wrap"><div class="cap">运行结果</div><pre>a[0]=3  a[2]=4  a[4]=5
+改完 a[0]=100
+a[4] = a[0]+a[1] = 101
+100 1 4 1 101</pre></div>
+
+<p>注意第 ④ 行：<code>a[0]</code> 被改成了 100，<code>a[4]</code> 变成了 101，
+而 <code>a[1] a[2] a[3]</code> 没动过 —— 说明改一格不影响别的格。</p>
+
+<div class="card tip">
+  <div class="card-t">下标可以是表达式</div>
+  <p>方括号里不只能是数字，任何能得到整数的东西都行：</p>
+  <ul>
+    <li><code>a[i]</code> —— 用循环变量，最常见的用法</li>
+    <li><code>a[i + 1]</code> —— 看下一个</li>
+    <li><code>a[n - 1]</code> —— 看最后一个</li>
+    <li><code>a[i * 2]</code> —— 跳着看</li>
+  </ul>
+  <p>这一点是数组能用循环的前提。</p>
+</div>
+
+<!-- ============================================================ -->
+<h2 id="s5"><span class="n">5</span>用循环遍历</h2>
+
+<p>「遍历」就是把每个格子挨个走一遍。因为下标是连续的整数，<code>for</code> 循环天生适合它。</p>
+
+<div class="code-wrap"><div class="bar"><span class="dot r"></span><span class="dot y"></span><span class="dot g"></span><span class="name">标准写法（把它背下来）</span><span class="cp">复制</span></div><pre><span class="hl-k">int</span> n = <span class="hl-n">5</span>;
+<span class="hl-k">for</span> (<span class="hl-k">int</span> i = <span class="hl-n">0</span>; i &lt; n; i++) {
+    <span class="hl-c">/* 这里用 a[i] 访问第 i 个元素 */</span>
+}</pre></div>
+
+<p>三个关键点，一个都不能错：</p>
+<div class="flow">
+  <div class="s"><div class="t">i = 0</div><div class="d">从第一个开始，不是从 1</div></div>
+  <div class="s"><div class="t">i &lt; n</div><div class="d">到第 n 个为止，不是 i &lt;= n</div></div>
+  <div class="s"><div class="t">i++</div><div class="d">每次往后挪一格</div></div>
+</div>
+
+<div class="code-wrap"><div class="bar"><span class="dot r"></span><span class="dot y"></span><span class="dot g"></span><span class="name">正着遍历 / 倒着遍历</span><span class="cp">复制</span></div><pre><span class="hl-p">#include</span> <span class="hl-s">&lt;stdio.h&gt;</span>
+
+<span class="hl-k">int</span> <span class="hl-f">main</span>(<span class="hl-k">void</span>) {
+    <span class="hl-k">int</span> a[<span class="hl-n">5</span>] = {<span class="hl-n">3</span>, <span class="hl-n">1</span>, <span class="hl-n">4</span>, <span class="hl-n">1</span>, <span class="hl-n">5</span>};
+    <span class="hl-k">int</span> n = <span class="hl-n">5</span>;
+
+    <span class="hl-c">/* 正着：0 → 4 */</span>
+    <span class="hl-f">printf</span>(<span class="hl-s">"正着：\n"</span>);
+    <span class="hl-k">for</span> (<span class="hl-k">int</span> i = <span class="hl-n">0</span>; i &lt; n; i++) {
+        <span class="hl-f">printf</span>(<span class="hl-s">"a[%d] = %d\n"</span>, i, a[i]);
+    }
+
+    <span class="hl-c">/* 倒着：4 → 0 */</span>
+    <span class="hl-f">printf</span>(<span class="hl-s">"倒着：\n"</span>);
+    <span class="hl-k">for</span> (<span class="hl-k">int</span> i = n - <span class="hl-n">1</span>; i &gt;= <span class="hl-n">0</span>; i--) {
+        <span class="hl-f">printf</span>(<span class="hl-s">"a[%d] = %d\n"</span>, i, a[i]);
+    }
+    <span class="hl-k">return</span> <span class="hl-n">0</span>;
+}</pre></div>
+
+<div class="out-wrap"><div class="cap">运行结果</div><pre>正着：
+a[0] = 3
+a[1] = 1
+a[2] = 4
+a[3] = 1
+a[4] = 5
+倒着：
+a[4] = 5
+a[3] = 1
+a[2] = 4
+a[1] = 1
+a[0] = 3</pre></div>
+
+<div class="card tip">
+  <div class="card-t">倒着遍历的三个细节</div>
+  <ul>
+    <li>起点是 <code>n - 1</code>（最后一个的下标）</li>
+    <li>条件是 <code>i &gt;= 0</code>，要写 <code>&gt;=</code> 才能走到 0</li>
+    <li>变化是 <code>i--</code></li>
+  </ul>
+</div>
+
+<div class="card warn">
+  <div class="card-t">倒着遍历的经典坑</div>
+  <p>不要把循环变量写成无符号类型（<code>unsigned</code>）。
+  因为 <code>0 - 1</code> 在无符号里会变成一个极大的数，循环永远停不下来。
+  初学阶段一律用 <code>int i</code> 就好。</p>
+</div>
+
+<!-- ============================================================ -->
+<h2 id="s6"><span class="n">6</span>初始化写法大全</h2>
+
+<p>声明数组时可以顺手把初值填进去，用大括号 <code>{ }</code>。
+下面四种写法都很常用。</p>
+
+<h4>① 全写出来</h4>
+<div class="code-wrap"><div class="bar"><span class="dot r"></span><span class="dot y"></span><span class="dot g"></span><span class="name">完整初始化</span><span class="cp">复制</span></div><pre><span class="hl-k">int</span> a[<span class="hl-n">5</span>] = {<span class="hl-n">3</span>, <span class="hl-n">1</span>, <span class="hl-n">4</span>, <span class="hl-n">1</span>, <span class="hl-n">5</span>};   <span class="hl-c">/* 5 个格子全部填好 */</span></pre></div>
+
+<h4>② 省略长度，让编译器数</h4>
+<div class="code-wrap"><div class="bar"><span class="dot r"></span><span class="dot y"></span><span class="dot g"></span><span class="name">长度自动推断</span><span class="cp">复制</span></div><pre><span class="hl-k">int</span> b[] = {<span class="hl-n">10</span>, <span class="hl-n">20</span>, <span class="hl-n">30</span>};   <span class="hl-c">/* 数一数是 3 个，等价于 int b[3] */</span></pre></div>
+
+<h4>③ 只写一部分，剩下的自动补 0</h4>
+<div class="code-wrap"><div class="bar"><span class="dot r"></span><span class="dot y"></span><span class="dot g"></span><span class="name">部分初始化</span><span class="cp">复制</span></div><pre><span class="hl-k">int</span> c[<span class="hl-n">5</span>] = {<span class="hl-n">1</span>, <span class="hl-n">2</span>};   <span class="hl-c">/* 前两个是 1、2，后面三个自动为 0 */</span></pre></div>
+
+<h4>④ 全部清零（最常用）</h4>
+<div class="code-wrap"><div class="bar"><span class="dot r"></span><span class="dot y"></span><span class="dot g"></span><span class="name">清零惯用法</span><span class="cp">复制</span></div><pre><span class="hl-k">int</span> z[<span class="hl-n">5</span>] = {<span class="hl-n">0</span>};   <span class="hl-c">/* 只要给第一个 0，其余全部自动为 0 */</span></pre></div>
+
+<p>把四种放在一个程序里看看：</p>
+
+<div class="code-wrap"><div class="bar"><span class="dot r"></span><span class="dot y"></span><span class="dot g"></span><span class="name">四种写法对照</span><span class="cp">复制</span></div><pre><span class="hl-p">#include</span> <span class="hl-s">&lt;stdio.h&gt;</span>
+
+<span class="hl-k">int</span> <span class="hl-f">main</span>(<span class="hl-k">void</span>) {
+    <span class="hl-k">int</span> a[<span class="hl-n">5</span>] = {<span class="hl-n">3</span>, <span class="hl-n">1</span>, <span class="hl-n">4</span>, <span class="hl-n">1</span>, <span class="hl-n">5</span>};
+    <span class="hl-k">int</span> b[]    = {<span class="hl-n">10</span>, <span class="hl-n">20</span>, <span class="hl-n">30</span>};
+    <span class="hl-k">int</span> c[<span class="hl-n">5</span>] = {<span class="hl-n">1</span>, <span class="hl-n">2</span>};
+    <span class="hl-k">int</span> z[<span class="hl-n">4</span>] = {<span class="hl-n">0</span>};
+
+    <span class="hl-f">printf</span>(<span class="hl-s">"a: %d %d %d %d %d\n"</span>, a[<span class="hl-n">0</span>], a[<span class="hl-n">1</span>], a[<span class="hl-n">2</span>], a[<span class="hl-n">3</span>], a[<span class="hl-n">4</span>]);
+    <span class="hl-f">printf</span>(<span class="hl-s">"b: %d %d %d\n"</span>,       b[<span class="hl-n">0</span>], b[<span class="hl-n">1</span>], b[<span class="hl-n">2</span>]);
+    <span class="hl-f">printf</span>(<span class="hl-s">"c: %d %d %d %d %d\n"</span>, c[<span class="hl-n">0</span>], c[<span class="hl-n">1</span>], c[<span class="hl-n">2</span>], c[<span class="hl-n">3</span>], c[<span class="hl-n">4</span>]);
+    <span class="hl-f">printf</span>(<span class="hl-s">"z: %d %d %d %d\n"</span>,    z[<span class="hl-n">0</span>], z[<span class="hl-n">1</span>], z[<span class="hl-n">2</span>], z[<span class="hl-n">3</span>]);
+    <span class="hl-k">return</span> <span class="hl-n">0</span>;
+}</pre></div>
+
+<div class="out-wrap"><div class="cap">运行结果</div><pre>a: 3 1 4 1 5
+b: 10 20 30
+c: 1 2 0 0 0
+z: 0 0 0 0</pre></div>
+
+<p>重点看 <code>c</code> 那一行：只给了 <code>{1, 2}</code>，
+后面三格<b>自动变成 0</b>，不是随机数。</p>
+
+<div class="card key">
+  <div class="card-t">为什么 <code>= {0}</code> 这么重要</div>
+  <p>如果声明时不写初值，格子里的内容是<b>不确定的垃圾值</b>。
+  凡是「先累加、先计数」的数组，用之前一定要清零：</p>
+  <ul>
+    <li>累加：<code>sum[i] += x;</code> —— 如果 <code>sum[i]</code> 本来是垃圾，结果就废了</li>
+    <li>计数：<code>cnt[v]++;</code> —— 同上</li>
+  </ul>
+  <p>养成习惯：<b>要累加或计数的数组，声明时一律 <code>= {0}</code>。</b></p>
+</div>
+
+<!-- ============================================================ -->
+<h2 id="s7"><span class="n">7</span>读入一批数据</h2>
+
+<p>把 <code>scanf</code> 和循环、数组凑在一起，就是「读入 n 个数」的标准写法：</p>
+
+<div class="code-wrap"><div class="bar"><span class="dot r"></span><span class="dot y"></span><span class="dot g"></span><span class="name">读入 n 个数</span><span class="cp">复制</span></div><pre><span class="hl-k">int</span> n;
+<span class="hl-k">int</span> a[<span class="hl-n">100</span>];
+
+<span class="hl-f">scanf</span>(<span class="hl-s">"%d"</span>, &amp;n);           <span class="hl-c">/* 先读个数 */</span>
+<span class="hl-k">for</span> (<span class="hl-k">int</span> i = <span class="hl-n">0</span>; i &lt; n; i++) {
+    <span class="hl-f">scanf</span>(<span class="hl-s">"%d"</span>, &amp;a[i]);   <span class="hl-c">/* 再一个一个读进数组 */</span>
+}
+</pre></div>
+
+<div class="card note">
+  <div class="card-t">关于 <code>&amp;</code> 这个符号</div>
+  <p>你已经学过 <code>scanf("%d", &amp;x)</code> 的写法。
+  对数组元素，就照葫芦画瓢写成 <code>&amp;a[i]</code> ——
+  <b>把它当成 scanf 要求的固定格式记住就行</b>，暂时不用管符号本身的含义。</p>
+  <p>（如果你看到别人写 <code>scanf("%s", s)</code> 读一串文字时没有 <code>&amp;</code>，
+  那不是笔误，是另一种情况 —— 这个以后再讲。）</p>
+</div>
+
+<h4>完整例子：读 5 个数并原样打印</h4>
+<div class="code-wrap"><div class="bar"><span class="dot r"></span><span class="dot y"></span><span class="dot g"></span><span class="name">读入 + 输出</span><span class="cp">复制</span></div><pre><span class="hl-p">#include</span> <span class="hl-s">&lt;stdio.h&gt;</span>
+
+<span class="hl-k">int</span> <span class="hl-f">main</span>(<span class="hl-k">void</span>) {
+    <span class="hl-k">int</span> n;
+    <span class="hl-k">int</span> a[<span class="hl-n">100</span>];
+
+    <span class="hl-f">scanf</span>(<span class="hl-s">"%d"</span>, &amp;n);
+    <span class="hl-k">for</span> (<span class="hl-k">int</span> i = <span class="hl-n">0</span>; i &lt; n; i++) {
+        <span class="hl-f">scanf</span>(<span class="hl-s">"%d"</span>, &amp;a[i]);
+    }
+
+    <span class="hl-f">printf</span>(<span class="hl-s">"读到了 %d 个数：\n"</span>, n);
+    <span class="hl-k">for</span> (<span class="hl-k">int</span> i = <span class="hl-n">0</span>; i &lt; n; i++) {
+        <span class="hl-f">printf</span>(<span class="hl-s">"%d "</span>, a[i]);
+    }
+    <span class="hl-f">printf</span>(<span class="hl-s">"\n"</span>);
+    <span class="hl-k">return</span> <span class="hl-n">0</span>;
+}</pre></div>
+
+<div class="out-wrap"><div class="cap">运行结果（第 1 行是你敲进去的）</div><pre>5
+3 1 4 1 5
+读到了 5 个数：
+3 1 4 1 5 </pre></div>
+
+<div class="card tip">
+  <div class="card-t">小技巧：<code>scanf</code> 不在乎空格和换行</div>
+  <p>输入 <code>3 1 4 1 5</code> 和分 5 行输入 <code>3 ↵ 1 ↵ 4 ↵ 1 ↵ 5</code> 效果完全一样。
+  <code>%d</code> 会自动跳过空白字符，所以你不用操心用户怎么敲。</p>
+</div>
+
+<!-- ============================================================ -->
+<h2 id="s8"><span class="n">8</span>六个常用套路</h2>
+
+<p>数组的用法千变万化，但初学阶段真正高频的就下面六个。
+<b>把这六个练熟，绝大多数作业题都能拆解出来。</b></p>
+
+<h3 id="s8a">8.1 求和与平均</h3>
+
+<p>思路：准备一个 <code>sum</code>，循环里把每个元素加进去。</p>
+
+<div class="code-wrap"><div class="bar"><span class="dot r"></span><span class="dot y"></span><span class="dot g"></span><span class="name">求和 / 求平均</span><span class="cp">复制</span></div><pre><span class="hl-p">#include</span> <span class="hl-s">&lt;stdio.h&gt;</span>
+
+<span class="hl-k">int</span> <span class="hl-f">main</span>(<span class="hl-k">void</span>) {
+    <span class="hl-k">int</span> a[<span class="hl-n">5</span>] = {<span class="hl-n">3</span>, <span class="hl-n">1</span>, <span class="hl-n">4</span>, <span class="hl-n">1</span>, <span class="hl-n">5</span>};
+    <span class="hl-k">int</span> n = <span class="hl-n">5</span>;
+
+    <span class="hl-k">int</span> sum = <span class="hl-n">0</span>;                      <span class="hl-c">/* ① 先置 0 */</span>
+    <span class="hl-k">for</span> (<span class="hl-k">int</span> i = <span class="hl-n">0</span>; i &lt; n; i++) {
+        sum += a[i];                    <span class="hl-c">/* ② 逐个累加 */</span>
+    }
+
+    <span class="hl-f">printf</span>(<span class="hl-s">"sum = %d\n"</span>, sum);
+    <span class="hl-f">printf</span>(<span class="hl-s">"avg = %.2f\n"</span>, sum / <span class="hl-n">5.0</span>);   <span class="hl-c">/* ③ 除以 5.0 而不是 5 */</span>
+    <span class="hl-k">return</span> <span class="hl-n">0</span>;
+}</pre></div>
+
+<div class="out-wrap"><div class="cap">运行结果</div><pre>sum = 14
+avg = 2.80</pre></div>
+
+<div class="card warn">
+  <div class="card-t">整数除法陷阱</div>
+  <p>如果把 <code>sum / 5.0</code> 写成 <code>sum / 5</code>，结果是 <code>2</code> 而不是 <code>2.80</code>。
+  因为两个整数相除，C 会<b>丢掉小数部分</b>（<code>14 / 5 = 2</code>）。</p>
+  <p>办法：除号两边至少有一个是小数，比如写 <code>5.0</code>，或者写
+  <code>(double)sum / n</code>。</p>
+</div>
+
+<h3 id="s8b">8.2 最大值与最小值</h3>
+
+<p>思路：<b>先假设第一个就是最大的</b>，然后从第二个开始逐个挑战它。</p>
+
+<div class="code-wrap"><div class="bar"><span class="dot r"></span><span class="dot y"></span><span class="dot g"></span><span class="name">求最大值</span><span class="cp">复制</span></div><pre><span class="hl-k">int</span> mx = a[<span class="hl-n">0</span>];                <span class="hl-c">/* ① 打擂：先让 a[0] 当擂主 */</span>
+<span class="hl-k">for</span> (<span class="hl-k">int</span> i = <span class="hl-n">1</span>; i &lt; n; i++) {  <span class="hl-c">/* ② 从第 2 个开始挑战，注意是 1 */</span>
+    <span class="hl-k">if</span> (a[i] &gt; mx) {
+        mx = a[i];              <span class="hl-c">/* ③ 赢了就换擂主 */</span>
+    }
+}
+<span class="hl-f">printf</span>(<span class="hl-s">"max = %d\n"</span>, mx);</pre></div>
+
+<div class="code-wrap"><div class="bar"><span class="dot r"></span><span class="dot y"></span><span class="dot g"></span><span class="name">求最小值：只改两处</span><span class="cp">复制</span></div><pre><span class="hl-c">/* 与求最大值相比只有两处不同：变量名 mx→mn，比较符 &gt;→&lt; */</span>
+<span class="hl-k">int</span> mn = a[<span class="hl-n">0</span>];
+<span class="hl-k">for</span> (<span class="hl-k">int</span> i = <span class="hl-n">1</span>; i &lt; n; i++) {
+    <span class="hl-k">if</span> (a[i] &lt; mn) {        <span class="hl-c">/* 只改这里 */</span>
+        mn = a[i];
+    }
+}
+<span class="hl-f">printf</span>(<span class="hl-s">"min = %d\n"</span>, mn);</pre></div>
+
+<div class="card warn">
+  <div class="card-t">两个最常见的错法</div>
+  <ul>
+    <li><b>初始值写 <code>int mx = 0;</code></b> —— 如果数组全是负数，答案就永远是 0，错了。
+      正确做法是用 <code>a[0]</code> 打擂。</li>
+    <li><b>循环从 <code>i = 0</code> 开始</b> —— 不算错，但让 <code>a[0]</code> 和自己比了一次，白跑一趟。从 <code>1</code> 开始更清楚。</li>
+  </ul>
+</div>
+
+<h4>完整程序与结果</h4>
+<div class="code-wrap"><div class="bar"><span class="dot r"></span><span class="dot y"></span><span class="dot g"></span><span class="name">同时求最大最小</span><span class="cp">复制</span></div><pre><span class="hl-p">#include</span> <span class="hl-s">&lt;stdio.h&gt;</span>
+
+<span class="hl-k">int</span> <span class="hl-f">main</span>(<span class="hl-k">void</span>) {
+    <span class="hl-k">int</span> a[<span class="hl-n">6</span>] = {<span class="hl-n">88</span>, <span class="hl-n">92</span>, <span class="hl-n">79</span>, <span class="hl-n">95</span>, <span class="hl-n">61</span>, <span class="hl-n">84</span>};
+    <span class="hl-k">int</span> n = <span class="hl-n">6</span>;
+
+    <span class="hl-k">int</span> mx = a[<span class="hl-n">0</span>], mn = a[<span class="hl-n">0</span>];
+    <span class="hl-k">for</span> (<span class="hl-k">int</span> i = <span class="hl-n">1</span>; i &lt; n; i++) {
+        <span class="hl-k">if</span> (a[i] &gt; mx) mx = a[i];
+        <span class="hl-k">if</span> (a[i] &lt; mn) mn = a[i];
+    }
+    <span class="hl-f">printf</span>(<span class="hl-s">"max = %d, min = %d\n"</span>, mx, mn);
+
+    <span class="hl-c">/* 顺便记下最大值在第几个（下标） */</span>
+    <span class="hl-k">int</span> pos = <span class="hl-n">0</span>;
+    <span class="hl-k">for</span> (<span class="hl-k">int</span> i = <span class="hl-n">1</span>; i &lt; n; i++) {
+        <span class="hl-k">if</span> (a[i] &gt; a[pos]) pos = i;
+    }
+    <span class="hl-f">printf</span>(<span class="hl-s">"最大值是 a[%d] = %d\n"</span>, pos, a[pos]);
+    <span class="hl-k">return</span> <span class="hl-n">0</span>;
+}</pre></div>
+
+<div class="out-wrap"><div class="cap">运行结果</div><pre>max = 95, min = 61
+最大值是 a[3] = 95</pre></div>
+
+<div class="card tip">
+  <div class="card-t">要「最大值是多少」还是「最大值在哪」？</div>
+  <p>第二个循环没存最大值本身，而是存<b>下标</b> <code>pos</code>。
+  因为只要知道下标，值随时能取（<code>a[pos]</code>）；
+  反过来只知道值，是查不出它在第几个的。<b>需要位置时就记下标。</b></p>
+</div>
+
+<h3 id="s8c">8.3 计数</h3>
+
+<p>思路：准备一个计数器，循环里碰到符合条件的就 <code>++</code>。</p>
+
+<div class="code-wrap"><div class="bar"><span class="dot r"></span><span class="dot y"></span><span class="dot g"></span><span class="name">统计等于 1 的个数</span><span class="cp">复制</span></div><pre><span class="hl-k">int</span> a[<span class="hl-n">5</span>] = {<span class="hl-n">3</span>, <span class="hl-n">1</span>, <span class="hl-n">4</span>, <span class="hl-n">1</span>, <span class="hl-n">5</span>};
+<span class="hl-k">int</span> n = <span class="hl-n">5</span>;
+<span class="hl-k">int</span> cnt = <span class="hl-n">0</span>;
+
+<span class="hl-k">for</span> (<span class="hl-k">int</span> i = <span class="hl-n">0</span>; i &lt; n; i++) {
+    <span class="hl-k">if</span> (a[i] == <span class="hl-n">1</span>) {
+        cnt++;
+    }
+}
+<span class="hl-f">printf</span>(<span class="hl-s">"1 出现了 %d 次\n"</span>, cnt);</pre></div>
+
+<div class="out-wrap"><div class="cap">运行结果</div><pre>1 出现了 2 次</pre></div>
+
+<p>把条件换掉，就变成了完全不同的统计 —— 这是计数套路最方便的地方：</p>
+
+<table>
+<thead><tr><th style="width:52%">条件写法</th><th>统计的是什么</th></tr></thead>
+<tbody>
+<tr><td class="c">if (a[i] == 1)</td><td>等于 1 的个数</td></tr>
+<tr><td class="c">if (a[i] &gt; 60)</td><td>大于 60 的个数（及格人数）</td></tr>
+<tr><td class="c">if (a[i] % 2 == 0)</td><td>偶数的个数</td></tr>
+<tr><td class="c">if (a[i] &gt;= 60 &amp;&amp; a[i] &lt; 70)</td><td>落在 60~69 之间的个数</td></tr>
+</tbody>
+</table>
+
+<h3 id="s8d">8.4 查找</h3>
+
+<p>思路：从头挨个比，找到了就记下位置并 <code>break</code>；
+找不到要能区分出来，所以位置先设成 <code>-1</code>。</p>
+
+<div class="code-wrap"><div class="bar"><span class="dot r"></span><span class="dot y"></span><span class="dot g"></span><span class="name">查找某个值</span><span class="cp">复制</span></div><pre><span class="hl-k">int</span> a[<span class="hl-n">5</span>] = {<span class="hl-n">3</span>, <span class="hl-n">1</span>, <span class="hl-n">4</span>, <span class="hl-n">1</span>, <span class="hl-n">5</span>};
+<span class="hl-k">int</span> n = <span class="hl-n">5</span>;
+<span class="hl-k">int</span> target = <span class="hl-n">4</span>;
+
+<span class="hl-k">int</span> pos = <span class="hl-n">-1</span>;              <span class="hl-c">/* ① 先假定「没找到」 */</span>
+<span class="hl-k">for</span> (<span class="hl-k">int</span> i = <span class="hl-n">0</span>; i &lt; n; i++) {
+    <span class="hl-k">if</span> (a[i] == target) {
+        pos = i;                <span class="hl-c">/* ② 找到了，记下第几个 */</span>
+        <span class="hl-k">break</span>;                  <span class="hl-c">/* ③ 不用再往后找了 */</span>
+    }
+}
+
+<span class="hl-k">if</span> (pos &gt;= <span class="hl-n">0</span>) {
+    <span class="hl-f">printf</span>(<span class="hl-s">"找到 %d，在下标 %d\n"</span>, target, pos);
+} <span class="hl-k">else</span> {
+    <span class="hl-f">printf</span>(<span class="hl-s">"%d 不存在\n"</span>, target);
+}</pre></div>
+
+<div class="out-wrap"><div class="cap">运行结果（target = 4）</div><pre>找到 4，在下标 2</pre></div>
+
+<p>把 <code>target</code> 改成 <code>9</code>，输出就变成：</p>
+
+<div class="out-wrap"><div class="cap">运行结果（target = 9）</div><pre>9 不存在</pre></div>
+
+<div class="card key">
+  <div class="card-t">为什么用 -1 而不是 0</div>
+  <p>下标 <code>0</code> 是<b>合法位置</b>（第一个元素）。
+  如果初始值设成 0，那么「没找到」和「在第 0 个找到」就分不清了。</p>
+  <p><code>-1</code> 是个不可能出现的下标，正好用来表示「没有」。
+  这个技巧在编程里很常用。</p>
+</div>
+
+<h3 id="s8e">8.5 逆序</h3>
+
+<p>「逆序」有两种完全不同的做法，别搞混。</p>
+
+<h4>做法一：另开一个数组，倒着搬过去</h4>
+<div class="code-wrap"><div class="bar"><span class="dot r"></span><span class="dot y"></span><span class="dot g"></span><span class="name">搬到新数组</span><span class="cp">复制</span></div><pre><span class="hl-k">int</span> src[<span class="hl-n">5</span>] = {<span class="hl-n">1</span>, <span class="hl-n">2</span>, <span class="hl-n">3</span>, <span class="hl-n">4</span>, <span class="hl-n">5</span>};
+<span class="hl-k">int</span> n = <span class="hl-n">5</span>;
+<span class="hl-k">int</span> rev[<span class="hl-n">5</span>];
+
+<span class="hl-k">for</span> (<span class="hl-k">int</span> i = <span class="hl-n">0</span>; i &lt; n; i++) {
+    rev[i] = src[n - <span class="hl-n">1</span> - i];   <span class="hl-c">/* 关键：n-1-i */</span>
+}
+
+<span class="hl-k">for</span> (<span class="hl-k">int</span> i = <span class="hl-n">0</span>; i &lt; n; i++) {
+    <span class="hl-f">printf</span>(<span class="hl-s">"%d "</span>, rev[i]);
+}
+<span class="hl-f">printf</span>(<span class="hl-s">"\n"</span>);</pre></div>
+
+<div class="out-wrap"><div class="cap">运行结果</div><pre>5 4 3 2 1 </pre></div>
+
+<p>理解 <code>src[n - 1 - i]</code> 的对应关系：</p>
+
+<table>
+<thead><tr><th class="c">i</th><th class="c">n-1-i</th><th>rev[i] = src[?]</th></tr></thead>
+<tbody>
+<tr><td class="c">0</td><td class="c">4</td><td class="c">rev[0] = src[4] = 5</td></tr>
+<tr><td class="c">1</td><td class="c">3</td><td class="c">rev[1] = src[3] = 4</td></tr>
+<tr><td class="c">2</td><td class="c">2</td><td class="c">rev[2] = src[2] = 3</td></tr>
+<tr><td class="c">3</td><td class="c">1</td><td class="c">rev[3] = src[1] = 2</td></tr>
+<tr><td class="c">4</td><td class="c">0</td><td class="c">rev[4] = src[0] = 1</td></tr>
+</tbody>
+</table>
+
+<h4>做法二：原地对调（不开新数组）</h4>
+<p>把第 1 个和倒数第 1 个换、第 2 个和倒数第 2 个换……换到中间就停。</p>
+
+<div class="code-wrap"><div class="bar"><span class="dot r"></span><span class="dot y"></span><span class="dot g"></span><span class="name">原地交换</span><span class="cp">复制</span></div><pre><span class="hl-k">int</span> a[<span class="hl-n">5</span>] = {<span class="hl-n">1</span>, <span class="hl-n">2</span>, <span class="hl-n">3</span>, <span class="hl-n">4</span>, <span class="hl-n">5</span>};
+<span class="hl-k">int</span> n = <span class="hl-n">5</span>;
+
+<span class="hl-k">for</span> (<span class="hl-k">int</span> i = <span class="hl-n">0</span>; i &lt; n / <span class="hl-n">2</span>; i++) {   <span class="hl-c">/* 只走一半！ */</span>
+    <span class="hl-k">int</span> t = a[i];                     <span class="hl-c">/* 三步交换，需要临时变量 */</span>
+    a[i] = a[n - <span class="hl-n">1</span> - i];
+    a[n - <span class="hl-n">1</span> - i] = t;
+}
+
+<span class="hl-k">for</span> (<span class="hl-k">int</span> i = <span class="hl-n">0</span>; i &lt; n; i++) {
+    <span class="hl-f">printf</span>(<span class="hl-s">"%d "</span>, a[i]);
+}
+<span class="hl-f">printf</span>(<span class="hl-s">"\n"</span>);</pre></div>
+
+<div class="out-wrap"><div class="cap">运行结果</div><pre>5 4 3 2 1 </pre></div>
+
+<div class="card warn">
+  <div class="card-t">为什么要 <code>i &lt; n / 2</code></div>
+  <p>如果写成 <code>i &lt; n</code>，就会把已经换好的又换回去 ——
+  转一圈等于没动。只要换到中间就够了。</p>
+  <p>另外，交换两个格子<b>必须借一个临时变量 <code>t</code></b>。
+  直接写 <code>a[i] = a[j]; a[j] = a[i];</code> 是错的（两格会变成一样）。</p>
+</div>
+
+<h3 id="s8f">8.6 用辅助数组统计频次</h3>
+
+<p>这是数组最漂亮的一类用法：<b>把「值」当下标</b>，直接数出每个值出现几次。</p>
+
+<p>比如给一串 0~9 的数字，统计每个数字出现多少次：</p>
+
+<div class="code-wrap"><div class="bar"><span class="dot r"></span><span class="dot y"></span><span class="dot g"></span><span class="name">频次统计</span><span class="cp">复制</span></div><pre><span class="hl-p">#include</span> <span class="hl-s">&lt;stdio.h&gt;</span>
+
+<span class="hl-k">int</span> <span class="hl-f">main</span>(<span class="hl-k">void</span>) {
+    <span class="hl-k">int</span> a[<span class="hl-n">8</span>] = {<span class="hl-n">2</span>, <span class="hl-n">5</span>, <span class="hl-n">2</span>, <span class="hl-n">7</span>, <span class="hl-n">5</span>, <span class="hl-n">2</span>, <span class="hl-n">9</span>, <span class="hl-n">7</span>};
+    <span class="hl-k">int</span> n = <span class="hl-n">8</span>;
+
+    <span class="hl-k">int</span> cnt[<span class="hl-n">10</span>] = {<span class="hl-n">0</span>};    <span class="hl-c">/* ① 10 个格子，分别管数字 0~9，先清零 */</span>
+
+    <span class="hl-k">for</span> (<span class="hl-k">int</span> i = <span class="hl-n">0</span>; i &lt; n; i++) {
+        cnt[a[i]]++;          <span class="hl-c">/* ② 把「值」当编号去 ++ */</span>
+    }
+
+    <span class="hl-k">for</span> (<span class="hl-k">int</span> v = <span class="hl-n">0</span>; v &lt; <span class="hl-n">10</span>; v++) {   <span class="hl-c">/* ③ 扫一遍看谁不为 0 */</span>
+        <span class="hl-k">if</span> (cnt[v] &gt; <span class="hl-n">0</span>) {
+            <span class="hl-f">printf</span>(<span class="hl-s">"%d 出现 %d 次\n"</span>, v, cnt[v]);
+        }
+    }
+    <span class="hl-k">return</span> <span class="hl-n">0</span>;
+}</pre></div>
+
+<div class="out-wrap"><div class="cap">运行结果</div><pre>2 出现 3 次
+5 出现 2 次
+7 出现 2 次
+9 出现 1 次</pre></div>
+
+<p>关键是 <code>cnt[a[i]]++</code> 这一句，拆开看：</p>
+<div class="flow">
+  <div class="s"><div class="t">a[i]</div><div class="d">取出第 i 个值<br>比如 2</div></div>
+  <div class="s"><div class="t">cnt[2]</div><div class="d">找到「管 2 的那个格子」</div></div>
+  <div class="s"><div class="t">cnt[2]++</div><div class="d">给它加 1</div></div>
+</div>
+
+<div class="card tip">
+  <div class="card-t">这个套路还能怎么变</div>
+  <p>只要把「值 → 下标」的对应关系换一换，同一招能解决很多题：</p>
+  <ul>
+    <li>成绩 0~100 → 开 <code>int cnt[101]</code>，直接统计每个分数的人数</li>
+    <li>小写字母 <code>a</code>~<code>z</code> → 开 <code>int cnt[26]</code>，
+      用 <code>cnt[ch - 'a']++</code>（这一招等你学了字符运算再用）</li>
+  </ul>
+  <p>核心永远是那句：<b>让值本身告诉你该去哪个格子。</b></p>
+</div>
+
+<h4>再练一个：分段统计人数</h4>
+<p>需求：把成绩分成 5 段，数出每段各有多少人。</p>
+
+<div class="code-wrap"><div class="bar"><span class="dot r"></span><span class="dot y"></span><span class="dot g"></span><span class="name">分数段统计</span><span class="cp">复制</span></div><pre><span class="hl-p">#include</span> <span class="hl-s">&lt;stdio.h&gt;</span>
+
+<span class="hl-k">int</span> <span class="hl-f">main</span>(<span class="hl-k">void</span>) {
+    <span class="hl-k">int</span> a[<span class="hl-n">6</span>] = {<span class="hl-n">88</span>, <span class="hl-n">92</span>, <span class="hl-n">79</span>, <span class="hl-n">95</span>, <span class="hl-n">61</span>, <span class="hl-n">84</span>};
+    <span class="hl-k">int</span> n = <span class="hl-n">6</span>;
+
+    <span class="hl-c">/* 0: 0-59   1: 60-69   2: 70-79   3: 80-89   4: 90-100 */</span>
+    <span class="hl-k">int</span> band[<span class="hl-n">5</span>] = {<span class="hl-n">0</span>};
+
+    <span class="hl-k">for</span> (<span class="hl-k">int</span> i = <span class="hl-n">0</span>; i &lt; n; i++) {
+        <span class="hl-k">int</span> s = a[i];
+        <span class="hl-k">if</span> (s &lt; <span class="hl-n">60</span>)      band[<span class="hl-n">0</span>]++;
+        <span class="hl-k">else</span> <span class="hl-k">if</span> (s &lt; <span class="hl-n">70</span>) band[<span class="hl-n">1</span>]++;
+        <span class="hl-k">else</span> <span class="hl-k">if</span> (s &lt; <span class="hl-n">80</span>) band[<span class="hl-n">2</span>]++;
+        <span class="hl-k">else</span> <span class="hl-k">if</span> (s &lt; <span class="hl-n">90</span>) band[<span class="hl-n">3</span>]++;
+        <span class="hl-k">else</span>                band[<span class="hl-n">4</span>]++;
+    }
+
+    <span class="hl-k">for</span> (<span class="hl-k">int</span> i = <span class="hl-n">0</span>; i &lt; <span class="hl-n">5</span>; i++) {
+        <span class="hl-f">printf</span>(<span class="hl-s">"band[%d] = %d\n"</span>, i, band[i]);
+    }
+    <span class="hl-k">return</span> <span class="hl-n">0</span>;
+}</pre></div>
+
+<div class="out-wrap"><div class="cap">运行结果</div><pre>band[0] = 0
+band[1] = 1
+band[2] = 1
+band[3] = 2
+band[4] = 2</pre></div>
+
+<p>核对一下：61 在 60~69（1 人）；79 在 70~79（1 人）；
+88 和 84 在 80~89（2 人）；92 和 95 在 90~100（2 人）。共 6 人，对上了。</p>
+
+<!-- ============================================================ -->
+<h2 id="s9"><span class="n">9</span>常见错误</h2>
+
+<p>下面这些是批改作业时最常看到的错法，<b>逐个对照一遍，能省你很多调试时间。</b></p>
+
+<h4>错误 1 · 循环条件写成 <code>&lt;=</code>（越界）</h4>
+<div class="code-wrap"><div class="bar"><span class="dot r"></span><span class="dot y"></span><span class="dot g"></span><span class="name">对比</span><span class="cp">复制</span></div><pre><span class="hl-k">int</span> a[<span class="hl-n">5</span>];
+
+<span class="hl-c">/* ❌ 错：i 会取到 5，而 a[5] 不存在 */</span>
+<span class="hl-k">for</span> (<span class="hl-k">int</span> i = <span class="hl-n">0</span>; i <span class="hl-bad">&lt;=</span> <span class="hl-n">5</span>; i++) { ... }
+
+<span class="hl-c">/* ✅ 对：i 只取 0~4 */</span>
+<span class="hl-k">for</span> (<span class="hl-k">int</span> i = <span class="hl-n">0</span>; i &lt; <span class="hl-n">5</span>; i++) { ... }</pre></div>
+
+<p>这里就体现出用<b>变量 <code>n</code> 表示长度</b>的好处：<code>i &lt; n</code> 一眼就能看出对不对。</p>
+
+<h4>错误 2 · 声明了长度，却按「第几个」去访问</h4>
+<div class="code-wrap"><div class="bar"><span class="dot r"></span><span class="dot y"></span><span class="dot g"></span><span class="name">对比</span><span class="cp">复制</span></div><pre><span class="hl-k">int</span> a[<span class="hl-n">5</span>] = {<span class="hl-n">88</span>, <span class="hl-n">92</span>, <span class="hl-n">79</span>, <span class="hl-n">95</span>, <span class="hl-n">61</span>};
+
+<span class="hl-f">printf</span>(<span class="hl-s">"%d\n"</span>, a[<span class="hl-n">1</span>]);   <span class="hl-c">/* ✅ 92 —— 第 1 个元素 */</span>
+<span class="hl-f">printf</span>(<span class="hl-s">"%d\n"</span>, a[<span class="hl-n">5</span>]);   <span class="hl-c">/* ❌ 越界！第 5 个是 a[4] */</span></pre></div>
+
+<div class="out-wrap"><div class="cap">正确输出</div><pre>92
+61</pre></div>
+
+<h4>错误 3 · 忘记给累加/计数数组清零</h4>
+<div class="code-wrap"><div class="bar"><span class="dot r"></span><span class="dot y"></span><span class="dot g"></span><span class="name">对比</span><span class="cp">复制</span></div><pre><span class="hl-c">/* ❌ 错：cnt 里是垃圾值，++ 之后结果无法预料 */</span>
+<span class="hl-k">int</span> cnt[<span class="hl-n">10</span>];
+cnt[<span class="hl-n">3</span>]++;
+
+<span class="hl-c">/* ✅ 对：先清零 */</span>
+<span class="hl-k">int</span> cnt[<span class="hl-n">10</span>] = {<span class="hl-n">0</span>};
+cnt[<span class="hl-n">3</span>]++;</pre></div>
+
+<h4>错误 4 · 交换两格时忘了临时变量</h4>
+<div class="code-wrap"><div class="bar"><span class="dot r"></span><span class="dot y"></span><span class="dot g"></span><span class="name">对比</span><span class="cp">复制</span></div><pre><span class="hl-c">/* ❌ 错：第一句就把 a[i] 覆盖了，第二句等于白写 */</span>
+a[i] = a[j];
+a[j] = a[i];
+
+<span class="hl-c">/* ✅ 对：借一个临时变量 */</span>
+<span class="hl-k">int</span> t = a[i];
+a[i] = a[j];
+a[j] = t;</pre></div>
+
+<h4>错误 5 · 整数除法丢小数</h4>
+<div class="code-wrap"><div class="bar"><span class="dot r"></span><span class="dot y"></span><span class="dot g"></span><span class="name">对比</span><span class="cp">复制</span></div><pre><span class="hl-k">int</span> sum = <span class="hl-n">499</span>, n = <span class="hl-n">6</span>;
+
+<span class="hl-f">printf</span>(<span class="hl-s">"%.2f\n"</span>, sum / n);         <span class="hl-c">/* ❌ 83.00 —— 先做整数除法，小数已经丢了 */</span>
+<span class="hl-f">printf</span>(<span class="hl-s">"%.2f\n"</span>, sum / <span class="hl-n">6.0</span>);       <span class="hl-c">/* ✅ 83.17 */</span>
+<span class="hl-f">printf</span>(<span class="hl-s">"%.2f\n"</span>, (<span class="hl-k">double</span>)sum / n); <span class="hl-c">/* ✅ 83.17 —— 另一种写法 */</span></pre></div>
+
+<div class="out-wrap"><div class="cap">运行结果</div><pre>83.00
+83.17
+83.17</pre></div>
+
+<h4>错误 6 · 求最大值时初始值给 0</h4>
+<div class="code-wrap"><div class="bar"><span class="dot r"></span><span class="dot y"></span><span class="dot g"></span><span class="name">对比</span><span class="cp">复制</span></div><pre><span class="hl-c">/* 数组全是负数时： */</span>
+<span class="hl-k">int</span> a[<span class="hl-n">3</span>] = {<span class="hl-n">-5</span>, <span class="hl-n">-2</span>, <span class="hl-n">-8</span>};
+
+<span class="hl-k">int</span> mx = <span class="hl-n">0</span>;        <span class="hl-c">/* ❌ 结果 0，但数组里最大的其实是 -2 */</span>
+<span class="hl-k">int</span> mx = a[<span class="hl-n">0</span>];     <span class="hl-c">/* ✅ 用第一个元素打擂，结果 -2 */</span></pre></div>
+
+<!-- ============================================================ -->
+<h2 id="s10"><span class="n">10</span>一页速查</h2>
+
+<table>
+<thead><tr><th style="width:34%">想做的事</th><th>写法</th></tr></thead>
+<tbody>
+<tr><td>声明 5 个整数</td><td class="c">int a[5];</td></tr>
+<tr><td>声明并填初值</td><td class="c">int a[5] = {3, 1, 4, 1, 5};</td></tr>
+<tr><td>长度让编译器数</td><td class="c">int a[] = {3, 1, 4};</td></tr>
+<tr><td>全部清零</td><td class="c">int a[100] = {0};</td></tr>
+<tr><td>算出元素个数</td><td class="c">sizeof(a) / sizeof(a[0])</td></tr>
+<tr><td>访问第 i 个</td><td class="c">a[i]</td></tr>
+<tr><td>最后一个元素</td><td class="c">a[n - 1]</td></tr>
+<tr><td>第四个元素</td><td class="c">a[3]</td></tr>
+<tr><td>遍历全部</td><td class="c">for (int i = 0; i &lt; n; i++)</td></tr>
+<tr><td>倒着遍历</td><td class="c">for (int i = n - 1; i &gt;= 0; i--)</td></tr>
+<tr><td>读入一个元素</td><td class="c">scanf("%d", &amp;a[i]);</td></tr>
+<tr><td>求和</td><td class="c">sum += a[i];</td></tr>
+<tr><td>打擂求最大</td><td class="c">if (a[i] &gt; mx) mx = a[i];</td></tr>
+<tr><td>计数</td><td class="c">if (条件) cnt++;</td></tr>
+<tr><td>查找（找不到用 -1）</td><td class="c">int pos = -1;</td></tr>
+<tr><td>交换两格</td><td class="c">int t = a[i]; a[i] = a[j]; a[j] = t;</td></tr>
+<tr><td>频次统计</td><td class="c">cnt[a[i]]++;</td></tr>
+</tbody>
+</table>
+
+<div class="card key">
+  <div class="card-t">本讲要记住的四句话</div>
+  <ol>
+    <li><b>数组是一排同类型的格子，编号从 0 开始。</b></li>
+    <li><b>长度 n 的数组，最后一个下标是 n-1</b>，循环写 <code>i &lt; n</code>。</li>
+    <li><b>要累加或计数的数组，声明时写 <code>= {0}</code>。</b></li>
+    <li><b>求最大值用 <code>a[0]</code> 打擂</b>，不要给 0。</li>
+  </ol>
+</div>
+
+<div class="card note">
+  <div class="card-t">下一讲预告</div>
+  <p>下一讲《C 风格 · 函数初步》会解决一个你大概已经感觉到的问题：
+  <b>同一个循环写了好几遍</b>（比如「求最大值」写一次、「求平均」又写一次），
+  代码越来越长、越来越难改。</p>
+  <p>函数就是把这些反复出现的代码<b>打包成一个名字</b>，
+  用的时候喊一声就行。而且你会发现，函数和数组配在一起特别好用 ——
+  比如「求任意一个数组的最大值」可以写成一个函数，谁都能调用。</p>
+</div>
+
+<footer>
+UME 项目组内部教程 · 第一讲《数组初步》<br>
+代码示例均以 <b>Consolas</b> 等宽字体呈现；文中所有「运行结果」都经过实际编译运行核对。
+</footer>
+
+</main>
+</div>
+
+<script>
+/* 目录滚动高亮 */
+(function(){
+  const links = [...document.querySelectorAll('#toc a')];
+  const targets = links.map(a => document.querySelector(a.getAttribute('href'))).filter(Boolean);
+  const setOn = id => links.forEach(a => a.classList.toggle('on', a.getAttribute('href') === '#'+id));
+  const io = new IntersectionObserver(es => {
+    const vis = es.filter(e => e.isIntersecting)
+                  .sort((a,b) => a.boundingClientRect.top - b.boundingClientRect.top);
+    if (vis[0]) setOn(vis[0].target.id);
+  }, { rootMargin:'-8% 0px -72% 0px', threshold:0 });
+  targets.forEach(t => io.observe(t));
+})();
+
+/* 每个代码块加「复制」按钮：把 pre 的文本复制走
+   （代码块内容含 HTML 高亮标签，取 textContent 即得纯代码） */
+(function(){
+  document.querySelectorAll('.code-wrap').forEach(box => {
+    const btn = box.querySelector('.cp');
+    const pre = box.querySelector('pre');
+    if (!btn || !pre) return;
+    btn.addEventListener('click', async () => {
+      const text = pre.textContent;
+      try {
+        await navigator.clipboard.writeText(text);
+      } catch (e) {
+        const ta = document.createElement('textarea');
+        ta.value = text; document.body.appendChild(ta);
+        ta.select(); document.execCommand('copy'); ta.remove();
+      }
+      const old = btn.textContent;
+      btn.textContent = '已复制 ✓';
+      setTimeout(() => { btn.textContent = old; }, 1200);
+    });
+  });
+})();
+</script>
+<script>
+/* 移动端：生成「目录」按钮，点击呼出/收起侧滑目录 */
+(function(){
+  var toc = document.getElementById('toc');
+  if (!toc) return;
+  var btn = document.createElement('button');
+  btn.id = 'tocToggle';
+  btn.type = 'button';
+  btn.setAttribute('aria-controls','toc');
+  btn.textContent = '目录';
+  document.body.appendChild(btn);
+
+  function setOpen(on){
+    toc.classList.toggle('open', on);
+    document.body.classList.toggle('toc-open', on);
+    btn.setAttribute('aria-expanded', on ? 'true' : 'false');
+    btn.textContent = on ? '收起' : '目录';
+  }
+  btn.addEventListener('click', function(){
+    setOpen(!toc.classList.contains('open'));
+  });
+  /* 点目录里的链接后自动收起；点遮罩（#toc 之外的区域）也收起 */
+  toc.addEventListener('click', function(e){
+    if (e.target.closest('a')) setOpen(false);
+  });
+  document.addEventListener('click', function(e){
+    if (!toc.classList.contains('open')) return;
+    if (e.target === toc || toc.contains(e.target) || e.target === btn) return;
+    setOpen(false);
+  });
+  document.addEventListener('keydown', function(e){
+    if (e.key === 'Escape') setOpen(false);
+  });
+  /* 窄屏进入页面时默认收起，宽屏则清掉状态 */
+  function sync(){ if (window.innerWidth > 980) setOpen(false); }
+  window.addEventListener('resize', sync);
+  sync();
+})();
+</script>
+</body>
+</html>

@@ -1,0 +1,1373 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>C 风格 · 静态、动态内存与内存安全初步</title>
+<style>
+/* ===================================================================
+   UME 项目组内部教程 · 静态、动态内存与内存安全初步
+   约定：所有代码与输出都用 Consolas 等宽字体
+   =================================================================== */
+:root{
+  --bg:#ffffff; --bg-soft:#f7f9fc; --bg-code:#1e2430; --bg-out:#0f1419;
+  --line:#e3e8f0; --line-2:#ccd5e3;
+  --fg:#1a1f28; --fg-2:#4b5563; --fg-3:#8b95a5;
+  --blue:#1f6feb; --blue-soft:#e8f1fe;
+  --green:#17864a; --green-soft:#e7f6ee;
+  --red:#c0392b; --red-soft:#fdeceb;
+  --amber:#a4690d; --amber-soft:#fdf4e3;
+  --violet:#6b46c1; --violet-soft:#f2ecfd;
+  --teal:#0d7d7d; --teal-soft:#e4f5f5;
+  --mono:"Consolas","Cascadia Mono","Courier New",monospace;
+  --sans:"Microsoft YaHei","PingFang SC","Hiragino Sans GB",system-ui,sans-serif;
+}
+*{box-sizing:border-box}
+html{scroll-behavior:smooth}
+body{margin:0;background:var(--bg);color:var(--fg);
+  font:16px/1.8 var(--sans);-webkit-font-smoothing:antialiased}
+#shell{display:flex;align-items:flex-start;max-width:1400px;margin:0 auto}
+
+#toc{position:sticky;top:0;width:274px;flex:0 0 274px;height:100vh;overflow:auto;
+  padding:32px 16px 40px 24px;border-right:1px solid var(--line);background:var(--bg-soft)}
+#toc h5{margin:0 0 12px;font-size:11px;letter-spacing:.16em;color:var(--fg-3);
+        text-transform:uppercase;font-weight:600}
+#toc a{display:block;padding:5px 10px;margin:1px 0;border-radius:6px;font-size:13.5px;
+  color:var(--fg-2);text-decoration:none;line-height:1.5;
+  border-left:2px solid transparent;transition:background .13s,color .13s,border-color .13s}
+#toc a:hover{background:#e9eef7;color:var(--fg);border-left-color:var(--line-2)}
+#toc a.sub{padding-left:24px;font-size:12.5px;color:var(--fg-3)}
+#toc a.on{background:var(--blue-soft);color:var(--blue);font-weight:600;border-left-color:var(--blue)}
+#toc .sep{height:1px;background:var(--line);margin:12px 0}
+
+main{flex:1;min-width:0;padding:44px 52px 140px}
+
+h1{font-size:32px;line-height:1.25;margin:0 0 8px;letter-spacing:-.01em}
+.sub-title{color:var(--fg-3);font-size:15px;margin:0 0 6px}
+h2{font-size:22px;margin:58px 0 14px;padding-top:18px;border-top:1px solid var(--line);
+   display:flex;align-items:center;gap:11px}
+h2 .n{flex:0 0 auto;width:30px;height:30px;line-height:30px;text-align:center;
+  background:var(--fg);color:#fff;border-radius:8px;font-size:15px;
+  font-family:var(--mono);font-weight:600}
+h3{font-size:17px;margin:30px 0 8px}
+h4{font-size:15px;margin:22px 0 6px;color:var(--fg-2)}
+p{margin:11px 0}
+ul,ol{margin:10px 0;padding-left:24px}
+li{margin:5px 0}
+a{color:var(--blue)}
+
+code{font-family:var(--mono);font-size:.9em;background:#eef2f8;color:#0d3a7a;
+  padding:1.5px 5px;border-radius:4px;border:1px solid #dbe4f0}
+.k{font-family:var(--mono);font-size:.9em;background:#f2ecfd;color:#5b34b0;
+  padding:1.5px 5px;border-radius:4px;border:1px solid #ded0f7;
+  cursor:help;transition:background .12s,box-shadow .12s}
+.k:hover{background:#e6dbfb;box-shadow:0 0 0 3px rgba(107,70,193,.13)}
+
+.code-wrap{margin:16px 0;border:1px solid #2c3444;border-radius:10px;overflow:hidden;
+  background:var(--bg-code);position:relative;
+  transition:box-shadow .18s,border-color .18s,transform .18s}
+.code-wrap:hover{border-color:#3d4a60;box-shadow:0 6px 22px rgba(20,30,50,.18);transform:translateY(-1px)}
+.code-wrap .bar{display:flex;align-items:center;gap:8px;padding:7px 12px;
+  background:#171d27;border-bottom:1px solid #2c3444;
+  font-family:var(--mono);font-size:11.5px;color:#8296b0}
+.code-wrap .bar .dot{width:9px;height:9px;border-radius:50%;background:#3c4658}
+.code-wrap .bar .dot.r{background:#e06c75}.code-wrap .bar .dot.y{background:#e5c07b}
+.code-wrap .bar .dot.g{background:#98c379}
+.code-wrap .bar .name{margin-left:4px}
+.code-wrap .bar .cp{margin-left:auto;cursor:pointer;border:1px solid #333d4f;background:#222a37;
+  color:#9fb0c7;border-radius:5px;padding:1px 9px;font:11.5px var(--mono);
+  transition:background .13s,color .13s,border-color .13s}
+.code-wrap .bar .cp:hover{background:#2d3849;color:#dbe6f5;border-color:#4a586f}
+.code-wrap pre{margin:0;padding:14px 16px;overflow:auto;
+  font-family:var(--mono);font-size:13.5px;line-height:1.72;color:#d7e0ee}
+/* 箭头高亮：本讲重点 */
+.arw{color:#ffcb6b;font-weight:700}
+.arw2{color:#82aaff;font-weight:700}
+
+.out-wrap{margin:12px 0 20px;border:1px solid #d9e2ee;border-left:4px solid var(--green);
+  border-radius:0 9px 9px 0;background:var(--bg-out);overflow:hidden;
+  transition:box-shadow .18s,border-left-color .18s}
+.out-wrap:hover{box-shadow:0 5px 18px rgba(20,30,50,.16);border-left-color:#22a35c}
+.out-wrap .cap{padding:6px 13px;background:#151b22;border-bottom:1px solid #232c38;
+  font-family:var(--mono);font-size:11.5px;color:#7f8f9f}
+.out-wrap pre{margin:0;padding:13px 16px;overflow:auto;
+  font-family:var(--mono);font-size:13.5px;line-height:1.7;color:#c9e6d5}
+
+.hl-k{color:#c792ea}.hl-n{color:#f78c6c}.hl-s{color:#c3e88d}
+.hl-c{color:#6a7a8c;font-style:italic}.hl-f{color:#82aaff}.hl-p{color:#89ddff}
+.hl-bad{color:#ff6b6b;font-weight:700}.hl-ok{color:#7ee787;font-weight:700}
+
+.card{border:1px solid var(--line);border-radius:12px;padding:16px 20px;margin:18px 0;
+  background:#fff;transition:box-shadow .18s,transform .18s,border-color .18s}
+.card:hover{box-shadow:0 5px 20px rgba(30,45,70,.09);transform:translateY(-1px)}
+.card h4{margin-top:0}
+.card.tip{border-color:#c6e6d3;background:var(--green-soft)}
+.card.warn{border-color:#f2d2ce;background:var(--red-soft)}
+.card.note{border-color:#cfe0fb;background:var(--blue-soft)}
+.card.key{border-color:#ded0f7;background:var(--violet-soft)}
+.card.teal{border-color:#bfe4e4;background:var(--teal-soft)}
+.card .card-t{font-weight:700;font-size:14.5px;margin-bottom:6px;display:flex;gap:7px;align-items:center}
+.card.tip .card-t{color:var(--green)}
+.card.warn .card-t{color:var(--red)}
+.card.note .card-t{color:var(--blue)}
+.card.key .card-t{color:var(--violet)}
+.card.teal .card-t{color:var(--teal)}
+.card p:last-child,.card ul:last-child,.card ol:last-child{margin-bottom:0}
+
+table{border-collapse:collapse;width:100%;margin:16px 0;font-size:14px}
+th,td{border:1px solid var(--line);padding:8px 12px;text-align:left;vertical-align:top}
+th{background:var(--bg-soft);font-weight:600;font-size:13px}
+tbody tr{transition:background .12s}
+tbody tr:hover{background:#f4f8fd}
+td.c,th.c{font-family:var(--mono);font-size:13px}
+
+/* 指针关系图：变量盒 + 箭头 */
+.ptr-demo{
+  display:flex;align-items:center;gap:0;flex-wrap:wrap;margin:18px 0;
+  padding:16px;border:1px solid var(--line-2);border-radius:12px;background:#fcfdff;
+}
+.ptr-demo .n{width:100%;font-size:12.5px;color:var(--fg-3);margin-bottom:10px}
+.box{
+  border:1px solid var(--line-2);border-radius:10px;padding:10px 14px;background:#fff;
+  min-width:120px;transition:box-shadow .16s,transform .16s,border-color .16s;cursor:default;
+}
+.box:hover{box-shadow:0 6px 18px rgba(30,45,70,.13);transform:translateY(-2px);border-color:var(--blue)}
+.box .nm{font-family:var(--mono);font-size:12px;color:var(--fg-3);margin-bottom:5px}
+.box .vl{font-family:var(--mono);font-size:16px;font-weight:600}
+.box.p{border-color:#bcd6fa;background:var(--blue-soft)}
+.box.p .vl{color:var(--blue)}
+.box.p:hover{border-color:var(--blue)}
+.link{
+  font-family:var(--mono);font-size:15px;color:var(--amber);padding:0 12px;
+  white-space:nowrap;transition:transform .16s,color .16s;
+}
+.link:hover{transform:scale(1.14);color:#c99400}
+.link.b{color:var(--blue)}
+.link.b:hover{color:var(--blue)}
+
+/* 地址表 */
+.addr{
+  display:grid;grid-template-columns:auto auto auto 1fr;gap:0;margin:16px 0;
+  border:1px solid var(--line-2);border-radius:10px;overflow:hidden;
+  font-family:var(--mono);font-size:13px;
+}
+.addr>div{padding:7px 12px;border-bottom:1px solid var(--line)}
+.addr>div:nth-child(4n+1){background:var(--bg-soft);color:var(--fg-3)}
+.addr>div:nth-child(4n+2){background:#fff;color:var(--fg-2)}
+.addr>div:nth-child(4n+3){background:#fff}
+.addr>div:nth-child(4n){background:#fff}
+.addr>div:last-child,.addr>div:nth-last-child(2),
+.addr>div:nth-last-child(3),.addr>div:nth-last-child(4){border-bottom:0}
+.addr .hi{color:var(--blue);font-weight:700;transition:background .14s}
+.addr .hi:hover{background:var(--blue-soft)}
+.addr .hd{font-weight:700;color:var(--fg-2);background:#eef2f8 !important}
+
+.flow{display:flex;flex-wrap:wrap;gap:0;margin:16px 0;align-items:stretch}
+.flow .s{flex:1 1 126px;border:1px solid var(--line);border-radius:9px;padding:10px 12px;
+  background:#fff;position:relative;transition:box-shadow .15s,transform .15s,border-color .15s}
+.flow .s:hover{box-shadow:0 5px 16px rgba(30,45,70,.1);transform:translateY(-2px);border-color:var(--line-2)}
+.flow .s+.s{margin-left:24px}
+.flow .s+.s::before{content:"→";position:absolute;left:-19px;top:50%;transform:translateY(-50%);
+  color:var(--fg-3);font-size:15px;font-family:var(--mono)}
+.flow .s .t{font-weight:650;font-size:13.5px;margin-bottom:2px}
+.flow .s .d{font-size:12px;color:var(--fg-3);line-height:1.55}
+
+.mnemonic{border-left:4px solid var(--amber);background:var(--amber-soft);
+  border-radius:0 9px 9px 0;padding:12px 18px;margin:16px 0;font-size:15px}
+.mnemonic b{color:var(--amber)}
+.hr{height:1px;background:var(--line);margin:34px 0}
+.tag{display:inline-block;font-family:var(--mono);font-size:11.5px;padding:1.5px 8px;
+  border-radius:999px;background:#eef1f6;color:var(--fg-2);border:1px solid var(--line-2);
+  vertical-align:2px}
+.tag.g{background:var(--green-soft);border-color:#bfe2cd;color:var(--green)}
+.tag.r{background:var(--red-soft);border-color:#f0c8c2;color:var(--red)}
+.tag.b{background:var(--blue-soft);border-color:#bcd6fa;color:var(--blue)}
+.tag.v{background:var(--violet-soft);border-color:#ded0f7;color:var(--violet)}
+
+/* 问答式疑难块 */
+.qa{border:1px solid var(--line);border-radius:12px;margin:16px 0;overflow:hidden;
+  transition:box-shadow .18s,border-color .18s}
+.qa:hover{box-shadow:0 5px 20px rgba(30,45,70,.1);border-color:var(--line-2)}
+.qa .q{
+  padding:11px 18px;background:var(--violet-soft);border-bottom:1px solid #ded0f7;
+  font-weight:700;font-size:14.5px;color:var(--violet);
+}
+.qa .a{padding:12px 18px;background:#fff}
+.qa .a p:first-child{margin-top:0}
+.qa .a p:last-child{margin-bottom:0}
+footer{border-top:1px solid var(--line);margin-top:70px;padding-top:18px;font-size:13px;color:var(--fg-3)}
+@media(max-width:980px){#toc{display:none}main{padding:24px}}
+@media print{#toc{display:none}main{padding:0}.code-wrap,.out-wrap{break-inside:avoid}body{font-size:12pt}}
+/* ===== 移动端增强 (mobile) ===== */
+/* 桌面端不显示抽屉按钮（只在窄屏呼出）。这条本身不设 display，避免
+   与窄屏里的 #tocToggle 规则打架；#shell{display:flex} 正好把它藏起来。 */
+@media (min-width:981px){#tocToggle{display:none}}
+#toc{scrollbar-width:thin}
+
+/* ---------- 平板及以下：收紧留白 ---------- */
+@media (max-width:980px){
+  #shell{display:block;max-width:none}
+  main{padding:56px 18px 110px}
+  h1{font-size:25px}
+  h2{font-size:19px;margin:42px 0 12px;gap:9px}
+  h2 .n{width:26px;height:26px;line-height:26px;font-size:13px;border-radius:7px}
+  h3{font-size:16px;margin:26px 0 8px}
+  h4{font-size:14.5px}
+
+  /* 代码与输出：手机上要看得清 */
+  .code-wrap pre{font-size:14px;line-height:1.68;padding:12px 13px;
+    -webkit-overflow-scrolling:touch}
+  .out-wrap pre{font-size:14px;line-height:1.66;padding:12px 13px;
+    -webkit-overflow-scrolling:touch}
+  .code-wrap .bar,.out-wrap .cap{font-size:11px;padding:6px 10px}
+  .code-wrap .bar .cp{padding:3px 10px;font-size:11px}
+
+  /* 表格单独横向滚动，不再撑破版心 */
+  main>table, main .card>table{
+    display:block;width:100%;overflow-x:auto;-webkit-overflow-scrolling:touch;
+    white-space:nowrap;font-size:13.5px
+  }
+  main>table th, main>table td{white-space:nowrap}
+
+  /* 各类示意图允许横向滚动 */
+  .bits,.bitrow,.bytes,.cells,.addr,.anat,.flow,.ptr-demo{
+    overflow-x:auto;-webkit-overflow-scrolling:touch
+  }
+  .bits,.bytes,.cells{flex-wrap:nowrap}
+  .anat .row{min-width:max-content}
+  .ptr-demo .link{white-space:nowrap}
+
+  /* 卡片与行内代码 */
+  .card{padding:13px 15px;border-radius:11px}
+  code{word-break:break-word}
+  .mnemonic{padding:11px 14px;font-size:14.5px}
+
+  /* 目录：变成可呼出的抽屉，不再直接藏掉 */
+  /* 基础样式里这条断点写了 #toc{display:none}，这里必须显式恢复，
+     否则目录会变成 0×0 的隐形元素 —— 按钮点了也没反应。
+     用 !important 是因为 display:none 与我们的 display:block 选择器
+     优先级相同，靠后写不一定稳。 */
+  #toc{
+    display:block !important;
+    position:fixed;top:0;left:0;bottom:0;z-index:60;
+    width:min(80vw,308px);height:100vh;max-height:100vh;
+    background:#fff;border-right:1px solid var(--line);
+    box-shadow:0 0 44px rgba(15,25,45,.20);
+    padding:66px 12px 40px 16px;
+    transform:translateX(-102%);
+    transition:transform .25s ease;
+    overscroll-behavior:contain
+  }
+  #toc.open{transform:translateX(0)}
+  #toc a{padding:9px 11px;font-size:15px}
+  #toc a.sub{padding-left:26px;font-size:13.5px}
+  body.toc-open{overflow:hidden}
+
+  /* 遮罩：用 body.toc-open 的伪元素生成，而不是挂在 #toc 上。
+     挂在 #toc 上时它会与抽屉同一个层叠上下文，层级很难既压住正文
+     又不盖住抽屉自己的文字。挂在 body 上则天然在抽屉（z-index:60）之下、
+     正文之上，层级干净。点击关闭由脚本的 document 监听处理。 */
+  body.toc-open::after{
+    content:"";position:fixed;inset:0;z-index:55;
+    background:rgba(18,26,40,.42);
+    opacity:1;transition:opacity .25s
+  }
+
+  #tocToggle{
+    position:fixed;top:11px;left:11px;z-index:70;
+    padding:7px 14px;border-radius:999px;cursor:pointer;
+    background:#fff;color:var(--fg);border:1px solid var(--line-2);
+    font:600 13px/1 var(--sans);box-shadow:0 2px 10px rgba(20,30,50,.14);
+    -webkit-tap-highlight-color:transparent;
+    opacity:.72;transition:opacity .18s,background .18s,color .18s,transform .12s
+  }
+  #tocToggle:hover,#tocToggle:focus-visible{opacity:1}
+  #tocToggle:active{transform:scale(.96)}
+  body.toc-open #tocToggle{background:var(--fg);color:#fff;border-color:var(--fg)}
+  html{scroll-padding-top:64px}
+}
+
+/* ---------- 手机：进一步压缩 ---------- */
+@media (max-width:560px){
+  main{padding:54px 13px 100px}
+  h1{font-size:22px}
+  h2{font-size:17.5px;margin:36px 0 10px}
+  .sub-title{font-size:14px}
+  .tag{font-size:11px;padding:1.5px 7px}
+  body{font-size:15.5px;line-height:1.75}
+
+  /* 流程条改成竖向排列，箭头朝下 */
+  .flow{display:block}
+  .flow .s+.s{margin:20px 0 0}
+  .flow .s+.s::before{content:"↓";left:50%;top:-19px;transform:translateX(-50%)}
+
+  .code-wrap,.out-wrap{border-radius:9px}
+  .code-wrap pre,.out-wrap pre{font-size:13.5px;padding:11px 11px}
+  .code-wrap .bar .name{max-width:56vw;overflow:hidden;text-overflow:ellipsis;
+    white-space:nowrap}
+  .card{padding:12px 13px;margin:15px 0}
+  .qa .q,.qa .a{padding:11px 13px}
+  .qa .q{font-size:14px}
+  blockquote{margin:12px 0;padding:10px 13px}
+
+  .bits .b{width:22px;height:28px;line-height:28px;font-size:13px}
+  .bits .b.w{width:27px}
+  .bits-lg .b{width:17px;height:22px;line-height:22px;font-size:11px}
+  .byte{min-width:64px;padding:7px 5px 5px}
+  .cell{min-width:56px}
+  .addr{font-size:12px}
+  .addr>div{padding:6px 10px}
+  .ptr-demo{padding:12px}
+  .ptr-demo .box{min-width:100px;padding:8px 11px}
+  .flow .s+.s{margin-left:20px}
+  .flow .s+.s::before{left:-16px}
+
+  #tocToggle{top:9px;left:9px;padding:6px 12px;font-size:12.5px}
+  #toc{width:min(86vw,300px);padding-top:58px}
+}
+
+/* ---------- 打印时保持干净 ---------- */
+@media print{
+  #tocToggle{display:none !important}
+  body.toc-open::after{display:none !important}
+}
+</style>
+<style>
+/* 栈 / 堆 对照示意图 */
+.memmap{
+  display:grid;grid-template-columns:1fr 1fr;gap:16px;margin:18px 0;
+}
+.memmap .col{
+  border:1px solid var(--line-2);border-radius:12px;overflow:hidden;background:#fff;
+  transition:box-shadow .18s,transform .18s,border-color .18s;
+}
+.memmap .col:hover{box-shadow:0 6px 20px rgba(30,45,70,.12);transform:translateY(-2px)}
+.memmap .col .hd{
+  padding:9px 14px;font-weight:700;font-size:14px;border-bottom:1px solid var(--line-2);
+}
+.memmap .col.stack .hd{background:var(--blue-soft);color:var(--blue)}
+.memmap .col.heap  .hd{background:var(--violet-soft);color:var(--violet)}
+.memmap .col .bd{padding:12px 14px;font-size:13.5px;color:var(--fg-2);line-height:1.7}
+.memmap .col .bd b{color:var(--fg)}
+@media(max-width:700px){.memmap{grid-template-columns:1fr}}
+
+/* 流程：申请 -> 使用 -> 释放 */
+.lifecycle{display:flex;flex-wrap:wrap;margin:16px 0;align-items:stretch}
+.lifecycle .st{
+  flex:1 1 120px;border:1px solid var(--line);border-radius:9px;padding:10px 12px;
+  background:#fff;position:relative;transition:box-shadow .15s,transform .15s;
+}
+.lifecycle .st:hover{box-shadow:0 5px 16px rgba(30,45,70,.1);transform:translateY(-2px)}
+.lifecycle .st+.st{margin-left:24px}
+.lifecycle .st+.st::before{
+  content:"→";position:absolute;left:-19px;top:50%;transform:translateY(-50%);
+  color:var(--fg-3);font-size:15px;font-family:var(--mono);
+}
+.lifecycle .st .t{font-weight:650;font-size:13.5px;margin-bottom:2px;font-family:var(--mono)}
+.lifecycle .st .d{font-size:12px;color:var(--fg-3);line-height:1.55}
+@media(max-width:560px){
+  .lifecycle{display:block}
+  .lifecycle .st+.st{margin:20px 0 0}
+  .lifecycle .st+.st::before{content:"↓";left:50%;top:-19px;transform:translateX(-50%)}
+}
+</style>
+<style>/* ===== 移动端：长路径字符串断行 =====
+/* 长且无空格的串（路径、命令、变量名）在窄屏上必须允许内部断行，
+   否则会把表格和终端块撑得比视口还宽。 */
+@media (max-width:980px){
+  main table th,
+  main table td,
+  main table td code,
+  main table th code,
+  main table td .c,
+  main td,
+  main th{
+    overflow-wrap:anywhere;
+    word-break:break-word;
+  }
+  /* 表头文字允许换行 */
+  main table th{white-space:normal}
+
+  /* 终端块里的提示符与输出 */
+  .term pre,
+  .term .pr,
+  .term .cmd,
+  .term .out,
+  .term .warn,
+  .term .err{
+    overflow-wrap:anywhere;
+    word-break:break-word;
+    white-space:pre-wrap;
+  }
+  /* 行内 code 也别撑宽 */
+  main p code,
+  main li code,
+  main td code,
+  .card code{
+    overflow-wrap:anywhere;
+    word-break:break-word;
+  }
+}
+</style>
+</head>
+<body>
+<div id="shell">
+
+<nav id="toc">
+  <h5>目录</h5>
+  <a href="#s1">1 · 内存为什么不够用</a>
+  <a href="#s2">2 · 三种「存放方式」总览</a>
+  <div class="sep"></div>
+  <a href="#s3">3 · 静态内存</a>
+  <a href="#s4">4 · 自动内存（栈）</a>
+  <a href="#s5">5 · 动态内存（堆）</a>
+  <a href="#s5a" class="sub">5.1 malloc：申请一块内存</a>
+  <a href="#s5b" class="sub">5.2 free：还回去</a>
+  <a href="#s5c" class="sub">5.3 calloc 与 realloc</a>
+  <a href="#s6">6 · 栈与堆的主要区别</a>
+  <a href="#s7">7 · 什么时候真的需要堆</a>
+  <div class="sep"></div>
+  <a href="#s8">8 · 维护内存安全的基本习惯</a>
+  <a href="#s8a" class="sub">8.1 配对：谁申请谁释放</a>
+  <a href="#s8b" class="sub">8.2 释放后立刻置 NULL</a>
+  <a href="#s8c" class="sub">8.3 检查分配是否成功</a>
+  <a href="#s8d" class="sub">8.4 不要越界</a>
+  <a href="#s8e" class="sub">8.5 不要返回局部数组</a>
+  <a href="#s8f" class="sub">8.6 先算清楚要多少字节</a>
+  <a href="#s9">9 · 常见错误</a>
+  <a href="#s10">10 · 一页速查</a>
+</nav>
+
+<main>
+<h1>静态、动态内存与内存安全初步</h1>
+<p class="sub-title">UME 项目组内部教程 · 第五讲 · 面向零编程基础成员</p>
+<p>
+  <span class="tag">已学：数组 / 函数 / 指针</span>
+  <span class="tag">已学：类型与地址</span>
+  <span class="tag b">本讲：内存从哪来、怎么还</span>
+</p>
+
+<div class="card note">
+  <div class="card-t">这一讲要解决什么</div>
+  <p>前面几讲里，数组的长度都是写死的：<code>int arr[100];</code>。
+  可是如果运行时才知道要存多少个数呢？</p>
+  <p>这一讲回答这个问题，并顺带把「内存分几块、各自什么脾气」讲清楚 ——
+  <b>这是写出不崩溃的程序的基础</b>。</p>
+  <p>文中所有「运行结果」均经过实际编译运行核对。</p>
+</div>
+
+<!-- ============================================================ -->
+<h2 id="s1"><span class="n">1</span>内存为什么不够用</h2>
+
+<p>先看一个真实的需求：<b>读入 n 个数，然后倒序输出。</b></p>
+
+<p>问题在于，<b>n 是运行时才知道的</b> —— 用户可能输入 5，也可能输入 5000。
+你写数组的时候不知道要开多大。</p>
+
+<h4>办法一：开一个「肯定够大」的数组</h4>
+<div class="code-wrap"><div class="bar"><span class="dot r"></span><span class="dot y"></span><span class="dot g"></span><span class="name">先开大一点</span><span class="cp">复制</span></div><pre><span class="hl-k">int</span> a[<span class="hl-n">10000</span>];      <span class="hl-c">/* 先按最大可能开 */</span>
+<span class="hl-f">scanf</span>(<span class="hl-s">"%d"</span>, &amp;n);
+<span class="hl-k">for</span> (<span class="hl-k">int</span> i = <span class="hl-n">0</span>; i &lt; n; i++) {
+    <span class="hl-f">scanf</span>(<span class="hl-s">"%d"</span>, &amp;a[i]);
+}</pre></div>
+
+<p>这个办法能跑，但有两个毛病：</p>
+
+<ul>
+  <li><b>浪费。</b>用户只输入 3 个数，你却一直占着 10000 个格子的位置。</li>
+  <li><b>还是可能不够。</b>万一用户输入 20000 个呢？照样越界。</li>
+</ul>
+
+<h4>办法二：运行时再决定开多大</h4>
+<p>这就是<b>动态内存</b>要做的事：程序跑起来之后，
+根据实际需要<b>临时向系统申请</b>一块刚好的内存，用完再还回去。</p>
+
+<div class="card key">
+  <div class="card-t">本讲的核心问题</div>
+  <p><b>内存不是只有一种，它们来历不同、脾气不同。</b></p>
+  <p>搞清楚「这块内存是谁给的、什么时候没的、要不要我负责还」，
+  就能避开一大类很难查的程序崩溃。</p>
+</div>
+
+<!-- ============================================================ -->
+<h2 id="s2"><span class="n">2</span>三种「存放方式」总览</h2>
+
+<p>程序运行时用到的内存，大致分三块。先看整体印象，后面逐个展开。</p>
+
+<div class="memmap">
+  <div class="col stack">
+    <div class="hd">静态内存</div>
+    <div class="bd">
+      <b>谁给的：</b>编译时就安排好<br>
+      <b>什么时候没的：</b>程序结束<br>
+      <b>要我还吗：</b><b>不用</b><br>
+      <b>典型：</b>全局变量、<code>static</code> 变量<br>
+      <b>特点：</b>整份程序共用一份
+    </div>
+  </div>
+  <div class="col stack">
+    <div class="hd">自动内存（栈）</div>
+    <div class="bd">
+      <b>谁给的：</b>进函数时自动分配<br>
+      <b>什么时候没的：</b>出函数就没了<br>
+      <b>要我还吗：</b><b>不用</b><br>
+      <b>典型：</b>局部变量、局部数组<br>
+      <b>特点：</b>又快又省心，但空间有限
+    </div>
+  </div>
+</div>
+
+<div class="memmap">
+  <div class="col heap">
+    <div class="hd">动态内存（堆）</div>
+    <div class="bd">
+      <b>谁给的：</b>你调用 <code>malloc</code> 才给<br>
+      <b>什么时候没的：</b>你调用 <code>free</code> 才没<br>
+      <b>要我还吗：</b><b>必须还</b><br>
+      <b>典型：</b><code>malloc</code> 得到的内存<br>
+      <b>特点：</b>大小随意、活得久，但一切自己管
+    </div>
+  </div>
+  <div class="col" style="display:flex;align-items:center">
+    <div class="bd">
+      <b>一句话对比：</b><br>
+      静态和栈内存<b>系统替你管</b>，你只管用；<br>
+      堆内存<b>系统一概不管</b>，申请和归还都得你亲手做。
+    </div>
+  </div>
+</div>
+
+<div class="mnemonic">
+  <b>先记住这个比喻：</b><br>
+  静态内存像<b>自己家的家具</b>（一直在）；<br>
+  栈内存像<b>去餐厅吃饭的桌子</b>（坐下就有，走时自动收）；<br>
+  堆内存像<b>租的仓库</b>（要自己去租，用完必须自己去退，忘了退就一直扣钱）。
+</div>
+
+<!-- ============================================================ -->
+<h2 id="s3"><span class="n">3</span>静态内存</h2>
+
+<p>写在所有函数<b>外面</b>的变量，就是静态内存。它在程序启动时就存在，
+程序结束才消失。</p>
+
+<div class="code-wrap"><div class="bar"><span class="dot r"></span><span class="dot y"></span><span class="dot g"></span><span class="name">全局变量</span><span class="cp">复制</span></div><pre><span class="hl-p">#include</span> <span class="hl-s">&lt;stdio.h&gt;</span>
+
+<span class="hl-k">int</span> gCount = <span class="hl-n">0</span>;          <span class="hl-c">/* 写在函数外面：全局变量 */</span>
+
+<span class="hl-k">void</span> <span class="hl-f">addOne</span>(<span class="hl-k">void</span>) {
+    gCount++;                <span class="hl-c">/* 任何函数都能用它 */</span>
+}
+
+<span class="hl-k">int</span> <span class="hl-f">main</span>(<span class="hl-k">void</span>) {
+    <span class="hl-f">printf</span>(<span class="hl-s">"开始: gCount = %d
+"</span>, gCount);
+    <span class="hl-f">addOne</span>();
+    <span class="hl-f">addOne</span>();
+    <span class="hl-f">printf</span>(<span class="hl-s">"调用两次后: gCount = %d
+"</span>, gCount);
+    <span class="hl-k">return</span> <span class="hl-n">0</span>;
+}</pre></div>
+
+<div class="out-wrap"><div class="cap">运行结果</div><pre>开始: gCount = 0
+调用两次后: gCount = 2</pre></div>
+
+<h4><code>static</code> 局部变量：只初始化一次，但活得很久</h4>
+<p>在局部变量前面加 <code>static</code>，它就变成静态的：
+<b>函数退出后它不会消失</b>，下次进函数还是上次的值。</p>
+
+<div class="code-wrap"><div class="bar"><span class="dot r"></span><span class="dot y"></span><span class="dot g"></span><span class="name">对比：普通局部 vs static 局部</span><span class="cp">复制</span></div><pre><span class="hl-p">#include</span> <span class="hl-s">&lt;stdio.h&gt;</span>
+
+<span class="hl-k">void</span> <span class="hl-f">normal</span>(<span class="hl-k">void</span>) {
+    <span class="hl-k">int</span> n = <span class="hl-n">0</span>;        <span class="hl-c">/* 每次进来都重新变成 0 */</span>
+    n++;
+    <span class="hl-f">printf</span>(<span class="hl-s">"普通局部   n = %d
+"</span>, n);
+}
+
+<span class="hl-k">void</span> <span class="hl-f">keep</span>(<span class="hl-k">void</span>) {
+    <span class="hl-k">static</span> <span class="hl-k">int</span> n = <span class="hl-n">0</span>;  <span class="hl-c">/* 只初始化一次，之后一直留着 */</span>
+    n++;
+    <span class="hl-f">printf</span>(<span class="hl-s">"static局部 n = %d
+"</span>, n);
+}
+
+<span class="hl-k">int</span> <span class="hl-f">main</span>(<span class="hl-k">void</span>) {
+    <span class="hl-k">for</span> (<span class="hl-k">int</span> i = <span class="hl-n">0</span>; i &lt; <span class="hl-n">3</span>; i++) {
+        <span class="hl-f">normal</span>();
+        <span class="hl-f">keep</span>();
+    }
+    <span class="hl-k">return</span> <span class="hl-n">0</span>;
+}</pre></div>
+
+<div class="out-wrap"><div class="cap">运行结果</div><pre>普通局部   n = 1
+static局部 n = 1
+普通局部   n = 1
+static局部 n = 2
+普通局部   n = 1
+static局部 n = 3</pre></div>
+
+<div class="card tip">
+  <div class="card-t">静态内存的特点</div>
+  <ul>
+    <li><b>不用管。</b>不用申请，也不用释放，最省心。</li>
+    <li><b>大小固定。</b>编译时就定下来了，运行时改不了。</li>
+    <li><b>全局可见（不加 static 时）。</b>任何函数都能读写，很方便 ——
+      但正因为太方便，<b>滥用会让程序很难维护</b>：
+      你不知道到底是谁把它改了。</li>
+  </ul>
+  <p>建议：<b>能用局部变量就用局部变量</b>，全局变量只在确实需要共享时才用。</p>
+</div>
+
+<!-- ============================================================ -->
+<h2 id="s4"><span class="n">4</span>自动内存（栈）</h2>
+
+<p>你在函数里写的每一个局部变量、每一个局部数组，都在栈上。
+<b>进函数时自动分配，出函数时自动回收。</b></p>
+
+<div class="code-wrap"><div class="bar"><span class="dot r"></span><span class="dot y"></span><span class="dot g"></span><span class="name">局部变量都在栈上</span><span class="cp">复制</span></div><pre><span class="hl-p">#include</span> <span class="hl-s">&lt;stdio.h&gt;</span>
+
+<span class="hl-k">void</span> <span class="hl-f">demo</span>(<span class="hl-k">void</span>) {
+    <span class="hl-k">int</span> a = <span class="hl-n">1</span>;
+    <span class="hl-k">int</span> b = <span class="hl-n">2</span>;
+    <span class="hl-k">int</span> c = <span class="hl-n">3</span>;
+    <span class="hl-f">printf</span>(<span class="hl-s">"a=%d b=%d c=%d
+"</span>, a, b, c);
+    <span class="hl-f">printf</span>(<span class="hl-s">"&amp;a=%p  &amp;b=%p  &amp;c=%p
+"</span>, (<span class="hl-k">void</span> *)&amp;a, (<span class="hl-k">void</span> *)&amp;b, (<span class="hl-k">void</span> *)&amp;c);
+    <span class="hl-c">/* 地址是挨着的，说明它们挤在同一块「栈」上 */</span>
+}
+
+<span class="hl-k">int</span> <span class="hl-f">main</span>(<span class="hl-k">void</span>) {
+    <span class="hl-f">demo</span>();
+    <span class="hl-k">return</span> <span class="hl-n">0</span>;
+}</pre></div>
+
+<div class="out-wrap"><div class="cap">运行结果（地址每次运行都会变）</div><pre>a=1 b=2 c=3
+&a=000000000060FD0C  &b=000000000060FD08  &c=000000000060FD04</pre></div>
+
+<p>三个地址挨在一起（这里是每个差 4 字节，正好是 <code>int</code> 的大小），
+说明它们确实排在同一块内存上。</p>
+
+<h4>栈的两个硬性限制</h4>
+
+<div class="card warn">
+  <div class="card-t">限制一：大小有限</div>
+  <p>栈通常只有 <b>1~8 MB</b>（具体看系统设置）。
+  在函数里开一个巨大的局部数组，就会「爆栈」：</p>
+  <pre style="background:#f2f4f8;border:1px solid var(--line);border-radius:8px;padding:10px 12px;font-family:var(--mono);font-size:13px;color:var(--fg);overflow:auto"><span class="hl-k">void</span> <span class="hl-f">bad</span>(<span class="hl-k">void</span>) {
+    <span class="hl-k">int</span> big[<span class="hl-n">10000000</span>];   <span class="hl-c">/* 约 40 MB，多半直接崩 */</span>
+}</pre>
+  <p>这种崩溃往往表现为「程序一闪就没了」，很难看出原因。</p>
+</div>
+
+<div class="card warn">
+  <div class="card-t">限制二：出函数就消失</div>
+  <p>局部变量只在函数执行期间存在。函数一返回，它们就没了。
+  所以<b>不能把局部数组的地址返回给调用者</b>：</p>
+  <pre style="background:#fdeceb;border:1px solid #f0c8c2;border-radius:8px;padding:10px 12px;font-family:var(--mono);font-size:13px;color:var(--fg);overflow:auto"><span class="hl-k">int</span> *<span class="hl-f">bad</span>(<span class="hl-k">void</span>) {
+    <span class="hl-k">int</span> local[<span class="hl-n">3</span>] = {<span class="hl-n">1</span>, <span class="hl-n">2</span>, <span class="hl-n">3</span>};
+    <span class="hl-k">return</span> local;    <span class="hl-c">/* ❌ 函数一结束，这块内存就没了 */</span>
+}</pre>
+  <p>返回的地址指向一块<b>已经不属于你</b>的内存，用它是未定义行为。
+  第 8 节会讲正确做法。</p>
+</div>
+
+<div class="card tip">
+  <div class="card-t">栈的好处</div>
+  <p>别因为上面两条就觉得栈不好。<b>绝大多数情况下都应该用栈</b>：</p>
+  <ul>
+    <li>不用申请、不用释放，<b>不可能忘记归还</b></li>
+    <li>分配回收极快（就是挪一下栈指针）</li>
+    <li>局部性好，别人改不到你的变量</li>
+  </ul>
+</div>
+
+<!-- ============================================================ -->
+<h2 id="s5"><span class="n">5</span>动态内存（堆）</h2>
+
+<p>当「大小要运行时才知道」或者「需要活得比函数长」时，
+就要用堆：<b>自己去申请，自己负责归还。</b></p>
+
+<p>完整的一生只有三步：</p>
+
+<div class="lifecycle">
+  <div class="st"><div class="t">malloc</div><div class="d">申请一块内存<br>拿到它的地址</div></div>
+  <div class="st"><div class="t">使用</div><div class="d">像数组一样读写<br>下标或指针都行</div></div>
+  <div class="st"><div class="t">free</div><div class="d">还回去<br><b>必须做，且只能做一次</b></div></div>
+</div>
+
+<h3 id="s5a">5.1 <code>malloc</code>：申请一块内存</h3>
+
+<p>用法是 <code>malloc(要多少字节)</code>，返回这块内存的<b>起始地址</b>：</p>
+
+<div class="code-wrap"><div class="bar"><span class="dot r"></span><span class="dot y"></span><span class="dot g"></span><span class="name">基本用法</span><span class="cp">复制</span></div><pre><span class="hl-p">#include</span> <span class="hl-s">&lt;stdio.h&gt;</span>
+<span class="hl-p">#include</span> <span class="hl-s">&lt;stdlib.h&gt;</span>          <span class="hl-c">/* malloc / free 在这里 */</span>
+
+<span class="hl-k">int</span> <span class="hl-f">main</span>(<span class="hl-k">void</span>) {
+    <span class="hl-k">int</span> n = <span class="hl-n">5</span>;
+
+    <span class="hl-c">/* 申请「5 个 int」那么大的内存 */</span>
+    <span class="hl-k">int</span> *p = <span class="hl-f">malloc</span>(<span class="hl-k">sizeof</span>(<span class="hl-k">int</span>) * n);
+
+    <span class="hl-k">if</span> (p == <span class="hl-n">NULL</span>) {          <span class="hl-c">/* 判断是否成功，好习惯 */</span>
+        <span class="hl-f">printf</span>(<span class="hl-s">"申请失败
+"</span>);
+        <span class="hl-k">return</span> <span class="hl-n">1</span>;
+    }
+
+    <span class="hl-c">/* 用起来和数组一模一样 */</span>
+    <span class="hl-k">for</span> (<span class="hl-k">int</span> i = <span class="hl-n">0</span>; i &lt; n; i++) {
+        p[i] = (i + <span class="hl-n">1</span>) * <span class="hl-n">10</span>;
+    }
+    <span class="hl-k">for</span> (<span class="hl-k">int</span> i = <span class="hl-n">0</span>; i &lt; n; i++) {
+        <span class="hl-f">printf</span>(<span class="hl-s">"%d "</span>, p[i]);
+    }
+    <span class="hl-f">printf</span>(<span class="hl-s">"
+"</span>);
+
+    <span class="hl-f">free</span>(p);               <span class="hl-c">/* 用完还回去 */</span>
+    <span class="hl-k">return</span> <span class="hl-n">0</span>;
+}</pre></div>
+
+<div class="out-wrap"><div class="cap">运行结果</div><pre>10 20 30 40 50 </pre></div>
+
+<p>注意两个要点：</p>
+
+<table>
+<thead><tr><th style="width:36%">写法</th><th>为什么这样写</th></tr></thead>
+<tbody>
+<tr><td class="c">malloc(sizeof(int) * n)</td>
+    <td><code>sizeof(int)</code> 拿到一个 int 的字节数，乘 n 就是总字节数。
+      <b>不要自己写 4</b> —— 换个平台可能就不是 4 了</td></tr>
+<tr><td class="c">p[i]</td>
+    <td>拿到的地址可以当数组用，下标写法最清楚</td></tr>
+</tbody>
+</table>
+
+<div class="card key">
+  <div class="card-t">malloc 只负责「给地方」，不负责「打扫」</div>
+  <p>申请到的内存里是<b>不确定的内容</b>（可能是任意数据），
+  <b>不是 0</b>。用之前一定要自己赋值。</p>
+  <p>实测对照（下面会讲 <code>calloc</code>）：</p>
+</div>
+
+<div class="code-wrap"><div class="bar"><span class="dot r"></span><span class="dot y"></span><span class="dot g"></span><span class="name">malloc 与 calloc 的差别</span><span class="cp">复制</span></div><pre><span class="hl-k">int</span> *a = <span class="hl-f">malloc</span>(<span class="hl-k">sizeof</span>(<span class="hl-k">int</span>) * <span class="hl-n">4</span>);
+<span class="hl-k">int</span> *b = <span class="hl-f">calloc</span>(<span class="hl-n">4</span>, <span class="hl-k">sizeof</span>(<span class="hl-k">int</span>));
+<span class="hl-f">printf</span>(<span class="hl-s">"malloc: %d %d %d %d
+"</span>, a[<span class="hl-n">0</span>], a[<span class="hl-n">1</span>], a[<span class="hl-n">2</span>], a[<span class="hl-n">3</span>]);
+<span class="hl-f">printf</span>(<span class="hl-s">"calloc: %d %d %d %d
+"</span>, b[<span class="hl-n">0</span>], b[<span class="hl-n">1</span>], b[<span class="hl-n">2</span>], b[<span class="hl-n">3</span>]);</pre></div>
+
+<div class="out-wrap"><div class="cap">运行结果（malloc 那几个数每次都可能不同）</div><pre>malloc: 341 47 0 0
+calloc: 0 0 0 0</pre></div>
+
+<p><code>malloc</code> 出来的是「脏」内存，<code>calloc</code> 出来的是全 0。
+需要用 0 打底（比如做计数、累加）时，<code>calloc</code> 更省事。</p>
+
+<h3 id="s5b">5.2 <code>free</code>：还回去</h3>
+
+<p>用完了就还。这一步<b>绝不能不写</b>。</p>
+
+<div class="code-wrap"><div class="bar"><span class="dot r"></span><span class="dot y"></span><span class="dot g"></span><span class="name">规范写法：free 之后置 NULL</span><span class="cp">复制</span></div><pre><span class="hl-k">int</span> *q = <span class="hl-f">malloc</span>(<span class="hl-k">sizeof</span>(<span class="hl-k">int</span>) * <span class="hl-n">4</span>);
+*q = <span class="hl-n">7</span>;
+<span class="hl-f">printf</span>(<span class="hl-s">"用的时候 *q = %d
+"</span>, *q);
+
+<span class="hl-f">free</span>(q);        <span class="hl-c">/* 还回去 */</span>
+q = <span class="hl-n">NULL</span>;         <span class="hl-c">/* 立刻置空，防止以后误用 */</span>
+
+<span class="hl-k">if</span> (q != <span class="hl-n">NULL</span>) {
+    <span class="hl-f">printf</span>(<span class="hl-s">"还指向旧地址，不能碰
+"</span>);
+} <span class="hl-k">else</span> {
+    <span class="hl-f">printf</span>(<span class="hl-s">"已经是空指针，可以安全判断
+"</span>);
+}</pre></div>
+
+<div class="out-wrap"><div class="cap">运行结果</div><pre>用的时候 *q = 7
+free 后 q == NULL 吗？ 1
+已经是空指针，可以安全判断</pre></div>
+
+<div class="card tip">
+  <div class="card-t"><code>free(NULL)</code> 是安全的</div>
+  <p>标准规定：<code>free(NULL)</code> <b>什么也不做</b>，不会出错。
+  所以「free 后置 NULL」这个习惯不会带来麻烦，反而让
+  <code>if (p) free(p);</code> 这种写法也安全。</p>
+  <p>实测：</p>
+  <pre style="background:#f2f4f8;border:1px solid var(--line);border-radius:8px;padding:10px 12px;font-family:var(--mono);font-size:13px;color:var(--fg);overflow:auto"><span class="hl-k">int</span> *p = <span class="hl-n">NULL</span>;
+<span class="hl-f">free</span>(p);      <span class="hl-c">/* 安全，什么都不做 */</span></pre>
+  <p>运行结果：<code>free(NULL) 没有崩溃，说明它是安全的</code></p>
+</div>
+
+<h3 id="s5c">5.3 <code>calloc</code> 与 <code>realloc</code></h3>
+
+<table>
+<thead><tr><th style="width:26%">函数</th><th style="width:34%">作用</th><th>要点</th></tr></thead>
+<tbody>
+<tr><td class="c">malloc(n)</td><td>申请 n <b>字节</b></td><td>内容不确定</td></tr>
+<tr><td class="c">calloc(k, size)</td><td>申请 k 个、每个 size 字节</td><td><b>自动清零</b>；注意参数是「个数 + 单个大小」</td></tr>
+<tr><td class="c">realloc(p, n)</td><td>把已申请的内存<b>改成 n 字节</b></td><td>可能搬家，<b>必须接住返回值</b></td></tr>
+</tbody>
+</table>
+
+<div class="code-wrap"><div class="bar"><span class="dot r"></span><span class="dot y"></span><span class="dot g"></span><span class="name">realloc 扩容</span><span class="cp">复制</span></div><pre><span class="hl-p">#include</span> <span class="hl-s">&lt;stdio.h&gt;</span>
+<span class="hl-p">#include</span> <span class="hl-s">&lt;stdlib.h&gt;</span>
+
+<span class="hl-k">int</span> <span class="hl-f">main</span>(<span class="hl-k">void</span>) {
+    <span class="hl-k">int</span> n = <span class="hl-n">3</span>;
+    <span class="hl-k">int</span> *p = <span class="hl-f">malloc</span>(<span class="hl-k">sizeof</span>(<span class="hl-k">int</span>) * n);
+    <span class="hl-k">for</span> (<span class="hl-k">int</span> i = <span class="hl-n">0</span>; i &lt; n; i++) p[i] = i + <span class="hl-n">1</span>;
+    <span class="hl-f">printf</span>(<span class="hl-s">"扩容前: "</span>);
+    <span class="hl-k">for</span> (<span class="hl-k">int</span> i = <span class="hl-n">0</span>; i &lt; n; i++) <span class="hl-f">printf</span>(<span class="hl-s">"%d "</span>, p[i]);
+    <span class="hl-f">printf</span>(<span class="hl-s">"
+"</span>);
+
+    <span class="hl-c">/* 想扩到 6 个 —— 用临时变量接住返回值 */</span>
+    <span class="hl-k">int</span> n2 = <span class="hl-n">6</span>;
+    <span class="hl-k">int</span> *q = <span class="hl-f">realloc</span>(p, <span class="hl-k">sizeof</span>(<span class="hl-k">int</span>) * n2);
+    <span class="hl-k">if</span> (q == <span class="hl-n">NULL</span>) {     <span class="hl-c">/* 失败时原来的 p 还在，不能丢 */</span>
+        <span class="hl-f">free</span>(p);
+        <span class="hl-k">return</span> <span class="hl-n">1</span>;
+    }
+    p = q;                  <span class="hl-c">/* 成功了才把 p 换成新的 */</span>
+
+    <span class="hl-k">for</span> (<span class="hl-k">int</span> i = n; i &lt; n2; i++) p[i] = (i + <span class="hl-n">1</span>) * <span class="hl-n">100</span>;
+    <span class="hl-f">printf</span>(<span class="hl-s">"扩容后: "</span>);
+    <span class="hl-k">for</span> (<span class="hl-k">int</span> i = <span class="hl-n">0</span>; i &lt; n2; i++) <span class="hl-f">printf</span>(<span class="hl-s">"%d "</span>, p[i]);
+    <span class="hl-f">printf</span>(<span class="hl-s">"
+"</span>);
+
+    <span class="hl-f">free</span>(p);
+    <span class="hl-k">return</span> <span class="hl-n">0</span>;
+}</pre></div>
+
+<div class="out-wrap"><div class="cap">运行结果</div><pre>扩容前: 1 2 3 
+扩容后: 1 2 3 400 500 600 </pre></div>
+
+<div class="card warn">
+  <div class="card-t">realloc 的三个注意点</div>
+  <ul>
+    <li><b>老内容会保留</b>（前 3 个还是 1 2 3），新加的部分<b>不确定</b>，要自己赋值。</li>
+    <li><b>必须接住返回值。</b>因为空间不够时它会「搬家」到别处，
+      老地址就失效了。写 <code>realloc(p, n)</code> 而不管返回值，
+      一旦搬家就可能用上废弃地址。</li>
+    <li><b>失败时返回 <code>NULL</code>，但原来的内存还在</b>。
+      所以要用临时变量接 —— 像上面那样写 <code>int *q = realloc(p, ...)</code>，
+      失败了还能 <code>free(p)</code>。直接写 <code>p = realloc(p, ...)</code>
+      一旦失败，原来那块就永远找不回来了（内存泄漏）。</li>
+  </ul>
+</div>
+
+<!-- ============================================================ -->
+<h2 id="s6"><span class="n">6</span>栈与堆的主要区别</h2>
+
+<p>这一节是全讲的重点。<b>把这几个区别记住，用的时候就不会选错。</b></p>
+
+<table>
+<thead><tr>
+  <th style="width:16%">对比项</th>
+  <th style="width:42%">栈</th>
+  <th>堆</th>
+</tr></thead>
+<tbody>
+<tr><td><b>谁分配</b></td>
+    <td>系统自动（进函数就分）</td>
+    <td>你调用 <code>malloc</code> 才分</td></tr>
+<tr><td><b>谁回收</b></td>
+    <td>系统自动（出函数就收）</td>
+    <td><b>你必须调用 <code>free</code></b></td></tr>
+<tr><td><b>大小</b></td>
+    <td>小，通常 <b>1~8 MB</b></td>
+    <td>大，受物理内存限制</td></tr>
+<tr><td><b>大小何时定</b></td>
+    <td>编译时定死（写 <code>int a[5]</code>）</td>
+    <td><b>运行时随便定</b>（<code>malloc(sizeof(int)*n)</code>）</td></tr>
+<tr><td><b>速度</b></td>
+    <td>极快（挪一下指针）</td>
+    <td>较慢（要查找可用块）</td></tr>
+<tr><td><b>活得多久</b></td>
+    <td>只到函数结束</td>
+    <td><b>直到你 free</b>，能跨函数</td></tr>
+<tr><td><b>内容</b></td>
+    <td>局部变量未初始化时也是脏的</td>
+    <td>脏的（<code>calloc</code> 才清零）</td></tr>
+<tr><td><b>出错后果</b></td>
+    <td>爆栈 → 程序直接崩</td>
+    <td>忘记 free → <b>内存泄漏</b>（慢慢变大）</td></tr>
+<tr><td><b>数量限制</b></td>
+    <td>受栈空间限制</td>
+    <td>受总内存限制</td></tr>
+</tbody>
+</table>
+
+<div class="mnemonic">
+  <b>选哪个？一句话判断：</b><br>
+  大小<b>编译时能写死</b>、且<b>只在函数里用</b> → 用<b>栈</b>（普通数组）；<br>
+  大小<b>运行时才知道</b>、或<b>要带回函数外面</b> → 用<b>堆</b>（malloc）。
+</div>
+
+<h4>一个直观的大小对照</h4>
+<div class="code-wrap"><div class="bar"><span class="dot r"></span><span class="dot y"></span><span class="dot g"></span><span class="name">同样是 10 个 int</span><span class="cp">复制</span></div><pre><span class="hl-k">int</span> stackArr[<span class="hl-n">10</span>];                          <span class="hl-c">/* 栈上，自动的 */</span>
+<span class="hl-k">int</span> *heapArr = <span class="hl-f">malloc</span>(<span class="hl-k">sizeof</span>(<span class="hl-k">int</span>) * <span class="hl-n">10</span>);   <span class="hl-c">/* 堆上，要手动 free */</span>
+
+<span class="hl-f">printf</span>(<span class="hl-s">"sizeof(stackArr) = %d
+"</span>, (<span class="hl-k">int</span>)<span class="hl-k">sizeof</span>(stackArr));
+<span class="hl-f">printf</span>(<span class="hl-s">"sizeof(heapArr)  = %d
+"</span>, (<span class="hl-k">int</span>)<span class="hl-k">sizeof</span>(heapArr));
+<span class="hl-f">free</span>(heapArr);</pre></div>
+
+<div class="out-wrap"><div class="cap">运行结果</div><pre>sizeof(stackArr) = 40  （整个数组）
+sizeof(heapArr)  = 8  （只是指针）</pre></div>
+
+<p>这是第四讲讲过的「数组名不是指针变量」在这里的体现：
+<b>栈数组的名字知道整个数组多大，而指向堆内存的只是一个指针。</b></p>
+
+<!-- ============================================================ -->
+<h2 id="s7"><span class="n">7</span>什么时候真的需要堆</h2>
+
+<p>堆虽然灵活，但「要自己 free」这件事本身就是负担。
+所以先问自己：<b>真的需要吗？</b></p>
+
+<h4>情况一：长度运行时才知道</h4>
+<p>这是最常见的理由。用「边读边算」能省掉数组的场合，就别开数组：</p>
+
+<div class="code-wrap"><div class="bar"><span class="dot r"></span><span class="dot y"></span><span class="dot g"></span><span class="name">不需要数组也能求平均</span><span class="cp">复制</span></div><pre><span class="hl-k">double</span> sum = <span class="hl-n">0</span>;
+<span class="hl-k">int</span> n;
+<span class="hl-f">scanf</span>(<span class="hl-s">"%d"</span>, &amp;n);
+<span class="hl-k">for</span> (<span class="hl-k">int</span> i = <span class="hl-n">0</span>; i &lt; n; i++) {
+    <span class="hl-k">int</span> v;
+    <span class="hl-f">scanf</span>(<span class="hl-s">"%d"</span>, &amp;v);
+    sum += v;               <span class="hl-c">/* 读完就加，不存 */</span>
+}
+<span class="hl-f">printf</span>(<span class="hl-s">"平均 = %.2f
+"</span>, n &gt; <span class="hl-n">0</span> ? sum / n : <span class="hl-n">0.0</span>);</pre></div>
+
+<p>但如果<b>需要回头再看</b>（比如倒序输出、排序、找第二大），
+就必须把数都存下来 —— 这时才需要数组，也才可能需要堆。</p>
+
+<div class="code-wrap"><div class="bar"><span class="dot r"></span><span class="dot y"></span><span class="dot g"></span><span class="name">需要回头再看，用堆</span><span class="cp">复制</span></div><pre><span class="hl-k">int</span> n;
+<span class="hl-f">scanf</span>(<span class="hl-s">"%d"</span>, &amp;n);
+
+<span class="hl-k">int</span> *p = <span class="hl-f">malloc</span>(<span class="hl-k">sizeof</span>(<span class="hl-k">int</span>) * n);
+<span class="hl-k">if</span> (p == <span class="hl-n">NULL</span>) <span class="hl-k">return</span> <span class="hl-n">1</span>;
+
+<span class="hl-k">for</span> (<span class="hl-k">int</span> i = <span class="hl-n">0</span>; i &lt; n; i++) {
+    <span class="hl-f">scanf</span>(<span class="hl-s">"%d"</span>, &amp;p[i]);
+}
+<span class="hl-f">printf</span>(<span class="hl-s">"倒序输出: "</span>);
+<span class="hl-k">for</span> (<span class="hl-k">int</span> i = n - <span class="hl-n">1</span>; i &gt;= <span class="hl-n">0</span>; i--) {
+    <span class="hl-f">printf</span>(<span class="hl-s">"%d "</span>, p[i]);
+}
+<span class="hl-f">printf</span>(<span class="hl-s">"
+"</span>);
+<span class="hl-f">free</span>(p);</pre></div>
+
+<h4>情况二：要带回函数外面</h4>
+<p>第四讲讲过「不能返回局部数组」。那想让函数造一个数组给外面用，怎么办？
+<b>让它申请堆内存，交给调用者 free。</b></p>
+
+<div class="code-wrap"><div class="bar"><span class="dot r"></span><span class="dot y"></span><span class="dot g"></span><span class="name">造一个数组交给调用者</span><span class="cp">复制</span></div><pre><span class="hl-p">#include</span> <span class="hl-s">&lt;stdio.h&gt;</span>
+<span class="hl-p">#include</span> <span class="hl-s">&lt;stdlib.h&gt;</span>
+
+<span class="hl-c">/* 造一个 0..n-1 的数组返回；调用者负责 free */</span>
+<span class="hl-k">int</span> *<span class="hl-f">makeRange</span>(<span class="hl-k">int</span> n) {
+    <span class="hl-k">int</span> *p = <span class="hl-f">malloc</span>(<span class="hl-k">sizeof</span>(<span class="hl-k">int</span>) * n);
+    <span class="hl-k">if</span> (p == <span class="hl-n">NULL</span>) <span class="hl-k">return</span> <span class="hl-n">NULL</span>;
+    <span class="hl-k">for</span> (<span class="hl-k">int</span> i = <span class="hl-n">0</span>; i &lt; n; i++) p[i] = i;
+    <span class="hl-k">return</span> p;                 <span class="hl-c">/* 堆内存不会随函数消失，可以返回 */</span>
+}
+
+<span class="hl-k">int</span> <span class="hl-f">main</span>(<span class="hl-k">void</span>) {
+    <span class="hl-k">int</span> *r = <span class="hl-f">makeRange</span>(<span class="hl-n">6</span>);
+    <span class="hl-k">if</span> (r != <span class="hl-n">NULL</span>) {
+        <span class="hl-f">printf</span>(<span class="hl-s">"makeRange(6) = "</span>);
+        <span class="hl-k">for</span> (<span class="hl-k">int</span> i = <span class="hl-n">0</span>; i &lt; <span class="hl-n">6</span>; i++) <span class="hl-f">printf</span>(<span class="hl-s">"%d "</span>, r[i]);
+        <span class="hl-f">printf</span>(<span class="hl-s">"
+"</span>);
+        <span class="hl-f">free</span>(r);               <span class="hl-c">/* 谁用谁负责还 */</span>
+    }
+    <span class="hl-k">return</span> <span class="hl-n">0</span>;
+}</pre></div>
+
+<div class="out-wrap"><div class="cap">运行结果</div><pre>makeRange(6) = 0 1 2 3 4 5 </pre></div>
+
+<div class="card key">
+  <div class="card-t">这里有个「约定」问题</div>
+  <p><code>makeRange</code> 申请了内存，却让<b>调用者</b>去 free —— 这是可以的，
+  但必须<b>在函数说明里写清楚</b>，否则调用者不知道要还，就泄漏了。</p>
+  <p>所以这类函数的注释很重要，例如：</p>
+  <pre style="background:#f2f4f8;border:1px solid var(--line);border-radius:8px;padding:10px 12px;font-family:var(--mono);font-size:13px;color:var(--fg);overflow:auto"><span class="hl-c">/* 返回一个新数组，调用者负责 free；失败返回 NULL */</span>
+<span class="hl-k">int</span> *<span class="hl-f">makeRange</span>(<span class="hl-k">int</span> n);</pre>
+</div>
+
+<!-- ============================================================ -->
+<h2 id="s8"><span class="n">8</span>维护内存安全的基本习惯</h2>
+
+<p>堆内存的绝大多数问题，都来自<b>不守规矩</b>。
+下面六条是入门阶段最该养成的习惯 —— 每一条都对应一类真实故障。</p>
+
+<h3 id="s8a">8.1 配对：谁申请谁释放</h3>
+
+<p>每一个 <code>malloc</code> / <code>calloc</code> / <code>realloc</code>，
+都必须有<b>恰好一次</b> <code>free</code> 与之对应。</p>
+
+<div class="code-wrap"><div class="bar"><span class="dot r"></span><span class="dot y"></span><span class="dot g"></span><span class="name">配对示意</span><span class="cp">复制</span></div><pre><span class="hl-c">/* ✅ 好：申请和释放挨得近，一眼能看出配平 */</span>
+<span class="hl-k">int</span> *p = <span class="hl-f">malloc</span>(<span class="hl-k">sizeof</span>(<span class="hl-k">int</span>) * n);
+<span class="hl-k">if</span> (p == <span class="hl-n">NULL</span>) <span class="hl-k">return</span>;
+<span class="hl-c">/* ... 用 p ... */</span>
+<span class="hl-f">free</span>(p);
+p = <span class="hl-n">NULL</span>;
+
+<span class="hl-c">/* ❌ 坏：申请了却没有任何 free —— 内存泄漏 */</span>
+<span class="hl-k">int</span> *q = <span class="hl-f">malloc</span>(<span class="hl-k">sizeof</span>(<span class="hl-k">int</span>) * n);
+<span class="hl-c">/* ... 用 q ... */</span>
+<span class="hl-c">/* 忘了还！程序运行越久占用越多 */</span></pre></div>
+
+<div class="card tip">
+  <div class="card-t">实用写法：让释放路径唯一</div>
+  <p>如果函数里有多个 <code>return</code>，很容易漏掉 free。
+  简单的办法是<b>把申请和释放在同一层缩进里</b>，
+  中间所有提前退出的分支都先 free 再 return：</p>
+  <pre style="background:#f2f4f8;border:1px solid var(--line);border-radius:8px;padding:10px 12px;font-family:var(--mono);font-size:13px;color:var(--fg);overflow:auto"><span class="hl-k">int</span> *p = <span class="hl-f">malloc</span>(<span class="hl-k">sizeof</span>(<span class="hl-k">int</span>) * n);
+<span class="hl-k">if</span> (p == <span class="hl-n">NULL</span>) <span class="hl-k">return</span> <span class="hl-n">NULL</span>;
+
+<span class="hl-k">if</span> (出错了) { <span class="hl-f">free</span>(p); <span class="hl-k">return</span> <span class="hl-n">NULL</span>; }   <span class="hl-c">/* 先还再退 */</span>
+
+<span class="hl-c">/* 正常用完 */</span>
+<span class="hl-f">free</span>(p);
+p = <span class="hl-n">NULL</span>;</pre>
+</div>
+
+<h3 id="s8b">8.2 释放后立刻置 NULL</h3>
+
+<p><code>free</code> 只是把内存还给了系统，<b>指针变量里的地址还在</b>。
+这个指针叫「悬空指针」，再用它就是未定义行为。</p>
+
+<div class="code-wrap"><div class="bar"><span class="dot r"></span><span class="dot y"></span><span class="dot g"></span><span class="name">对比</span><span class="cp">复制</span></div><pre><span class="hl-c">/* ❌ 危险：free 之后指针还指着那块地方 */</span>
+<span class="hl-f">free</span>(p);
+<span class="hl-f">printf</span>(<span class="hl-s">"%d
+"</span>, *p);      <span class="hl-c">/* 用了已经归还的内存 */</span>
+<span class="hl-f">free</span>(p);                <span class="hl-c">/* 重复释放，可能直接崩 */</span>
+
+<span class="hl-c">/* ✅ 安全：还完就置空 */</span>
+<span class="hl-f">free</span>(p);
+p = <span class="hl-n">NULL</span>;
+<span class="hl-k">if</span> (p != <span class="hl-n">NULL</span>) {
+    <span class="hl-f">printf</span>(<span class="hl-s">"%d
+"</span>, *p);  <span class="hl-c">/* 进不来，安全 */</span>
+}
+<span class="hl-f">free</span>(p);                <span class="hl-c">/* free(NULL) 安全 */</span></pre></div>
+
+<div class="card key">
+  <div class="card-t">为什么置 NULL 能防住这么多问题</div>
+  <ul>
+    <li><b>防误用：</b>加一句 <code>if (p != NULL)</code> 就挡住了</li>
+    <li><b>防重复释放：</b>第二次 <code>free(NULL)</code> 是安全的</li>
+    <li><b>崩溃点前移：</b>万一真去解引用空指针，通常立刻崩在那一行，
+      而不是「隔了很久在别处莫名崩溃」—— <b>好查得多</b></li>
+  </ul>
+</div>
+
+<h3 id="s8c">8.3 检查分配是否成功</h3>
+
+<p><code>malloc</code> 有可能失败（内存不够），失败时返回 <code>NULL</code>。
+<b>不检查就直接用，是最典型的崩溃原因。</b></p>
+
+<div class="code-wrap"><div class="bar"><span class="dot r"></span><span class="dot y"></span><span class="dot g"></span><span class="name">对比</span><span class="cp">复制</span></div><pre><span class="hl-c">/* ❌ 如果 n 很大，p 可能是 NULL，下一行就崩 */</span>
+<span class="hl-k">int</span> *p = <span class="hl-f">malloc</span>(<span class="hl-k">sizeof</span>(<span class="hl-k">int</span>) * n);
+p[<span class="hl-n">0</span>] = <span class="hl-n">1</span>;
+
+<span class="hl-c">/* ✅ 先判断再用 */</span>
+<span class="hl-k">int</span> *p = <span class="hl-f">malloc</span>(<span class="hl-k">sizeof</span>(<span class="hl-k">int</span>) * n);
+<span class="hl-k">if</span> (p == <span class="hl-n">NULL</span>) {
+    <span class="hl-f">printf</span>(<span class="hl-s">"内存不足
+"</span>);
+    <span class="hl-k">return</span> <span class="hl-n">1</span>;
+}
+p[<span class="hl-n">0</span>] = <span class="hl-n">1</span>;</pre></div>
+
+<h3 id="s8d">8.4 不要越界</h3>
+
+<p>堆内存<b>也不会替你检查边界</b>。申请了 5 个，写第 6 个就是越界。
+越界在堆上尤其危险 —— 它可能悄悄改坏别处的数据，
+直到很久以后才以奇怪的方式暴露。</p>
+
+<div class="code-wrap"><div class="bar"><span class="dot r"></span><span class="dot y"></span><span class="dot g"></span><span class="name">对比</span><span class="cp">复制</span></div><pre><span class="hl-k">int</span> n = <span class="hl-n">5</span>;
+<span class="hl-k">int</span> *p = <span class="hl-f">malloc</span>(<span class="hl-k">sizeof</span>(<span class="hl-k">int</span>) * n);
+
+<span class="hl-k">for</span> (<span class="hl-k">int</span> i = <span class="hl-n">0</span>; i &lt;= n; i++) p[i] = <span class="hl-n">0</span>;   <span class="hl-c">/* ❌ i==5 越界 */</span>
+<span class="hl-k">for</span> (<span class="hl-k">int</span> i = <span class="hl-n">0</span>; i &lt;  n; i++) p[i] = <span class="hl-n">0</span>;   <span class="hl-c">/* ✅ 0..4 */</span></pre></div>
+
+<div class="card tip">
+  <div class="card-t">字符缓冲特别容易少算 1</div>
+  <p>字符串结尾要留一个位置给 <code>' '</code>。
+  放 6 个字符要申请 <b>7</b> 字节：</p>
+  <pre style="background:#f2f4f8;border:1px solid var(--line);border-radius:8px;padding:10px 12px;font-family:var(--mono);font-size:13px;color:var(--fg);overflow:auto"><span class="hl-k">char</span> *s = <span class="hl-f">malloc</span>(<span class="hl-k">sizeof</span>(<span class="hl-k">char</span>) * (<span class="hl-n">6</span> + <span class="hl-n">1</span>));   <span class="hl-c">/* +1 给 ' ' */</span></pre>
+  <p>实测：申请 5 字节放 <code>"Mong"</code>（4 个字符 + 结束符）正好；<br>
+  申请 7 字节放 <code>"Mongol"</code>（6 个字符 + 结束符）正好：</p>
+  <div class="out-wrap" style="margin-top:10px"><div class="cap">运行结果</div><pre>s = Mong  strlen = 4
+t = Mongol  strlen = 6</pre></div>
+</div>
+
+<h3 id="s8e">8.5 不要返回局部数组的地址</h3>
+
+<p>这是第四讲提过的问题，这里给出正确做法。</p>
+
+<div class="code-wrap"><div class="bar"><span class="dot r"></span><span class="dot y"></span><span class="dot g"></span><span class="name">两种做法对照</span><span class="cp">复制</span></div><pre><span class="hl-c">/* ❌ 错：local 随函数结束而消失，返回的地址悬空 */</span>
+<span class="hl-k">int</span> *<span class="hl-f">bad</span>(<span class="hl-k">int</span> n) {
+    <span class="hl-k">int</span> local[<span class="hl-n">100</span>];
+    <span class="hl-k">for</span> (<span class="hl-k">int</span> i = <span class="hl-n">0</span>; i &lt; n; i++) local[i] = i;
+    <span class="hl-k">return</span> local;
+}
+
+<span class="hl-c">/* ✅ 对：用堆，活得比函数久 */</span>
+<span class="hl-k">int</span> *<span class="hl-f">good</span>(<span class="hl-k">int</span> n) {
+    <span class="hl-k">int</span> *p = <span class="hl-f">malloc</span>(<span class="hl-k">sizeof</span>(<span class="hl-k">int</span>) * n);
+    <span class="hl-k">if</span> (p == <span class="hl-n">NULL</span>) <span class="hl-k">return</span> <span class="hl-n">NULL</span>;
+    <span class="hl-k">for</span> (<span class="hl-k">int</span> i = <span class="hl-n">0</span>; i &lt; n; i++) p[i] = i;
+    <span class="hl-k">return</span> p;                  <span class="hl-c">/* 记得：调用者要 free */</span>
+}
+
+<span class="hl-c">/* ✅ 另一种对：外面传进来一块内存，函数只往里写 */</span>
+<span class="hl-k">void</span> <span class="hl-f">fill</span>(<span class="hl-k">int</span> *out, <span class="hl-k">int</span> n) {
+    <span class="hl-k">for</span> (<span class="hl-k">int</span> i = <span class="hl-n">0</span>; i &lt; n; i++) out[i] = i;
+}</pre></div>
+
+<div class="card tip">
+  <div class="card-t">第二种做法往往更好</div>
+  <p>「外面传进来，函数只写」这种形式（第四讲的指针参数），
+  <b>把「谁申请」和「谁释放」都留在了调用者手里</b>，
+  不容易出现「到底该谁 free」的扯皮。很多标准库函数都是这个风格。</p>
+</div>
+
+<h3 id="s8f">8.6 先算清楚要多少字节</h3>
+
+<p>申请字节数写错，是新手最常踩的坑。两种情况要分清：</p>
+
+<table>
+<thead><tr><th style="width:34%">你想要</th><th>正确写法</th></tr></thead>
+<tbody>
+<tr><td><b>n 个 int</b></td><td class="c">malloc(sizeof(int) * n)</td></tr>
+<tr><td><b>n 个 double</b></td><td class="c">malloc(sizeof(double) * n)</td></tr>
+<tr><td><b>n 个 struct</b></td><td class="c">malloc(sizeof(Player) * n)</td></tr>
+<tr><td><b>一个 int</b></td><td class="c">malloc(sizeof(int))</td></tr>
+<tr><td><b>放 6 个字符的字符串</b></td><td class="c">malloc(sizeof(char) * (6 + 1))</td></tr>
+</tbody>
+</table>
+
+<div class="card warn">
+  <div class="card-t">两个高频错误</div>
+  <ul>
+    <li><b>忘了乘 <code>n</code>：</b><code>malloc(sizeof(int))</code> 只给了
+      一个 int 的位置，你当地址用了 n 个 → 越界。</li>
+    <li><b><code>n</code> 本身算错了：</b>比如 <code>n</code> 是「字符个数」，
+      却忘了给 <code>' '</code> 多留一格。</li>
+  </ul>
+  <p><b>习惯：写 <code>sizeof(类型) * 个数</code> 这个形状，
+  一眼就能看出「申请了几个」。</b></p>
+</div>
+
+<!-- ============================================================ -->
+<h2 id="s9"><span class="n">9</span>常见错误</h2>
+
+<h4>错误 1 · 内存泄漏（忘了 free）</h4>
+<div class="code-wrap"><div class="bar"><span class="dot r"></span><span class="dot y"></span><span class="dot g"></span><span class="name">对比</span><span class="cp">复制</span></div><pre><span class="hl-c">/* ❌ 在循环里反复申请却从不释放 */</span>
+<span class="hl-k">for</span> (<span class="hl-k">int</span> i = <span class="hl-n">0</span>; i &lt; <span class="hl-n">1000000</span>; i++) {
+    <span class="hl-k">int</span> *p = <span class="hl-f">malloc</span>(<span class="hl-k">sizeof</span>(<span class="hl-k">int</span>) * <span class="hl-n">100</span>);
+    <span class="hl-c">/* 用完没 free，每次都漏一点 */</span>
+}
+<span class="hl-c">/* 结果：内存占用一路涨，最后可能被系统杀掉 */</span>
+
+<span class="hl-c">/* ✅ 每轮用完就还 */</span>
+<span class="hl-k">for</span> (<span class="hl-k">int</span> i = <span class="hl-n">0</span>; i &lt; <span class="hl-n">1000000</span>; i++) {
+    <span class="hl-k">int</span> *p = <span class="hl-f">malloc</span>(<span class="hl-k">sizeof</span>(<span class="hl-k">int</span>) * <span class="hl-n">100</span>);
+    <span class="hl-c">/* ... 用 p ... */</span>
+    <span class="hl-f">free</span>(p);
+}</pre></div>
+<p><b>泄漏的特点：程序不会立刻崩，只是越来越占内存。</b>
+短时间跑的小程序看不出来，长时间运行的服务会因此被拖垮。</p>
+
+<h4>错误 2 · 用了已释放的内存</h4>
+<div class="code-wrap"><div class="bar"><span class="dot r"></span><span class="dot y"></span><span class="dot g"></span><span class="name">对比</span><span class="cp">复制</span></div><pre><span class="hl-f">free</span>(p);
+<span class="hl-f">printf</span>(<span class="hl-s">"%d
+"</span>, p[<span class="hl-n">0</span>]);   <span class="hl-c">/* ❌ 那块内存已经不属于你 */</span>
+
+<span class="hl-f">free</span>(p);
+p = <span class="hl-n">NULL</span>;               <span class="hl-c">/* ✅ 置空后就不会误用 */</span></pre></div>
+
+<h4>错误 3 · 重复释放</h4>
+<div class="code-wrap"><div class="bar"><span class="dot r"></span><span class="dot y"></span><span class="dot g"></span><span class="name">对比</span><span class="cp">复制</span></div><pre><span class="hl-f">free</span>(p);
+<span class="hl-f">free</span>(p);                 <span class="hl-c">/* ❌ 释放两次，可能直接崩 */</span>
+
+<span class="hl-f">free</span>(p);
+p = <span class="hl-n">NULL</span>;
+<span class="hl-f">free</span>(p);                 <span class="hl-c">/* ✅ free(NULL) 安全，什么也不做 */</span></pre></div>
+
+<h4>错误 4 · 用 <code>realloc</code> 时丢掉原指针</h4>
+<div class="code-wrap"><div class="bar"><span class="dot r"></span><span class="dot y"></span><span class="dot g"></span><span class="name">对比</span><span class="cp">复制</span></div><pre><span class="hl-c">/* ❌ 失败时返回 NULL，原来的内存就找不回来了（泄漏） */</span>
+p = <span class="hl-f">realloc</span>(p, <span class="hl-k">sizeof</span>(<span class="hl-k">int</span>) * n2);
+
+<span class="hl-c">/* ✅ 用临时变量接，成功了再换 */</span>
+<span class="hl-k">int</span> *q = <span class="hl-f">realloc</span>(p, <span class="hl-k">sizeof</span>(<span class="hl-k">int</span>) * n2);
+<span class="hl-k">if</span> (q == <span class="hl-n">NULL</span>) {
+    <span class="hl-f">free</span>(p);              <span class="hl-c">/* 原来的还在，正常还掉 */</span>
+    <span class="hl-k">return</span> <span class="hl-n">1</span>;
+}
+p = q;</pre></div>
+
+<h4>错误 5 · 申请了却没检查，直接用</h4>
+<div class="code-wrap"><div class="bar"><span class="dot r"></span><span class="dot y"></span><span class="dot g"></span><span class="name">对比</span><span class="cp">复制</span></div><pre><span class="hl-k">int</span> *p = <span class="hl-f">malloc</span>(<span class="hl-k">sizeof</span>(<span class="hl-k">int</span>) * n);
+p[<span class="hl-n">0</span>] = <span class="hl-n">1</span>;                <span class="hl-c">/* ❌ n 太大时 p 是 NULL，这里崩 */</span>
+
+<span class="hl-k">int</span> *p = <span class="hl-f">malloc</span>(<span class="hl-k">sizeof</span>(<span class="hl-k">int</span>) * n);
+<span class="hl-k">if</span> (p == <span class="hl-n">NULL</span>) <span class="hl-k">return</span> <span class="hl-n">1</span>;   <span class="hl-c">/* ✅ */</span>
+p[<span class="hl-n">0</span>] = <span class="hl-n">1</span>;</pre></div>
+
+<h4>错误 6 · 在栈上开过大的数组</h4>
+<div class="code-wrap"><div class="bar"><span class="dot r"></span><span class="dot y"></span><span class="dot g"></span><span class="name">对比</span><span class="cp">复制</span></div><pre><span class="hl-c">/* ❌ 栈通常只有几 MB，这个要 40 MB，直接爆栈 */</span>
+<span class="hl-k">int</span> big[<span class="hl-n">10000000</span>];
+
+<span class="hl-c">/* ✅ 大块内存放到堆上 */</span>
+<span class="hl-k">int</span> *big = <span class="hl-f">malloc</span>(<span class="hl-k">sizeof</span>(<span class="hl-k">int</span>) * <span class="hl-n">10000000</span>);
+<span class="hl-k">if</span> (big == <span class="hl-n">NULL</span>) <span class="hl-k">return</span> <span class="hl-n">1</span>;
+<span class="hl-c">/* ... */</span>
+<span class="hl-f">free</span>(big);</pre></div>
+
+<h4>错误 7 · 忘了 <code>#include &lt;stdlib.h&gt;</code></h4>
+<div class="code-wrap"><div class="bar"><span class="dot r"></span><span class="dot y"></span><span class="dot g"></span><span class="name">对比</span><span class="cp">复制</span></div><pre><span class="hl-p">#include</span> <span class="hl-s">&lt;stdio.h&gt;</span>
+<span class="hl-p">#include</span> <span class="hl-s">&lt;stdlib.h&gt;</span>      <span class="hl-c">/* ✅ malloc / free 声明在这里 */</span></pre></div>
+<p>少了这个头文件，编译器可能只给个警告，程序却带着错误假定继续跑。</p>
+
+<!-- ============================================================ -->
+<h2 id="s10"><span class="n">10</span>一页速查</h2>
+
+<table>
+<thead><tr><th style="width:38%">想做的事</th><th>写法</th></tr></thead>
+<tbody>
+<tr><td>包含所需头文件</td><td class="c">#include &lt;stdlib.h&gt;</td></tr>
+<tr><td>申请 n 个 int</td><td class="c">int *p = malloc(sizeof(int) * n);</td></tr>
+<tr><td>申请并清零</td><td class="c">int *p = calloc(n, sizeof(int));</td></tr>
+<tr><td>判断是否成功</td><td class="c">if (p == NULL) { 处理失败 }</td></tr>
+<tr><td>当数组用</td><td class="c">p[i] &nbsp;或&nbsp; *(p + i)</td></tr>
+<tr><td>扩容</td><td class="c">int *q = realloc(p, sizeof(int) * n2);</td></tr>
+<tr><td>扩容成功后再换指针</td><td class="c">if (q) p = q; else free(p);</td></tr>
+<tr><td>释放</td><td class="c">free(p);</td></tr>
+<tr><td>释放后防误用</td><td class="c">p = NULL;</td></tr>
+<tr><td>字符串缓冲（6 字符）</td><td class="c">malloc(sizeof(char) * (6 + 1))</td></tr>
+<tr><td>全局变量</td><td class="c">写在所有函数外面</td></tr>
+<tr><td>函数间保留值的局部变量</td><td class="c">static int n = 0;</td></tr>
+<tr><td>大块内存</td><td class="c">用 malloc，不要开大局部数组</td></tr>
+</tbody>
+</table>
+
+<div class="card key">
+  <div class="card-t">本讲要记住的六句话</div>
+  <ol>
+    <li><b>静态内存</b>（全局/static）程序全程都在，不用管，但别滥用。</li>
+    <li><b>栈内存</b>（局部变量）进函数分配、出函数回收，<b>又快又省心，但空间小</b>。</li>
+    <li><b>堆内存</b>要先 <code>malloc</code>、后 <code>free</code>，
+      <b>大小运行时定，能跨函数，但一切自己负责</b>。</li>
+    <li><b>申请和释放必须配对</b>，而且只释放一次。</li>
+    <li><b>free 之后立刻 <code>p = NULL</code></b> —— 一条习惯防住三类错误。</li>
+    <li><b>每次 malloc 都要检查是不是 NULL</b>，不检查就是等着崩。</li>
+  </ol>
+</div>
+
+<div class="card note">
+  <div class="card-t">下一讲预告</div>
+  <p>这一讲里我们一直在用「数组」存一组数据。但如果要存的是
+  <b>一个游戏角色</b>呢？它有名字、血量、魔法值、攻击力……
+  用几个平行数组来存会非常别扭：</p>
+  <pre style="background:#f2f4f8;border:1px solid var(--line);border-radius:8px;padding:10px 12px;font-family:var(--mono);font-size:13px;color:var(--fg);overflow:auto"><span class="hl-k">char</span> names[<span class="hl-n">3</span>][<span class="hl-n">20</span>];
+<span class="hl-k">int</span>  hps[<span class="hl-n">3</span>];
+<span class="hl-k">int</span>  mps[<span class="hl-n">3</span>];
+<span class="hl-c">/* 加一个属性就要再加一个数组…… */</span></pre>
+  <p>下一讲《类、结构体》就从这个场景出发：
+  <b>把「属于同一个东西的若干数据」打包成一个整体</b>。</p>
+</div>
+
+<footer>
+UME 项目组内部教程 · 第五讲《静态、动态内存与内存安全初步》<br>
+代码示例均以 <b>Consolas</b> 等宽字体呈现；文中所有「运行结果」都经过实际编译运行核对。<br>
+地址的具体数值每次运行都会变化；<code>malloc</code> 得到的未初始化内容也是不确定的。
+</footer>
+
+</main>
+</div>
+
+<script>
+/* 目录滚动高亮 */
+(function(){
+  const links = [...document.querySelectorAll('#toc a')];
+  const targets = links.map(a => document.querySelector(a.getAttribute('href'))).filter(Boolean);
+  const setOn = id => links.forEach(a => a.classList.toggle('on', a.getAttribute('href') === '#'+id));
+  const io = new IntersectionObserver(es => {
+    const vis = es.filter(e => e.isIntersecting)
+                  .sort((a,b) => a.boundingClientRect.top - b.boundingClientRect.top);
+    if (vis[0]) setOn(vis[0].target.id);
+  }, { rootMargin:'-8% 0px -72% 0px', threshold:0 });
+  targets.forEach(t => io.observe(t));
+})();
+
+/* 复制按钮 */
+(function(){
+  document.querySelectorAll('.code-wrap').forEach(box => {
+    const btn = box.querySelector('.cp');
+    const pre = box.querySelector('pre');
+    if (!btn || !pre) return;
+    btn.addEventListener('click', async () => {
+      const text = pre.textContent;
+      try { await navigator.clipboard.writeText(text); }
+      catch (e) {
+        const ta = document.createElement('textarea');
+        ta.value = text; document.body.appendChild(ta);
+        ta.select(); document.execCommand('copy'); ta.remove();
+      }
+      const old = btn.textContent;
+      btn.textContent = '已复制 ✓';
+      setTimeout(() => { btn.textContent = old; }, 1200);
+    });
+  });
+})();
+</script>
+<script>
+/* 移动端：生成「目录」按钮，点击呼出/收起侧滑目录 */
+(function(){
+  var toc = document.getElementById('toc');
+  if (!toc) return;
+  var btn = document.createElement('button');
+  btn.id = 'tocToggle';
+  btn.type = 'button';
+  btn.setAttribute('aria-controls','toc');
+  btn.textContent = '目录';
+  document.body.appendChild(btn);
+
+  function setOpen(on){
+    toc.classList.toggle('open', on);
+    document.body.classList.toggle('toc-open', on);
+    btn.setAttribute('aria-expanded', on ? 'true' : 'false');
+    btn.textContent = on ? '收起' : '目录';
+  }
+  btn.addEventListener('click', function(){
+    setOpen(!toc.classList.contains('open'));
+  });
+  /* 点目录里的链接后自动收起；点遮罩（#toc 之外的区域）也收起 */
+  toc.addEventListener('click', function(e){
+    if (e.target.closest('a')) setOpen(false);
+  });
+  document.addEventListener('click', function(e){
+    if (!toc.classList.contains('open')) return;
+    if (e.target === toc || toc.contains(e.target) || e.target === btn) return;
+    setOpen(false);
+  });
+  document.addEventListener('keydown', function(e){
+    if (e.key === 'Escape') setOpen(false);
+  });
+  /* 窄屏进入页面时默认收起，宽屏则清掉状态 */
+  function sync(){ if (window.innerWidth > 980) setOpen(false); }
+  window.addEventListener('resize', sync);
+  sync();
+})();
+</script>
+</body>
+</html>

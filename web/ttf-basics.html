@@ -1,0 +1,895 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>TTF 与蒙文排版基础 · 概念详解</title>
+<style>
+@font-face{
+  font-family:"UME Mongolian";
+  src:url("../font/NotoSansMongolian-Regular.ttf") format("truetype");
+  font-weight:400;font-style:normal;font-display:block;
+}
+:root{
+  --bg:#fff;--bg-soft:#f6f8fb;--bg-code:#f2f4f8;
+  --line:#e2e7ef;--line-2:#cdd6e3;
+  --fg:#161a21;--fg-2:#4a5464;--fg-3:#7b8698;
+  --blue:#1f6feb;--blue-soft:#e7f0fe;
+  --green:#1a7f45;--green-soft:#e6f5ec;
+  --red:#c0392b;--red-soft:#fdecea;
+  --amber:#a86a12;--amber-soft:#fdf3e2;
+  --violet:#6b46c1;--violet-soft:#f1ecfd;
+  --mono:"Cascadia Mono",Consolas,"SF Mono",ui-monospace,monospace;
+}
+*{box-sizing:border-box}
+html{scroll-behavior:smooth}
+body{margin:0;background:var(--bg);color:var(--fg);
+  font:16px/1.78 -apple-system,BlinkMacSystemFont,"Segoe UI","Microsoft YaHei",sans-serif;
+  -webkit-font-smoothing:antialiased}
+#shell{display:flex;align-items:flex-start;max-width:1460px;margin:0 auto}
+#toc{position:sticky;top:0;width:280px;flex:0 0 280px;height:100vh;overflow:auto;
+  padding:34px 16px 40px 26px;border-right:1px solid var(--line);background:var(--bg-soft)}
+#toc h5{margin:0 0 10px;font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:var(--fg-3)}
+#toc a{display:block;padding:5px 10px;margin:1px 0;border-radius:6px;color:var(--fg-2);
+  text-decoration:none;font-size:13.5px;line-height:1.45}
+#toc a:hover{background:#e9eef7;color:var(--fg)}
+#toc a.sub{padding-left:22px;font-size:12.5px;color:var(--fg-3)}
+#toc a.on{background:var(--blue-soft);color:var(--blue);font-weight:600}
+main{flex:1;min-width:0;padding:44px 54px 140px}
+
+h1{font-size:33px;line-height:1.25;margin:0 0 6px;letter-spacing:-.02em}
+h2{font-size:23px;margin:62px 0 14px;padding-top:20px;border-top:1px solid var(--line);
+   letter-spacing:-.01em}
+h2 .num{display:inline-block;min-width:30px;height:30px;line-height:30px;text-align:center;
+  background:var(--fg);color:#fff;border-radius:8px;font-size:15px;margin-right:11px;
+  font-variant-numeric:tabular-nums}
+h3{font-size:17.5px;margin:34px 0 10px}
+h4{font-size:15px;margin:24px 0 8px;color:var(--fg-2)}
+p{margin:12px 0}
+.lead{font-size:17.5px;color:var(--fg-2);line-height:1.85}
+a{color:var(--blue)}
+code{font-family:var(--mono);font-size:.89em;background:var(--bg-code);padding:2px 5px;
+  border-radius:4px;border:1px solid var(--line)}
+pre{background:var(--bg-code);border:1px solid var(--line);border-radius:10px;
+  padding:14px 16px;overflow:auto;font-family:var(--mono);font-size:13px;line-height:1.65}
+pre code{background:none;border:0;padding:0;font-size:inherit}
+.cmt{color:var(--fg-3)}.bad{color:var(--red)}.good{color:var(--green)}
+.vi{color:var(--violet)}
+
+.card{border:1px solid var(--line);border-radius:14px;padding:20px 22px;margin:20px 0;background:#fff}
+.card.soft{background:var(--bg-soft)}
+.card.warn{border-color:#f3d3cd;background:var(--red-soft)}
+.card.ok{border-color:#c6e6d3;background:var(--green-soft)}
+.card.info{border-color:#cfe0fb;background:var(--blue-soft)}
+.card.amber{border-color:#f0dcb4;background:var(--amber-soft)}
+.card h4{margin-top:0}
+.tag{display:inline-block;font-size:11.5px;font-family:var(--mono);padding:2px 8px;
+  border-radius:999px;background:#eef1f6;color:var(--fg-2);border:1px solid var(--line-2);
+  vertical-align:2px}
+.tag.b{background:var(--blue-soft);border-color:#bcd6fa;color:var(--blue)}
+.tag.g{background:var(--green-soft);border-color:#bfe2cd;color:var(--green)}
+.tag.r{background:var(--red-soft);border-color:#f0c8c2;color:var(--red)}
+.tag.v{background:var(--violet-soft);border-color:#d6c9f5;color:var(--violet)}
+.tag.a{background:var(--amber-soft);border-color:#ecd7ac;color:var(--amber)}
+
+table{border-collapse:collapse;width:100%;margin:16px 0;font-size:14px}
+th,td{border:1px solid var(--line);padding:8px 11px;text-align:left;vertical-align:top}
+th{background:var(--bg-soft);font-weight:600;font-size:13px}
+td.num,th.num{text-align:right;font-variant-numeric:tabular-nums;font-family:var(--mono);font-size:13px}
+td.mono{font-family:var(--mono);font-size:12.5px}
+tr.hl td{background:var(--amber-soft)}
+
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:18px}
+.grid3{display:grid;grid-template-columns:repeat(3,1fr);gap:16px}
+@media(max-width:1100px){.grid2,.grid3{grid-template-columns:1fr}}
+@media(max-width:900px){#toc{display:none}main{padding:24px}}
+
+.mn{font-family:"UME Mongolian","Noto Sans Mongolian",serif;font-size:46px;line-height:1.35}
+.mn-v{writing-mode:vertical-lr;direction:ltr;text-orientation:mixed}
+.spec{border:1px dashed var(--line-2);border-radius:10px;padding:14px 16px;background:#fff;overflow:auto}
+.spec .cap{font-size:12px;color:var(--fg-3);font-weight:600;display:flex;gap:8px;
+  align-items:center;flex-wrap:wrap;margin-bottom:8px}
+
+/* 流水线 */
+.pipe{display:flex;align-items:stretch;flex-wrap:wrap;margin:18px 0}
+.step{flex:1 1 150px;min-width:140px;border:1px solid var(--line);border-radius:10px;
+  padding:11px 12px;background:#fff;position:relative}
+.step+.step{margin-left:26px}
+.step+.step::before{content:"→";position:absolute;left:-21px;top:50%;
+  transform:translateY(-50%);color:var(--fg-3)}
+.step .n{font-size:11px;font-family:var(--mono);color:var(--fg-3)}
+.step .t{font-weight:640;font-size:13.5px;margin:2px 0 3px}
+.step .d{font-size:12px;color:var(--fg-3);line-height:1.5}
+
+/* 字形链 */
+.chain{display:flex;flex-wrap:wrap;gap:10px;align-items:stretch;margin:14px 0}
+.node{border:1px solid var(--line);border-radius:9px;background:#fff;padding:8px 10px;text-align:center;min-width:78px}
+.node .top{font-family:var(--mono);font-size:11px;color:var(--fg-3);min-height:14px}
+.node .mid{font-family:var(--mono);font-size:11.5px;color:var(--violet);word-break:break-all;
+  line-height:1.35;min-height:30px;margin-top:2px}
+.node.lig{border-color:#c9b6f0;background:var(--violet-soft)}
+.node.lig .mid{color:#5b34b0;font-weight:600}
+.arrow{align-self:center;color:var(--fg-3);font-size:18px}
+
+.cmp{display:grid;grid-template-columns:1fr 1fr;border:1px solid var(--line);
+  border-radius:12px;overflow:hidden;margin:16px 0}
+.cmp>div{padding:15px 17px}
+.cmp>div+div{border-left:1px solid var(--line)}
+.cmp .ok{background:var(--green-soft)}
+.cmp .no{background:var(--red-soft)}
+.cmp .hd{font-weight:650;font-size:13.5px;margin-bottom:8px}
+.metric{font-family:var(--mono);font-size:12.5px;color:var(--fg-2);margin-top:8px;line-height:1.7}
+
+.legend{display:flex;gap:16px;flex-wrap:wrap;font-size:12.5px;color:var(--fg-2);margin:10px 0}
+.legend i{display:inline-block;width:12px;height:12px;border-radius:3px;margin-right:5px;
+  vertical-align:-1px;border:1px solid var(--line-2)}
+.hr{height:1px;background:var(--line);margin:32px 0}
+footer{border-top:1px solid var(--line);margin-top:70px;padding-top:20px;font-size:13px;color:var(--fg-3)}
+.kbd{font-family:var(--mono);font-size:12px;border:1px solid var(--line-2);
+  border-bottom-width:2px;border-radius:5px;padding:1px 6px;background:#fff}
+blockquote{margin:14px 0;padding:12px 18px;border-left:4px solid var(--blue);
+  background:var(--blue-soft);border-radius:0 8px 8px 0;font-size:15px}
+blockquote p{margin:6px 0}
+.small{font-size:13.5px;color:var(--fg-3)}
+ul.tight{margin:8px 0;padding-left:22px}
+ul.tight li{margin:5px 0}
+</style>
+</head>
+<body>
+<div id="shell">
+
+<nav id="toc">
+  <h5>目录</h5>
+  <a href="#s0">0 · 先建立心智模型</a>
+  <a href="#s1">1 · TTF 文件里有什么</a>
+  <a href="#s2">2 · 码位 ≠ 字形</a>
+  <a href="#s3">3 · GSUB：字形替换</a>
+  <a href="#s3a" class="sub">3.1 lookup 的 8 种类型</a>
+  <a href="#s3b" class="sub">3.2 特性标签 feature tag</a>
+  <a href="#s4">4 · rclt 详解</a>
+  <a href="#s5">5 · LB=AL 与 AL × AL</a>
+  <a href="#s5a" class="sub">5.1 LB 是什么</a>
+  <a href="#s5b" class="sub">5.2 × 和 ÷ 的读法</a>
+  <a href="#s6">6 · font-feature-settings</a>
+  <a href="#s7">7 · 竖排不只是 vertical-lr</a>
+  <a href="#s8">8 · 小结与查阅表</a>
+</nav>
+
+<main>
+<h1>TTF 与蒙文排版基础</h1>
+<p class="lead">
+把这次踩过的概念一次讲清：<code>rclt</code>、<code>LB=AL</code>、<code>AL × AL</code>、
+<code>font-feature-settings</code>，以及竖排到底做了哪些事。
+</p>
+<p>
+<span class="tag">TrueType / OpenType</span>
+<span class="tag b">Noto Sans Mongolian 3.103</span>
+<span class="tag">UCD 18.0.0</span>
+<span class="tag g">数据取自本仓库字体</span>
+</p>
+
+<!-- ============================================================ -->
+<h2 id="s0"><span class="num">0</span>先建立心智模型</h2>
+
+<p>一句话：<b>字体是一个"字形仓库 + 一套替换规则"，文本是一串"码位"，
+排版引擎负责按规则把码位换成字形，再摆到屏幕上。</b></p>
+
+<p>所有的坑都出在"替换规则"这一层。因为它<b>看上下文</b>——同一个码位在不同位置要换成
+不同字形。所以任何"绕过上下文、直接指定字形"的做法都会出错。</p>
+
+<div class="pipe">
+  <div class="step"><div class="n">你的输入</div><div class="t">码位</div>
+    <div class="d"><code>U+182E</code> 这样的一串数字，是文本的"真身"。</div></div>
+  <div class="step"><div class="n">字体提供</div><div class="t">字形 + 规则</div>
+    <div class="d">字形是矢量轮廓；规则写在 <code>GSUB</code>/<code>GPOS</code> 表里。</div></div>
+  <div class="step"><div class="n">引擎执行</div><div class="t">整形 shaping</div>
+    <div class="d">按规则选字形、合并连字、摆位置。这一步叫 shaping。</div></div>
+  <div class="step"><div class="n">屏幕</div><div class="t">像素</div>
+    <div class="d">引擎把字形光栅化，再按书写方向摆放。</div></div>
+</div>
+
+<div class="card info">
+<h4>记住这条分界线</h4>
+<p style="margin:0"><b>码位是你的事，字形是引擎的事。</b>
+你能做的是"把码位排好、别挡住引擎"；你<b>不能</b>做的是"替引擎决定用哪个字形"。
+后面 <code>font-feature-settings</code> 那一节就是这条线的实际案例。</p>
+</div>
+
+<!-- ============================================================ -->
+<h2 id="s1"><span class="num">1</span>TTF 文件里有什么</h2>
+
+<p>一个 <code>.ttf</code> 文件（严格说叫 sfnt 容器）就是一堆<b>表（table）</b>，
+每张表管一件事。下面是从本仓库字体里读出来的真实清单：</p>
+
+<div id="tables"></div>
+
+<p>其中与排版最相关的是四张：</p>
+
+<table>
+<thead><tr><th style="width:110px">表</th><th style="width:80px">大小</th><th>作用</th></tr></thead>
+<tbody>
+<tr><td class="mono"><b>cmap</b></td><td class="num">3.6 KB</td>
+    <td>码位 → 字形 的<b>入口映射</b>。告诉你 <code>U+182E</code> 对应哪个默认字形。</td></tr>
+<tr class="hl"><td class="mono"><b>GSUB</b></td><td class="num">57.9 KB</td>
+    <td><b>字形替换</b>。连字、位置形位、变体选择全在这里。本字体最大的一张表，
+        也是蒙文排版的全部秘密所在。</td></tr>
+<tr><td class="mono"><b>GPOS</b></td><td class="num">10.5 KB</td>
+    <td><b>字形定位</b>。字距、组合标记的摆放。</td></tr>
+<tr><td class="mono"><b>glyf</b></td><td class="num">210.2 KB</td>
+    <td>字形轮廓本身。真正"画字"的数据。</td></tr>
+</tbody>
+</table>
+
+<div class="card amber">
+<h4>一个值得注意的数字</h4>
+<p style="margin:0">本字体有 <b>3,715 个字形</b>，但 <code>cmap</code> 只映射了
+<b>517 个码位</b>。也就是说 <b>86% 的字形不是入口</b>，只能靠 <code>GSUB</code> 规则产生。
+这直接说明：<b>不支持 GSUB 的渲染器根本画不出蒙文</b>。</p>
+</div>
+
+<!-- ============================================================ -->
+<h2 id="s2"><span class="num">2</span>码位 ≠ 字形</h2>
+
+<p>这是理解后面一切的前提。举本字体的真实例子：<code>U+182E</code>
+（<span class="mn" style="font-size:26px">ᠮ</span> MONGOLIAN LETTER MA）。
+它在 <code>cmap</code> 里只对应一个默认字形，但字体里跟它相关的字形有：</p>
+
+<table>
+<thead><tr><th>字形名</th><th>含义</th><th class="num">宽度</th></tr></thead>
+<tbody>
+<tr><td class="mono">u182E.M.init</td><td>词首形</td><td class="num">492</td></tr>
+<tr><td class="mono">u182E.M.medi</td><td>词中形</td><td class="num">284</td></tr>
+<tr><td class="mono">u182E.M.fina</td><td>词尾形</td><td class="num">455</td></tr>
+<tr><td class="mono">u182E.M.init._isol</td><td>独立出现时的形（后无元音）</td><td class="num">632</td></tr>
+<tr><td class="mono">u182D_u1823.GO.medi</td><td>与 <code>U+1823</code> 合并成的连字</td><td class="num">838</td></tr>
+</tbody>
+</table>
+
+<p>到底用哪一个，<b>不取决于这个码位本身，而取决于它左右是谁</b>。
+这就是"上下文相关"（contextual）的含义。</p>
+
+<div class="spec">
+  <div class="cap">实例：同一个 MA，四种上下文 → 四个字形
+    <span class="small">（浏览器现场渲染）</span></div>
+  <div id="posTable"></div>
+</div>
+
+<!-- ============================================================ -->
+<h2 id="s3"><span class="num">3</span>GSUB：字形替换</h2>
+
+<p><code>GSUB</code>（Glyph SUBstitution）是一组规则的集合。它<b>不产生</b>字形，
+只是告诉引擎"在这个条件下，把 A 换成 B"。</p>
+
+<h3 id="s3a">3.1 lookup 的 8 种类型</h3>
+<p>规则被组织成 <b>lookup</b>，每个 lookup 有一种"替换方式"：</p>
+<div id="lookupTypes"></div>
+
+<p>本字体实际用到的类型分布：</p>
+<div id="lookupDist"></div>
+
+<h3 id="s3b">3.2 特性标签（feature tag）</h3>
+
+<p>lookup 本身不带"什么时候用"的信息。这个信息由 <b>feature</b> 提供：
+feature 是一个 4 字母标签，把若干 lookup 打包，并说明它们的用途。
+引擎按标签决定启用哪些 lookup。</p>
+
+<p>本字体的 <code>GSUB</code> 特性清单（按替换条目数排序）：</p>
+<div id="featureTable"></div>
+
+<div class="card info">
+<h4>三条需要记住的约定</h4>
+<ul class="tight">
+  <li><b>必需特性</b>（<code>rclt</code>、<code>ccmp</code>、<code>locl</code>）：
+      引擎应当<b>默认启用</b>，用户不应关闭。蒙文靠这个才能连写。</li>
+  <li><b>可选特性</b>（<code>liga</code>、<code>calt</code>、<code>dlig</code> 等）：
+      可按用户偏好开关，CSS 里用 <code>font-variant-*</code> 或
+      <code>font-feature-settings</code> 控制。</li>
+  <li><b>位置形位</b>（<code>init</code>/<code>medi</code>/<code>fina</code>/<code>isol</code>）：
+      这套标签源自阿拉伯文排版。对蒙文，引擎是通过 <code>rclt</code> 统一处理的，
+      <b>不需要你手动指定</b>——手动指定反而会坏事（见第 6 节）。</li>
+</ul>
+</div>
+
+<!-- ============================================================ -->
+<h2 id="s4"><span class="num">4</span><code>rclt</code> 详解</h2>
+
+<p><b>全称 Required Contextual Ligatures（必需上下文连字）。</b>
+拆开看三个词：</p>
+
+<table>
+<thead><tr><th style="width:130px">词</th><th>含义</th></tr></thead>
+<tbody>
+<tr><td><b>Required</b></td><td><b>必需</b>。引擎默认启用，不应当被关闭 ——
+    关掉它文字就是错的，不是"风格不同"。</td></tr>
+<tr><td><b>Contextual</b></td><td><b>看上下文</b>。规则要考察前文/后文才决定怎么做。</td></tr>
+<tr><td><b>Ligatures</b></td><td><b>连字</b>。把多个字形合并成一个。</td></tr>
+</tbody>
+</table>
+
+<p>在本字体的 <code>GSUB</code> 里，<code>rclt</code> 的实际构成：</p>
+<div id="rcltStat"></div>
+
+<p>可以看到它的主体是 <b>类型 6（链式上下文替换）44 个</b>。
+类型 6 的规则长这样：</p>
+
+<pre><code>「如果 前文是 <span class="vi">X</span>，当前是 <span class="vi">Y</span>，后文是 <span class="vi">Z</span>，
+  那么 把 Y 替换成 <span class="good">Y'</span>」</code></pre>
+
+<p>下面是从字体里真实导出的几条规则（<code>backtrack</code>=前文、
+<code>input</code>=当前、<code>lookahead</code>=后文、<code>subst</code>=执行什么）：</p>
+<div id="rcltRules"></div>
+
+<p>第 3 条特别有代表性：<b>前文是</b> <code>marker.masculine</code>（阳性元音记号）时，
+才把 <code>u1822.I.fina</code> / <code>u1822.I.medi</code> 换成另一个形式。
+这就是蒙文正字法里"阴阳性元音"在字体层面的实现方式 ——
+它不是一个码位，而是一条<b>取决于前文</b>的替换规则。</p>
+
+<div class="card">
+<h4>完整走一遍：<span class="mn" style="font-size:24px">ᠮᠣᠩᠭᠣᠯ</span></h4>
+<div id="rcltWalk"></div>
+</div>
+
+<!-- ============================================================ -->
+<h2 id="s5"><span class="num">5</span><code>LB=AL</code> 与 <code>AL × AL</code></h2>
+
+<h3 id="s5a">5.1 <code>LB</code> 是什么</h3>
+
+<p><code>LB</code> 是 <b>Line Break</b> 的缩写，指 Unicode 的
+<b>断行属性</b>（Line_Break property，定义在
+<a href="https://www.unicode.org/reports/tr14/" target="_blank" rel="noopener">UAX #14</a>）。
+每个码位都有这样一个属性值，取值是若干个"类"之一。</p>
+
+<p><code>LB=AL</code> 的意思就是：<b>这个码位的断行类别是 <code>AL</code>
+（Alphabetic，字母类）</b>。本字体里的蒙文字母全是这一类：</p>
+
+<div class="spec">
+  <div class="cap">蒙文码区的断行属性分布
+    <span class="small">（数据来自 UCD 18.0.0 的 LineBreak.txt）</span></div>
+  <div id="lbDist"></div>
+</div>
+
+<p>为什么要给字符分"断行类别"？因为<b>断行不是"哪里都能断"</b>。
+一句英文不能从单词中间断开，数字不能从 <code>1,000</code> 中间断开，
+左括号不能留在行尾。这些规则需要知道每个字符"属于哪一类"，才能成对判断。
+<code>AL</code> 就是"普通字母"这一类。</p>
+
+<h3 id="s5b">5.2 <code>×</code> 和 <code>÷</code> 怎么读</h3>
+
+<p><code>AL × AL</code> 这个写法来自 UAX #14 的规则记法，<b>不是乘法</b>：</p>
+
+<table>
+<thead><tr><th style="width:120px">记号</th><th style="width:150px">读法</th><th>含义</th></tr></thead>
+<tbody>
+<tr><td style="font-size:22px;text-align:center">×</td><td><b>不允许断行</b></td>
+    <td>两个字符之间<b>不能</b>换行。<code>AL × AL</code> 即"两个字母之间不许断"。</td></tr>
+<tr><td style="font-size:22px;text-align:center">÷</td><td><b>允许断行</b></td>
+    <td>这里<b>可以</b>换行。<code>SP ÷ AL</code> 即"空格之后可以断"。</td></tr>
+<tr><td style="font-size:15px;text-align:center"><code>SP*</code></td>
+    <td>零或多个空格</td>
+    <td>写在中间表示"即使隔了若干空格也算"。<code>OP SP* × AL</code>
+        = 左括号后即使有空格，也不许断。</td></tr>
+</tbody>
+</table>
+
+<blockquote>
+<p><code>AL × AL</code> —— 两个 <code>AL</code> 类字符相邻时，禁止在它们之间断行。</p>
+</blockquote>
+
+<div class="card warn">
+<h4>为什么这条对蒙文特别要命</h4>
+<p>英文用空格分词，所以断行机会多。传统蒙文<b>不用空格分词</b>，
+一个词就是一串连续的 <code>AL</code>。于是：</p>
+<ul class="tight">
+  <li>词内部<b>完全没有</b>断行机会；</li>
+  <li>而蒙文又是竖排，一列的高度有限；</li>
+  <li>结论：<b>长词在竖排里是不可断的整体</b>，会整块溢出到下一列。</li>
+</ul>
+<p style="margin-bottom:0">实测（本仓库 <code>report/unicode-mongolian-editing.txt</code>）：
+纯字母词、<code>NIRUGU</code> 连接、<code>MVS</code> 分隔、字母+数字，
+断行机会<b>全为 0</b>。唯一自然断点是 ASCII 空格与少量标点。</p>
+</div>
+
+<h4>蒙文标点的断行类别（全部 171 个码位的类别统计见上，此处列标点）</h4>
+<div id="lbMongPunct"></div>
+
+<p>和常见 ASCII 字符对照一下，感受一下"类别"这个概念：</p>
+<div id="lbContrast"></div>
+
+<!-- ============================================================ -->
+<h2 id="s6"><span class="num">6</span><code>font-feature-settings</code></h2>
+
+<p>理解它需要先分清两个层次：</p>
+
+<table>
+<thead><tr><th style="width:150px">层次</th><th>是什么</th><th>在哪</th></tr></thead>
+<tbody>
+<tr><td><b>字体内部</b></td><td>特性标签（<code>rclt</code>、<code>liga</code>…）
+    只是<b>规则的打包名</b>，本身没有"开/关"状态</td>
+    <td><code>.ttf</code> 的 <code>GSUB</code> 表</td></tr>
+<tr class="hl"><td><b>渲染层</b></td><td>排版引擎在整形时决定<b>这次启用哪些标签</b>；
+    这个决定可以被 CSS 覆盖</td>
+    <td>CSS 的 <code>font-feature-settings</code> / <code>font-variant-*</code></td></tr>
+</tbody>
+</table>
+
+<p>语法就是一个"标签 → 开关"的列表：</p>
+
+<pre><code>font-feature-settings: <span class="vi">"liga"</span> 1, <span class="vi">"dlig"</span> 0;
+<span class="cmt">/*                      ↑标签   ↑1=开 0=关 */</span></code></pre>
+
+<p>它<b>不是</b>用来"启用字体功能"的开关。<b>引擎本来就会按自己的默认策略启用正确的标签</b>。
+它真正的用途是两种：</p>
+
+<div class="grid2">
+  <div class="card" style="margin:0">
+    <h4>① 开启默认关闭的可选项</h4>
+    <p style="margin:0">比如强制启用 discretionary ligatures：
+    <code>font-feature-settings:"dlig" 1</code>。
+    这类用法是安全的。</p>
+  </div>
+  <div class="card warn" style="margin:0">
+    <h4>② 关闭某些特性做对照</h4>
+    <p style="margin:0">调试时关掉特性看差异，例如
+    <code>"rclt" 0</code>。本编辑器保留了这个开关专门用来对照。</p>
+  </div>
+</div>
+
+<h4>我犯的错：用它去"确保"必需特性被启用</h4>
+
+<pre><code><span class="cmt">/* ❌ 我曾经这么写，以为更保险 */</span>
+<span class="bad">font-feature-settings:"rclt" 1,"ccmp" 1,"init" 1,"medi" 1,"fina" 1,"isol" 1;</span>
+
+<span class="cmt">/* ✅ 正确：什么都不写 */</span></code></pre>
+
+<p>为什么反而坏了？关键在于 <b><code>init</code>/<code>medi</code>/<code>fina</code>/<code>isol</code>
+与 <code>rclt</code> 的语义冲突</b>：</p>
+
+<ul class="tight">
+  <li><code>rclt</code> 的规则是"<b>看上下文</b>决定"。同一个字母在词首、词中、词尾、
+      单独四种情形下，<b>由规则自己判断</b>该用哪个字形。</li>
+  <li>而 <code>init</code>/<code>medi</code>/<code>fina</code>/<code>isol</code>
+      这几个标签的含义是"<b>请把所有当前字符都当作词首/词中/词尾/单独形处理</b>"。</li>
+  <li>把它们强制置 <code>1</code>，等于告诉引擎"别管上下文了，全按孤立形来"。</li>
+  <li>结果：<code>rclt</code> 的上下文判断被架空，连字全部丢失。</li>
+</ul>
+
+<div class="cmp">
+  <div class="ok">
+    <div class="hd"><span class="tag g">默认（正确）</span></div>
+    <div class="spec" style="background:#fff"><div class="mn" style="font-size:52px">ᠮᠣᠩᠭᠣᠯ</div></div>
+    <div class="metric">5 个字形 / 6 个码位 · <b>2.90 em</b><br>含连字
+      <span class="vi">u182D_u1823.GO.medi</span></div>
+  </div>
+  <div class="no">
+    <div class="hd"><span class="tag r">强制打开位置特性</span></div>
+    <div class="spec" style="background:#fff">
+      <div class="mn" style="font-size:52px;font-feature-settings:'rclt' 1,'ccmp' 1,'init' 1,'medi' 1,'fina' 1,'isol' 1,'calt' 1,'liga' 1">ᠮᠣᠩᠭᠣᠯ</div></div>
+    <div class="metric">6 个字形（无连字） · <b>4.81 em</b><br>全退化为
+      <span class="bad">.init._isol</span></div>
+  </div>
+</div>
+<p class="small">两栏都是浏览器现场渲染。右栏字母被拉开、连不上，宽度涨了 66%。</p>
+
+<div class="card ok">
+<h4>结论</h4>
+<p style="margin:0">对<b>必需特性</b>，正确做法是<b>不写</b>。
+需要判断成形是否正常，别靠肉眼 —— 量整词宽度：
+<span class="mn" style="font-size:22px">ᠮᠣᠩᠭᠣᠯ</span> 应为 <b>2.90 em</b>，若是 <b>4.81 em</b> 就是连字丢了。</p>
+</div>
+
+<!-- ============================================================ -->
+<h2 id="s7"><span class="num">7</span>竖排不只是 <code>vertical-lr</code></h2>
+
+<p><b>不是。</b><code>vertical-lr</code> 只是一个起点，而且它是<b>唯一一行让引擎替你干活</b>的代码。
+整个竖排实现一共有六层，下面逐层说清各自做了什么。</p>
+
+<div class="pipe">
+  <div class="step"><div class="n">①</div><div class="t">书写方向</div>
+    <div class="d"><code>vertical-lr</code> 交给引擎排版。</div></div>
+  <div class="step"><div class="n">②</div><div class="t">字形朝向</div>
+    <div class="d">蒙文是 <code>vo=R</code>，由浏览器自动转 90°。</div></div>
+  <div class="step"><div class="n">③</div><div class="t">字体与回退</div>
+    <div class="d">要自己保证蒙文字体在字体栈里、且真的加载了。</div></div>
+  <div class="step"><div class="n">④</div><div class="t">换列</div>
+    <div class="d">最大风险点：长词不可断，需"整词换列"。</div></div>
+  <div class="step"><div class="n">⑤</div><div class="t">围绕文本的一切</div>
+    <div class="d">光标、选区、滚动、表单控件 —— 会跟着一起转。</div></div>
+  <div class="step"><div class="n">⑥</div><div class="t">诊断与对照</div>
+    <div class="d">双引擎切换、字素簇边界、字形分解。</div></div>
+</div>
+
+<h3>① 书写方向：唯一"引擎代劳"的一层</h3>
+
+<pre><code>writing-mode: <span class="good">vertical-lr</span>;   <span class="cmt">/* 蒙文：列自左向右 */</span>
+direction: <span class="good">ltr</span>;              <span class="cmt">/* 必须显式写，否则 RTL 上下文会再翻一次 */</span>
+text-orientation: <span class="good">mixed</span>;      <span class="cmt">/* 保持默认，不要设 upright */</span></code></pre>
+
+<p>注意 <code>vertical-lr</code> 里的 <code>lr</code> 指的是<b>列的增长方向</b>，
+不是"文字从左到右"。蒙文列自左向右，所以用 <code>vertical-lr</code>；
+CJK 列自右向左，用 <code>vertical-rl</code>。</p>
+
+<h3>② 字形朝向：不需要你旋转</h3>
+
+<p>竖排时每个字符要不要侧躺，由 Unicode 的
+<code>Vertical_Orientation</code> 属性决定。本字体覆盖的 171 个蒙文码位
+<b>全部是 <code>R</code>（rotated，旋转）</b>，浏览器会自动顺时针转 90°。
+你需要做的只是"不要阻止它"——比如别去设 <code>text-orientation: upright</code>。</p>
+
+<h3>③ 字体与回退：容易功亏一篑的一层</h3>
+
+<p>竖排代码写对了，字体没加载，看到的仍然是"豆腐块"。我们的做法：</p>
+<ul class="tight">
+  <li><code>@font-face</code> 用相对路径 <code>../font/…ttf</code> 引入；</li>
+  <li>字体栈里<b>先蒙文字体、再通用回退</b>；</li>
+  <li>启动时用 <code>document.fonts.check()</code> 检测并显示状态；</li>
+  <li>连输入框的等宽字体栈末尾也要挂上蒙文字体 ——
+      否则核对码位的那一栏会显示成方框（我踩过这个坑）。</li>
+</ul>
+
+<h3>④ 换列：真正的风险点</h3>
+
+<p>这一层最容易被忽略。因为 <code>AL × AL</code> 禁止断行（第 5 节），
+一个长蒙文词在竖排里<b>没有可断之处</b>。当我设定一列的高度后：</p>
+
+<pre><code><span class="cmt">/* 若某词比一列还高，浏览器只能紧急断行 —— 蒙文没有空格，它会从字母中间切 */</span>
+height: 420px;   <span class="cmt">← 词比这高就会在字形中间断开，破坏连写</span></code></pre>
+
+<p>我在做说明文档时就撞上了：竖排样例没有限制，长句被从字母中间切开。
+修法是 <code>white-space: nowrap</code>，并配合横向滚动 ——
+也就是接受"长内容需要滚动"而不是"允许在词中断开"。真实编辑器还需要更完整的策略
+（整词换列、超长词溢出处理）。</p>
+
+<h3>⑤ 围绕文本的一切：这一层几乎全是浏览器代劳，但有边界</h3>
+
+<p>设了 <code>writing-mode</code> 之后，下面这些<b>会自动跟着竖排</b>：</p>
+
+<div class="grid3">
+  <div class="card ok" style="margin:0"><h4 style="color:var(--green)">自动跟随 ✓</h4>
+    <ul class="tight" style="margin-bottom:0;font-size:13.5px">
+      <li>光标上下移动、左右跨列</li>
+      <li>选区高亮</li>
+      <li>滚动条方向</li>
+      <li>textarea / 按钮等表单控件旋转</li>
+      <li>逻辑属性（<code>margin-inline</code> 等）</li>
+      <li>文本对齐（<code>text-align: start/end</code>）</li>
+    </ul></div>
+  <div class="card warn" style="margin:0"><h4 style="color:var(--red)">需要自己处理 ✗</h4>
+    <ul class="tight" style="margin-bottom:0;font-size:13.5px">
+      <li>列的宽度与间距</li>
+      <li>长词换列策略</li>
+      <li>标点禁则（<code>EX</code> 类不得行首）</li>
+      <li>下拉框展开后的选项方向</li>
+      <li>画布 / canvas 里的竖排（要自己转）</li>
+      <li>字体加载失败的回退提示</li>
+    </ul></div>
+  <div class="card amber" style="margin:0"><h4 style="color:var(--amber)">布局上的坑</h4>
+    <ul class="tight" style="margin-bottom:0;font-size:13.5px">
+      <li>旋转元素的包围盒会跑到负坐标 → 被裁</li>
+      <li>旋转不改变布局盒 → 滚动区要另行撑开</li>
+      <li><code>width</code> 与 <code>height</code> 的语义互换</li>
+    </ul></div>
+</div>
+
+<h3>⑥ 诊断与对照：这部分是"额外劳动"</h3>
+
+<p>为了排查成形问题，编辑器里这些都不是竖排必需的，但没有它们就查不出问题：</p>
+<ul class="tight">
+  <li><b>两个竖排引擎可切换</b>（<code>vertical-lr</code> / <code>rotate(90deg)</code>），
+      便于对照是环境问题还是代码问题；</li>
+  <li><b>字素簇边界</b>显示（UAX #29），确认 FVS 是否黏附正确；</li>
+  <li><b>字形分解</b>视图，逐簇排版以暴露连字结果；</li>
+  <li><b>连字特性开关</b>，对照成形与未成形。</li>
+</ul>
+
+<div class="card info">
+<h4>回到你的问题</h4>
+<p style="margin:0">如果只做"能看的竖排"，确实接近"<code>vertical-lr</code> + 换行处理"。
+但要做成<b>能用的编辑器</b>，还必须处理<b>字形朝向的验证</b>、
+<b>字体回退</b>、<b>长词换列</b>、<b>标点禁则</b>，以及一整套<b>诊断手段</b>。
+而且真正容易出错的地方往往不在竖排本身，而在第 6 节那个成形陷阱 ——
+<b>竖排写错是"看起来不对"，成形写错是"文字是错的"。</b></p>
+</div>
+
+<!-- ============================================================ -->
+<h2 id="s8"><span class="num">8</span>小结与查阅表</h2>
+
+<table>
+<thead><tr><th style="width:230px">术语</th><th>一句话</th></tr></thead>
+<tbody>
+<tr><td class="mono"><b>码位 codepoint</b></td>
+    <td>文本的字符编号（<code>U+182E</code>）。你操作的对象。</td></tr>
+<tr><td class="mono"><b>字形 glyph</b></td>
+    <td>字体里的矢量图形。同一个码位可以对应多个字形。</td></tr>
+<tr><td class="mono"><b>GSUB</b></td>
+    <td>字形替换表。决定"在什么条件下把哪个字形换成哪个"。</td></tr>
+<tr><td class="mono"><b>lookup</b></td>
+    <td>GSUB 里的一组替换动作，共 8 种类型。</td></tr>
+<tr><td class="mono"><b>feature tag</b></td>
+    <td>4 字母标签，把 lookup 打包并声明用途，如 <code>rclt</code>。</td></tr>
+<tr class="hl"><td class="mono"><b>rclt</b></td>
+    <td>必需上下文连字。蒙文连写的主力（本字体 75 个 lookup，含 44 个链式上下文规则）。</td></tr>
+<tr><td class="mono"><b>shaping</b></td>
+    <td>整形：按 GSUB/GPOS 规则把码位序列变成字形序列的过程。</td></tr>
+<tr class="hl"><td class="mono"><b>LB=AL</b></td>
+    <td>该字符的断行类别是 <code>AL</code>（字母类）。</td></tr>
+<tr class="hl"><td class="mono"><b>AL × AL</b></td>
+    <td>UAX #14 记法，<code>×</code> 读"不允许断行"。即两个字母之间不能换行。</td></tr>
+<tr><td class="mono"><b>÷</b></td>
+    <td>同一套记法里读"允许断行"。</td></tr>
+<tr><td class="mono"><b>font-feature-settings</b></td>
+    <td>CSS 属性，覆盖引擎默认启用哪些 feature tag。对必需特性<b>不要写</b>。</td></tr>
+<tr><td class="mono"><b>vertical-lr</b></td>
+    <td>竖排且列自左向右（蒙文）。CJK 用 <code>vertical-rl</code>。</td></tr>
+<tr><td class="mono"><b>vo=R</b></td>
+    <td><code>Vertical_Orientation = Rotated</code>，竖排时字形自动转 90°。</td></tr>
+</tbody>
+</table>
+
+<h4>本字体的关键数字（可复核）</h4>
+<table>
+<tbody>
+<tr><td>字形总数</td><td class="num">3,715</td></tr>
+<tr><td>cmap 映射的码位</td><td class="num">517</td></tr>
+<tr><td>仅由 GSUB 产生的字形</td><td class="num">3,198（86%）</td></tr>
+<tr><td>GSUB lookup 总数</td><td class="num">202</td></tr>
+<tr><td>rclt 引用的 lookup</td><td class="num">75</td></tr>
+<tr><td>其中链式上下文（类型 6）</td><td class="num">44</td></tr>
+<tr><td>rclt 的替换条目</td><td class="num">820</td></tr>
+<tr><td>rclt 占全字体替换条目比</td><td class="num">60%</td></tr>
+<tr><td>蒙文码区已分配码位</td><td class="num">158 / 176</td></tr>
+<tr><td>其中断行类别为 AL 的字母</td><td class="num">129</td></tr>
+</tbody>
+</table>
+
+<footer>
+数据由 <code>tools/extract_ttf_basics.py</code> 与
+<code>tools/extract_process_data.py</code> 从
+<code>font/NotoSansMongolian-Regular.ttf</code> 与 UCD 18.0.0 导出。
+本页蒙文均为浏览器现场渲染。
+</footer>
+
+</main>
+</div>
+
+<script src="../report/ttf-basics-data.js"></script>
+<script>
+const D = window.UME_TTF_BASICS;
+const esc = s => String(s).replace(/[&<>"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+const $ = id => document.getElementById(id);
+
+/* ---------- 1. 表清单 ---------- */
+(function(){
+  if (!D) return;
+  const rel = {"GSUB":"字形替换（连字/形位）","GPOS":"字形定位（字距/标记）",
+    "GDEF":"字形分类","glyf":"字形轮廓","cmap":"码位→字形","head":"全局信息",
+    "hhea":"横向度量","hmtx":"横向宽度","loca":"轮廓索引","maxp":"上限值",
+    "name":"名称字符串","post":"PostScript 信息","OS/2":"OS/2 度量",
+    "cvt ":"控制值","fpgm":"字体程序","prep":"预置程序","gasp":"栅格化提示"};
+  const rows = D.tables.slice().sort((a,b)=>b.size-a.size).map(t => {
+    const key = t.tag === "cvt" ? "cvt " : t.tag;
+    const hot = ["GSUB","GPOS","cmap","glyf"].includes(t.tag);
+    return `<tr${hot?' class="hl"':''}>
+      <td class="mono"><b>${esc(t.tag)}</b></td>
+      <td class="num">${(t.size/1024).toFixed(1)} KB</td>
+      <td>${esc(rel[key] || rel[t.tag] || "")}</td></tr>`;
+  }).join('');
+  $('tables').innerHTML = `<table><thead><tr>
+    <th style="width:110px">表名</th><th class="num" style="width:90px">大小</th>
+    <th>作用</th></tr></thead><tbody>${rows}</tbody></table>
+    <p class="small">共 ${D.tables.length} 张表；字形 ${D.numGlyphs.toLocaleString()} 个，
+    em = ${D.upem}，cmap 映射 ${D.cmapCount} 个码位。</p>`;
+})();
+
+/* ---------- 2. 位置形位实例 ---------- */
+(function(){
+  if (!D) return;
+  const POS = [
+    ["MA 单独（后无元音）", "ᠮ", ["u182E.M.init._isol"]],
+    ["MA 词首", "ᠮᠣ", ["u182E.M.init", "u1823.O.fina"]],
+    ["MA 词中", "ᠠᠮᠠ", ["u1820.AA.init", "u182E.M.medi", "u1820.A.fina"]],
+    ["MA 词尾", "ᠠᠮ", ["u1820.AA.init", "u182E.M.fina"]],
+  ];
+  $('posTable').innerHTML = `<table><thead><tr>
+    <th style="width:180px">上下文</th><th style="width:120px">文本</th>
+    <th>选中的字形</th></tr></thead><tbody>${
+    POS.map(([lab, txt, gs]) => `<tr>
+      <td><b>${esc(lab)}</b></td>
+      <td><span class="mn" style="font-size:30px">${esc(txt)}</span></td>
+      <td class="mono" style="font-size:12px">${gs.map(esc).join(' <span style="color:#7b8698">+</span> ')}</td>
+    </tr>`).join('')}</tbody></table>`;
+})();
+
+/* ---------- 3.1 lookup 类型 ---------- */
+(function(){
+  if (!D) return;
+  const dist = D.gsubLookupTypes;
+  const rows = Object.keys(D.lookupTypeDoc).map(k => {
+    const v = D.lookupTypeDoc[k];
+    const n = dist[k] || 0;
+    return `<tr${k==='6'?' class="hl"':''}>
+      <td class="num">${k}</td>
+      <td><b>${esc(v.full)}</b></td>
+      <td>${esc(v.cn)}</td>
+      <td>${esc(v.desc)}</td>
+      <td class="num">${n}</td></tr>`;
+  }).join('');
+  $('lookupTypes').innerHTML = `<table><thead><tr>
+    <th class="num" style="width:52px">类型</th><th style="width:230px">名称</th>
+    <th style="width:130px">中文</th><th>说明</th>
+    <th class="num" style="width:90px">本字体</th></tr></thead><tbody>${rows}</tbody></table>`;
+})();
+(function(){
+  if (!D) return;
+  const dist = D.gsubLookupTypes;
+  const total = Object.values(dist).reduce((a,b)=>a+b,0);
+  const colors = {"1":"#1f6feb","2":"#1a7f45","4":"#6b46c1","5":"#a86a12",
+                  "6":"#c0392b","8":"#7b8698"};
+  const bars = Object.keys(dist).sort((a,b)=>a-b).map(k => {
+    const pct = 100*dist[k]/total;
+    const cn = (D.lookupTypeDoc[k]||{}).cn || '';
+    return `<div style="display:flex;align-items:center;gap:10px;margin:5px 0">
+      <span class="mono" style="width:210px;font-size:12.5px">类型 ${k} · ${esc(cn)}</span>
+      <span style="flex:0 0 ${Math.max(pct*4,14)}px;height:18px;border-radius:4px;
+        background:${colors[k]||'#999'};display:inline-block"></span>
+      <span class="mono" style="font-size:12.5px;color:#4a5464">${dist[k]} 个（${pct.toFixed(0)}%）</span>
+    </div>`;
+  }).join('');
+  $('lookupDist').innerHTML = bars +
+    `<p class="small" style="margin-top:10px">合计 ${total} 个 lookup。
+     类型 6（链式上下文）最多，这与"蒙文靠上下文决定形态"完全吻合。</p>`;
+})();
+
+/* ---------- 3.2 特性表 ---------- */
+(function(){
+  if (!D) return;
+  const must = ["rclt","ccmp"];
+  const rows = D.features.map(f => {
+    const isMust = must.includes(f.tag);
+    return `<tr${isMust?' class="hl"':''}>
+      <td class="mono"><b>${esc(f.tag)}</b></td>
+      <td style="font-size:12.5px">${esc(f.full)}</td>
+      <td>${esc(f.cn)}</td>
+      <td class="num">${f.lookups}</td>
+      <td class="num">${f.entries}</td>
+      <td style="font-size:12.5px">${esc(f.desc)}</td></tr>`;
+  }).join('');
+  $('featureTable').innerHTML = `<table><thead><tr>
+    <th style="width:66px">标签</th><th style="width:210px">全称</th>
+    <th style="width:112px">中文</th><th class="num" style="width:62px">lookup</th>
+    <th class="num" style="width:62px">条目</th><th>用途</th></tr></thead>
+    <tbody>${rows}</tbody></table>
+    <p class="small">高亮行 = 必需特性（引擎默认启用，不应关闭）。</p>`;
+})();
+
+/* ---------- 4. rclt ---------- */
+(function(){
+  if (!D) return;
+  const t = D.gsubLookupTypes;
+  const rclt = D.rcltChainExamples;
+  $('rcltStat').innerHTML = `<div class="grid3">
+    <div class="card" style="margin:0"><h4 style="margin:0">引用的 lookup</h4>
+      <div style="font-size:30px;font-weight:680;color:var(--violet)">${D.rcltLookupCount}</div>
+      <p class="small" style="margin:4px 0 0">占全字体 ${D.gsubLookupCount} 个 lookup 的一部分</p></div>
+    <div class="card" style="margin:0"><h4 style="margin:0">其中链式上下文（类型 6）</h4>
+      <div style="font-size:30px;font-weight:680;color:var(--red)">44</div>
+      <p class="small" style="margin:4px 0 0">占比最高，是 rclt 的主体</p></div>
+    <div class="card" style="margin:0"><h4 style="margin:0">替换条目</h4>
+      <div style="font-size:30px;font-weight:680;color:var(--blue)">820</div>
+      <p class="small" style="margin:4px 0 0">占全字体 1,360 条的 60%</p></div>
+  </div>`;
+})();
+(function(){
+  if (!D) return;
+  const ex = D.rcltChainExamples;
+  if (!ex.length){ $('rcltRules').innerHTML = '<p class="small">（未导出示例）</p>'; return; }
+  $('rcltRules').innerHTML = ex.map((r, i) => `
+    <div class="spec" style="margin:10px 0">
+      <div class="cap">规则 ${i+1} · lookup #${r.lookup} · format ${r.format}</div>
+      <div class="chain">
+        <div class="node"><div class="top">前文 backtrack</div>
+          <div class="mid">${r.backtrack.length ? r.backtrack.map(esc).join('<br>') : '<span style="color:#b6bdc9">（无）</span>'}</div></div>
+        <div class="arrow">+</div>
+        <div class="node lig"><div class="top">当前 input</div>
+          <div class="mid">${r.input.map(esc).join('<br>')}</div></div>
+        <div class="arrow">+</div>
+        <div class="node"><div class="top">后文 lookahead</div>
+          <div class="mid">${r.lookahead.length ? r.lookahead.map(esc).join('<br>') : '<span style="color:#b6bdc9">（无）</span>'}</div></div>
+        <div class="arrow">→</div>
+        <div class="node" style="border-color:#bfe2cd;background:var(--green-soft)">
+          <div class="top">执行</div>
+          <div class="mid" style="color:#1a7f45">${r.subst.map(esc).join('<br>')}</div></div>
+      </div>
+    </div>`).join('');
+})();
+(function(){
+  if (!D) return;
+  const s = D.sampleChain;
+  const nodes = s.glyphs.map((g, i) => {
+    const consumed = i === 3 ? 2 : 1;
+    const isLig = consumed > 1;
+    const cpStart = i < 3 ? i : 3;
+    const cps = s.codepoints.slice(cpStart, cpStart + consumed).join('+');
+    return `<div class="node${isLig?' lig':''}">
+      <div class="top">${cps}</div>
+      <div class="mid">${esc(g)}</div>
+      ${isLig?'<div class="tag v" style="margin-top:4px">连字</div>':''}
+    </div>`;
+  }).join('<div class="arrow">→</div>');
+  $('rcltWalk').innerHTML = `
+    <p style="margin-top:0">输入 ${s.codepoints.length} 个码位
+      （<span class="mn" style="font-size:26px">${esc(s.text)}</span>）：</p>
+    <div class="mono" style="font-size:12.5px;color:#7b8698;margin-bottom:8px">
+      ${s.codepoints.join(' ')}</div>
+    <div class="chain">${nodes}</div>
+    <p class="small" style="margin-bottom:0">输出 <b>${s.glyphs.length}</b> 个字形。
+    第 4 个字形 <code>u182D_u1823.GO.medi</code> 把
+    <code>U+182D</code> 和 <code>U+1823</code> <b>两个码位合并成了一个字形</b>——
+    这就是"连字"。整条链由 <code>rclt</code> 的上下文规则驱动，
+    没有一步是你能用 CSS 指定的。</p>`;
+})();
+
+/* ---------- 5. 断行属性 ---------- */
+(function(){
+  if (!D) return;
+  const cnt = {};
+  D.lbMongolian.forEach(r => cnt[r.lb] = (cnt[r.lb]||0)+1);
+  const total = D.lbMongolian.length;
+  const rows = Object.entries(cnt).sort((a,b)=>b[1]-a[1]).map(([k,v]) => {
+    const doc = D.lbDoc[k] || {};
+    return `<tr${k==='AL'?' class="hl"':''}>
+      <td class="mono"><b>${esc(k)}</b></td>
+      <td>${esc(doc.cn||'')}</td>
+      <td>${esc(doc.desc||'')}</td>
+      <td class="num">${v}</td></tr>`;
+  }).join('');
+  $('lbDist').innerHTML = `<table><thead><tr>
+    <th style="width:70px">LB 值</th><th style="width:120px">中文</th>
+    <th>含义</th><th class="num" style="width:80px">码位数</th></tr></thead>
+    <tbody>${rows}</tbody></table>
+    <p class="small">共 ${total} 个已分配码位。<code>AL</code> 占绝大多数 ——
+    它们就是蒙文字母。</p>`;
+})();
+(function(){
+  if (!D) return;
+  const PUNCT = D.lbMongolian.filter(r => ["EX","BA","BB","GL"].includes(r.lb));
+  $('lbMongPunct').innerHTML = `<table><thead><tr>
+    <th style="width:90px">码位</th><th style="width:70px">字符</th>
+    <th style="width:70px">LB</th><th>断行行为</th></tr></thead><tbody>${
+    PUNCT.map(r => `<tr>
+      <td class="mono">${esc(r.cp)}</td>
+      <td><span class="mn" style="font-size:26px">${esc(r.ch)}</span></td>
+      <td class="mono"><b>${esc(r.lb)}</b></td>
+      <td>${esc((D.lbDoc[r.lb]||{}).desc||'')}</td></tr>`).join('')}</tbody></table>`;
+})();
+(function(){
+  if (!D) return;
+  $('lbContrast').innerHTML = `<table><thead><tr>
+    <th style="width:90px">码位</th><th style="width:90px">字符</th>
+    <th style="width:80px">LB</th><th style="width:130px">说明</th>
+    <th>断行行为</th></tr></thead><tbody>${
+    D.lbContrast.map(r => {
+      const doc = D.lbDoc[r.lb] || {};
+      return `<tr>
+        <td class="mono">${esc(r.cp)}</td>
+        <td class="mono" style="font-size:16px">${esc(r.ch === ' ' ? '␠' : r.ch)}</td>
+        <td class="mono"><b>${esc(r.lb)}</b></td>
+        <td>${esc(r.note)}</td>
+        <td>${esc(doc.desc || '')}</td></tr>`;
+    }).join('')}</tbody></table>`;
+})();
+
+/* ---------- 目录高亮 ---------- */
+(function(){
+  const links = [...document.querySelectorAll('#toc a')];
+  const targets = links.map(a => document.querySelector(a.getAttribute('href'))).filter(Boolean);
+  const setOn = id => links.forEach(a => a.classList.toggle('on', a.getAttribute('href') === '#'+id));
+  const io = new IntersectionObserver(es => {
+    const vis = es.filter(e => e.isIntersecting)
+                  .sort((a,b) => a.boundingClientRect.top - b.boundingClientRect.top);
+    if (vis[0]) setOn(vis[0].target.id);
+  }, { rootMargin:'-10% 0px -70% 0px', threshold:0 });
+  targets.forEach(t => io.observe(t));
+})();
+</script>
+</body>
+</html>

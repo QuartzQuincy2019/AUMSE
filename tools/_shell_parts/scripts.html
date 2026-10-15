@@ -1,0 +1,74 @@
+<script>
+/* 目录滚动高亮 */
+(function(){
+  const links = [...document.querySelectorAll('#toc a')];
+  const targets = links.map(a => document.querySelector(a.getAttribute('href'))).filter(Boolean);
+  const setOn = id => links.forEach(a => a.classList.toggle('on', a.getAttribute('href') === '#'+id));
+  const io = new IntersectionObserver(es => {
+    const vis = es.filter(e => e.isIntersecting)
+                  .sort((a,b) => a.boundingClientRect.top - b.boundingClientRect.top);
+    if (vis[0]) setOn(vis[0].target.id);
+  }, { rootMargin:'-8% 0px -72% 0px', threshold:0 });
+  targets.forEach(t => io.observe(t));
+})();
+
+/* 复制按钮 */
+(function(){
+  document.querySelectorAll('.code-wrap').forEach(box => {
+    const btn = box.querySelector('.cp');
+    const pre = box.querySelector('pre');
+    if (!btn || !pre) return;
+    btn.addEventListener('click', async () => {
+      const text = pre.textContent;
+      try { await navigator.clipboard.writeText(text); }
+      catch (e) {
+        const ta = document.createElement('textarea');
+        ta.value = text; document.body.appendChild(ta);
+        ta.select(); document.execCommand('copy'); ta.remove();
+      }
+      const old = btn.textContent;
+      btn.textContent = '已复制 ✓';
+      setTimeout(() => { btn.textContent = old; }, 1200);
+    });
+  });
+})();
+</script>
+<script>
+/* 移动端：生成「目录」按钮，点击呼出/收起侧滑目录 */
+(function(){
+  var toc = document.getElementById('toc');
+  if (!toc) return;
+  var btn = document.createElement('button');
+  btn.id = 'tocToggle';
+  btn.type = 'button';
+  btn.setAttribute('aria-controls','toc');
+  btn.textContent = '目录';
+  document.body.appendChild(btn);
+
+  function setOpen(on){
+    toc.classList.toggle('open', on);
+    document.body.classList.toggle('toc-open', on);
+    btn.setAttribute('aria-expanded', on ? 'true' : 'false');
+    btn.textContent = on ? '收起' : '目录';
+  }
+  btn.addEventListener('click', function(){
+    setOpen(!toc.classList.contains('open'));
+  });
+  /* 点目录里的链接后自动收起；点遮罩（#toc 之外的区域）也收起 */
+  toc.addEventListener('click', function(e){
+    if (e.target.closest('a')) setOpen(false);
+  });
+  document.addEventListener('click', function(e){
+    if (!toc.classList.contains('open')) return;
+    if (e.target === toc || toc.contains(e.target) || e.target === btn) return;
+    setOpen(false);
+  });
+  document.addEventListener('keydown', function(e){
+    if (e.key === 'Escape') setOpen(false);
+  });
+  /* 窄屏进入页面时默认收起，宽屏则清掉状态 */
+  function sync(){ if (window.innerWidth > 980) setOpen(false); }
+  window.addEventListener('resize', sync);
+  sync();
+})();
+</script>

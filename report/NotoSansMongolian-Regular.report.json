@@ -1,0 +1,1715 @@
+{
+  "file": "E:\\QKMansion\\CSX10\\w\\UME\\font\\NotoSansMongolian-Regular.ttf",
+  "size_bytes": 388168,
+  "sfnt_version": "0x00010000",
+  "flavor": "TTF (glyf outlines)",
+  "tables": [
+    "GDEF",
+    "GPOS",
+    "GSUB",
+    "OS/2",
+    "cmap",
+    "cvt ",
+    "fpgm",
+    "gasp",
+    "glyf",
+    "head",
+    "hhea",
+    "hmtx",
+    "loca",
+    "maxp",
+    "name",
+    "post",
+    "prep"
+  ],
+  "table_sizes": {
+    "GDEF": 190,
+    "GPOS": 10782,
+    "GSUB": 59284,
+    "OS/2": 96,
+    "cmap": 3702,
+    "cvt ": 74,
+    "fpgm": 3596,
+    "gasp": 8,
+    "glyf": 215258,
+    "head": 54,
+    "hhea": 36,
+    "hmtx": 14860,
+    "loca": 14864,
+    "maxp": 32,
+    "name": 1344,
+    "post": 63511,
+    "prep": 178
+  },
+  "units_per_em": 1000,
+  "created": "3652107772",
+  "modified": "3874720424",
+  "mac_style_flags": 0,
+  "os2_version": 4,
+  "weight_class": 400,
+  "width_class": 5,
+  "fsSelection": 192,
+  "fsType": 0,
+  "vendor_id": "GOOG",
+  "typo_ascender": 1457,
+  "typo_descender": -293,
+  "typo_line_gap": 0,
+  "win_ascent": 1642,
+  "win_descent": 388,
+  "x_height": 500,
+  "cap_height": 700,
+  "default_char": 0,
+  "break_char": 32,
+  "unicode_ranges": "0xA000006F 0x0201204A 0x00020010 0x00000000",
+  "codepage_ranges": "0x00000013 0x00000000",
+  "name_records": {
+    "Copyright": {
+      "Windows/1/1033": "Copyright 2023 The Noto Project Authors (https://github.com/notofonts/mongolian)"
+    },
+    "Family": {
+      "Windows/1/1033": "Noto Sans Mongolian"
+    },
+    "Subfamily": {
+      "Windows/1/1033": "Regular"
+    },
+    "Unique ID": {
+      "Windows/1/1033": "3.103;GOOG;NotoSansMongolian-Regular"
+    },
+    "Full name": {
+      "Windows/1/1033": "Noto Sans Mongolian Regular"
+    },
+    "Version": {
+      "Windows/1/1033": "Version 3.103;fontc 1.0.0; tilvisan (v0.1.1)"
+    },
+    "PostScript name": {
+      "Windows/1/1033": "NotoSansMongolian-Regular"
+    },
+    "Trademark": {
+      "Windows/1/1033": "Noto is a trademark of Google Inc."
+    },
+    "Manufacturer": {
+      "Windows/1/1033": "Monotype Imaging Inc."
+    },
+    "Designer": {
+      "Windows/1/1033": "Monotype Design Team"
+    },
+    "Description": {
+      "Windows/1/1033": "Designed by Monotype design team."
+    },
+    "Vendor URL": {
+      "Windows/1/1033": "http://www.google.com/get/noto/"
+    },
+    "Designer URL": {
+      "Windows/1/1033": "http://www.monotype.com/studio"
+    },
+    "License": {
+      "Windows/1/1033": "This Font Software is licensed under the SIL Open Font License, Version 1.1. This license is available with a FAQ at: https://scripts.sil.org/OFL"
+    },
+    "License URL": {
+      "Windows/1/1033": "https://scripts.sil.org/OFL"
+    }
+  },
+  "num_glyphs": 3715,
+  "maxp_version": "0x00010000",
+  "advance_width": {
+    "min": 0,
+    "max": 1596,
+    "distinct": 552,
+    "most_common": [
+      [
+        885,
+        78
+      ],
+      [
+        714,
+        72
+      ],
+      [
+        666,
+        72
+      ],
+      [
+        749,
+        58
+      ],
+      [
+        838,
+        49
+      ],
+      [
+        702,
+        49
+      ],
+      [
+        973,
+        48
+      ],
+      [
+        858,
+        48
+      ]
+    ]
+  },
+  "hhea": {
+    "ascender": 1457,
+    "descender": -293,
+    "lineGap": 0,
+    "advanceWidthMax": 1596,
+    "numOfLongHorMetrics": 3715
+  },
+  "cmap_subtables": {
+    "Unicode/3 (format 4)": 504,
+    "Unicode/4 (format 12)": 517,
+    "Windows/1 (format 4)": 504,
+    "Windows/10 (format 12)": 517
+  },
+  "unicode_codepoints_best_cmap": 517,
+  "unicode_codepoints_all_subtables": 517,
+  "coverage_by_block": {
+    "Mongolian": 158,
+    "Basic Latin": 95,
+    "Latin Extended-A": 89,
+    "Latin-1 Supplement": 84,
+    "General Punctuation": 17,
+    "Combining Diacritical Marks": 14,
+    "Mongolian Supplement": 13,
+    "CJK Symbols and Punctuation": 11,
+    "Spacing Modifier Letters": 9,
+    "Latin Extended Additional": 9,
+    "Halfwidth and Fullwidth Forms": 9,
+    "Latin Extended-B": 5,
+    "Currency Symbols": 1,
+    "Letterlike Symbols": 1,
+    "Mathematical Operators": 1,
+    "Geometric Shapes": 1
+  },
+  "coverage_by_category": {
+    "字母(其它)": 130,
+    "小写字母": 109,
+    "大写字母": 108,
+    "标点(其它)": 54,
+    "组合标记(非间距)": 21,
+    "十进制数字": 20,
+    "修饰符号": 12,
+    "标点(左括号)": 11,
+    "标点(右括号)": 9,
+    "数学符号": 9,
+    "货币符号": 5,
+    "其它符号": 5,
+    "空格": 4,
+    "标点(横线)": 4,
+    "标点(左引号)": 4,
+    "标点(右引号)": 4,
+    "修饰字母": 4,
+    "格式字符": 3,
+    "Pc": 1
+  },
+  "mongolian_block_detail": [
+    {
+      "codepoint": "U+1800",
+      "char": "᠀",
+      "name": "MONGOLIAN BIRGA",
+      "category": "标点(其它)",
+      "glyph": "uni1800",
+      "advance_width": 614
+    },
+    {
+      "codepoint": "U+1801",
+      "char": "᠁",
+      "name": "MONGOLIAN ELLIPSIS",
+      "category": "标点(其它)",
+      "glyph": "uni1801",
+      "advance_width": 1086
+    },
+    {
+      "codepoint": "U+1802",
+      "char": "᠂",
+      "name": "MONGOLIAN COMMA",
+      "category": "标点(其它)",
+      "glyph": "uni1802",
+      "advance_width": 324
+    },
+    {
+      "codepoint": "U+1803",
+      "char": "᠃",
+      "name": "MONGOLIAN FULL STOP",
+      "category": "标点(其它)",
+      "glyph": "uni1803",
+      "advance_width": 578
+    },
+    {
+      "codepoint": "U+1804",
+      "char": "᠄",
+      "name": "MONGOLIAN COLON",
+      "category": "标点(其它)",
+      "glyph": "uni1804",
+      "advance_width": 324
+    },
+    {
+      "codepoint": "U+1805",
+      "char": "᠅",
+      "name": "MONGOLIAN FOUR DOTS",
+      "category": "标点(其它)",
+      "glyph": "uni1805",
+      "advance_width": 638
+    },
+    {
+      "codepoint": "U+1806",
+      "char": "᠆",
+      "name": "MONGOLIAN TODO SOFT HYPHEN",
+      "category": "标点(横线)",
+      "glyph": "uni1806",
+      "advance_width": 630
+    },
+    {
+      "codepoint": "U+1807",
+      "char": "᠇",
+      "name": "MONGOLIAN SIBE SYLLABLE BOUNDARY MARKER",
+      "category": "标点(其它)",
+      "glyph": "uni1807",
+      "advance_width": 284
+    },
+    {
+      "codepoint": "U+1808",
+      "char": "᠈",
+      "name": "MONGOLIAN MANCHU COMMA",
+      "category": "标点(其它)",
+      "glyph": "uni1808",
+      "advance_width": 372
+    },
+    {
+      "codepoint": "U+1809",
+      "char": "᠉",
+      "name": "MONGOLIAN MANCHU FULL STOP",
+      "category": "标点(其它)",
+      "glyph": "uni1809",
+      "advance_width": 592
+    },
+    {
+      "codepoint": "U+180A",
+      "char": "᠊",
+      "name": "MONGOLIAN NIRUGU",
+      "category": "标点(其它)",
+      "glyph": "uni180A",
+      "advance_width": 168
+    },
+    {
+      "codepoint": "U+180B",
+      "char": "᠋",
+      "name": "MONGOLIAN FREE VARIATION SELECTOR ONE",
+      "category": "组合标记(非间距)",
+      "glyph": "uni180B",
+      "advance_width": 770
+    },
+    {
+      "codepoint": "U+180C",
+      "char": "᠌",
+      "name": "MONGOLIAN FREE VARIATION SELECTOR TWO",
+      "category": "组合标记(非间距)",
+      "glyph": "uni180C",
+      "advance_width": 770
+    },
+    {
+      "codepoint": "U+180D",
+      "char": "᠍",
+      "name": "MONGOLIAN FREE VARIATION SELECTOR THREE",
+      "category": "组合标记(非间距)",
+      "glyph": "uni180D",
+      "advance_width": 770
+    },
+    {
+      "codepoint": "U+180E",
+      "char": "᠎",
+      "name": "MONGOLIAN VOWEL SEPARATOR",
+      "category": "格式字符",
+      "glyph": "uni180E",
+      "advance_width": 770
+    },
+    {
+      "codepoint": "U+180F",
+      "char": "᠏",
+      "name": "MONGOLIAN FREE VARIATION SELECTOR FOUR",
+      "category": "组合标记(非间距)",
+      "glyph": "fvs4",
+      "advance_width": 770
+    },
+    {
+      "codepoint": "U+1810",
+      "char": "᠐",
+      "name": "MONGOLIAN DIGIT ZERO",
+      "category": "十进制数字",
+      "glyph": "uni1810",
+      "advance_width": 572
+    },
+    {
+      "codepoint": "U+1811",
+      "char": "᠑",
+      "name": "MONGOLIAN DIGIT ONE",
+      "category": "十进制数字",
+      "glyph": "uni1811",
+      "advance_width": 572
+    },
+    {
+      "codepoint": "U+1812",
+      "char": "᠒",
+      "name": "MONGOLIAN DIGIT TWO",
+      "category": "十进制数字",
+      "glyph": "uni1812",
+      "advance_width": 605
+    },
+    {
+      "codepoint": "U+1813",
+      "char": "᠓",
+      "name": "MONGOLIAN DIGIT THREE",
+      "category": "十进制数字",
+      "glyph": "uni1813",
+      "advance_width": 875
+    },
+    {
+      "codepoint": "U+1814",
+      "char": "᠔",
+      "name": "MONGOLIAN DIGIT FOUR",
+      "category": "十进制数字",
+      "glyph": "uni1814",
+      "advance_width": 534
+    },
+    {
+      "codepoint": "U+1815",
+      "char": "᠕",
+      "name": "MONGOLIAN DIGIT FIVE",
+      "category": "十进制数字",
+      "glyph": "uni1815",
+      "advance_width": 712
+    },
+    {
+      "codepoint": "U+1816",
+      "char": "᠖",
+      "name": "MONGOLIAN DIGIT SIX",
+      "category": "十进制数字",
+      "glyph": "uni1816",
+      "advance_width": 630
+    },
+    {
+      "codepoint": "U+1817",
+      "char": "᠗",
+      "name": "MONGOLIAN DIGIT SEVEN",
+      "category": "十进制数字",
+      "glyph": "uni1817",
+      "advance_width": 630
+    },
+    {
+      "codepoint": "U+1818",
+      "char": "᠘",
+      "name": "MONGOLIAN DIGIT EIGHT",
+      "category": "十进制数字",
+      "glyph": "uni1818",
+      "advance_width": 564
+    },
+    {
+      "codepoint": "U+1819",
+      "char": "᠙",
+      "name": "MONGOLIAN DIGIT NINE",
+      "category": "十进制数字",
+      "glyph": "uni1819",
+      "advance_width": 534
+    },
+    {
+      "codepoint": "U+1820",
+      "char": "ᠠ",
+      "name": "MONGOLIAN LETTER A",
+      "category": "字母(其它)",
+      "glyph": "uni1820",
+      "advance_width": 919
+    },
+    {
+      "codepoint": "U+1821",
+      "char": "ᠡ",
+      "name": "MONGOLIAN LETTER E",
+      "category": "字母(其它)",
+      "glyph": "uni1821",
+      "advance_width": 824
+    },
+    {
+      "codepoint": "U+1822",
+      "char": "ᠢ",
+      "name": "MONGOLIAN LETTER I",
+      "category": "字母(其它)",
+      "glyph": "uni1822",
+      "advance_width": 993
+    },
+    {
+      "codepoint": "U+1823",
+      "char": "ᠣ",
+      "name": "MONGOLIAN LETTER O",
+      "category": "字母(其它)",
+      "glyph": "uni1823",
+      "advance_width": 932
+    },
+    {
+      "codepoint": "U+1824",
+      "char": "ᠤ",
+      "name": "MONGOLIAN LETTER U",
+      "category": "字母(其它)",
+      "glyph": "uni1824",
+      "advance_width": 1065
+    },
+    {
+      "codepoint": "U+1825",
+      "char": "ᠥ",
+      "name": "MONGOLIAN LETTER OE",
+      "category": "字母(其它)",
+      "glyph": "uni1825",
+      "advance_width": 1235
+    },
+    {
+      "codepoint": "U+1826",
+      "char": "ᠦ",
+      "name": "MONGOLIAN LETTER UE",
+      "category": "字母(其它)",
+      "glyph": "uni1826",
+      "advance_width": 1426
+    },
+    {
+      "codepoint": "U+1827",
+      "char": "ᠧ",
+      "name": "MONGOLIAN LETTER EE",
+      "category": "字母(其它)",
+      "glyph": "uni1827",
+      "advance_width": 1200
+    },
+    {
+      "codepoint": "U+1828",
+      "char": "ᠨ",
+      "name": "MONGOLIAN LETTER NA",
+      "category": "字母(其它)",
+      "glyph": "uni1828",
+      "advance_width": 492
+    },
+    {
+      "codepoint": "U+1829",
+      "char": "ᠩ",
+      "name": "MONGOLIAN LETTER ANG",
+      "category": "字母(其它)",
+      "glyph": "uni1829",
+      "advance_width": 614
+    },
+    {
+      "codepoint": "U+182A",
+      "char": "ᠪ",
+      "name": "MONGOLIAN LETTER BA",
+      "category": "字母(其它)",
+      "glyph": "uni182A",
+      "advance_width": 557
+    },
+    {
+      "codepoint": "U+182B",
+      "char": "ᠫ",
+      "name": "MONGOLIAN LETTER PA",
+      "category": "字母(其它)",
+      "glyph": "uni182B",
+      "advance_width": 552
+    },
+    {
+      "codepoint": "U+182C",
+      "char": "ᠬ",
+      "name": "MONGOLIAN LETTER QA",
+      "category": "字母(其它)",
+      "glyph": "uni182C",
+      "advance_width": 788
+    },
+    {
+      "codepoint": "U+182D",
+      "char": "ᠭ",
+      "name": "MONGOLIAN LETTER GA",
+      "category": "字母(其它)",
+      "glyph": "uni182D",
+      "advance_width": 788
+    },
+    {
+      "codepoint": "U+182E",
+      "char": "ᠮ",
+      "name": "MONGOLIAN LETTER MA",
+      "category": "字母(其它)",
+      "glyph": "uni182E",
+      "advance_width": 492
+    },
+    {
+      "codepoint": "U+182F",
+      "char": "ᠯ",
+      "name": "MONGOLIAN LETTER LA",
+      "category": "字母(其它)",
+      "glyph": "uni182F",
+      "advance_width": 492
+    },
+    {
+      "codepoint": "U+1830",
+      "char": "ᠰ",
+      "name": "MONGOLIAN LETTER SA",
+      "category": "字母(其它)",
+      "glyph": "uni1830",
+      "advance_width": 681
+    },
+    {
+      "codepoint": "U+1831",
+      "char": "ᠱ",
+      "name": "MONGOLIAN LETTER SHA",
+      "category": "字母(其它)",
+      "glyph": "uni1831",
+      "advance_width": 681
+    },
+    {
+      "codepoint": "U+1832",
+      "char": "ᠲ",
+      "name": "MONGOLIAN LETTER TA",
+      "category": "字母(其它)",
+      "glyph": "uni1832",
+      "advance_width": 670
+    },
+    {
+      "codepoint": "U+1833",
+      "char": "ᠳ",
+      "name": "MONGOLIAN LETTER DA",
+      "category": "字母(其它)",
+      "glyph": "uni1833",
+      "advance_width": 673
+    },
+    {
+      "codepoint": "U+1834",
+      "char": "ᠴ",
+      "name": "MONGOLIAN LETTER CHA",
+      "category": "字母(其它)",
+      "glyph": "uni1834",
+      "advance_width": 692
+    },
+    {
+      "codepoint": "U+1835",
+      "char": "ᠵ",
+      "name": "MONGOLIAN LETTER JA",
+      "category": "字母(其它)",
+      "glyph": "uni1835",
+      "advance_width": 421
+    },
+    {
+      "codepoint": "U+1836",
+      "char": "ᠶ",
+      "name": "MONGOLIAN LETTER YA",
+      "category": "字母(其它)",
+      "glyph": "uni1836",
+      "advance_width": 421
+    },
+    {
+      "codepoint": "U+1837",
+      "char": "ᠷ",
+      "name": "MONGOLIAN LETTER RA",
+      "category": "字母(其它)",
+      "glyph": "uni1837",
+      "advance_width": 421
+    },
+    {
+      "codepoint": "U+1838",
+      "char": "ᠸ",
+      "name": "MONGOLIAN LETTER WA",
+      "category": "字母(其它)",
+      "glyph": "uni1838",
+      "advance_width": 520
+    },
+    {
+      "codepoint": "U+1839",
+      "char": "ᠹ",
+      "name": "MONGOLIAN LETTER FA",
+      "category": "字母(其它)",
+      "glyph": "uni1839",
+      "advance_width": 557
+    },
+    {
+      "codepoint": "U+183A",
+      "char": "ᠺ",
+      "name": "MONGOLIAN LETTER KA",
+      "category": "字母(其它)",
+      "glyph": "uni183A",
+      "advance_width": 429
+    },
+    {
+      "codepoint": "U+183B",
+      "char": "ᠻ",
+      "name": "MONGOLIAN LETTER KHA",
+      "category": "字母(其它)",
+      "glyph": "uni183B",
+      "advance_width": 428
+    },
+    {
+      "codepoint": "U+183C",
+      "char": "ᠼ",
+      "name": "MONGOLIAN LETTER TSA",
+      "category": "字母(其它)",
+      "glyph": "uni183C",
+      "advance_width": 817
+    },
+    {
+      "codepoint": "U+183D",
+      "char": "ᠽ",
+      "name": "MONGOLIAN LETTER ZA",
+      "category": "字母(其它)",
+      "glyph": "uni183D",
+      "advance_width": 740
+    },
+    {
+      "codepoint": "U+183E",
+      "char": "ᠾ",
+      "name": "MONGOLIAN LETTER HAA",
+      "category": "字母(其它)",
+      "glyph": "uni183E",
+      "advance_width": 1013
+    },
+    {
+      "codepoint": "U+183F",
+      "char": "ᠿ",
+      "name": "MONGOLIAN LETTER ZRA",
+      "category": "字母(其它)",
+      "glyph": "uni183F",
+      "advance_width": 833
+    },
+    {
+      "codepoint": "U+1840",
+      "char": "ᡀ",
+      "name": "MONGOLIAN LETTER LHA",
+      "category": "字母(其它)",
+      "glyph": "uni1840",
+      "advance_width": 1013
+    },
+    {
+      "codepoint": "U+1841",
+      "char": "ᡁ",
+      "name": "MONGOLIAN LETTER ZHI",
+      "category": "字母(其它)",
+      "glyph": "uni1841",
+      "advance_width": 566
+    },
+    {
+      "codepoint": "U+1842",
+      "char": "ᡂ",
+      "name": "MONGOLIAN LETTER CHI",
+      "category": "字母(其它)",
+      "glyph": "uni1842",
+      "advance_width": 1102
+    },
+    {
+      "codepoint": "U+1843",
+      "char": "ᡃ",
+      "name": "MONGOLIAN LETTER TODO LONG VOWEL SIGN",
+      "category": "修饰字母",
+      "glyph": "uni1843",
+      "advance_width": 267
+    },
+    {
+      "codepoint": "U+1844",
+      "char": "ᡄ",
+      "name": "MONGOLIAN LETTER TODO E",
+      "category": "字母(其它)",
+      "glyph": "uni1844",
+      "advance_width": 899
+    },
+    {
+      "codepoint": "U+1845",
+      "char": "ᡅ",
+      "name": "MONGOLIAN LETTER TODO I",
+      "category": "字母(其它)",
+      "glyph": "uni1845",
+      "advance_width": 906
+    },
+    {
+      "codepoint": "U+1846",
+      "char": "ᡆ",
+      "name": "MONGOLIAN LETTER TODO O",
+      "category": "字母(其它)",
+      "glyph": "uni1846",
+      "advance_width": 915
+    },
+    {
+      "codepoint": "U+1847",
+      "char": "ᡇ",
+      "name": "MONGOLIAN LETTER TODO U",
+      "category": "字母(其它)",
+      "glyph": "uni1847",
+      "advance_width": 1126
+    },
+    {
+      "codepoint": "U+1848",
+      "char": "ᡈ",
+      "name": "MONGOLIAN LETTER TODO OE",
+      "category": "字母(其它)",
+      "glyph": "uni1848",
+      "advance_width": 915
+    },
+    {
+      "codepoint": "U+1849",
+      "char": "ᡉ",
+      "name": "MONGOLIAN LETTER TODO UE",
+      "category": "字母(其它)",
+      "glyph": "uni1849",
+      "advance_width": 1126
+    },
+    {
+      "codepoint": "U+184A",
+      "char": "ᡊ",
+      "name": "MONGOLIAN LETTER TODO ANG",
+      "category": "字母(其它)",
+      "glyph": "uni184A",
+      "advance_width": 1024
+    },
+    {
+      "codepoint": "U+184B",
+      "char": "ᡋ",
+      "name": "MONGOLIAN LETTER TODO BA",
+      "category": "字母(其它)",
+      "glyph": "uni184B",
+      "advance_width": 511
+    },
+    {
+      "codepoint": "U+184C",
+      "char": "ᡌ",
+      "name": "MONGOLIAN LETTER TODO PA",
+      "category": "字母(其它)",
+      "glyph": "uni184C",
+      "advance_width": 594
+    },
+    {
+      "codepoint": "U+184D",
+      "char": "ᡍ",
+      "name": "MONGOLIAN LETTER TODO QA",
+      "category": "字母(其它)",
+      "glyph": "uni184D",
+      "advance_width": 786
+    },
+    {
+      "codepoint": "U+184E",
+      "char": "ᡎ",
+      "name": "MONGOLIAN LETTER TODO GA",
+      "category": "字母(其它)",
+      "glyph": "uni184E",
+      "advance_width": 786
+    },
+    {
+      "codepoint": "U+184F",
+      "char": "ᡏ",
+      "name": "MONGOLIAN LETTER TODO MA",
+      "category": "字母(其它)",
+      "glyph": "uni184F",
+      "advance_width": 284
+    },
+    {
+      "codepoint": "U+1850",
+      "char": "ᡐ",
+      "name": "MONGOLIAN LETTER TODO TA",
+      "category": "字母(其它)",
+      "glyph": "uni1850",
+      "advance_width": 648
+    },
+    {
+      "codepoint": "U+1851",
+      "char": "ᡑ",
+      "name": "MONGOLIAN LETTER TODO DA",
+      "category": "字母(其它)",
+      "glyph": "uni1851",
+      "advance_width": 576
+    },
+    {
+      "codepoint": "U+1852",
+      "char": "ᡒ",
+      "name": "MONGOLIAN LETTER TODO CHA",
+      "category": "字母(其它)",
+      "glyph": "uni1852",
+      "advance_width": 710
+    },
+    {
+      "codepoint": "U+1853",
+      "char": "ᡓ",
+      "name": "MONGOLIAN LETTER TODO JA",
+      "category": "字母(其它)",
+      "glyph": "uni1853",
+      "advance_width": 692
+    },
+    {
+      "codepoint": "U+1854",
+      "char": "ᡔ",
+      "name": "MONGOLIAN LETTER TODO TSA",
+      "category": "字母(其它)",
+      "glyph": "uni1854",
+      "advance_width": 575
+    },
+    {
+      "codepoint": "U+1855",
+      "char": "ᡕ",
+      "name": "MONGOLIAN LETTER TODO YA",
+      "category": "字母(其它)",
+      "glyph": "uni1855",
+      "advance_width": 361
+    },
+    {
+      "codepoint": "U+1856",
+      "char": "ᡖ",
+      "name": "MONGOLIAN LETTER TODO WA",
+      "category": "字母(其它)",
+      "glyph": "uni1856",
+      "advance_width": 674
+    },
+    {
+      "codepoint": "U+1857",
+      "char": "ᡗ",
+      "name": "MONGOLIAN LETTER TODO KA",
+      "category": "字母(其它)",
+      "glyph": "uni1857",
+      "advance_width": 446
+    },
+    {
+      "codepoint": "U+1858",
+      "char": "ᡘ",
+      "name": "MONGOLIAN LETTER TODO GAA",
+      "category": "字母(其它)",
+      "glyph": "uni1858",
+      "advance_width": 428
+    },
+    {
+      "codepoint": "U+1859",
+      "char": "ᡙ",
+      "name": "MONGOLIAN LETTER TODO HAA",
+      "category": "字母(其它)",
+      "glyph": "uni1859",
+      "advance_width": 805
+    },
+    {
+      "codepoint": "U+185A",
+      "char": "ᡚ",
+      "name": "MONGOLIAN LETTER TODO JIA",
+      "category": "字母(其它)",
+      "glyph": "uni185A",
+      "advance_width": 870
+    },
+    {
+      "codepoint": "U+185B",
+      "char": "ᡛ",
+      "name": "MONGOLIAN LETTER TODO NIA",
+      "category": "字母(其它)",
+      "glyph": "uni185B",
+      "advance_width": 443
+    },
+    {
+      "codepoint": "U+185C",
+      "char": "ᡜ",
+      "name": "MONGOLIAN LETTER TODO DZA",
+      "category": "字母(其它)",
+      "glyph": "uni185C",
+      "advance_width": 652
+    },
+    {
+      "codepoint": "U+185D",
+      "char": "ᡝ",
+      "name": "MONGOLIAN LETTER SIBE E",
+      "category": "字母(其它)",
+      "glyph": "uni185D",
+      "advance_width": 660
+    },
+    {
+      "codepoint": "U+185E",
+      "char": "ᡞ",
+      "name": "MONGOLIAN LETTER SIBE I",
+      "category": "字母(其它)",
+      "glyph": "uni185E",
+      "advance_width": 853
+    },
+    {
+      "codepoint": "U+185F",
+      "char": "ᡟ",
+      "name": "MONGOLIAN LETTER SIBE IY",
+      "category": "字母(其它)",
+      "glyph": "uni185F",
+      "advance_width": 284
+    },
+    {
+      "codepoint": "U+1860",
+      "char": "ᡠ",
+      "name": "MONGOLIAN LETTER SIBE UE",
+      "category": "字母(其它)",
+      "glyph": "uni1860",
+      "advance_width": 932
+    },
+    {
+      "codepoint": "U+1861",
+      "char": "ᡡ",
+      "name": "MONGOLIAN LETTER SIBE U",
+      "category": "字母(其它)",
+      "glyph": "uni1861",
+      "advance_width": 934
+    },
+    {
+      "codepoint": "U+1862",
+      "char": "ᡢ",
+      "name": "MONGOLIAN LETTER SIBE ANG",
+      "category": "字母(其它)",
+      "glyph": "uni1862",
+      "advance_width": 875
+    },
+    {
+      "codepoint": "U+1863",
+      "char": "ᡣ",
+      "name": "MONGOLIAN LETTER SIBE KA",
+      "category": "字母(其它)",
+      "glyph": "uni1863",
+      "advance_width": 568
+    },
+    {
+      "codepoint": "U+1864",
+      "char": "ᡤ",
+      "name": "MONGOLIAN LETTER SIBE GA",
+      "category": "字母(其它)",
+      "glyph": "uni1864",
+      "advance_width": 788
+    },
+    {
+      "codepoint": "U+1865",
+      "char": "ᡥ",
+      "name": "MONGOLIAN LETTER SIBE HA",
+      "category": "字母(其它)",
+      "glyph": "uni1865",
+      "advance_width": 887
+    },
+    {
+      "codepoint": "U+1866",
+      "char": "ᡦ",
+      "name": "MONGOLIAN LETTER SIBE PA",
+      "category": "字母(其它)",
+      "glyph": "uni1866",
+      "advance_width": 593
+    },
+    {
+      "codepoint": "U+1867",
+      "char": "ᡧ",
+      "name": "MONGOLIAN LETTER SIBE SHA",
+      "category": "字母(其它)",
+      "glyph": "uni1867",
+      "advance_width": 681
+    },
+    {
+      "codepoint": "U+1868",
+      "char": "ᡨ",
+      "name": "MONGOLIAN LETTER SIBE TA",
+      "category": "字母(其它)",
+      "glyph": "uni1868",
+      "advance_width": 757
+    },
+    {
+      "codepoint": "U+1869",
+      "char": "ᡩ",
+      "name": "MONGOLIAN LETTER SIBE DA",
+      "category": "字母(其它)",
+      "glyph": "uni1869",
+      "advance_width": 670
+    },
+    {
+      "codepoint": "U+186A",
+      "char": "ᡪ",
+      "name": "MONGOLIAN LETTER SIBE JA",
+      "category": "字母(其它)",
+      "glyph": "uni186A",
+      "advance_width": 360
+    },
+    {
+      "codepoint": "U+186B",
+      "char": "ᡫ",
+      "name": "MONGOLIAN LETTER SIBE FA",
+      "category": "字母(其它)",
+      "glyph": "uni186B",
+      "advance_width": 520
+    },
+    {
+      "codepoint": "U+186C",
+      "char": "ᡬ",
+      "name": "MONGOLIAN LETTER SIBE GAA",
+      "category": "字母(其它)",
+      "glyph": "uni186C",
+      "advance_width": 429
+    },
+    {
+      "codepoint": "U+186D",
+      "char": "ᡭ",
+      "name": "MONGOLIAN LETTER SIBE HAA",
+      "category": "字母(其它)",
+      "glyph": "uni186D",
+      "advance_width": 429
+    },
+    {
+      "codepoint": "U+186E",
+      "char": "ᡮ",
+      "name": "MONGOLIAN LETTER SIBE TSA",
+      "category": "字母(其它)",
+      "glyph": "uni186E",
+      "advance_width": 681
+    },
+    {
+      "codepoint": "U+186F",
+      "char": "ᡯ",
+      "name": "MONGOLIAN LETTER SIBE ZA",
+      "category": "字母(其它)",
+      "glyph": "uni186F",
+      "advance_width": 681
+    },
+    {
+      "codepoint": "U+1870",
+      "char": "ᡰ",
+      "name": "MONGOLIAN LETTER SIBE RAA",
+      "category": "字母(其它)",
+      "glyph": "uni1870",
+      "advance_width": 288
+    },
+    {
+      "codepoint": "U+1871",
+      "char": "ᡱ",
+      "name": "MONGOLIAN LETTER SIBE CHA",
+      "category": "字母(其它)",
+      "glyph": "uni1871",
+      "advance_width": 692
+    },
+    {
+      "codepoint": "U+1872",
+      "char": "ᡲ",
+      "name": "MONGOLIAN LETTER SIBE ZHA",
+      "category": "字母(其它)",
+      "glyph": "uni1872",
+      "advance_width": 421
+    },
+    {
+      "codepoint": "U+1873",
+      "char": "ᡳ",
+      "name": "MONGOLIAN LETTER MANCHU I",
+      "category": "字母(其它)",
+      "glyph": "uni1873",
+      "advance_width": 501
+    },
+    {
+      "codepoint": "U+1874",
+      "char": "ᡴ",
+      "name": "MONGOLIAN LETTER MANCHU KA",
+      "category": "字母(其它)",
+      "glyph": "uni1874",
+      "advance_width": 708
+    },
+    {
+      "codepoint": "U+1875",
+      "char": "ᡵ",
+      "name": "MONGOLIAN LETTER MANCHU RA",
+      "category": "字母(其它)",
+      "glyph": "uni1875",
+      "advance_width": 361
+    },
+    {
+      "codepoint": "U+1876",
+      "char": "ᡶ",
+      "name": "MONGOLIAN LETTER MANCHU FA",
+      "category": "字母(其它)",
+      "glyph": "uni1876",
+      "advance_width": 540
+    },
+    {
+      "codepoint": "U+1877",
+      "char": "ᡷ",
+      "name": "MONGOLIAN LETTER MANCHU ZHA",
+      "category": "字母(其它)",
+      "glyph": "uni1877",
+      "advance_width": 530
+    },
+    {
+      "codepoint": "U+1878",
+      "char": "ᡸ",
+      "name": "MONGOLIAN LETTER CHA WITH TWO DOTS",
+      "category": "字母(其它)",
+      "glyph": "u1878",
+      "advance_width": 692
+    },
+    {
+      "codepoint": "U+1880",
+      "char": "ᢀ",
+      "name": "MONGOLIAN LETTER ALI GALI ANUSVARA ONE",
+      "category": "字母(其它)",
+      "glyph": "uni1880",
+      "advance_width": 583
+    },
+    {
+      "codepoint": "U+1881",
+      "char": "ᢁ",
+      "name": "MONGOLIAN LETTER ALI GALI VISARGA ONE",
+      "category": "字母(其它)",
+      "glyph": "uni1881",
+      "advance_width": 790
+    },
+    {
+      "codepoint": "U+1882",
+      "char": "ᢂ",
+      "name": "MONGOLIAN LETTER ALI GALI DAMARU",
+      "category": "字母(其它)",
+      "glyph": "uni1882",
+      "advance_width": 673
+    },
+    {
+      "codepoint": "U+1883",
+      "char": "ᢃ",
+      "name": "MONGOLIAN LETTER ALI GALI UBADAMA",
+      "category": "字母(其它)",
+      "glyph": "uni1883",
+      "advance_width": 483
+    },
+    {
+      "codepoint": "U+1884",
+      "char": "ᢄ",
+      "name": "MONGOLIAN LETTER ALI GALI INVERTED UBADAMA",
+      "category": "字母(其它)",
+      "glyph": "uni1884",
+      "advance_width": 483
+    },
+    {
+      "codepoint": "U+1885",
+      "char": "ᢅ",
+      "name": "MONGOLIAN LETTER ALI GALI BALUDA",
+      "category": "组合标记(非间距)",
+      "glyph": "uni1885",
+      "advance_width": 0
+    },
+    {
+      "codepoint": "U+1886",
+      "char": "ᢆ",
+      "name": "MONGOLIAN LETTER ALI GALI THREE BALUDA",
+      "category": "组合标记(非间距)",
+      "glyph": "uni1886",
+      "advance_width": 0
+    },
+    {
+      "codepoint": "U+1887",
+      "char": "ᢇ",
+      "name": "MONGOLIAN LETTER ALI GALI A",
+      "category": "字母(其它)",
+      "glyph": "uni1887",
+      "advance_width": 1021
+    },
+    {
+      "codepoint": "U+1888",
+      "char": "ᢈ",
+      "name": "MONGOLIAN LETTER ALI GALI I",
+      "category": "字母(其它)",
+      "glyph": "uni1888",
+      "advance_width": 993
+    },
+    {
+      "codepoint": "U+1889",
+      "char": "ᢉ",
+      "name": "MONGOLIAN LETTER ALI GALI KA",
+      "category": "字母(其它)",
+      "glyph": "uni1889",
+      "advance_width": 377
+    },
+    {
+      "codepoint": "U+188A",
+      "char": "ᢊ",
+      "name": "MONGOLIAN LETTER ALI GALI NGA",
+      "category": "字母(其它)",
+      "glyph": "uni188A",
+      "advance_width": 822
+    },
+    {
+      "codepoint": "U+188B",
+      "char": "ᢋ",
+      "name": "MONGOLIAN LETTER ALI GALI CA",
+      "category": "字母(其它)",
+      "glyph": "uni188B",
+      "advance_width": 652
+    },
+    {
+      "codepoint": "U+188C",
+      "char": "ᢌ",
+      "name": "MONGOLIAN LETTER ALI GALI TTA",
+      "category": "字母(其它)",
+      "glyph": "uni188C",
+      "advance_width": 555
+    },
+    {
+      "codepoint": "U+188D",
+      "char": "ᢍ",
+      "name": "MONGOLIAN LETTER ALI GALI TTHA",
+      "category": "字母(其它)",
+      "glyph": "uni188D",
+      "advance_width": 856
+    },
+    {
+      "codepoint": "U+188E",
+      "char": "ᢎ",
+      "name": "MONGOLIAN LETTER ALI GALI DDA",
+      "category": "字母(其它)",
+      "glyph": "uni188E",
+      "advance_width": 640
+    },
+    {
+      "codepoint": "U+188F",
+      "char": "ᢏ",
+      "name": "MONGOLIAN LETTER ALI GALI NNA",
+      "category": "字母(其它)",
+      "glyph": "uni188F",
+      "advance_width": 520
+    },
+    {
+      "codepoint": "U+1890",
+      "char": "ᢐ",
+      "name": "MONGOLIAN LETTER ALI GALI TA",
+      "category": "字母(其它)",
+      "glyph": "uni1890",
+      "advance_width": 569
+    },
+    {
+      "codepoint": "U+1891",
+      "char": "ᢑ",
+      "name": "MONGOLIAN LETTER ALI GALI DA",
+      "category": "字母(其它)",
+      "glyph": "uni1891",
+      "advance_width": 576
+    },
+    {
+      "codepoint": "U+1892",
+      "char": "ᢒ",
+      "name": "MONGOLIAN LETTER ALI GALI PA",
+      "category": "字母(其它)",
+      "glyph": "uni1892",
+      "advance_width": 557
+    },
+    {
+      "codepoint": "U+1893",
+      "char": "ᢓ",
+      "name": "MONGOLIAN LETTER ALI GALI PHA",
+      "category": "字母(其它)",
+      "glyph": "uni1893",
+      "advance_width": 552
+    },
+    {
+      "codepoint": "U+1894",
+      "char": "ᢔ",
+      "name": "MONGOLIAN LETTER ALI GALI SSA",
+      "category": "字母(其它)",
+      "glyph": "uni1894",
+      "advance_width": 580
+    },
+    {
+      "codepoint": "U+1895",
+      "char": "ᢕ",
+      "name": "MONGOLIAN LETTER ALI GALI ZHA",
+      "category": "字母(其它)",
+      "glyph": "uni1895",
+      "advance_width": 833
+    },
+    {
+      "codepoint": "U+1896",
+      "char": "ᢖ",
+      "name": "MONGOLIAN LETTER ALI GALI ZA",
+      "category": "字母(其它)",
+      "glyph": "uni1896",
+      "advance_width": 652
+    },
+    {
+      "codepoint": "U+1897",
+      "char": "ᢗ",
+      "name": "MONGOLIAN LETTER ALI GALI AH",
+      "category": "字母(其它)",
+      "glyph": "uni1897",
+      "advance_width": 428
+    },
+    {
+      "codepoint": "U+1898",
+      "char": "ᢘ",
+      "name": "MONGOLIAN LETTER TODO ALI GALI TA",
+      "category": "字母(其它)",
+      "glyph": "uni1898",
+      "advance_width": 650
+    },
+    {
+      "codepoint": "U+1899",
+      "char": "ᢙ",
+      "name": "MONGOLIAN LETTER TODO ALI GALI ZHA",
+      "category": "字母(其它)",
+      "glyph": "uni1899",
+      "advance_width": 885
+    },
+    {
+      "codepoint": "U+189A",
+      "char": "ᢚ",
+      "name": "MONGOLIAN LETTER MANCHU ALI GALI GHA",
+      "category": "字母(其它)",
+      "glyph": "uni189A",
+      "advance_width": 785
+    },
+    {
+      "codepoint": "U+189B",
+      "char": "ᢛ",
+      "name": "MONGOLIAN LETTER MANCHU ALI GALI NGA",
+      "category": "字母(其它)",
+      "glyph": "uni189B",
+      "advance_width": 774
+    },
+    {
+      "codepoint": "U+189C",
+      "char": "ᢜ",
+      "name": "MONGOLIAN LETTER MANCHU ALI GALI CA",
+      "category": "字母(其它)",
+      "glyph": "uni189C",
+      "advance_width": 681
+    },
+    {
+      "codepoint": "U+189D",
+      "char": "ᢝ",
+      "name": "MONGOLIAN LETTER MANCHU ALI GALI JHA",
+      "category": "字母(其它)",
+      "glyph": "uni189D",
+      "advance_width": 848
+    },
+    {
+      "codepoint": "U+189E",
+      "char": "ᢞ",
+      "name": "MONGOLIAN LETTER MANCHU ALI GALI TTA",
+      "category": "字母(其它)",
+      "glyph": "uni189E",
+      "advance_width": 445
+    },
+    {
+      "codepoint": "U+189F",
+      "char": "ᢟ",
+      "name": "MONGOLIAN LETTER MANCHU ALI GALI DDHA",
+      "category": "字母(其它)",
+      "glyph": "uni189F",
+      "advance_width": 622
+    },
+    {
+      "codepoint": "U+18A0",
+      "char": "ᢠ",
+      "name": "MONGOLIAN LETTER MANCHU ALI GALI TA",
+      "category": "字母(其它)",
+      "glyph": "uni18A0",
+      "advance_width": 576
+    },
+    {
+      "codepoint": "U+18A1",
+      "char": "ᢡ",
+      "name": "MONGOLIAN LETTER MANCHU ALI GALI DHA",
+      "category": "字母(其它)",
+      "glyph": "uni18A1",
+      "advance_width": 973
+    },
+    {
+      "codepoint": "U+18A2",
+      "char": "ᢢ",
+      "name": "MONGOLIAN LETTER MANCHU ALI GALI SSA",
+      "category": "字母(其它)",
+      "glyph": "uni18A2",
+      "advance_width": 681
+    },
+    {
+      "codepoint": "U+18A3",
+      "char": "ᢣ",
+      "name": "MONGOLIAN LETTER MANCHU ALI GALI CYA",
+      "category": "字母(其它)",
+      "glyph": "uni18A3",
+      "advance_width": 445
+    },
+    {
+      "codepoint": "U+18A4",
+      "char": "ᢤ",
+      "name": "MONGOLIAN LETTER MANCHU ALI GALI ZHA",
+      "category": "字母(其它)",
+      "glyph": "uni18A4",
+      "advance_width": 681
+    },
+    {
+      "codepoint": "U+18A5",
+      "char": "ᢥ",
+      "name": "MONGOLIAN LETTER MANCHU ALI GALI ZA",
+      "category": "字母(其它)",
+      "glyph": "uni18A5",
+      "advance_width": 681
+    },
+    {
+      "codepoint": "U+18A6",
+      "char": "ᢦ",
+      "name": "MONGOLIAN LETTER ALI GALI HALF U",
+      "category": "字母(其它)",
+      "glyph": "uni18A6",
+      "advance_width": 311
+    },
+    {
+      "codepoint": "U+18A7",
+      "char": "ᢧ",
+      "name": "MONGOLIAN LETTER ALI GALI HALF YA",
+      "category": "字母(其它)",
+      "glyph": "uni18A7",
+      "advance_width": 313
+    },
+    {
+      "codepoint": "U+18A8",
+      "char": "ᢨ",
+      "name": "MONGOLIAN LETTER MANCHU ALI GALI BHA",
+      "category": "字母(其它)",
+      "glyph": "uni18A8",
+      "advance_width": 557
+    },
+    {
+      "codepoint": "U+18A9",
+      "char": "ᢩ",
+      "name": "MONGOLIAN LETTER ALI GALI DAGALGA",
+      "category": "组合标记(非间距)",
+      "glyph": "uni18A9",
+      "advance_width": 0
+    },
+    {
+      "codepoint": "U+18AA",
+      "char": "ᢪ",
+      "name": "MONGOLIAN LETTER MANCHU ALI GALI LHA",
+      "category": "字母(其它)",
+      "glyph": "uni18AA",
+      "advance_width": 643
+    }
+  ],
+  "mongolian_block_coverage": {
+    "assigned_in_unicode": 158,
+    "present_in_font": 158,
+    "missing_in_font": []
+  },
+  "mongolian_supplement_detail": [
+    {
+      "codepoint": "U+11660",
+      "char": "𑙠",
+      "name": "MONGOLIAN BIRGA WITH ORNAMENT",
+      "glyph": "u11660",
+      "advance_width": 776
+    },
+    {
+      "codepoint": "U+11661",
+      "char": "𑙡",
+      "name": "MONGOLIAN ROTATED BIRGA",
+      "glyph": "u11661",
+      "advance_width": 910
+    },
+    {
+      "codepoint": "U+11662",
+      "char": "𑙢",
+      "name": "MONGOLIAN DOUBLE BIRGA WITH ORNAMENT",
+      "glyph": "u11662",
+      "advance_width": 736
+    },
+    {
+      "codepoint": "U+11663",
+      "char": "𑙣",
+      "name": "MONGOLIAN TRIPLE BIRGA WITH ORNAMENT",
+      "glyph": "u11663",
+      "advance_width": 696
+    },
+    {
+      "codepoint": "U+11664",
+      "char": "𑙤",
+      "name": "MONGOLIAN BIRGA WITH DOUBLE ORNAMENT",
+      "glyph": "u11664",
+      "advance_width": 938
+    },
+    {
+      "codepoint": "U+11665",
+      "char": "𑙥",
+      "name": "MONGOLIAN ROTATED BIRGA WITH ORNAMENT",
+      "glyph": "u11665",
+      "advance_width": 1072
+    },
+    {
+      "codepoint": "U+11666",
+      "char": "𑙦",
+      "name": "MONGOLIAN ROTATED BIRGA WITH DOUBLE ORNAMENT",
+      "glyph": "u11666",
+      "advance_width": 1234
+    },
+    {
+      "codepoint": "U+11667",
+      "char": "𑙧",
+      "name": "MONGOLIAN INVERTED BIRGA",
+      "glyph": "u11667",
+      "advance_width": 614
+    },
+    {
+      "codepoint": "U+11668",
+      "char": "𑙨",
+      "name": "MONGOLIAN INVERTED BIRGA WITH DOUBLE ORNAMENT",
+      "glyph": "u11668",
+      "advance_width": 938
+    },
+    {
+      "codepoint": "U+11669",
+      "char": "𑙩",
+      "name": "MONGOLIAN SWIRL BIRGA",
+      "glyph": "u11669",
+      "advance_width": 788
+    },
+    {
+      "codepoint": "U+1166A",
+      "char": "𑙪",
+      "name": "MONGOLIAN SWIRL BIRGA WITH ORNAMENT",
+      "glyph": "u1166A",
+      "advance_width": 948
+    },
+    {
+      "codepoint": "U+1166B",
+      "char": "𑙫",
+      "name": "MONGOLIAN SWIRL BIRGA WITH DOUBLE ORNAMENT",
+      "glyph": "u1166B",
+      "advance_width": 1110
+    },
+    {
+      "codepoint": "U+1166C",
+      "char": "𑙬",
+      "name": "MONGOLIAN TURNED SWIRL BIRGA WITH DOUBLE ORNAMENT",
+      "glyph": "u1166C",
+      "advance_width": 1110
+    }
+  ],
+  "free_variation_selectors": [
+    "U+180B MONGOLIAN FREE VARIATION SELECTOR ONE",
+    "U+180C MONGOLIAN FREE VARIATION SELECTOR TWO",
+    "U+180D MONGOLIAN FREE VARIATION SELECTOR THREE",
+    "U+180F MONGOLIAN FREE VARIATION SELECTOR FOUR"
+  ],
+  "GSUB": {
+    "scripts": {
+      "DFLT": {
+        "default_lang_sys": true,
+        "lang_sys": []
+      },
+      "cyrl": {
+        "default_lang_sys": true,
+        "lang_sys": [
+          "BGR ",
+          "MKD ",
+          "SRB "
+        ]
+      },
+      "grek": {
+        "default_lang_sys": true,
+        "lang_sys": [
+          "APPH",
+          "IPPH"
+        ]
+      },
+      "latn": {
+        "default_lang_sys": true,
+        "lang_sys": [
+          "APPH",
+          "CAT ",
+          "IPPH",
+          "MAH ",
+          "MOL ",
+          "NAV ",
+          "ROM "
+        ]
+      },
+      "mong": {
+        "default_lang_sys": true,
+        "lang_sys": [
+          "MCH ",
+          "MNG ",
+          "SIB ",
+          "TOD "
+        ]
+      }
+    },
+    "features": {
+      "aalt": 1,
+      "ccmp": 2,
+      "fina": 1,
+      "init": 1,
+      "isol": 1,
+      "locl": 2,
+      "medi": 1,
+      "ordn": 1,
+      "rclt": 149,
+      "vert": 1
+    },
+    "lookup_count": 202,
+    "lookup_types": {
+      "1": 113,
+      "2": 10,
+      "4": 13,
+      "5": 11,
+      "6": 54,
+      "8": 1
+    },
+    "total_substitutions": 2520
+  },
+  "GPOS": {
+    "scripts": [
+      "DFLT",
+      "cyrl",
+      "grek",
+      "latn",
+      "mong"
+    ],
+    "features": {
+      "kern": 1,
+      "mark": 1,
+      "mkmk": 2
+    },
+    "lookup_types": {
+      "2": 1,
+      "4": 1,
+      "6": 2
+    }
+  },
+  "GDEF": {
+    "glyph_class_defs": {
+      "Base(基字形)": 223,
+      "Mark(标记)": 17
+    },
+    "mark_glyph_sets": 6
+  },
+  "glyf": {
+    "glyphs_with_outlines": 3695,
+    "empty_glyphs": 20
+  },
+  "glyph_order_sample": [
+    ".notdef",
+    "mvs.narrow",
+    "uni180A",
+    "space",
+    "_A.isol",
+    "_A.init",
+    "_A.medi",
+    "_A.fina",
+    "_A.fina.Wp_",
+    "_A2.init",
+    "_Aa.isol",
+    "_Aa.fina",
+    "_Ah.medi",
+    "_Ah.fina",
+    "_Ai.medi",
+    "_Ai.fina",
+    "_At.fina",
+    "_Aw.fina",
+    "_B.init",
+    "_B.medi",
+    "_B.fina",
+    "_B2.fina",
+    "_Bc.init",
+    "_Bc.medi",
+    "_Bg.init",
+    "_Bg.medi",
+    "_Bg.fina",
+    "_Bh.init",
+    "_Bh.medi",
+    "_C.init",
+    "_C.medi",
+    "_C.fina",
+    "_Cc.init",
+    "_Cc.medi",
+    "_Ch.init",
+    "_Ch.medi",
+    "_Ch.fina",
+    "_Cp.init",
+    "_Cp.medi",
+    "_Cp.fina"
+  ]
+}

@@ -1,0 +1,299 @@
+==============================================================================
+UME 字体字符分布分析报告
+==============================================================================
+文件      : E:\QKMansion\CSX10\w\UME\font\NotoSansMongolian-Regular.ttf
+大小      : 388168 字节 (379.1 KB)
+轮廓格式  : TTF (glyf outlines)   sfntVersion=0x00010000
+em 单位   : 1000
+字形总数  : 3715
+表数量    : 17 -> GDEF, GPOS, GSUB, OS/2, cmap, cvt , fpgm, gasp, glyf, head, hhea, hmtx, loca, maxp, name, post, prep
+
+-- 名称表 --
+  Copyright              [Windows/1/1033] Copyright 2023 The Noto Project Authors (https://github.com/notofonts/mongolian)
+  Family                 [Windows/1/1033] Noto Sans Mongolian
+  Subfamily              [Windows/1/1033] Regular
+  Unique ID              [Windows/1/1033] 3.103;GOOG;NotoSansMongolian-Regular
+  Full name              [Windows/1/1033] Noto Sans Mongolian Regular
+  Version                [Windows/1/1033] Version 3.103;fontc 1.0.0; tilvisan (v0.1.1)
+  PostScript name        [Windows/1/1033] NotoSansMongolian-Regular
+  Trademark              [Windows/1/1033] Noto is a trademark of Google Inc.
+  Manufacturer           [Windows/1/1033] Monotype Imaging Inc.
+  Designer               [Windows/1/1033] Monotype Design Team
+  Description            [Windows/1/1033] Designed by Monotype design team.
+  Vendor URL             [Windows/1/1033] http://www.google.com/get/noto/
+  Designer URL           [Windows/1/1033] http://www.monotype.com/studio
+  License                [Windows/1/1033] This Font Software is licensed under the SIL Open Font License, Version 1.1. This license is available with a FAQ at: https://scripts.sil.org/OFL
+  License URL            [Windows/1/1033] https://scripts.sil.org/OFL
+
+-- 度量 --
+  hhea.ascender           1457
+  hhea.descender          -293
+  hhea.lineGap            0
+  hhea.advanceWidthMax    1596
+  hhea.numOfLongHorMetrics 3715
+  OS/2.typo_ascender      1457
+  OS/2.typo_descender     -293
+  OS/2.typo_line_gap      0
+  OS/2.win_ascent         1642
+  OS/2.win_descent        388
+  OS/2.x_height           500
+  OS/2.cap_height         700
+  OS/2.weight_class       400
+  OS/2.width_class        5
+  OS/2.unicode_ranges     0xA000006F 0x0201204A 0x00020010 0x00000000
+  横向 advance  : min=0 max=1596 不同值=552
+  最常见 advance: [(885, 78), (714, 72), (666, 72), (749, 58), (838, 49), (702, 49), (973, 48), (858, 48)]
+
+-- cmap 子表 --
+  Unicode/3 (format 4)         504 个映射
+  Unicode/4 (format 12)        517 个映射
+  Windows/1 (format 4)         504 个映射
+  Windows/10 (format 12)       517 个映射
+  Unicode 码位数(最佳 cmap) : 517
+  Unicode 码位数(全部子表) : 517
+
+-- 按 Unicode 区段分布 --
+  Mongolian                               158
+  Basic Latin                              95
+  Latin Extended-A                         89
+  Latin-1 Supplement                       84
+  General Punctuation                      17
+  Combining Diacritical Marks              14
+  Mongolian Supplement                     13
+  CJK Symbols and Punctuation              11
+  Spacing Modifier Letters                  9
+  Latin Extended Additional                 9
+  Halfwidth and Fullwidth Forms             9
+  Latin Extended-B                          5
+  Currency Symbols                          1
+  Letterlike Symbols                        1
+  Mathematical Operators                    1
+  Geometric Shapes                          1
+
+-- 按字符类别分布 --
+  字母(其它)                    130
+  小写字母                      109
+  大写字母                      108
+  标点(其它)                     54
+  组合标记(非间距)                  21
+  十进制数字                      20
+  修饰符号                       12
+  标点(左括号)                    11
+  标点(右括号)                     9
+  数学符号                        9
+  货币符号                        5
+  其它符号                        5
+  空格                          4
+  标点(横线)                      4
+  标点(左引号)                     4
+  标点(右引号)                     4
+  修饰字母                        4
+  格式字符                        3
+  Pc                          1
+
+-- 蒙文主区段 U+1800..U+18AF --
+  Unicode 已分配 : 158
+  字体已收录     : 158
+  覆盖率         : 100.0%
+  未收录         : 无
+
+  码位        字   Unicode 名称                               类别             advance
+  U+1800    ᠀   MONGOLIAN BIRGA                          标点(其它)         614
+  U+1801    ᠁   MONGOLIAN ELLIPSIS                       标点(其它)         1086
+  U+1802    ᠂   MONGOLIAN COMMA                          标点(其它)         324
+  U+1803    ᠃   MONGOLIAN FULL STOP                      标点(其它)         578
+  U+1804    ᠄   MONGOLIAN COLON                          标点(其它)         324
+  U+1805    ᠅   MONGOLIAN FOUR DOTS                      标点(其它)         638
+  U+1806    ᠆   MONGOLIAN TODO SOFT HYPHEN               标点(横线)         630
+  U+1807    ᠇   MONGOLIAN SIBE SYLLABLE BOUNDARY MARKER  标点(其它)         284
+  U+1808    ᠈   MONGOLIAN MANCHU COMMA                   标点(其它)         372
+  U+1809    ᠉   MONGOLIAN MANCHU FULL STOP               标点(其它)         592
+  U+180A    ᠊   MONGOLIAN NIRUGU                         标点(其它)         168
+  U+180B    ᠋   MONGOLIAN FREE VARIATION SELECTOR ONE    组合标记(非间距)      770
+  U+180C    ᠌   MONGOLIAN FREE VARIATION SELECTOR TWO    组合标记(非间距)      770
+  U+180D    ᠍   MONGOLIAN FREE VARIATION SELECTOR THREE  组合标记(非间距)      770
+  U+180E    ᠎   MONGOLIAN VOWEL SEPARATOR                格式字符           770
+  U+180F    ᠏   MONGOLIAN FREE VARIATION SELECTOR FOUR   组合标记(非间距)      770
+  U+1810    ᠐   MONGOLIAN DIGIT ZERO                     十进制数字          572
+  U+1811    ᠑   MONGOLIAN DIGIT ONE                      十进制数字          572
+  U+1812    ᠒   MONGOLIAN DIGIT TWO                      十进制数字          605
+  U+1813    ᠓   MONGOLIAN DIGIT THREE                    十进制数字          875
+  U+1814    ᠔   MONGOLIAN DIGIT FOUR                     十进制数字          534
+  U+1815    ᠕   MONGOLIAN DIGIT FIVE                     十进制数字          712
+  U+1816    ᠖   MONGOLIAN DIGIT SIX                      十进制数字          630
+  U+1817    ᠗   MONGOLIAN DIGIT SEVEN                    十进制数字          630
+  U+1818    ᠘   MONGOLIAN DIGIT EIGHT                    十进制数字          564
+  U+1819    ᠙   MONGOLIAN DIGIT NINE                     十进制数字          534
+  U+1820    ᠠ   MONGOLIAN LETTER A                       字母(其它)         919
+  U+1821    ᠡ   MONGOLIAN LETTER E                       字母(其它)         824
+  U+1822    ᠢ   MONGOLIAN LETTER I                       字母(其它)         993
+  U+1823    ᠣ   MONGOLIAN LETTER O                       字母(其它)         932
+  U+1824    ᠤ   MONGOLIAN LETTER U                       字母(其它)         1065
+  U+1825    ᠥ   MONGOLIAN LETTER OE                      字母(其它)         1235
+  U+1826    ᠦ   MONGOLIAN LETTER UE                      字母(其它)         1426
+  U+1827    ᠧ   MONGOLIAN LETTER EE                      字母(其它)         1200
+  U+1828    ᠨ   MONGOLIAN LETTER NA                      字母(其它)         492
+  U+1829    ᠩ   MONGOLIAN LETTER ANG                     字母(其它)         614
+  U+182A    ᠪ   MONGOLIAN LETTER BA                      字母(其它)         557
+  U+182B    ᠫ   MONGOLIAN LETTER PA                      字母(其它)         552
+  U+182C    ᠬ   MONGOLIAN LETTER QA                      字母(其它)         788
+  U+182D    ᠭ   MONGOLIAN LETTER GA                      字母(其它)         788
+  U+182E    ᠮ   MONGOLIAN LETTER MA                      字母(其它)         492
+  U+182F    ᠯ   MONGOLIAN LETTER LA                      字母(其它)         492
+  U+1830    ᠰ   MONGOLIAN LETTER SA                      字母(其它)         681
+  U+1831    ᠱ   MONGOLIAN LETTER SHA                     字母(其它)         681
+  U+1832    ᠲ   MONGOLIAN LETTER TA                      字母(其它)         670
+  U+1833    ᠳ   MONGOLIAN LETTER DA                      字母(其它)         673
+  U+1834    ᠴ   MONGOLIAN LETTER CHA                     字母(其它)         692
+  U+1835    ᠵ   MONGOLIAN LETTER JA                      字母(其它)         421
+  U+1836    ᠶ   MONGOLIAN LETTER YA                      字母(其它)         421
+  U+1837    ᠷ   MONGOLIAN LETTER RA                      字母(其它)         421
+  U+1838    ᠸ   MONGOLIAN LETTER WA                      字母(其它)         520
+  U+1839    ᠹ   MONGOLIAN LETTER FA                      字母(其它)         557
+  U+183A    ᠺ   MONGOLIAN LETTER KA                      字母(其它)         429
+  U+183B    ᠻ   MONGOLIAN LETTER KHA                     字母(其它)         428
+  U+183C    ᠼ   MONGOLIAN LETTER TSA                     字母(其它)         817
+  U+183D    ᠽ   MONGOLIAN LETTER ZA                      字母(其它)         740
+  U+183E    ᠾ   MONGOLIAN LETTER HAA                     字母(其它)         1013
+  U+183F    ᠿ   MONGOLIAN LETTER ZRA                     字母(其它)         833
+  U+1840    ᡀ   MONGOLIAN LETTER LHA                     字母(其它)         1013
+  U+1841    ᡁ   MONGOLIAN LETTER ZHI                     字母(其它)         566
+  U+1842    ᡂ   MONGOLIAN LETTER CHI                     字母(其它)         1102
+  U+1843    ᡃ   MONGOLIAN LETTER TODO LONG VOWEL SIGN    修饰字母           267
+  U+1844    ᡄ   MONGOLIAN LETTER TODO E                  字母(其它)         899
+  U+1845    ᡅ   MONGOLIAN LETTER TODO I                  字母(其它)         906
+  U+1846    ᡆ   MONGOLIAN LETTER TODO O                  字母(其它)         915
+  U+1847    ᡇ   MONGOLIAN LETTER TODO U                  字母(其它)         1126
+  U+1848    ᡈ   MONGOLIAN LETTER TODO OE                 字母(其它)         915
+  U+1849    ᡉ   MONGOLIAN LETTER TODO UE                 字母(其它)         1126
+  U+184A    ᡊ   MONGOLIAN LETTER TODO ANG                字母(其它)         1024
+  U+184B    ᡋ   MONGOLIAN LETTER TODO BA                 字母(其它)         511
+  U+184C    ᡌ   MONGOLIAN LETTER TODO PA                 字母(其它)         594
+  U+184D    ᡍ   MONGOLIAN LETTER TODO QA                 字母(其它)         786
+  U+184E    ᡎ   MONGOLIAN LETTER TODO GA                 字母(其它)         786
+  U+184F    ᡏ   MONGOLIAN LETTER TODO MA                 字母(其它)         284
+  U+1850    ᡐ   MONGOLIAN LETTER TODO TA                 字母(其它)         648
+  U+1851    ᡑ   MONGOLIAN LETTER TODO DA                 字母(其它)         576
+  U+1852    ᡒ   MONGOLIAN LETTER TODO CHA                字母(其它)         710
+  U+1853    ᡓ   MONGOLIAN LETTER TODO JA                 字母(其它)         692
+  U+1854    ᡔ   MONGOLIAN LETTER TODO TSA                字母(其它)         575
+  U+1855    ᡕ   MONGOLIAN LETTER TODO YA                 字母(其它)         361
+  U+1856    ᡖ   MONGOLIAN LETTER TODO WA                 字母(其它)         674
+  U+1857    ᡗ   MONGOLIAN LETTER TODO KA                 字母(其它)         446
+  U+1858    ᡘ   MONGOLIAN LETTER TODO GAA                字母(其它)         428
+  U+1859    ᡙ   MONGOLIAN LETTER TODO HAA                字母(其它)         805
+  U+185A    ᡚ   MONGOLIAN LETTER TODO JIA                字母(其它)         870
+  U+185B    ᡛ   MONGOLIAN LETTER TODO NIA                字母(其它)         443
+  U+185C    ᡜ   MONGOLIAN LETTER TODO DZA                字母(其它)         652
+  U+185D    ᡝ   MONGOLIAN LETTER SIBE E                  字母(其它)         660
+  U+185E    ᡞ   MONGOLIAN LETTER SIBE I                  字母(其它)         853
+  U+185F    ᡟ   MONGOLIAN LETTER SIBE IY                 字母(其它)         284
+  U+1860    ᡠ   MONGOLIAN LETTER SIBE UE                 字母(其它)         932
+  U+1861    ᡡ   MONGOLIAN LETTER SIBE U                  字母(其它)         934
+  U+1862    ᡢ   MONGOLIAN LETTER SIBE ANG                字母(其它)         875
+  U+1863    ᡣ   MONGOLIAN LETTER SIBE KA                 字母(其它)         568
+  U+1864    ᡤ   MONGOLIAN LETTER SIBE GA                 字母(其它)         788
+  U+1865    ᡥ   MONGOLIAN LETTER SIBE HA                 字母(其它)         887
+  U+1866    ᡦ   MONGOLIAN LETTER SIBE PA                 字母(其它)         593
+  U+1867    ᡧ   MONGOLIAN LETTER SIBE SHA                字母(其它)         681
+  U+1868    ᡨ   MONGOLIAN LETTER SIBE TA                 字母(其它)         757
+  U+1869    ᡩ   MONGOLIAN LETTER SIBE DA                 字母(其它)         670
+  U+186A    ᡪ   MONGOLIAN LETTER SIBE JA                 字母(其它)         360
+  U+186B    ᡫ   MONGOLIAN LETTER SIBE FA                 字母(其它)         520
+  U+186C    ᡬ   MONGOLIAN LETTER SIBE GAA                字母(其它)         429
+  U+186D    ᡭ   MONGOLIAN LETTER SIBE HAA                字母(其它)         429
+  U+186E    ᡮ   MONGOLIAN LETTER SIBE TSA                字母(其它)         681
+  U+186F    ᡯ   MONGOLIAN LETTER SIBE ZA                 字母(其它)         681
+  U+1870    ᡰ   MONGOLIAN LETTER SIBE RAA                字母(其它)         288
+  U+1871    ᡱ   MONGOLIAN LETTER SIBE CHA                字母(其它)         692
+  U+1872    ᡲ   MONGOLIAN LETTER SIBE ZHA                字母(其它)         421
+  U+1873    ᡳ   MONGOLIAN LETTER MANCHU I                字母(其它)         501
+  U+1874    ᡴ   MONGOLIAN LETTER MANCHU KA               字母(其它)         708
+  U+1875    ᡵ   MONGOLIAN LETTER MANCHU RA               字母(其它)         361
+  U+1876    ᡶ   MONGOLIAN LETTER MANCHU FA               字母(其它)         540
+  U+1877    ᡷ   MONGOLIAN LETTER MANCHU ZHA              字母(其它)         530
+  U+1878    ᡸ   MONGOLIAN LETTER CHA WITH TWO DOTS       字母(其它)         692
+  U+1880    ᢀ   MONGOLIAN LETTER ALI GALI ANUSVARA ONE   字母(其它)         583
+  U+1881    ᢁ   MONGOLIAN LETTER ALI GALI VISARGA ONE    字母(其它)         790
+  U+1882    ᢂ   MONGOLIAN LETTER ALI GALI DAMARU         字母(其它)         673
+  U+1883    ᢃ   MONGOLIAN LETTER ALI GALI UBADAMA        字母(其它)         483
+  U+1884    ᢄ   MONGOLIAN LETTER ALI GALI INVERTED UBADAMA 字母(其它)         483
+  U+1885    ᢅ   MONGOLIAN LETTER ALI GALI BALUDA         组合标记(非间距)      0
+  U+1886    ᢆ   MONGOLIAN LETTER ALI GALI THREE BALUDA   组合标记(非间距)      0
+  U+1887    ᢇ   MONGOLIAN LETTER ALI GALI A              字母(其它)         1021
+  U+1888    ᢈ   MONGOLIAN LETTER ALI GALI I              字母(其它)         993
+  U+1889    ᢉ   MONGOLIAN LETTER ALI GALI KA             字母(其它)         377
+  U+188A    ᢊ   MONGOLIAN LETTER ALI GALI NGA            字母(其它)         822
+  U+188B    ᢋ   MONGOLIAN LETTER ALI GALI CA             字母(其它)         652
+  U+188C    ᢌ   MONGOLIAN LETTER ALI GALI TTA            字母(其它)         555
+  U+188D    ᢍ   MONGOLIAN LETTER ALI GALI TTHA           字母(其它)         856
+  U+188E    ᢎ   MONGOLIAN LETTER ALI GALI DDA            字母(其它)         640
+  U+188F    ᢏ   MONGOLIAN LETTER ALI GALI NNA            字母(其它)         520
+  U+1890    ᢐ   MONGOLIAN LETTER ALI GALI TA             字母(其它)         569
+  U+1891    ᢑ   MONGOLIAN LETTER ALI GALI DA             字母(其它)         576
+  U+1892    ᢒ   MONGOLIAN LETTER ALI GALI PA             字母(其它)         557
+  U+1893    ᢓ   MONGOLIAN LETTER ALI GALI PHA            字母(其它)         552
+  U+1894    ᢔ   MONGOLIAN LETTER ALI GALI SSA            字母(其它)         580
+  U+1895    ᢕ   MONGOLIAN LETTER ALI GALI ZHA            字母(其它)         833
+  U+1896    ᢖ   MONGOLIAN LETTER ALI GALI ZA             字母(其它)         652
+  U+1897    ᢗ   MONGOLIAN LETTER ALI GALI AH             字母(其它)         428
+  U+1898    ᢘ   MONGOLIAN LETTER TODO ALI GALI TA        字母(其它)         650
+  U+1899    ᢙ   MONGOLIAN LETTER TODO ALI GALI ZHA       字母(其它)         885
+  U+189A    ᢚ   MONGOLIAN LETTER MANCHU ALI GALI GHA     字母(其它)         785
+  U+189B    ᢛ   MONGOLIAN LETTER MANCHU ALI GALI NGA     字母(其它)         774
+  U+189C    ᢜ   MONGOLIAN LETTER MANCHU ALI GALI CA      字母(其它)         681
+  U+189D    ᢝ   MONGOLIAN LETTER MANCHU ALI GALI JHA     字母(其它)         848
+  U+189E    ᢞ   MONGOLIAN LETTER MANCHU ALI GALI TTA     字母(其它)         445
+  U+189F    ᢟ   MONGOLIAN LETTER MANCHU ALI GALI DDHA    字母(其它)         622
+  U+18A0    ᢠ   MONGOLIAN LETTER MANCHU ALI GALI TA      字母(其它)         576
+  U+18A1    ᢡ   MONGOLIAN LETTER MANCHU ALI GALI DHA     字母(其它)         973
+  U+18A2    ᢢ   MONGOLIAN LETTER MANCHU ALI GALI SSA     字母(其它)         681
+  U+18A3    ᢣ   MONGOLIAN LETTER MANCHU ALI GALI CYA     字母(其它)         445
+  U+18A4    ᢤ   MONGOLIAN LETTER MANCHU ALI GALI ZHA     字母(其它)         681
+  U+18A5    ᢥ   MONGOLIAN LETTER MANCHU ALI GALI ZA      字母(其它)         681
+  U+18A6    ᢦ   MONGOLIAN LETTER ALI GALI HALF U         字母(其它)         311
+  U+18A7    ᢧ   MONGOLIAN LETTER ALI GALI HALF YA        字母(其它)         313
+  U+18A8    ᢨ   MONGOLIAN LETTER MANCHU ALI GALI BHA     字母(其它)         557
+  U+18A9    ᢩ   MONGOLIAN LETTER ALI GALI DAGALGA        组合标记(非间距)      0
+  U+18AA    ᢪ   MONGOLIAN LETTER MANCHU ALI GALI LHA     字母(其它)         643
+
+-- 蒙文补充区段 U+11660..U+1167F --
+  U+11660   𑙠   MONGOLIAN BIRGA WITH ORNAMENT            adv=776
+  U+11661   𑙡   MONGOLIAN ROTATED BIRGA                  adv=910
+  U+11662   𑙢   MONGOLIAN DOUBLE BIRGA WITH ORNAMENT     adv=736
+  U+11663   𑙣   MONGOLIAN TRIPLE BIRGA WITH ORNAMENT     adv=696
+  U+11664   𑙤   MONGOLIAN BIRGA WITH DOUBLE ORNAMENT     adv=938
+  U+11665   𑙥   MONGOLIAN ROTATED BIRGA WITH ORNAMENT    adv=1072
+  U+11666   𑙦   MONGOLIAN ROTATED BIRGA WITH DOUBLE ORNAMENT adv=1234
+  U+11667   𑙧   MONGOLIAN INVERTED BIRGA                 adv=614
+  U+11668   𑙨   MONGOLIAN INVERTED BIRGA WITH DOUBLE ORNAMENT adv=938
+  U+11669   𑙩   MONGOLIAN SWIRL BIRGA                    adv=788
+  U+1166A   𑙪   MONGOLIAN SWIRL BIRGA WITH ORNAMENT      adv=948
+  U+1166B   𑙫   MONGOLIAN SWIRL BIRGA WITH DOUBLE ORNAMENT adv=1110
+  U+1166C   𑙬   MONGOLIAN TURNED SWIRL BIRGA WITH DOUBLE ORNAMENT adv=1110
+
+-- 自由变体选择符 (FVS) --
+  U+180B MONGOLIAN FREE VARIATION SELECTOR ONE
+  U+180C MONGOLIAN FREE VARIATION SELECTOR TWO
+  U+180D MONGOLIAN FREE VARIATION SELECTOR THREE
+  U+180F MONGOLIAN FREE VARIATION SELECTOR FOUR
+
+-- OpenType 排版特性 --
+  GSUB 脚本   : DFLT, cyrl, grek, latn, mong
+  GSUB lookup : 202 个, 类型分布 {'1': 113, '2': 10, '4': 13, '5': 11, '6': 54, '8': 1}
+  GSUB 替换总数: 2520
+  GSUB 特性   :
+      aalt   lookups=1
+      ccmp   lookups=2
+      fina   lookups=1
+      init   lookups=1
+      isol   lookups=1
+      locl   lookups=2
+      medi   lookups=1
+      ordn   lookups=1
+      rclt   lookups=149
+      vert   lookups=1
+  GPOS 脚本   : DFLT, cyrl, grek, latn, mong
+  GPOS lookup 类型分布: {'2': 1, '4': 1, '6': 2}
+  GPOS 特性   : kern, mark, mkmk
+  GDEF        : {"glyph_class_defs": {"Base(基字形)": 223, "Mark(标记)": 17}, "mark_glyph_sets": 6}

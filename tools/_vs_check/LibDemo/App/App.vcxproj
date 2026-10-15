@@ -1,0 +1,80 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- 控制台程序：App —— 链接上面那个静态库 -->
+<Project DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+
+  <ItemGroup Label="ProjectConfigurations">
+    <ProjectConfiguration Include="Debug|x64">
+      <Configuration>Debug</Configuration><Platform>x64</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="Release|x64">
+      <Configuration>Release</Configuration><Platform>x64</Platform>
+    </ProjectConfiguration>
+  </ItemGroup>
+
+  <PropertyGroup Label="Globals">
+    <ProjectGuid>{BBBBBBBB-0002-0002-0002-000000000002}</ProjectGuid>
+    <RootNamespace>App</RootNamespace>
+    <Keyword>Win32Proj</Keyword>
+  </PropertyGroup>
+
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
+
+  <PropertyGroup Condition="'$(Configuration)'=='Debug'" Label="Configuration">
+    <!-- ↓ 应用程序就是 Application -->
+    <ConfigurationType>Application</ConfigurationType>
+    <UseDebugLibraries>true</UseDebugLibraries>
+    <PlatformToolset>v145</PlatformToolset>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)'=='Release'" Label="Configuration">
+    <ConfigurationType>Application</ConfigurationType>
+    <UseDebugLibraries>false</UseDebugLibraries>
+    <PlatformToolset>v145</PlatformToolset>
+  </PropertyGroup>
+
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.props" />
+  <ImportGroup Label="PropertySheets">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props"
+            Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')"
+            Label="LocalAppDataPlatform" />
+  </ImportGroup>
+
+  <PropertyGroup>
+    <OutDir>$(SolutionDir)$(Platform)\$(Configuration)\</OutDir>
+    <IntDir>$(Platform)\$(Configuration)\</IntDir>
+  </PropertyGroup>
+
+  <ItemDefinitionGroup>
+    <ClCompile>
+      <LanguageStandard>stdcpp17</LanguageStandard>
+      <WarningLevel>Level3</WarningLevel>
+      <!-- ↓↓↓ 对应 VS 属性页「附加包含目录」 -->
+      <AdditionalIncludeDirectories>$(SolutionDir)UmeMath;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+    </ClCompile>
+    <Link>
+      <!-- ↓↓↓ 对应 VS 属性页「附加依赖项」（库的名字） -->
+      <AdditionalDependencies>UmeMath.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <!-- ↓↓↓ 对应 VS 属性页「附加库目录」（库在哪里） -->
+      <AdditionalLibraryDirectories>$(SolutionDir)$(Platform)\$(Configuration);%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+    </Link>
+  </ItemDefinitionGroup>
+
+  <ItemGroup>
+    <ClCompile Include="main.cpp" />
+  </ItemGroup>
+
+  <!-- ↓↓↓ 对应 VS 里「添加 → 引用 → 勾选 UmeMath」 -->
+  <ItemGroup>
+    <ProjectReference Include="..\UmeMath\UmeMath.vcxproj">
+      <Project>{AAAAAAAA-0001-0001-0001-000000000001}</Project>
+    </ProjectReference>
+  </ItemGroup>
+
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
+
+  <Target Name="ShowApp" AfterTargets="Build">
+    <Message Importance="high" Text="=== 应用程序生成结果 ===" />
+    <Message Importance="high" Text="IncludePath 里我加的那条 = 见下" />
+    <Message Importance="high" Text="AdditionalDependencies = [%(Link.AdditionalDependencies)]" />
+    <Message Importance="high" Text="TargetPath = [$(TargetPath)]" />
+  </Target>
+</Project>

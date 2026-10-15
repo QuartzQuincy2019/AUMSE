@@ -1,0 +1,262 @@
+====================================================================================================
+蒙文 Unicode 码区 U+1800–U+18AF 完整属性调查
+====================================================================================================
+UCD 版本(Blocks.txt) : Blocks-18.0.0.txt
+码位总数             : 176
+已分配               : 158
+未分配(保留)         : 18 -> U+181A U+181B U+181C U+181D U+181E U+181F U+1879 U+187A U+187B U+187C U+187D U+187E U+187F U+18AB U+18AC U+18AD U+18AE U+18AF
+整块归属             : Mongolian
+
+-- 通用类别 (General_Category) 分布 --
+  Lo   Other_Letter               128
+  Po   Other_Punctuation           10
+  Nd   Decimal_Number              10
+  Mn   Nonspacing_Mark              7
+  Pd   Dash_Punctuation             1
+  Cf   Format                       1
+  Lm   Modifier_Letter              1
+
+-- 文字属性 (Script) --
+  Mongolian      155
+  Common           3
+
+-- 连接类型 (Joining_Type) --
+  D   Dual_Joining 双向连接            125
+  U   Non_Joining 不连接               25
+  T   Transparent 透明                 7
+  C   Join_Causing 引起连接              1
+  注：['Common', 'Mongolian'] 脚本在 UCD 中不使用阿拉伯式连接类型；蒙文连写由 OpenType 上下文特性实现。
+
+-- 字素簇断行属性 (Grapheme_Cluster_Break) --
+  Other            150
+  Extend             7
+  Control            1
+
+-- 组合类 (Canonical_Combining_Class) --
+  ccc=0   157
+  ccc=228   1
+
+-- 关键派生属性（仅列命中的码位） --
+  Default_Ignorable_Code_Point   5  U+180B U+180C U+180D U+180E U+180F
+  Variation_Selector             4  U+180B U+180C U+180D U+180F
+  Grapheme_Extend                7  U+180B U+180C U+180D U+180F U+1885 U+1886 U+18A9
+  White_Space                    0  —
+  Deprecated                     0  —
+  Join_Control                   0  —
+  Bidi_Control                   0  —
+  Noncharacter_Code_Point        0  —
+  Alphabetic                   132  U+1820 U+1821 U+1822 U+1823 U+1824 U+1825 U+1826 U+1827 U+1828 U+1829 U+182A U+182B U+182C U+182D U+182E U+182F U+1830 U+1831 U+1832 U+1833 U+1834 U+1835 U+1836 U+1837 …
+  Cased                          0  —
+  Case_Ignorable                 9  U+180B U+180C U+180D U+180E U+180F U+1843 U+1885 U+1886 U+18A9
+  ID_Start                     131  U+1820 U+1821 U+1822 U+1823 U+1824 U+1825 U+1826 U+1827 U+1828 U+1829 U+182A U+182B U+182C U+182D U+182E U+182F U+1830 U+1831 U+1832 U+1833 U+1834 U+1835 U+1836 U+1837 …
+  ID_Continue                  146  U+180B U+180C U+180D U+180F U+1810 U+1811 U+1812 U+1813 U+1814 U+1815 U+1816 U+1817 U+1818 U+1819 U+1820 U+1821 U+1822 U+1823 U+1824 U+1825 U+1826 U+1827 U+1828 U+1829 …
+  Math                           0  —
+
+====================================================================================================
+逐码位完整属性表（176 个码位）
+====================================================================================================
+码位       字   Unicode 官方名称                           gc   script   jt  ccc  GCB            WordBreak        Flags
+----------------------------------------------------------------------------------------------------
+U+1800   ᠀   MONGOLIAN BIRGA                        Po   Mongolian U   0    Other          Other            
+U+1801   ᠁   MONGOLIAN ELLIPSIS                     Po   Mongolian U   0    Other          Other            
+U+1802   ᠂   MONGOLIAN COMMA                        Po   Common   U   0    Other          Other            
+U+1803   ᠃   MONGOLIAN FULL STOP                    Po   Common   U   0    Other          Other            
+U+1804   ᠄   MONGOLIAN COLON                        Po   Mongolian U   0    Other          Other            
+U+1805   ᠅   MONGOLIAN FOUR DOTS                    Po   Common   U   0    Other          Other            
+U+1806   ᠆   MONGOLIAN TODO SOFT HYPHEN             Pd   Mongolian U   0    Other          Other            
+U+1807   ᠇   MONGOLIAN SIBE SYLLABLE BOUNDARY MARKE Po   Mongolian D   0    Other          Other            
+U+1808   ᠈   MONGOLIAN MANCHU COMMA                 Po   Mongolian U   0    Other          Other            
+U+1809   ᠉   MONGOLIAN MANCHU FULL STOP             Po   Mongolian U   0    Other          Other            
+U+180A   ᠊   MONGOLIAN NIRUGU                       Po   Mongolian C   0    Other          Other            
+U+180B   ᠋   MONGOLIAN FREE VARIATION SELECTOR ONE  Mn   Mongolian T   0    Extend         Extend           Default_Ignorable, Variation_Selector, Case_Ignorable, Grapheme_Extend
+U+180C   ᠌   MONGOLIAN FREE VARIATION SELECTOR TWO  Mn   Mongolian T   0    Extend         Extend           Default_Ignorable, Variation_Selector, Case_Ignorable, Grapheme_Extend
+U+180D   ᠍   MONGOLIAN FREE VARIATION SELECTOR THRE Mn   Mongolian T   0    Extend         Extend           Default_Ignorable, Variation_Selector, Case_Ignorable, Grapheme_Extend
+U+180E   ᠎   MONGOLIAN VOWEL SEPARATOR              Cf   Mongolian U   0    Control        Format           Default_Ignorable, Case_Ignorable
+U+180F   ᠏   MONGOLIAN FREE VARIATION SELECTOR FOUR Mn   Mongolian T   0    Extend         Extend           Default_Ignorable, Variation_Selector, Case_Ignorable, Grapheme_Extend
+U+1810   ᠐   MONGOLIAN DIGIT ZERO                   Nd   Mongolian U   0    Other          Numeric          
+U+1811   ᠑   MONGOLIAN DIGIT ONE                    Nd   Mongolian U   0    Other          Numeric          
+U+1812   ᠒   MONGOLIAN DIGIT TWO                    Nd   Mongolian U   0    Other          Numeric          
+U+1813   ᠓   MONGOLIAN DIGIT THREE                  Nd   Mongolian U   0    Other          Numeric          
+U+1814   ᠔   MONGOLIAN DIGIT FOUR                   Nd   Mongolian U   0    Other          Numeric          
+U+1815   ᠕   MONGOLIAN DIGIT FIVE                   Nd   Mongolian U   0    Other          Numeric          
+U+1816   ᠖   MONGOLIAN DIGIT SIX                    Nd   Mongolian U   0    Other          Numeric          
+U+1817   ᠗   MONGOLIAN DIGIT SEVEN                  Nd   Mongolian U   0    Other          Numeric          
+U+1818   ᠘   MONGOLIAN DIGIT EIGHT                  Nd   Mongolian U   0    Other          Numeric          
+U+1819   ᠙   MONGOLIAN DIGIT NINE                   Nd   Mongolian U   0    Other          Numeric          
+U+181A   ·   — 未分配 / 保留 —                           Cn   Unknown  U   0    Other          Other            
+U+181B   ·   — 未分配 / 保留 —                           Cn   Unknown  U   0    Other          Other            
+U+181C   ·   — 未分配 / 保留 —                           Cn   Unknown  U   0    Other          Other            
+U+181D   ·   — 未分配 / 保留 —                           Cn   Unknown  U   0    Other          Other            
+U+181E   ·   — 未分配 / 保留 —                           Cn   Unknown  U   0    Other          Other            
+U+181F   ·   — 未分配 / 保留 —                           Cn   Unknown  U   0    Other          Other            
+U+1820   ᠠ   MONGOLIAN LETTER A                     Lo   Mongolian D   0    Other          ALetter          
+U+1821   ᠡ   MONGOLIAN LETTER E                     Lo   Mongolian D   0    Other          ALetter          
+U+1822   ᠢ   MONGOLIAN LETTER I                     Lo   Mongolian D   0    Other          ALetter          
+U+1823   ᠣ   MONGOLIAN LETTER O                     Lo   Mongolian D   0    Other          ALetter          
+U+1824   ᠤ   MONGOLIAN LETTER U                     Lo   Mongolian D   0    Other          ALetter          
+U+1825   ᠥ   MONGOLIAN LETTER OE                    Lo   Mongolian D   0    Other          ALetter          
+U+1826   ᠦ   MONGOLIAN LETTER UE                    Lo   Mongolian D   0    Other          ALetter          
+U+1827   ᠧ   MONGOLIAN LETTER EE                    Lo   Mongolian D   0    Other          ALetter          
+U+1828   ᠨ   MONGOLIAN LETTER NA                    Lo   Mongolian D   0    Other          ALetter          
+U+1829   ᠩ   MONGOLIAN LETTER ANG                   Lo   Mongolian D   0    Other          ALetter          
+U+182A   ᠪ   MONGOLIAN LETTER BA                    Lo   Mongolian D   0    Other          ALetter          
+U+182B   ᠫ   MONGOLIAN LETTER PA                    Lo   Mongolian D   0    Other          ALetter          
+U+182C   ᠬ   MONGOLIAN LETTER QA                    Lo   Mongolian D   0    Other          ALetter          
+U+182D   ᠭ   MONGOLIAN LETTER GA                    Lo   Mongolian D   0    Other          ALetter          
+U+182E   ᠮ   MONGOLIAN LETTER MA                    Lo   Mongolian D   0    Other          ALetter          
+U+182F   ᠯ   MONGOLIAN LETTER LA                    Lo   Mongolian D   0    Other          ALetter          
+U+1830   ᠰ   MONGOLIAN LETTER SA                    Lo   Mongolian D   0    Other          ALetter          
+U+1831   ᠱ   MONGOLIAN LETTER SHA                   Lo   Mongolian D   0    Other          ALetter          
+U+1832   ᠲ   MONGOLIAN LETTER TA                    Lo   Mongolian D   0    Other          ALetter          
+U+1833   ᠳ   MONGOLIAN LETTER DA                    Lo   Mongolian D   0    Other          ALetter          
+U+1834   ᠴ   MONGOLIAN LETTER CHA                   Lo   Mongolian D   0    Other          ALetter          
+U+1835   ᠵ   MONGOLIAN LETTER JA                    Lo   Mongolian D   0    Other          ALetter          
+U+1836   ᠶ   MONGOLIAN LETTER YA                    Lo   Mongolian D   0    Other          ALetter          
+U+1837   ᠷ   MONGOLIAN LETTER RA                    Lo   Mongolian D   0    Other          ALetter          
+U+1838   ᠸ   MONGOLIAN LETTER WA                    Lo   Mongolian D   0    Other          ALetter          
+U+1839   ᠹ   MONGOLIAN LETTER FA                    Lo   Mongolian D   0    Other          ALetter          
+U+183A   ᠺ   MONGOLIAN LETTER KA                    Lo   Mongolian D   0    Other          ALetter          
+U+183B   ᠻ   MONGOLIAN LETTER KHA                   Lo   Mongolian D   0    Other          ALetter          
+U+183C   ᠼ   MONGOLIAN LETTER TSA                   Lo   Mongolian D   0    Other          ALetter          
+U+183D   ᠽ   MONGOLIAN LETTER ZA                    Lo   Mongolian D   0    Other          ALetter          
+U+183E   ᠾ   MONGOLIAN LETTER HAA                   Lo   Mongolian D   0    Other          ALetter          
+U+183F   ᠿ   MONGOLIAN LETTER ZRA                   Lo   Mongolian D   0    Other          ALetter          
+U+1840   ᡀ   MONGOLIAN LETTER LHA                   Lo   Mongolian D   0    Other          ALetter          
+U+1841   ᡁ   MONGOLIAN LETTER ZHI                   Lo   Mongolian D   0    Other          ALetter          
+U+1842   ᡂ   MONGOLIAN LETTER CHI                   Lo   Mongolian D   0    Other          ALetter          
+U+1843   ᡃ   MONGOLIAN LETTER TODO LONG VOWEL SIGN  Lm   Mongolian D   0    Other          ALetter          Case_Ignorable
+U+1844   ᡄ   MONGOLIAN LETTER TODO E                Lo   Mongolian D   0    Other          ALetter          
+U+1845   ᡅ   MONGOLIAN LETTER TODO I                Lo   Mongolian D   0    Other          ALetter          
+U+1846   ᡆ   MONGOLIAN LETTER TODO O                Lo   Mongolian D   0    Other          ALetter          
+U+1847   ᡇ   MONGOLIAN LETTER TODO U                Lo   Mongolian D   0    Other          ALetter          
+U+1848   ᡈ   MONGOLIAN LETTER TODO OE               Lo   Mongolian D   0    Other          ALetter          
+U+1849   ᡉ   MONGOLIAN LETTER TODO UE               Lo   Mongolian D   0    Other          ALetter          
+U+184A   ᡊ   MONGOLIAN LETTER TODO ANG              Lo   Mongolian D   0    Other          ALetter          
+U+184B   ᡋ   MONGOLIAN LETTER TODO BA               Lo   Mongolian D   0    Other          ALetter          
+U+184C   ᡌ   MONGOLIAN LETTER TODO PA               Lo   Mongolian D   0    Other          ALetter          
+U+184D   ᡍ   MONGOLIAN LETTER TODO QA               Lo   Mongolian D   0    Other          ALetter          
+U+184E   ᡎ   MONGOLIAN LETTER TODO GA               Lo   Mongolian D   0    Other          ALetter          
+U+184F   ᡏ   MONGOLIAN LETTER TODO MA               Lo   Mongolian D   0    Other          ALetter          
+U+1850   ᡐ   MONGOLIAN LETTER TODO TA               Lo   Mongolian D   0    Other          ALetter          
+U+1851   ᡑ   MONGOLIAN LETTER TODO DA               Lo   Mongolian D   0    Other          ALetter          
+U+1852   ᡒ   MONGOLIAN LETTER TODO CHA              Lo   Mongolian D   0    Other          ALetter          
+U+1853   ᡓ   MONGOLIAN LETTER TODO JA               Lo   Mongolian D   0    Other          ALetter          
+U+1854   ᡔ   MONGOLIAN LETTER TODO TSA              Lo   Mongolian D   0    Other          ALetter          
+U+1855   ᡕ   MONGOLIAN LETTER TODO YA               Lo   Mongolian D   0    Other          ALetter          
+U+1856   ᡖ   MONGOLIAN LETTER TODO WA               Lo   Mongolian D   0    Other          ALetter          
+U+1857   ᡗ   MONGOLIAN LETTER TODO KA               Lo   Mongolian D   0    Other          ALetter          
+U+1858   ᡘ   MONGOLIAN LETTER TODO GAA              Lo   Mongolian D   0    Other          ALetter          
+U+1859   ᡙ   MONGOLIAN LETTER TODO HAA              Lo   Mongolian D   0    Other          ALetter          
+U+185A   ᡚ   MONGOLIAN LETTER TODO JIA              Lo   Mongolian D   0    Other          ALetter          
+U+185B   ᡛ   MONGOLIAN LETTER TODO NIA              Lo   Mongolian D   0    Other          ALetter          
+U+185C   ᡜ   MONGOLIAN LETTER TODO DZA              Lo   Mongolian D   0    Other          ALetter          
+U+185D   ᡝ   MONGOLIAN LETTER SIBE E                Lo   Mongolian D   0    Other          ALetter          
+U+185E   ᡞ   MONGOLIAN LETTER SIBE I                Lo   Mongolian D   0    Other          ALetter          
+U+185F   ᡟ   MONGOLIAN LETTER SIBE IY               Lo   Mongolian D   0    Other          ALetter          
+U+1860   ᡠ   MONGOLIAN LETTER SIBE UE               Lo   Mongolian D   0    Other          ALetter          
+U+1861   ᡡ   MONGOLIAN LETTER SIBE U                Lo   Mongolian D   0    Other          ALetter          
+U+1862   ᡢ   MONGOLIAN LETTER SIBE ANG              Lo   Mongolian D   0    Other          ALetter          
+U+1863   ᡣ   MONGOLIAN LETTER SIBE KA               Lo   Mongolian D   0    Other          ALetter          
+U+1864   ᡤ   MONGOLIAN LETTER SIBE GA               Lo   Mongolian D   0    Other          ALetter          
+U+1865   ᡥ   MONGOLIAN LETTER SIBE HA               Lo   Mongolian D   0    Other          ALetter          
+U+1866   ᡦ   MONGOLIAN LETTER SIBE PA               Lo   Mongolian D   0    Other          ALetter          
+U+1867   ᡧ   MONGOLIAN LETTER SIBE SHA              Lo   Mongolian D   0    Other          ALetter          
+U+1868   ᡨ   MONGOLIAN LETTER SIBE TA               Lo   Mongolian D   0    Other          ALetter          
+U+1869   ᡩ   MONGOLIAN LETTER SIBE DA               Lo   Mongolian D   0    Other          ALetter          
+U+186A   ᡪ   MONGOLIAN LETTER SIBE JA               Lo   Mongolian D   0    Other          ALetter          
+U+186B   ᡫ   MONGOLIAN LETTER SIBE FA               Lo   Mongolian D   0    Other          ALetter          
+U+186C   ᡬ   MONGOLIAN LETTER SIBE GAA              Lo   Mongolian D   0    Other          ALetter          
+U+186D   ᡭ   MONGOLIAN LETTER SIBE HAA              Lo   Mongolian D   0    Other          ALetter          
+U+186E   ᡮ   MONGOLIAN LETTER SIBE TSA              Lo   Mongolian D   0    Other          ALetter          
+U+186F   ᡯ   MONGOLIAN LETTER SIBE ZA               Lo   Mongolian D   0    Other          ALetter          
+U+1870   ᡰ   MONGOLIAN LETTER SIBE RAA              Lo   Mongolian D   0    Other          ALetter          
+U+1871   ᡱ   MONGOLIAN LETTER SIBE CHA              Lo   Mongolian D   0    Other          ALetter          
+U+1872   ᡲ   MONGOLIAN LETTER SIBE ZHA              Lo   Mongolian D   0    Other          ALetter          
+U+1873   ᡳ   MONGOLIAN LETTER MANCHU I              Lo   Mongolian D   0    Other          ALetter          
+U+1874   ᡴ   MONGOLIAN LETTER MANCHU KA             Lo   Mongolian D   0    Other          ALetter          
+U+1875   ᡵ   MONGOLIAN LETTER MANCHU RA             Lo   Mongolian D   0    Other          ALetter          
+U+1876   ᡶ   MONGOLIAN LETTER MANCHU FA             Lo   Mongolian D   0    Other          ALetter          
+U+1877   ᡷ   MONGOLIAN LETTER MANCHU ZHA            Lo   Mongolian D   0    Other          ALetter          
+U+1878   ᡸ   MONGOLIAN LETTER CHA WITH TWO DOTS     Lo   Mongolian D   0    Other          ALetter          
+U+1879   ·   — 未分配 / 保留 —                           Cn   Unknown  U   0    Other          Other            
+U+187A   ·   — 未分配 / 保留 —                           Cn   Unknown  U   0    Other          Other            
+U+187B   ·   — 未分配 / 保留 —                           Cn   Unknown  U   0    Other          Other            
+U+187C   ·   — 未分配 / 保留 —                           Cn   Unknown  U   0    Other          Other            
+U+187D   ·   — 未分配 / 保留 —                           Cn   Unknown  U   0    Other          Other            
+U+187E   ·   — 未分配 / 保留 —                           Cn   Unknown  U   0    Other          Other            
+U+187F   ·   — 未分配 / 保留 —                           Cn   Unknown  U   0    Other          Other            
+U+1880   ᢀ   MONGOLIAN LETTER ALI GALI ANUSVARA ONE Lo   Mongolian U   0    Other          ALetter          
+U+1881   ᢁ   MONGOLIAN LETTER ALI GALI VISARGA ONE  Lo   Mongolian U   0    Other          ALetter          
+U+1882   ᢂ   MONGOLIAN LETTER ALI GALI DAMARU       Lo   Mongolian U   0    Other          ALetter          
+U+1883   ᢃ   MONGOLIAN LETTER ALI GALI UBADAMA      Lo   Mongolian U   0    Other          ALetter          
+U+1884   ᢄ   MONGOLIAN LETTER ALI GALI INVERTED UBA Lo   Mongolian U   0    Other          ALetter          
+U+1885   ᢅ   MONGOLIAN LETTER ALI GALI BALUDA       Mn   Mongolian T   0    Extend         Extend           Case_Ignorable, Grapheme_Extend
+U+1886   ᢆ   MONGOLIAN LETTER ALI GALI THREE BALUDA Mn   Mongolian T   0    Extend         Extend           Case_Ignorable, Grapheme_Extend
+U+1887   ᢇ   MONGOLIAN LETTER ALI GALI A            Lo   Mongolian D   0    Other          ALetter          
+U+1888   ᢈ   MONGOLIAN LETTER ALI GALI I            Lo   Mongolian D   0    Other          ALetter          
+U+1889   ᢉ   MONGOLIAN LETTER ALI GALI KA           Lo   Mongolian D   0    Other          ALetter          
+U+188A   ᢊ   MONGOLIAN LETTER ALI GALI NGA          Lo   Mongolian D   0    Other          ALetter          
+U+188B   ᢋ   MONGOLIAN LETTER ALI GALI CA           Lo   Mongolian D   0    Other          ALetter          
+U+188C   ᢌ   MONGOLIAN LETTER ALI GALI TTA          Lo   Mongolian D   0    Other          ALetter          
+U+188D   ᢍ   MONGOLIAN LETTER ALI GALI TTHA         Lo   Mongolian D   0    Other          ALetter          
+U+188E   ᢎ   MONGOLIAN LETTER ALI GALI DDA          Lo   Mongolian D   0    Other          ALetter          
+U+188F   ᢏ   MONGOLIAN LETTER ALI GALI NNA          Lo   Mongolian D   0    Other          ALetter          
+U+1890   ᢐ   MONGOLIAN LETTER ALI GALI TA           Lo   Mongolian D   0    Other          ALetter          
+U+1891   ᢑ   MONGOLIAN LETTER ALI GALI DA           Lo   Mongolian D   0    Other          ALetter          
+U+1892   ᢒ   MONGOLIAN LETTER ALI GALI PA           Lo   Mongolian D   0    Other          ALetter          
+U+1893   ᢓ   MONGOLIAN LETTER ALI GALI PHA          Lo   Mongolian D   0    Other          ALetter          
+U+1894   ᢔ   MONGOLIAN LETTER ALI GALI SSA          Lo   Mongolian D   0    Other          ALetter          
+U+1895   ᢕ   MONGOLIAN LETTER ALI GALI ZHA          Lo   Mongolian D   0    Other          ALetter          
+U+1896   ᢖ   MONGOLIAN LETTER ALI GALI ZA           Lo   Mongolian D   0    Other          ALetter          
+U+1897   ᢗ   MONGOLIAN LETTER ALI GALI AH           Lo   Mongolian D   0    Other          ALetter          
+U+1898   ᢘ   MONGOLIAN LETTER TODO ALI GALI TA      Lo   Mongolian D   0    Other          ALetter          
+U+1899   ᢙ   MONGOLIAN LETTER TODO ALI GALI ZHA     Lo   Mongolian D   0    Other          ALetter          
+U+189A   ᢚ   MONGOLIAN LETTER MANCHU ALI GALI GHA   Lo   Mongolian D   0    Other          ALetter          
+U+189B   ᢛ   MONGOLIAN LETTER MANCHU ALI GALI NGA   Lo   Mongolian D   0    Other          ALetter          
+U+189C   ᢜ   MONGOLIAN LETTER MANCHU ALI GALI CA    Lo   Mongolian D   0    Other          ALetter          
+U+189D   ᢝ   MONGOLIAN LETTER MANCHU ALI GALI JHA   Lo   Mongolian D   0    Other          ALetter          
+U+189E   ᢞ   MONGOLIAN LETTER MANCHU ALI GALI TTA   Lo   Mongolian D   0    Other          ALetter          
+U+189F   ᢟ   MONGOLIAN LETTER MANCHU ALI GALI DDHA  Lo   Mongolian D   0    Other          ALetter          
+U+18A0   ᢠ   MONGOLIAN LETTER MANCHU ALI GALI TA    Lo   Mongolian D   0    Other          ALetter          
+U+18A1   ᢡ   MONGOLIAN LETTER MANCHU ALI GALI DHA   Lo   Mongolian D   0    Other          ALetter          
+U+18A2   ᢢ   MONGOLIAN LETTER MANCHU ALI GALI SSA   Lo   Mongolian D   0    Other          ALetter          
+U+18A3   ᢣ   MONGOLIAN LETTER MANCHU ALI GALI CYA   Lo   Mongolian D   0    Other          ALetter          
+U+18A4   ᢤ   MONGOLIAN LETTER MANCHU ALI GALI ZHA   Lo   Mongolian D   0    Other          ALetter          
+U+18A5   ᢥ   MONGOLIAN LETTER MANCHU ALI GALI ZA    Lo   Mongolian D   0    Other          ALetter          
+U+18A6   ᢦ   MONGOLIAN LETTER ALI GALI HALF U       Lo   Mongolian D   0    Other          ALetter          
+U+18A7   ᢧ   MONGOLIAN LETTER ALI GALI HALF YA      Lo   Mongolian D   0    Other          ALetter          
+U+18A8   ᢨ   MONGOLIAN LETTER MANCHU ALI GALI BHA   Lo   Mongolian D   0    Other          ALetter          
+U+18A9   ᢩ   MONGOLIAN LETTER ALI GALI DAGALGA      Mn   Mongolian T   228  Extend         Extend           Case_Ignorable, Grapheme_Extend
+U+18AA   ᢪ   MONGOLIAN LETTER MANCHU ALI GALI LHA   Lo   Mongolian D   0    Other          ALetter          
+U+18AB   ·   — 未分配 / 保留 —                           Cn   Unknown  U   0    Other          Other            
+U+18AC   ·   — 未分配 / 保留 —                           Cn   Unknown  U   0    Other          Other            
+U+18AD   ·   — 未分配 / 保留 —                           Cn   Unknown  U   0    Other          Other            
+U+18AE   ·   — 未分配 / 保留 —                           Cn   Unknown  U   0    Other          Other            
+U+18AF   ·   — 未分配 / 保留 —                           Cn   Unknown  U   0    Other          Other            
+
+====================================================================================================
+结构分析
+====================================================================================================
+
+-- 按名称前缀分组的结构段 --
+  MONGOLIAN    U+1800–U+18AA  158 个  gc=Po
+
+-- 蒙文元音与性别(阳性/阴性)对应（编辑器正字法校验用） --
+  U+1820 A                  阳性
+  U+1821 E                  阴性
+  U+1822 I                  中性
+  U+1823 O                  阳性
+  U+1824 U                  阳性
+  U+1825 OE                 阴性
+  U+1826 UE                 阴性
+  U+1827 EE                 阴性
+  U+1843 TODO LONG VOWEL    托忒长元音
+  U+1844 TODO E             托忒
+  U+1845 TODO I             托忒
+  U+1846 TODO O             托忒
+  U+1847 TODO U             托忒
+
+-- 未分配(保留)码位的连续段 --
+  U+181A–U+181F  (6 个)
+  U+1879–U+187F  (7 个)
+  U+18AB–U+18AF  (5 个)
