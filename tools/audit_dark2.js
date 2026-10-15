@@ -99,6 +99,28 @@ const get = p => new Promise((res, rej) => {
 
       const L = lum(bg);
       if (L <= 0.35) return;
+
+      /* 浅底本身不等于有问题 —— 关键看**里面的字读不读得出来**。
+         例：.home-fab 是青绿按钮配深色字，底色亮度 0.43 但对比度 7.9:1，
+         完全正常。若自身或后代文字对比度 ≥ 4.5，就放行。 */
+      const fg = parse(getComputedStyle(el).color);
+      if (fg) {
+        const fgE = fg.a >= 1 ? fg : over(fg, bg);
+        const hi = Math.max(lum(fgE), lum(bg)), lo = Math.min(lum(fgE), lum(bg));
+        if ((hi + 0.05) / (lo + 0.05) >= 4.5) {
+          /* 自身文字够清楚，再看有没有后代文字是深色的（深字浅底也正常） */
+          let ok = true;
+          el.querySelectorAll('*').forEach(c => {
+            if (!(c.textContent || '').trim()) return;
+            const cf = parse(getComputedStyle(c).color);
+            if (!cf) return;
+            const ce = cf.a >= 1 ? cf : over(cf, bg);
+            const h2 = Math.max(lum(ce), lum(bg)), l2 = Math.min(lum(ce), lum(bg));
+            if ((h2 + 0.05) / (l2 + 0.05) < 4.5) ok = false;
+          });
+          if (ok) return;
+        }
+      }
       const own = getComputedStyle(el).backgroundColor;
       const cls = (typeof el.className === 'string' && el.className.trim())
         ? '.' + el.className.trim().split(/\\s+/).slice(0,2).join('.') : '';

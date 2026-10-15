@@ -851,3 +851,29 @@ main p code,
 @media (max-width:980px){
   #tocToggle{top:28px}
 }
+
+/* =====================================================================
+   窄屏：代码块自动换行（不再需要左右拖动）
+   ---------------------------------------------------------------------
+   宽屏保留 `white-space:pre` 的原样 —— 空间够，换行反而打乱代码结构。
+   窄屏（≤720px）改成 pre-wrap + anywhere：
+     · pre-wrap     保留缩进与换行，但超长行折行
+     · anywhere     长标识符（aVeryLongFunctionName）也能断开
+   折行的那一行左侧加一条细引导线，提示「这是折过来的」。
+   ===================================================================== */
+@media (max-width:720px){
+  .code-wrap pre,
+  .out-wrap pre,
+  .term pre,
+  .plain-pre,
+  pre.tree,
+  .pv-wrap pre{
+    white-space:pre-wrap !important;
+    overflow-wrap:anywhere !important;
+    word-break:break-word !important;
+  }
+  /* 输入框 / 终端区同理 */
+  .code-wrap pre code,.out-wrap pre code{white-space:pre-wrap !important}
+  /* 行内 code 不要被长串撑破 */
+  code,td.c,th.c{overflow-wrap:anywhere;word-break:break-word}
+}

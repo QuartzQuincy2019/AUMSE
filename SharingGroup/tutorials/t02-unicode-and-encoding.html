@@ -548,16 +548,16 @@ QByteArray b = s.toUtf8();                <span class="hl-c">/* 文字 → 字�
 <h4>② 画字：字体是按码位取字形的</h4>
 <p>要显示一个蒙文字母，流程是：</p>
 <div class="pipeline" style="display:flex;flex-wrap:wrap;gap:0;margin:16px 0">
-  <div style="flex:1 1 130px;border:1px solid var(--line);border-radius:9px;padding:10px 12px;background:#fff">
+  <div style="flex:1 1 130px;border:1px solid var(--line);border-radius:9px;padding:10px 12px;background:var(--sfc)">
     <div style="font-weight:650;font-size:13.5px">字符</div>
     <div style="font-size:12px;color:var(--fg-3)">ᠮ</div></div>
-  <div style="flex:1 1 130px;border:1px solid var(--line);border-radius:9px;padding:10px 12px;background:#fff;margin-left:24px">
+  <div style="flex:1 1 130px;border:1px solid var(--line);border-radius:9px;padding:10px 12px;background:var(--sfc);margin-left:24px">
     <div style="font-weight:650;font-size:13.5px">码位</div>
     <div style="font-size:12px;color:var(--fg-3)">U+182E</div></div>
-  <div style="flex:1 1 130px;border:1px solid var(--line);border-radius:9px;padding:10px 12px;background:#fff;margin-left:24px">
+  <div style="flex:1 1 130px;border:1px solid var(--line);border-radius:9px;padding:10px 12px;background:var(--sfc);margin-left:24px">
     <div style="font-weight:650;font-size:13.5px">字体里的字形</div>
     <div style="font-size:12px;color:var(--fg-3)">查 cmap 表，按上下文选 init/medi/fina</div></div>
-  <div style="flex:1 1 130px;border:1px solid var(--line);border-radius:9px;padding:10px 12px;background:#fff;margin-left:24px">
+  <div style="flex:1 1 130px;border:1px solid var(--line);border-radius:9px;padding:10px 12px;background:var(--sfc);margin-left:24px">
     <div style="font-weight:650;font-size:13.5px">绘制</div>
     <div style="font-size:12px;color:var(--fg-3)">把字形轮廓画到屏幕上</div></div>
 </div>
