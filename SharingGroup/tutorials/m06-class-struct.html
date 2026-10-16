@@ -45,7 +45,7 @@
   还有「挨打」「加血」「攻击」这些行为。</p>
   <p>这一讲就是把这类东西<b>打包成一个整体</b>。
   语法在 C 和 C++ 里都叫 <code>struct</code>，C++ 还多了一个 <code>class</code>。</p>
-  <p>文中所有「运行结果」与「编译错误」均按 C++17 标准推演。</p>
+  <p>文中所有「运行结果」与「编译错误」均均使用 g++ 13.1.0（<code>-std=c++17</code>）实际编译运行核对。</p>
 </div>
 
 <!-- ============================================================ -->
@@ -408,7 +408,7 @@ Archer HP 100/100</pre></div>
 <h3 id="s5c">5.3 亲眼看看编译错误</h3>
 
 <p>如果你从外面直接改私有成员，<b>编译器根本不会让它编过</b>。
-按 C++17 标准推演（编译器给出的报错应当一致）：</p>
+均使用 g++ 13.1.0（<code>-std=c++17</code>）实际编译运行核对（编译器指纹：<code>GCC 13.1.0</code> · MinGW-w64 x86_64-posix-seh；验证程序与产物见 <code>tools/_c_check/</code>）：</p>
 
 <div class="code-wrap"><div class="bar"><span class="dot r"></span><span class="dot y"></span><span class="dot g"></span><span class="name">故意写错：从外面改私有成员</span><span class="cpp-badge">C++</span><span class="cp">复制</span></div><pre><span class="hl-k">class</span> Player {
 <span class="hl-k">private</span>:
@@ -711,7 +711,7 @@ ptr-&gt;<span class="hl-f">hp</span> = <span class="hl-n">10</span>;      <span 
 <footer>
 UME 项目组内部教程 · M06《类、结构体》<br>
 代码示例均以 <b>Consolas</b> 等宽字体呈现；文中所有「运行结果」与「编译错误」
-按 C++17 标准推演。
+均使用 g++ 13.1.0（<code>-std=c++17</code>）实际编译运行核对。
 </footer>
 
 </main>
