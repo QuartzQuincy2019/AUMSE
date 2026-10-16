@@ -38,6 +38,25 @@ _HOME_JS = os.path.join(REPO, "tools", "home-cards.js")
 META = [(p[1], p[3], p[4], p[5], p[2], bool(p[6])) for p in PAGES]
 FE = [(a, b, c, d, e, f) for a, b, c, d, e, f in FE_PAGES]
 
+# 非 FE 系列每篇的「语言标注」。
+#   按系列给即可 —— 这几组的主线语言各自统一：
+#     T  理论三篇：示例都是 HTML
+#     F  F01/F02 是命令提示符、F03 是编译与链接 → Shell
+#     M  C++（M08 讲 C 字符串，但通篇用 C++ 的 iostream 演示）
+#     Q  C++
+#     R  R01 只讲字体度量、R02/R03 是 C++ → 归 C++
+#     E  E01/E03 是 C++，E02 是批处理 → 见下面的单篇覆盖
+#   以后某篇换了主线语言，加一条 PAGE_LANG 覆盖即可。
+SERIES_LANG = {"T": "HTML", "F": "Shell", "M": "C++",
+               "Q": "C++", "R": "C++", "E": "C++"}
+PAGE_LANG = {
+    "e02-batch-and-cmd.html": "Shell",
+    # R01 讲的是字体度量（EM Square / x 字高 / 行高），里面一个编程语言例子
+    # 都没有 —— 归到 R 系列的默认 C++ 会误导。它讲的东西是 CSS 关心的，
+    # 而且教程页自己的语言徽章也是 CSS，这里必须与之一致。
+    "r01-font-design-metrics.html": "CSS",
+}
+
 
 # ---------------------------------------------------------------- 组长留言
 # 原文一字不动。日期单独一行，右对齐。
@@ -111,6 +130,20 @@ a.card .sb{display:inline-block;margin-top:8px;font:700 10.5px/1.8 var(--sans);
 .k-T{background:#fdf3dc;color:#8a6008;border:1px solid #f0dcb4}
 .k-R{background:#fbdfe0;color:#a02b40;border:1px solid #f2c6c9}
 .k-empty{background:#f1f3f6;color:#6b7684;border:1px dashed #ccd5e3}
+
+/* 语言标注 —— 与教程页的 .lang 同一套色值（见 tools/build_tg.py）。
+   首页没有外链样式表（全部内联），所以这里必须再写一份。
+   色值改动时两处都要改：build_tg.py 的 LANG_CSS 和这里。 */
+.lang{display:inline-block;font:700 11px/1.7 var(--mono);
+  border-radius:999px;padding:0 9px;vertical-align:1px;
+  color:#fff;border:1px solid transparent;letter-spacing:.02em}
+.lang.html{background:#cf4520}          /* 橙红 4.64 */
+.lang.css{background:#0478ab}           /* 天蓝 4.91 */
+.lang.cpp{background:#2456c4}           /* 深蓝 6.56 */
+.lang.c{background:#7d5cd6}             /* 蓝紫 4.80 */
+.lang.sh{background:#3f6212}            /* 橄榄绿 7.34 */
+.lang.py{background:#1f6f5c}            /* 松绿 5.73 */
+.lang.js{background:#ffd400;color:#0d1110}   /* 正黄 + 深字 13.28 */
 
 .note{margin-top:46px;padding:18px 20px;border:1px solid var(--line);
   border-radius:12px;background:var(--bg-soft)}
@@ -204,6 +237,16 @@ a.card .sb{display:inline-block;margin-top:8px;font:700 10.5px/1.8 var(--sans);
   .k-E{background:#22152c;color:#d6a6f2;border-color:#3d2a4d}
   .k-R{background:#291619;color:#f7a8b6;border-color:#4a2830}
   .k-empty{background:#1b1e25;color:#95a0b0;border-color:#3a414c}
+  /* 语言标注（暗色）—— 除 JS 外都反过来：浅底 + 深字。
+     JS 沿用同一个正黄 + 深字，与教程页保持一致。 */
+  .lang{color:#12161d;border-color:transparent}
+  .lang.html{background:#ffb4a2}
+  .lang.css{background:#7dd3fc}
+  .lang.cpp{background:#a5c8ff}
+  .lang.c{background:#c4b5fd}
+  .lang.sh{background:#bef264}
+  .lang.py{background:#7dd3b0}
+  .lang.js{background:#ffd400;color:#0d1110}
   .note table td{border-bottom-color:var(--line)}
   .lead-msg{
     border-color:var(--gold-line);border-left-color:var(--gold);
@@ -269,17 +312,21 @@ a.card .sb{display:inline-block;margin-top:8px;font:700 10.5px/1.8 var(--sans);
 
 
 def card(fn, num, title, desc, kind, star):
-    kcls = {"C": "k-c", "C++": "k-cpp", "Extra": "k-extra", "File": "k-file",
-            "HTML": "k-html", "CSS": "k-css", "Theory": "k-th",
-            "M": "k-M", "Q": "k-Q", "E": "k-E", "F": "k-F",
-            "T": "k-T", "R": "k-R"}.get(kind, "k-c")
+    # 首页卡片上的「语言标注」—— 配色类与教程页的 .lang 是同一套。
+    # 参数 kind 现在传的是**语言**（HTML / CSS / JS / C / C++ / Shell），
+    # 不再是系列 key。原先这里传的是系列 key，于是八篇 FE 全显示「FE」，
+    # 浏览器里根本看不出哪篇讲 HTML、哪篇讲 CSS、哪篇讲 JS。
+    lcls = {"HTML": "lang html", "CSS": "lang css", "JS": "lang js",
+            "C": "lang c", "C++": "lang cpp",
+            "Shell": "lang sh", "Python": "lang py"}.get(kind)
+    lang_chip = ('<span class="%s">%s</span>' % (lcls, kind)) if lcls else ''
     return ('<a class="card%s" href="SharingGroup/tutorials/%s" '
             'target="_blank" rel="noopener">'
             '<span class="no">%s</span>'
-            '<span class="k %s">%s</span>'
+            '%s'
             '<span class="tt">%s</span>'
             '<span class="ds">%s</span>%s</a>'
-            % (" star" if star else "", fn, num, kcls, kind, title, desc,
+            % (" star" if star else "", fn, num, lang_chip, title, desc,
                '<br><span class="sb">&#9733; 重点</span>' if star else ""))
 
 
@@ -298,10 +345,17 @@ def build_html():
     for sk in ORDER:
         s = SERIES[sk]
         ps = pages_of(sk)
-        items = [(p[1], p[3], p[4], p[5], sk, bool(p[6])) for p in ps]
+        # 这里第 5 个字段必须是**语言**（p[2] 是系列 key，不是语言）。
+        # 原先写成 sk，等于把语言覆盖成系列名，首页卡片上就看不到
+        # HTML / CSS / JS 了 —— FE 八篇会一律显示「FE」。
+        # 非 FE 各页的数据里没有语言字段，所以按系列查 SERIES_LANG。
+        items = [(p[1], p[3], p[4], p[5],
+                  PAGE_LANG.get(p[1], SERIES_LANG.get(sk, "C++")),
+                  bool(p[6])) for p in ps]
         groups.append({"key": sk, "label": s["label"], "banner": s["banner"],
                        "desc": s["desc"], "count": len(items),
                        "items": items})
+    # FE 页的 FE_PAGES 里第 5 个字段本来就是语言（HTML / CSS / JS），直接用
     fe_items = [(a, b, c, d, e, f) for a, b, c, d, e, f in FE_PAGES]
     groups.append({"key": "FE", "label": "前端 · FE",
                    "banner": "FE 系列 · 前端基础",
@@ -322,10 +376,23 @@ def build_html():
 
     def plain(items):
         out = ["<ul>"]
+        # noscript 兜底列表：这里不能依赖 .lang 的样式表（虽然首页的
+        # <style> 里也有），直接把颜色内联上去，确保禁用 JS 时也看得见语言。
+        INLINE = {"HTML": "#cf4520", "CSS": "#0478ab", "JS": "#ffd400",
+                  "C++": "#2456c4", "C": "#7d5cd6", "Shell": "#3f6212",
+                  "Python": "#1f6f5c"}
         for a, b, c, d, e, f in items:
             s = " <b>&#9733;</b>" if f else ""
-            out.append('<li><a href="SharingGroup/tutorials/%s">%s %s</a>%s</li>'
-                       % (a, b, c, s))
+            bg = INLINE.get(e)
+            chip = ""
+            if bg:
+                fg = "#0d1110" if e == "JS" else "#fff"
+                chip = ('<span style="display:inline-block;font:700 11px/1.7 '
+                        'Consolas,monospace;border-radius:999px;padding:0 8px;'
+                        'margin-right:6px;background:%s;color:%s">%s</span>'
+                        % (bg, fg, e))
+            out.append('<li>%s<a href="SharingGroup/tutorials/%s">%s %s</a>%s</li>'
+                       % (chip, a, b, c, s))
         out.append("</ul>")
         return "".join(out)
 

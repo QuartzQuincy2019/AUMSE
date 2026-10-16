@@ -14,7 +14,7 @@ EXPECT = {
     "t01-mongolian-script-intro.html": "html", "t02-unicode-and-encoding.html": "html",
     "t03-font-file-anatomy.html": "html",
     "f01-command-prompt.html": "sh", "f02-paths-and-env.html": "sh",
-    "f03-compile-and-link.html": "cpp",
+    "f03-compile-and-link.html": "sh",
     "m01-c-arrays.html": "cpp", "m02-c-functions.html": "cpp", "m03-c-types.html": "cpp",
     "m04-c-pointers.html": "cpp", "m05-memory.html": "cpp", "m06-class-struct.html": "cpp",
     "m07-scope.html": "cpp", "m08-c-strings.html": "cpp", "m09-vector-and-array.html": "cpp",

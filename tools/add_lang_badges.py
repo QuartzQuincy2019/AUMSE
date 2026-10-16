@@ -43,7 +43,9 @@ LANG = {
     # ---- F：文件操作（命令行 + 编译链接）----
     "f01-command-prompt.html": ("Shell", "sh"),
     "f02-paths-and-env.html": ("Shell", "sh"),
-    "f03-compile-and-link.html": ("C++", "cpp"),
+    # F03 讲的是编译/链接这套**工具链**（cl 命令行、静态库、LNK 报错），
+    # 代码只是被编译的素材 —— 所以归 Shell，与首页保持一致。
+    "f03-compile-and-link.html": ("Shell", "sh"),
     # ---- M：课本内容 ----
     "m01-c-arrays.html": ("C++", "cpp"),
     "m02-c-functions.html": ("C++", "cpp"),

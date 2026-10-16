@@ -17,11 +17,14 @@
   var D = window.__HOME__;
   if (!D) return;
 
-  /* 系列标记的配色类（与 make_pages.py 生成的 .k-* 对应） */
-  var KCLS = {
-    C: 'k-c', 'C++': 'k-cpp', Extra: 'k-extra', File: 'k-file',
-    HTML: 'k-html', CSS: 'k-css', Theory: 'k-th',
-    M: 'k-M', Q: 'k-Q', E: 'k-E', F: 'k-F', T: 'k-T', R: 'k-R', FE: 'k-html'
+  /* 语言标注的配色类 —— 与教程页的 .lang 同一套（见 tools/build_tg.py）。
+     数据里的 c.kind 现在一律是**语言**（HTML / CSS / JS / C / C++ / Shell），
+     不再是系列 key。
+     这里同时保留旧的系列 key 映射：万一有人还往数据里塞系列名，
+     也不至于把「M」当成语言显示出来。 */
+  var LCLS = {
+    HTML: 'lang html', CSS: 'lang css', JS: 'lang js',
+    C: 'lang c', 'C++': 'lang cpp', Shell: 'lang sh', Python: 'lang py'
   };
 
   function el(tag, cls, text) {
@@ -38,7 +41,9 @@
     a.rel = 'noopener';
 
     a.appendChild(el('span', 'no', c.num));
-    a.appendChild(el('span', 'k ' + (KCLS[c.kind] || 'k-c'), c.kind || ''));
+    if (LCLS[c.kind]) {
+      a.appendChild(el('span', LCLS[c.kind], c.kind));
+    }
     a.appendChild(el('span', 'tt', c.title));
     a.appendChild(el('span', 'ds', c.desc));
 
