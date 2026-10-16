@@ -1,0 +1,745 @@
+<p><span class="lang cpp">C++</span></p>
+
+<p>上一篇（Q02）把「引用」本身讲清楚了：它是<b>语法上的别名、实现上的指针</b>。</p>
+
+<p>这一篇换个角度 —— <b>看它在真实项目里省下多少内存</b>，以及
+<b>「传递指针」和「传递引用」到底差在哪</b>。</p>
+
+<p>背景换成游戏。游戏里最典型的对象就是「角色」，而角色恰好是一个
+<b>又大又经常被传来传去</b>的东西 —— 拿它当例子，代价一眼就能看见。</p>
+
+<div class="card key">
+  <div class="card-t">这一篇的主线</div>
+  <p><b>传对象这件事，本质是在「搬内存」还是「递地址」之间选。</b></p>
+  <p>一个角色对象有一百多字节，一场战斗里每秒要被传几千次。
+  按值传 = 每次都搬一整份；按引用 / 指针传 = 每次只递 8 字节的地址。
+  <b>这就是本篇要论证的「大幅减少内存开销」。</b></p>
+</div>
+
+<div class="card note">
+  <div class="card-t">前置</div>
+  <p>Q02 讲的是引用本身（别名、绑定不可改）。这一篇假设你已经读过 Q02，
+  或者至少知道 <code>T&amp;</code> 是「别名」的意思。M04 讲指针、
+  M06 讲类与结构体，也都会用到。</p>
+</div>
+
+<h2 id="s1"><span class="n">1</span>例子：一个游戏角色</h2>
+
+<p>先看这一篇要反复用到的类。它就是最普通的写法 —— 一堆属性，
+没有任何花招：</p>
+
+<div class="code-wrap">
+  <div class="bar"><span class="dot r"></span><span class="dot y"></span><span class="dot g"></span>
+    <span class="name">Actor.h —— 游戏角色</span><span class="cp">复制</span></div>
+<pre><span class="hl-p">#include</span> <span class="hl-s">&lt;string&gt;</span>
+
+<span class="hl-k">class</span> Actor {
+<span class="hl-k">private</span>:
+    std::string full_name;   <span class="hl-c">// 全名，比如「灰羽·夜行者」</span>
+    std::string nickname;    <span class="hl-c">// 昵称，比如「小灰」</span>
+    std::string address;     <span class="hl-c">// 所在地图坐标名，比如「北境·霜牙岭」</span>
+    <span class="hl-k">int</span> maxLevel;            <span class="hl-c">// 等级上限</span>
+
+<span class="hl-k">public</span>:
+    <span class="hl-k">int</span> hp;                  <span class="hl-c">// 当前血量</span>
+    <span class="hl-k">int</span> maxHp;               <span class="hl-c">// 血量上限</span>
+    <span class="hl-k">int</span> atk;                 <span class="hl-c">// 攻击力</span>
+    <span class="hl-k">int</span> def;                 <span class="hl-c">// 防御力</span>
+    <span class="hl-k">int</span> mp;                  <span class="hl-c">// 当前法力</span>
+    <span class="hl-k">int</span> maxMp;               <span class="hl-c">// 法力上限</span>
+    <span class="hl-k">int</span> agi;                 <span class="hl-c">// 敏捷</span>
+    <span class="hl-k">int</span> luk;                 <span class="hl-c">// 幸运</span>
+};</pre>
+</div>
+
+<p>这样的类在实际项目里满地都是：<b>几个字符串 + 一堆数值属性</b>。
+它有两个特点，这一篇全靠它们展开：</p>
+
+<div class="alias">
+  <div class="row"><span class="k">它不小</span>
+    <span class="v">三个 <code>std::string</code> 加九个 <code>int</code>，
+    一个对象就上百字节</span></div>
+  <div class="row"><span class="k">它很忙</span>
+    <span class="v">战斗系统每帧都要读它的属性、算伤害、回血 ——
+    同一帧里被传进传出十几次很正常</span></div>
+</div>
+
+<div class="card tip">
+  <div class="card-t">为什么 <code>private</code> / <code>public</code> 这么分</div>
+  <p>名字和地址是<b>建立后就不该随便改</b>的东西 —— 改名要走改名卡，
+  换地图要走传送。而血量、法力这些<b>每帧都在变</b>，所以放开。</p>
+  <p>这个划分正好对应第 5 节要讲的：<b>只读的用 <code>const T&amp;</code>，
+  要改的用 <code>T&amp;</code></b>。</p>
+</div>
+
+<h2 id="s2"><span class="n">2</span>它到底占多少内存</h2>
+
+<p>要谈「省了多少」，先得知道「原来是多少」。把成员一个个加起来：</p>
+
+<div class="lay">
+<table>
+<thead><tr><th style="width:34%">成员</th><th style="width:26%">类型</th>
+<th style="width:18%">大小</th><th>说明</th></tr></thead>
+<tbody>
+<tr><td class="m">full_name</td><td class="m">std::string</td><td class="r">32</td>
+    <td>指针 + 长度 + 16 字节小缓冲</td></tr>
+<tr><td class="m">nickname</td><td class="m">std::string</td><td class="r">32</td>
+    <td>同上</td></tr>
+<tr><td class="m">address</td><td class="m">std::string</td><td class="r">32</td>
+    <td>同上</td></tr>
+<tr><td class="m">maxLevel, hp, maxHp, atk, def,<br>mp, maxMp, agi, luk</td>
+    <td class="m">int × 9</td><td class="r">36</td>
+    <td>每个 4 字节</td></tr>
+<tr class="sum"><td>合计</td><td class="m">—</td><td class="r">132</td>
+    <td>96 + 36，正好 4 的倍数，不用补空隙</td></tr>
+</tbody>
+</table>
+</div>
+
+<div class="card warn">
+  <div class="card-t">这三个 32 是怎么来的（以及为什么我没有写死）</div>
+  <p>多数 64 位编译器上 <code>sizeof(std::string)</code> 是 <b>32</b>：
+  一个指针（8）+ 一个长度（8）+ 16 字节的小字符串缓冲区。
+  那 16 字节是<b>短字符串优化（SSO）</b> —— 短名字直接存在对象里，
+  不长的时候才去堆上分配。</p>
+  <p><b>但这是实现细节，标准没规定。</b>换了标准库或平台，数字会变。
+  所以：<b>别记我这张表，去量你自己的。</b></p>
+</div>
+
+<div class="code-wrap">
+  <div class="bar"><span class="dot r"></span><span class="dot y"></span><span class="dot g"></span>
+    <span class="name">size.cpp —— 数字要自己量</span><span class="cp">复制</span></div>
+<pre><span class="hl-p">#include</span> <span class="hl-s">&lt;iostream&gt;</span>
+<span class="hl-p">#include</span> <span class="hl-s">&lt;string&gt;</span>
+<span class="hl-p">#include</span> <span class="hl-s">"Actor.h"</span>
+
+<span class="hl-k">int</span> main() {
+    std::cout &lt;&lt; <span class="hl-s">"sizeof(std::string) = "</span> &lt;&lt; <span class="hl-k">sizeof</span>(std::string) &lt;&lt; <span class="hl-s">"\n"</span>;
+    std::cout &lt;&lt; <span class="hl-s">"sizeof(Actor)       = "</span> &lt;&lt; <span class="hl-k">sizeof</span>(Actor)       &lt;&lt; <span class="hl-s">"\n"</span>;
+    std::cout &lt;&lt; <span class="hl-s">"sizeof(Actor*)      = "</span> &lt;&lt; <span class="hl-k">sizeof</span>(Actor*)      &lt;&lt; <span class="hl-s">"\n"</span>;
+}</pre>
+</div>
+<div class="out-wrap">
+  <div class="cap">输出（64 位，libstdc++）</div>
+<pre>sizeof(std::string) = 32
+sizeof(Actor)       = 132
+sizeof(Actor*)      = 8</pre>
+</div>
+
+<div class="take">
+  <b>关键的一个数字：</b>一个 <code>Actor</code> 是 <b>132 字节</b>，
+  而它的地址只有 <b>8 字节</b> —— <b>16.5 倍</b>。
+  记住这个比例，下面全都由它推出来。
+</div>
+
+<h2 id="s3"><span class="n">3</span>按值传递：每帧搬几千份角色</h2>
+
+<p>先看最容易写出来的那种函数 —— <b>参数直接写类型</b>：</p>
+
+<div class="code-wrap">
+  <div class="bar"><span class="dot r"></span><span class="dot y"></span><span class="dot g"></span>
+    <span class="name">battle.cpp —— 按值传递</span><span class="cp">复制</span></div>
+<pre><span class="hl-p">#include</span> <span class="hl-s">&lt;iostream&gt;</span>
+<span class="hl-p">#include</span> <span class="hl-s">"Actor.h"</span>
+
+<span class="hl-c">// 只读：看一眼攻击力，不改任何东西</span>
+<span class="hl-k">int</span> damageOf(Actor a) {
+    <span class="hl-k">return</span> a.atk * 2;
+}
+
+<span class="hl-c">// 要改：加血</span>
+<span class="hl-k">void</span> heal(Actor a, <span class="hl-k">int</span> amount) {
+    a.hp += amount;
+    <span class="hl-k">if</span> (a.hp &gt; a.maxHp) a.hp = a.maxHp;
+}
+
+<span class="hl-k">int</span> main() {
+    Actor hero;
+    hero.atk = 120;
+    hero.hp  = 50;
+    hero.maxHp = 200;
+
+    std::cout &lt;&lt; <span class="hl-s">"伤害 = "</span> &lt;&lt; damageOf(hero) &lt;&lt; <span class="hl-s">"\n"</span>;
+
+    heal(hero, 30);
+    std::cout &lt;&lt; <span class="hl-s">"治疗后 hp = "</span> &lt;&lt; hero.hp &lt;&lt; <span class="hl-s">"\n"</span>;
+}</pre>
+</div>
+<div class="out-wrap">
+  <div class="cap">输出</div>
+<pre>伤害 = 240
+治疗后 hp = 50</pre>
+</div>
+
+<div class="card warn">
+  <div class="card-t">两件事同时发生了 —— 一件浪费，一件是 bug</div>
+  <ol>
+    <li><b>浪费</b>：<code>damageOf(hero)</code> 只是要读一个 <code>atk</code>，
+    却把整个 132 字节复制了一遍。</li>
+    <li><b>bug</b>：<code>heal</code> 改的是<b>副本</b>，
+    所以 <code>hero.hp</code> 还是 50 —— 治疗完全没生效。</li>
+  </ol>
+  <p>两件事是同一个原因：<b>函数里的 <code>a</code> 不是 <code>hero</code>，
+  而是它的一份拷贝。</b></p>
+</div>
+
+<h3>浪费有多少：算一遍</h3>
+
+<p>假设一场战斗里有 <b>100 个角色</b>，跑在 <b>60 帧/秒</b>，
+每个角色每帧要被这类函数调用 <b>3 次</b>（算伤害、算治疗、刷新状态）：</p>
+
+<div class="cost">
+  <div class="hd">按值传递（<code>void heal(Actor a, int n)</code>）</div>
+  <div class="bd">
+    <div class="side">
+      <div class="lb">每次调用拷贝</div>
+      <div class="nb bad">132 B</div>
+      <div class="nt">= sizeof(Actor)</div>
+    </div>
+    <div class="side">
+      <div class="lb">调用次数</div>
+      <div class="nb">18 000 / 秒</div>
+      <div class="nt">100 角色 × 3 次 × 60 帧</div>
+    </div>
+    <div class="side">
+      <div class="lb">每秒搬运</div>
+      <div class="nb bad">约 2.3 MB</div>
+      <div class="nt">18000 × 132 B</div>
+    </div>
+  </div>
+</div>
+
+<p>而且这还只是「按值拷贝对象本身」。那三个 <code>std::string</code>
+如果内容较长（超过 16 字节的小缓冲），<b>拷贝时还要去堆上各分配一块内存</b> ——
+一次调用就是三次 <code>malloc</code> 加三次 <code>free</code>。</p>
+
+<div class="two">
+  <div class="side">
+    <div class="hd bad">名字短（走 SSO）</div>
+<pre>Actor a;              // 132 B
+a.full_name = "小灰";  // 3 字符
+a.nickname  = "灰羽";  // 2 字符
+
+heal(a, 30);
+// 拷贝 132 B，无堆分配</pre>
+  </div>
+  <div class="side">
+    <div class="hd bad">名字长（走堆）</div>
+<pre>Actor a;
+a.full_name = "灰羽·夜行者·第三形态";
+a.nickname  = "北境霜牙岭的守望者";
+
+heal(a, 30);
+// 拷贝 132 B + 3 次 malloc + 3 次 free</pre>
+  </div>
+</div>
+
+<div class="take">
+  <b>结论：</b>按值传递的代价是 <b>「对象多大就搬多大」×「调用多频繁」</b>。
+  角色越大、战斗越激烈，这个数字涨得越快 —— 而它<b>完全没必要</b>。
+</div>
+
+<h2 id="s4"><span class="n">4</span>按引用传递：只递一个地址</h2>
+
+<p>把参数类型后面加一个 <code>&amp;</code>，别的都不动：</p>
+
+<div class="code-wrap">
+  <div class="bar"><span class="dot r"></span><span class="dot y"></span><span class="dot g"></span>
+    <span class="name">battle2.cpp —— 按引用传递</span><span class="cp">复制</span></div>
+<pre><span class="hl-p">#include</span> <span class="hl-s">&lt;iostream&gt;</span>
+<span class="hl-p">#include</span> <span class="hl-s">"Actor.h"</span>
+
+<span class="hl-c">// 要改：加血 —— 这里的 a 就是外面那个角色本人</span>
+<span class="hl-k">void</span> heal(Actor&amp; a, <span class="hl-k">int</span> amount) {
+    a.hp += amount;
+    <span class="hl-k">if</span> (a.hp &gt; a.maxHp) a.hp = a.maxHp;
+}
+
+<span class="hl-k">int</span> main() {
+    Actor hero;
+    hero.hp = 50;
+    hero.maxHp = 200;
+
+    heal(hero, 30);
+    std::cout &lt;&lt; <span class="hl-s">"治疗后 hp = "</span> &lt;&lt; hero.hp &lt;&lt; <span class="hl-s">"\n"</span>;
+
+    heal(hero, 999);
+    std::cout &lt;&lt; <span class="hl-s">"再治一次 hp = "</span> &lt;&lt; hero.hp &lt;&lt; <span class="hl-s">"\n"</span>;
+}</pre>
+</div>
+<div class="out-wrap">
+  <div class="cap">输出</div>
+<pre>治疗后 hp = 80
+再治一次 hp = 200</pre>
+</div>
+
+<p>两件事一起变好了：</p>
+
+<div class="alias">
+  <div class="row"><span class="k">治疗生效了</span>
+    <span class="v">函数里的 <code>a</code> 就是 <code>hero</code>，
+    改它等于改本体</span></div>
+  <div class="row"><span class="k">不再搬 132 字节</span>
+    <span class="v">只递了一个地址进去，对象本身<b>一动没动</b></span></div>
+</div>
+
+<h3>省下多少</h3>
+
+<div class="cost">
+  <div class="hd">按引用传递（<code>void heal(Actor&amp; a, int n)</code>）</div>
+  <div class="bd">
+    <div class="side">
+      <div class="lb">每次调用传递</div>
+      <div class="nb good">8 B</div>
+      <div class="nt">一个地址而已</div>
+    </div>
+    <div class="side">
+      <div class="lb">调用次数</div>
+      <div class="nb">18 000 / 秒</div>
+      <div class="nt">与上面同一场景</div>
+    </div>
+    <div class="side">
+      <div class="lb">每秒传递</div>
+      <div class="nb good">约 0.14 MB</div>
+      <div class="nt">18000 × 8 B</div>
+    </div>
+  </div>
+</div>
+
+<div class="card key">
+  <div class="card-t">两个数字并排看</div>
+  <table>
+  <thead><tr><th style="width:36%">写法</th><th style="width:20%">每次</th>
+  <th style="width:22%">每秒</th><th>相对</th></tr></thead>
+  <tbody>
+  <tr><td class="c">void heal(Actor a, int n)</td><td class="c">132 B</td>
+      <td class="c">2.3 MB</td><td>基准</td></tr>
+  <tr><td class="c">void heal(Actor&amp; a, int n)</td><td class="c">8 B</td>
+      <td class="c">0.14 MB</td><td><b>省掉 93.9%</b></td></tr>
+  </tbody>
+  </table>
+  <p>2.3 MB 看着不多 —— 但那是<b>每秒</b>、而且只是这一个函数。
+  战斗系统里这类函数有几十个，再加技能、增益、AI 判定，
+  数字很快就上到几百 MB。</p>
+  <p><b>更关键的是：这 93.9% 是白拿的。</b>改动只是加了一个 <code>&amp;</code>。</p>
+</div>
+
+<div class="card tip">
+  <div class="card-t">顺带解决的：字符串也不复制了</div>
+  <p>按引用传递时，函数里的 <code>a.full_name</code> 直接就是原来那个
+  <code>std::string</code> —— <b>一次堆分配都不会发生</b>。</p>
+  <p>所以上面说的「3 次 malloc + 3 次 free」也一起省掉了。
+  这部分开销不体现在 132 字节里，但往往比拷贝本身更贵。</p>
+</div>
+
+<h2 id="s5"><span class="n">5</span>只读的场合：const 引用</h2>
+
+<p>上一节的 <code>heal(Actor&amp; a, …)</code> 是<b>要改</b>的角色，所以用
+<code>Actor&amp;</code> 是对的。但「只读」的那些函数呢？</p>
+
+<p>它们只想要<b>第一个好处</b>（不拷贝），不想要<b>第二个</b>（能被改）：</p>
+
+<div class="code-wrap">
+  <div class="bar"><span class="dot r"></span><span class="dot y"></span><span class="dot g"></span>
+    <span class="name">readonly.cpp —— 只读就该锁住</span><span class="cp">复制</span></div>
+<pre><span class="hl-c">// ❌ 只是看一眼，却能被改 —— 读代码的人无法确定它会不会动 hero</span>
+<span class="hl-k">int</span> damageOf(Actor&amp; a) {
+    <span class="hl-c">// a.hp = 0;      ← 这行居然合法！一个「查询」函数能秒杀角色</span>
+    <span class="hl-k">return</span> a.atk * 2;
+}
+
+<span class="hl-c">// ✅ 不拷贝，同时明确「我绝不改它」</span>
+<span class="hl-k">int</span> damageOf(<span class="hl-k">const</span> Actor&amp; a) {
+    <span class="hl-c">// a.hp = 0;      ← 这一行编译不过，正合我意</span>
+    <span class="hl-k">return</span> a.atk * 2;
+}</pre>
+</div>
+
+<div class="card key">
+  <div class="card-t"><code>const Actor&amp;</code> 把两件事同时给你</div>
+  <table>
+  <thead><tr><th style="width:30%">写法</th><th style="width:24%">拷贝?</th>
+  <th>能改?</th></tr></thead>
+  <tbody>
+  <tr><td class="c">Actor a</td><td>拷 132 B</td><td>能（但改的是副本）</td></tr>
+  <tr><td class="c">Actor&amp; a</td><td>不拷</td><td><b>能改本体</b></td></tr>
+  <tr><td class="c">const Actor&amp; a</td><td>不拷</td><td><b>不能改</b></td></tr>
+  </tbody>
+  </table>
+  <p><b>「只读 + 大对象」就写 <code>const T&amp;</code>。</b>
+  这是 C++ 里最常用的一种参数写法，也是最该先养成习惯的。</p>
+</div>
+
+<div class="code-wrap">
+  <div class="bar"><span class="dot r"></span><span class="dot y"></span><span class="dot g"></span>
+    <span class="name">full.cpp —— 完整的战斗小例</span><span class="cp">复制</span></div>
+<pre><span class="hl-p">#include</span> <span class="hl-s">&lt;iostream&gt;</span>
+<span class="hl-p">#include</span> <span class="hl-s">&lt;string&gt;</span>
+
+<span class="hl-k">class</span> Actor {
+<span class="hl-k">private</span>:
+    std::string full_name, nickname, address;
+    <span class="hl-k">int</span> maxLevel;
+<span class="hl-k">public</span>:
+    <span class="hl-k">int</span> hp, maxHp, atk, def, mp, maxMp, agi, luk;
+};
+
+<span class="hl-c">// 只读 → const 引用</span>
+<span class="hl-k">int</span>  damageOf(<span class="hl-k">const</span> Actor&amp; a)  { <span class="hl-k">return</span> a.atk * 2; }
+
+<span class="hl-c">// 要改 → 普通引用</span>
+<span class="hl-k">void</span> heal(Actor&amp; a, <span class="hl-k">int</span> n) {
+    a.hp += n;
+    <span class="hl-k">if</span> (a.hp &gt; a.maxHp) a.hp = a.maxHp;
+}
+
+<span class="hl-c">// 要改，且「没目标」是正常情况 → 指针（见下一节）</span>
+<span class="hl-k">void</span> attack(Actor&amp; from, Actor* target) {
+    <span class="hl-k">if</span> (!target) <span class="hl-k">return</span>;              <span class="hl-c">// 没有目标就跳过</span>
+    <span class="hl-k">int</span> dmg = damageOf(from) - target-&gt;def;
+    <span class="hl-k">if</span> (dmg &lt; 1) dmg = 1;              <span class="hl-c">// 至少扣 1 点</span>
+    target-&gt;hp -= dmg;
+    <span class="hl-k">if</span> (target-&gt;hp &lt; 0) target-&gt;hp = 0;
+}
+
+<span class="hl-k">int</span> main() {
+    Actor hero;  hero.atk = 120; hero.hp = 50;  hero.maxHp = 200; hero.def = 0;
+    Actor slime; slime.def = 20; slime.hp = 300; slime.maxHp = 300;
+
+    <span class="hl-c">// ① 只读：看一眼</span>
+    std::cout &lt;&lt; <span class="hl-s">"英雄伤害 = "</span> &lt;&lt; damageOf(hero) &lt;&lt; <span class="hl-s">"\n"</span>;
+
+    <span class="hl-c">// ② 要改：治疗</span>
+    heal(hero, 30);
+    std::cout &lt;&lt; <span class="hl-s">"治疗后英雄 hp = "</span> &lt;&lt; hero.hp &lt;&lt; <span class="hl-s">"\n"</span>;
+
+    <span class="hl-c">// ③ 打怪（传的是怪物的地址）</span>
+    attack(hero, &amp;slime);
+    std::cout &lt;&lt; <span class="hl-s">"怪物 hp = "</span> &lt;&lt; slime.hp &lt;&lt; <span class="hl-s">"\n"</span>;
+
+    <span class="hl-c">// ④ 没有目标：传 nullptr，函数自己跳过</span>
+    attack(hero, <span class="hl-k">nullptr</span>);
+    std::cout &lt;&lt; <span class="hl-s">"空目标时英雄 hp = "</span> &lt;&lt; hero.hp &lt;&lt; <span class="hl-s">"\n"</span>;
+}</pre>
+</div>
+<div class="out-wrap">
+  <div class="cap">输出</div>
+<pre>英雄伤害 = 240
+治疗后英雄 hp = 80
+怪物 hp = 80
+空目标时英雄 hp = 80</pre>
+</div>
+
+<p>这四行调用正好把三种写法都用上了 —— 注释里标了每一处为什么这么选。
+第 ④ 行是第 6 节的重点：<code>nullptr</code> 能当参数传进去，
+<b>而引用做不到这件事</b>。</p>
+
+<h2 id="s6"><span class="n">6</span>传递指针 vs 传递引用</h2>
+
+<p>两种都能避免拷贝，那该用哪个？先看同一个函数的两副样子：</p>
+
+<div class="two">
+  <div class="side">
+    <div class="hd">传指针</div>
+<pre>void heal(Actor* a, int n) {
+    if (!a) return;        // 必须防
+    a->hp += n;            // 用 -> 访问
+    if (a->hp > a->maxHp)
+        a->hp = a->maxHp;
+}
+
+// 调用处要写 &amp;
+heal(&amp;hero, 30);</pre>
+  </div>
+  <div class="side">
+    <div class="hd good">传引用</div>
+<pre>void heal(Actor&amp; a, int n) {
+    // 不用防，没有「空引用」
+    a.hp += n;             // 用 . 访问
+    if (a.hp > a.maxHp)
+        a.hp = a.maxHp;
+}
+
+// 调用处直接传对象
+heal(hero, 30);</pre>
+  </div>
+</div>
+
+<p>语法上的差别就这四处。但<b>真正的区别只有一条</b>：</p>
+
+<div class="card key">
+  <div class="card-t">唯一的决定性问题：这个参数可以「没有」吗？</div>
+  <table>
+  <thead><tr><th style="width:34%">情况</th><th style="width:24%">能表达「没有」</th>
+  <th>该用</th></tr></thead>
+  <tbody>
+  <tr><td>一定有目标</td><td class="c">不需要</td><td class="c">T&amp; / const T&amp;</td></tr>
+  <tr><td><b>可能没有目标</b>（搜索失败、可选参数）</td>
+      <td class="c">只有指针能</td><td class="c">T*</td></tr>
+  </tbody>
+  </table>
+  <p><b>引用不能为空。</b>要表达「没有」，只能用指针传 <code>nullptr</code>。
+  这是两者最本质的分工。</p>
+</div>
+
+<h3>逐项对照</h3>
+
+<div class="vs">
+<table>
+<thead><tr><th style="width:22%">对比项</th><th style="width:39%">指针 <code>Actor*</code></th>
+<th>引用 <code>Actor&amp;</code></th></tr></thead>
+<tbody>
+<tr><td>能否为空</td><td class="c">能（nullptr）</td><td class="c"><b>不能</b></td></tr>
+<tr><td>调用处写法</td><td class="c">heal(&amp;hero, 30)</td><td class="c">heal(hero, 30)</td></tr>
+<tr><td>函数内访问</td><td class="c">a-&gt;hp</td><td class="c">a.hp</td></tr>
+<tr><td>要不要判空</td><td class="c"><b>要</b>：if (!a) return;</td><td class="c">不用</td></tr>
+<tr><td>能否改指向</td><td class="c">能：a = &amp;other;</td><td class="c">不能，绑定不可改</td></tr>
+<tr><td>传递的字节数</td><td class="c">8</td><td class="c">8（实现上也是地址）</td></tr>
+<tr><td>能否指向数组做算术</td><td class="c">能：a + 1</td><td class="c">不能</td></tr>
+<tr><td>典型用途</td><td class="c">可选对象、遍历、容器</td><td class="c">参数传递的主力</td></tr>
+</tbody>
+</table>
+</div>
+
+<div class="card tip">
+  <div class="card-t">「传递的字节数」这一行值得单独说</div>
+  <p>两者都是 <b>8 字节</b> —— 引用在实现上就是地址。
+  所以<b>省内存这件事上，指针和引用完全等价</b>，
+  选哪个只看语义（能不能为空、要不要改指向），不看性能。</p>
+  <p>很多人以为「引用比指针快」，其实不会；它只是<b>更安全、更短</b>。</p>
+</div>
+
+<h3>游戏里的具体选法</h3>
+
+<div class="alias">
+  <div class="row"><span class="k">治疗、加 buff</span>
+    <span class="v"><code>void heal(Actor&amp; a, int n)</code> ——
+    <b>一定有目标</b>，而且要改它 → 引用</span></div>
+  <div class="row"><span class="k">查询属性</span>
+    <span class="v"><code>int hpOf(const Actor&amp; a)</code> ——
+    一定有、且只读 → <code>const</code> 引用</span></div>
+  <div class="row"><span class="k">攻击目标</span>
+    <span class="v"><code>void attack(Actor&amp; from, Actor* target)</code> ——
+    <b>可能没有目标</b> → 目标用指针</span></div>
+  <div class="row"><span class="k">遍历全部怪物</span>
+    <span class="v"><code>for (Actor* m : monsters)</code> ——
+    容器里存的就是指针，天然用指针</span></div>
+  <div class="row"><span class="k">目标可能已死</span>
+    <span class="v">用指针并传 <code>nullptr</code>，或者约定
+    「查不到就传 nullptr」—— 别用「一个特殊的空角色」来凑</span></div>
+</div>
+
+<div class="card warn">
+  <div class="card-t">一条容易走偏的思路</div>
+  <p>有人为了「避免判空」，就干脆全用引用。结果遇到「可能没有目标」时，
+  只能造一个假的空角色传进去 —— 那比传 <code>nullptr</code>
+  <b>更难查、更危险</b>（假对象的属性是什么？会不会被误伤？）。</p>
+  <p><b>该用指针的地方就用指针。</b>判空那一行不是负担，是在把
+  「可能没有」这件事写进代码。</p>
+</div>
+
+<h2 id="s7"><span class="n">7</span>指向对象的指针：从对象内部指出去</h2>
+
+<p>前面讲的都是<b>把对象当参数传</b>。对象内部也可以<b>存指针或引用</b>，
+用来表示「我关联着另一个对象」。游戏里到处都是这种关系：</p>
+
+<div class="code-wrap">
+  <div class="bar"><span class="dot r"></span><span class="dot y"></span><span class="dot g"></span>
+    <span class="name">relation.cpp —— 角色之间的关联</span><span class="cp">复制</span></div>
+<pre><span class="hl-k">class</span> Actor;
+
+<span class="hl-k">class</span> Skill {
+<span class="hl-k">private</span>:
+    std::string name;
+<span class="hl-k">public</span>:
+    <span class="hl-k">int</span> power;
+    <span class="hl-c">// 这个技能属于谁 —— 建立后不会变，用引用</span>
+    Actor&amp; owner;
+    Skill(Actor&amp; o) : owner(o) {}
+};
+
+<span class="hl-k">class</span> Actor {
+<span class="hl-k">private</span>:
+    std::string full_name, nickname, address;
+    <span class="hl-k">int</span> maxLevel;
+<span class="hl-k">public</span>:
+    <span class="hl-k">int</span> hp, maxHp, atk, def, mp, maxMp, agi, luk;
+
+    <span class="hl-c">// 当前锁定的目标 —— 可能没有，而且会随时改 → 指针</span>
+    Actor* target = <span class="hl-k">nullptr</span>;
+
+    <span class="hl-c">// 当前正在施放的技能 —— 可能没有 → 指针</span>
+    Skill* casting = <span class="hl-k">nullptr</span>;
+};</pre>
+</div>
+
+<div class="card key">
+  <div class="card-t">成员该怎么选，看两个问题</div>
+  <ol>
+    <li><b>它可能「不存在」吗？</b>可能 → 指针（初值 <code>nullptr</code>）；
+    不可能 → 引用。</li>
+    <li><b>它会「换一个」吗？</b>会（换目标、换技能）→ 指针；
+    不会（技能属于谁）→ 引用。</li>
+  </ol>
+  <p>两个问题都是「否」才用引用。上面 <code>owner</code> 两问都否，
+  <code>target</code> / <code>casting</code> 两问都是「是」。</p>
+</div>
+
+<div class="card warn">
+  <div class="card-t">成员用引用有个硬约束</div>
+  <p>引用<b>必须在构造时就绑定</b>，所以含引用的类不能默认构造，
+  赋值运算符也会被隐式删掉。上面 <code>Skill</code> 就不得不写
+  <code>Skill(Actor&amp; o) : owner(o) {}</code>。</p>
+  <p>如果这个类还需要「先建后设」，那 <code>owner</code> 也得改成指针。
+  <b>这是语法逼你做的选择，不是风格问题。</b></p>
+</div>
+
+<h3>返回指针还是引用</h3>
+
+<div class="code-wrap">
+  <div class="bar"><span class="dot r"></span><span class="dot y"></span><span class="dot g"></span>
+    <span class="name">return.cpp —— 查找类函数的两种返回</span><span class="cp">复制</span></div>
+<pre><span class="hl-p">#include</span> <span class="hl-s">&lt;vector&gt;</span>
+<span class="hl-p">#include</span> <span class="hl-s">&lt;string&gt;</span>
+
+<span class="hl-k">class</span> Actor {
+<span class="hl-k">private</span>:
+    std::string full_name, nickname, address;
+    <span class="hl-k">int</span> maxLevel;
+<span class="hl-k">public</span>:
+    <span class="hl-k">int</span> hp = 100, maxHp = 100, atk = 10, def = 0;
+    <span class="hl-k">int</span> mp = 0, maxMp = 0, agi = 0, luk = 0;
+    <span class="hl-k">const</span> std::string&amp; name() <span class="hl-k">const</span> { <span class="hl-k">return</span> full_name; }
+};
+
+<span class="hl-c">// ① 一定找得到 → 返回引用（不拷贝）</span>
+Actor&amp; leaderOf(std::vector&lt;Actor&gt;&amp; team) {
+    <span class="hl-k">return</span> team[0];
+}
+
+<span class="hl-c">// ② 可能找不到 → 返回指针，找不到给 nullptr</span>
+Actor* findByName(std::vector&lt;Actor&gt;&amp; team, <span class="hl-k">const</span> std::string&amp; n) {
+    <span class="hl-k">for</span> (Actor&amp; a : team) {
+        <span class="hl-k">if</span> (a.name() == n) <span class="hl-k">return</span> &amp;a;
+    }
+    <span class="hl-k">return</span> <span class="hl-k">nullptr</span>;
+}</pre>
+</div>
+
+<p>这两者的分工和参数完全一致：<b>「一定找得到」用引用，「可能找不到」用指针。</b>
+调用处也一眼能看出来：</p>
+
+<div class="code-wrap">
+  <div class="bar"><span class="dot r"></span><span class="dot y"></span><span class="dot g"></span>
+    <span class="name">调用处的区别</span><span class="cp">复制</span></div>
+<pre>leaderOf(team).hp = 999;         <span class="hl-c">// 引用：直接用，不用判</span>
+
+Actor* p = findByName(team, <span class="hl-s">"小灰"</span>);
+<span class="hl-k">if</span> (p) {                          <span class="hl-c">// 指针：必须判</span>
+    p-&gt;hp = 999;
+} <span class="hl-k">else</span> {
+    std::cout &lt;&lt; <span class="hl-s">"队伍里没有叫小灰的\n"</span>;
+}</pre>
+</div>
+
+<div class="card warn">
+  <div class="card-t">绝不要返回局部对象的引用或指针</div>
+  <p>函数里的局部对象在返回时就销毁了，返回它的地址就是返回一块
+  已失效的内存。这一条 Q02 已经讲过（悬空引用），这里再强调一次，
+  因为「返回引用」这个手法很诱人。</p>
+  <p>安全的情形只有：返回的是<b>参数传进来的</b>对象，
+  或<b>生命周期比函数长</b>的对象（成员、容器元素）。</p>
+</div>
+
+<h2 id="s8"><span class="n">8</span>常见错误</h2>
+
+<table>
+<thead><tr><th style="width:44%">写法 / 想法</th><th>问题</th></tr></thead>
+<tbody>
+<tr><td class="c">void heal(Actor a, int n)</td>
+    <td>拷 132 B，而且改的是副本 —— 治疗不生效</td></tr>
+<tr><td class="c">int damageOf(Actor&amp; a)</td>
+    <td>只是查询却能改本体；读代码的人无法确定</td></tr>
+<tr><td class="c">读只读参数也写 <code>Actor&amp;</code></td>
+    <td>该写 <code>const Actor&amp;</code> —— 少一个字，多一层保护</td></tr>
+<tr><td class="c">void attack(Actor&amp; target) 却要表达「没目标」</td>
+    <td>引用不能为空；这种情况用 <code>Actor*</code> + <code>nullptr</code></td></tr>
+<tr><td class="c">为了不判空而造一个「空角色」传进去</td>
+    <td>假对象比 <code>nullptr</code> 更难查、更危险</td></tr>
+<tr><td class="c">用 <code>==</code> 比较两个 Actor</td>
+    <td>比较的是成员逐个相等，不是「同一个对象」；
+    要判断「是不是同一个」应比地址</td></tr>
+<tr><td class="c">成员写成 <code>Actor&amp; target;</code></td>
+    <td>引用成员必须构造时绑定，且类会失去默认构造与赋值；
+    会变的关联要用指针</td></tr>
+<tr><td class="c">返回局部对象的 <code>Actor&amp;</code></td>
+    <td>悬空引用；只能返回参数或成员的引用</td></tr>
+<tr><td class="c">以为「引用比指针快」</td>
+    <td>两者传的都是 8 字节地址，性能上等价；
+    区别在<b>语义</b>（能不能为空、能不能改指向）</td></tr>
+<tr><td class="c">按值传 <code>int</code> 也想改成引用</td>
+    <td><code>int</code> 只有 4 字节，比地址还小 —— 直接传值更好</td></tr>
+</tbody>
+</table>
+
+<h2 id="s9"><span class="n">9</span>一页速查</h2>
+
+<h3>三种参数写法</h3>
+
+<table>
+<thead><tr><th style="width:26%">写法</th><th style="width:20%">拷贝</th>
+<th style="width:22%">能改本体</th><th>什么时候用</th></tr></thead>
+<tbody>
+<tr><td class="c">T v</td><td class="c">整个对象</td><td class="c">不能（改副本）</td>
+    <td>小类型（<code>int</code>、<code>double</code>）</td></tr>
+<tr><td class="c">const T&amp; v</td><td class="c">不拷</td><td class="c">不能</td>
+    <td><b>大对象 + 只读</b> —— 最常用</td></tr>
+<tr><td class="c">T&amp; v</td><td class="c">不拷</td><td class="c"><b>能</b></td>
+    <td>大对象 + 要改</td></tr>
+<tr><td class="c">T* v</td><td class="c">不拷</td><td class="c">能（还能改指向）</td>
+    <td>可能为空，或需要改指向</td></tr>
+</tbody>
+</table>
+
+<h3>本篇的五个数字</h3>
+
+<div class="mnemonic">
+  <b>① <code>sizeof(std::string)</code> = 32</b>（64 位常见实现）<br>
+  <b>② <code>sizeof(Actor)</code> = 132</b> = 三个 string 96 + 九个 int 36<br>
+  <b>③ <code>sizeof(Actor*)</code> = 8</b> —— 地址就是 8 字节<br>
+  <b>④ 132 ÷ 8 ≈ 16.5 倍</b> —— 按值 vs 按引用，单次差这么多<br>
+  <b>⑤ 省掉 93.9%</b> —— 100 角色 × 3 次 × 60 帧的场景下，2.3 MB/s → 0.14 MB/s
+</div>
+
+<h3>选择流程</h3>
+
+<div class="steps">
+  <div class="st"><span class="i">1</span><span class="t">类型大吗？</span>
+    小（<code>int</code> 之类）→ 直接传值，收工</div>
+  <div class="st"><span class="i">2</span><span class="t">可能没有吗？</span>
+    可能 → <code>T*</code>，传 <code>nullptr</code></div>
+  <div class="st"><span class="i">3</span><span class="t">要改它吗？</span>
+    要改 → <code>T&amp;</code></div>
+  <div class="st"><span class="i">4</span><span class="t">只读</span>
+    → <code>const T&amp;</code></div>
+</div>
+
+<div class="card key">
+  <div class="card-t">一句话</div>
+  <p><b>大对象一律不要按值传。</b>要改就 <code>T&amp;</code>，
+  只读就 <code>const T&amp;</code>，可能为空才用 <code>T*</code>。</p>
+  <p>这不会让代码变复杂 —— 大多数时候只是<b>多一个 <code>&amp;</code></b>，
+  换来的是<b>九成以上的内存开销消失</b>。</p>
+</div>
+
+<div class="card tip">
+  <div class="card-t">接下来看什么</div>
+  <p>这一篇讲的是「怎么把对象递出去不花钱」。顺着往下还有两件事值得单独看：</p>
+  <ul>
+    <li><b>右值引用与移动语义</b>（<code>T&amp;&amp;</code>）——
+    连「一定要转移所有权」的那一次拷贝也省掉；</li>
+    <li><b>智能指针</b>（<code>std::unique_ptr</code> /
+    <code>QSharedPointer</code>）—— 指针用得多了，
+    「谁负责释放」就成了新问题，它就是这个问题的答案。</li>
+  </ul>
+</div>

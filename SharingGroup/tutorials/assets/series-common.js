@@ -57,6 +57,8 @@
 
     { f: 'q02-references.html', n: 'Q02', t: 'C++ 的引用', s: 'Q' },
 
+    { f: 'q03-pointers-to-objects.html', n: 'Q03', t: '指针进阶：指向对象的指针与引用', s: 'Q' },
+
     { f: 'e01-recursion.html',      n: 'E01', t: '递归',                       s: 'E' },
     { f: 'e02-batch-and-cmd.html',  n: 'E02', t: '批处理与命令提示符进阶',       s: 'E' },
     { f: 'e03-syntactic-sugar.html', n: 'E03', t: '语法糖', s: 'E' },

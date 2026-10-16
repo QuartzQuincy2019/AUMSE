@@ -133,7 +133,9 @@ PAGES = [
     ("10-std-and-namespace.html",     "q01-std-and-namespace.html",
      "Q", "Q01", "std 与命名空间初步", "从这里进入 C++：std:: 是什么、using 该不该用", False),
     ("q02-references.html",             "q02-references.html",
-     "Q", "Q02", "C++ 的引用", "重点：引用是什么、与指针的关系、const 引用", True),
+     "Q", "Q02", "C++ 的引用", "重点：引用是什么、与指针的关系", True),
+    ("q03-pointers-to-objects.html",  "q03-pointers-to-objects.html",
+     "Q", "Q03", "指针进阶：指向对象的指针与引用", "按引用传递的必要性；传递指针与传递引用的分工", True),
 
     # ---- E：补充练习 ----
     ("08-e01-recursion.html",         "e01-recursion.html",

@@ -68,6 +68,28 @@ def Io(p):
     return io.open(p, encoding="utf-8").read()
 
 
+# 教程页是纯 HTML，不解析 markdown。正文里留下 **…** 会**原样显示**出来
+# （Q03 初稿就漏了一处：「它是**语法上的别名**」）。
+#
+# 只查 `**` 这一种，而且必须剔掉代码区之后再查。理由：
+#   · <pre> / <code> 里本来就满是 * 和 `：
+#       C++ 的 `*p`、`**ptr`；JavaScript 模板字符串 `hi ${n}`；
+#       Shell 的引号。这些**不是** markdown，报了全是噪音。
+#     第一版没剔代码区，R03 的 `coll.compare(a, b) < 0` 被误报一百多条；
+#     第二版只剔 <pre>，E03 表格里的 `hi ${n}` 又被误报。
+#   · 反引号在正文里也可能**故意**用作示例（E03 那格就是 JS 语法），
+#     所以不查反引号 —— 只查 `**`，它没有任何正当用途。
+MD = "**"
+
+
+def check_markdown(slug, body):
+    """扫一遍正文片段，看有没有误写的 `**`（跳过 <pre> 与 <code>）。"""
+    prose = re.sub(r'<pre[\s\S]*?</pre>', '', body)
+    prose = re.sub(r'<code[\s\S]*?</code>', '', prose)
+    n = prose.count(MD)
+    return ["**（markdown 粗体）%d 处 —— 会原样显示出来" % n] if n else []
+
+
 def page_css_for(slug):
     """从已生成的页面里找出它的样式表（排除全局层）。"""
     htmls = [f for f in os.listdir(T)
@@ -107,6 +129,11 @@ def main():
             bad_total += len(missing)
             print("         缺：%s" % ", ".join(missing))
             print("         （这些 class 会按普通元素渲染 —— 不报错，但样子不对）")
+        md = check_markdown(slug, body)
+        if md:
+            bad_total += len(md)
+            print("         !! 正文里有 markdown 记号，会原样显示出来：%s"
+                  % "、".join(md))
     print()
     print("  合计缺定义 %d 个 %s" % (bad_total, "✅" if bad_total == 0 else "❌"))
 

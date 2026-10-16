@@ -21,7 +21,7 @@
 <div class="card note">
   <div class="card-t">这一篇的定位</div>
   <p>M04《指针初步》已经把<b>指针</b>讲透了。这一篇<b>只讲引用</b>，
-  指针只在第 9 节做对比。没有读过 M04 也能看懂，
+  指针只在第 8 节做对比。没有读过 M04 也能看懂，
   但要真正吃透，建议先过一遍 M04。</p>
 </div>
 
@@ -213,7 +213,7 @@ std::cout &lt;&lt; a &lt;&lt; <span class="hl-s">" "</span> &lt;&lt; b &lt;&lt; 
   <p>调用处看不出 <code>byRef</code> 会改参数 —— 这是引用被批评最多的地方。
   所以业界有一条惯例：</p>
   <ul>
-    <li><b>只读</b>就用 <code>const T&amp;</code>（第 8 节），读代码时一眼知道不会被改；</li>
+    <li><b>只读</b>就用 <code>const T&amp;</code>（下一篇 Q03 会专门讲），读代码时一眼知道不会被改；</li>
     <li><b>要改</b>就明确一点，别在注释里藏。</li>
   </ul>
 </div>
@@ -310,7 +310,7 @@ b = UME!</pre>
     <li>但函数里的修改会作用到调用者身上 —— 这是<b>需要小心的副作用</b>。</li>
   </ul>
   <p>两者无法分开。如果你<b>只想要效率、不想要副作用</b>，就用 <code>const T&amp;</code>：
-  不拷贝，同时也不许改（第 8 节）。</p>
+  不拷贝，同时也不许改 —— 这就是 <code>const T&amp;</code>，下一篇 Q03 的主题。</p>
 </div>
 
 <h3>什么时候「不拷贝」才真的有收益</h3>
@@ -595,68 +595,7 @@ std::vector&lt;<span class="hl-k">int</span>&gt; v{1, 2, 3};
 （<code>v[1]</code> 的别名），而不是一个临时副本。
 <b>这也是 <code>std::vector::operator[]</code> 能赋值的原因</b> —— 它返回的就是引用。</p>
 
-<h2 id="s8"><span class="n">8</span>const 引用：只读的那把锁</h2>
-
-<p><code>const T&amp;</code> 是引用里出现最多的一种组合，值得单独说清它锁住了什么。</p>
-
-<div class="card key">
-  <div class="card-t"><code>const int&amp; r = x;</code> 锁的是「通过 r 修改」这条路</div>
-  <p>它<b>不</b>意味着 <code>x</code> 不能被改，只意味着<b>不能通过 <code>r</code> 去改</b>：</p>
-  <div class="code-wrap">
-    <div class="bar"><span class="dot r"></span><span class="dot y"></span><span class="dot g"></span>
-      <span class="name">const 只锁一条路</span><span class="cp">复制</span></div>
-  <pre><span class="hl-k">int</span> x = 10;
-<span class="hl-k">const</span> <span class="hl-k">int</span>&amp; r = x;
-
-<span class="hl-c">// r = 20;   ✗ 编译错：不能通过 r 改</span>
-x = 20;      <span class="hl-c">// ✓ 可以：x 自己不是 const</span>
-
-std::cout &lt;&lt; r;   <span class="hl-c">// 20 —— r 看到的是最新的值</span></pre>
-  </div>
-</div>
-
-<p>另外两个常见用途：</p>
-
-<div class="alias">
-  <div class="row"><span class="k">绑定临时对象</span>
-    <span class="v"><code>const std::string&amp; s = "hello";</code> ——
-    普通引用绑不了临时值，<code>const</code> 引用可以（编译器会延长它的生命期）</span></div>
-  <div class="row"><span class="k">接住任意类型</span>
-    <span class="v"><code>const auto&amp; x = expr;</code> ——
-    不复制、也不怕 <code>expr</code> 是个临时值，很常用的写法</span></div>
-</div>
-
-<div class="code-wrap">
-  <div class="bar"><span class="dot r"></span><span class="dot y"></span><span class="dot g"></span>
-    <span class="name">constref.cpp —— 两个常见写法</span><span class="cp">复制</span></div>
-<pre><span class="hl-c">// ① 绑定临时值：普通引用不行，const 引用可以</span>
-<span class="hl-c">// std::string&amp; bad = "hi";        ✗ 编译错</span>
-<span class="hl-k">const</span> std::string&amp; ok = <span class="hl-s">"hi"</span>;    <span class="hl-c">// ✓</span>
-
-<span class="hl-c">// ② const auto&amp;：范围 for 里最省事的写法</span>
-std::vector&lt;std::string&gt; names{<span class="hl-s">"A"</span>, <span class="hl-s">"BB"</span>, <span class="hl-s">"CCC"</span>};
-<span class="hl-k">for</span> (<span class="hl-k">const</span> <span class="hl-k">auto</span>&amp; n : names) {
-    std::cout &lt;&lt; n.size() &lt;&lt; <span class="hl-s">" "</span>;      <span class="hl-c">// 不复制每个元素</span>
-}</pre>
-</div>
-<div class="out-wrap">
-  <div class="cap">输出</div>
-<pre>1 2 3 </pre>
-</div>
-
-<div class="card tip">
-  <div class="card-t">范围 for 里的三种写法</div>
-  <table>
-  <thead><tr><th style="width:40%">写法</th><th>含义</th></tr></thead>
-  <tbody>
-  <tr><td class="c">for (auto n : v)</td><td>每个元素<b>复制</b>一份 —— 元素大就慢</td></tr>
-  <tr><td class="c">for (const auto&amp; n : v)</td><td>不复制、不能改 —— <b>只读遍历首选</b></td></tr>
-  <tr><td class="c">for (auto&amp; n : v)</td><td>不复制、可以改 —— 要修改元素时用</td></tr>
-  </tbody>
-  </table>
-</div>
-
-<h2 id="s9"><span class="n">9</span>这个模型的边界：与指针的关系</h2>
+<h2 id="s8"><span class="n">8</span>这个模型的边界：与指针的关系</h2>
 
 <p>「实现上是指针、语法上是别名」这句话在绝大多数场合够用。
 但有几处必须收着点，否则会推出错误结论。</p>
@@ -727,7 +666,7 @@ std::vector&lt;std::string&gt; names{<span class="hl-s">"A"</span>, <span class=
   这也是为什么很多老代码宁可在函数里继续用指针。</p>
 </div>
 
-<h2 id="s10"><span class="n">10</span>一页速查</h2>
+<h2 id="s9"><span class="n">9</span>一页速查</h2>
 
 <h3>五句话</h3>
 
