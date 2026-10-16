@@ -100,11 +100,27 @@ SERIES = {
         "d1": "#1a0e11", "d2": "#291619", "d3": "#ef7288", "d4": "#f7a8b6",
         "dink": "#f2d8dd",
     },
-}
 
+    # FE：前端系列。外观自成一系（走 fe_base.css / fe-dark.css，
+    # 不由 build_series_css.py 从本表生成主题），所以这里**只给
+    # 页面与导航要用的字段**，不写 c1~d4 / ink / dink 那套主题色。
+    "FE": {
+        "name": "FrontEnd",
+        "num": "FE",
+        "banner": "FE 系列 · 前端基础",
+        "label": "前端 · FE",
+        "desc": "HTML 与 CSS：界面长什么样、怎么让它好看",
+        "cls": "feseries",
+    },
+}
 # 首页分组顺序（FE 单独处理）
 # 展示顺序由项目组长按组员进度手工排优先度 —— 会变，改这一行即可
 ORDER = ["T", "F", "M", "R", "Q", "E"]
+
+# 遍历**全部**系列（含 FE）时用这个。
+# ORDER 不含 FE 是有意的 —— 主题生成那套脚本依赖它跳过 FE；
+# 但首页分组与篇目表生成需要 FE，所以单列一个。
+PAGE_ORDER = ORDER + ["FE"]
 
 # ---------------------------------------------------------------- 篇目表
 # (当前文件名, 新文件名, 系列, 新编号, 标题, 一句话说明, 星标)
@@ -127,7 +143,7 @@ PAGES = [
     ("08-c-strings.html",             "m08-c-strings.html",
      "M", "M08", "C 风格字符串", "一串文字怎么存、\\0 为什么重要", False),
     ("09-vector-and-array.html",      "m09-vector-and-array.html",
-     "M", "M09", "C++ 标准库里的「数组」", "重点：vector", False),
+     "M", "M09", "vector 和 array", "重点：vector", False),
 
     # ---- Q：C++ 与 Qt ----
     ("10-std-and-namespace.html",     "q01-std-and-namespace.html",
@@ -142,6 +158,8 @@ PAGES = [
      "Q", "Q05", "开闭原则", "为什么不能什么都塞进一个类；耦合的代价与拆分方向", True),
     ("q06-components.html",      "q06-components.html",
      "Q", "Q06", "组件化编程与解耦合", "什么叫耦合、高耦合的代价、组件化的三条准则", True),
+    ("q07-homework1.html",      "q07-homework1.html",
+     "Q", "Q07", "代码复用性和扩展性", "从一道作业题看：数据与逻辑分开、给反复出现的东西一个类型", True),
 
     # ---- E：补充练习 ----
     ("08-e01-recursion.html",         "e01-recursion.html",

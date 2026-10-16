@@ -63,6 +63,7 @@ LANG = {
     "q04-interfaces.html": ("C++", "cpp"),
     "q05-open-closed.html": ("C++", "cpp"),
     "q06-components.html": ("C++", "cpp"),
+    "q07-homework1.html": ("C++", "cpp"),
     # ---- R：相关信息 ----
     "r01-font-design-metrics.html": ("CSS", "css"),
     "r02-bubble-sort.html": ("C++", "cpp"),

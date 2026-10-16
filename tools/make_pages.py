@@ -357,9 +357,12 @@ def build_html():
                        "items": items})
     # FE 页的 FE_PAGES 里第 5 个字段本来就是语言（HTML / CSS / JS），直接用
     fe_items = [(a, b, c, d, e, f) for a, b, c, d, e, f in FE_PAGES]
-    groups.append({"key": "FE", "label": "前端 · FE",
-                   "banner": "FE 系列 · 前端基础",
-                   "desc": "HTML 与 CSS：界面长什么样、怎么让它好看",
+    # FE 的 label / banner / desc 以前是**硬写**在这里的，与
+    # series_data.py 的 FE_PAGES 分成两处。现在统一从 SERIES["FE"] 取 ——
+    # 生成器 gen_series_tables.py 也依赖 SERIES 里有 FE。
+    _fe = SERIES["FE"]
+    groups.append({"key": "FE", "label": _fe["label"],
+                   "banner": _fe["banner"], "desc": _fe["desc"],
                    "count": len(fe_items), "items": fe_items})
 
     total = sum(g["count"] for g in groups)
