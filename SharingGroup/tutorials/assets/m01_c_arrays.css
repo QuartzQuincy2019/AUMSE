@@ -149,67 +149,12 @@ td.c,th.c{font-family:var(--mono);font-size:13px}
 
 #toc{scrollbar-width:thin}
 
-body{margin:0;background:var(--bg);color:var(--fg);
-  font:16px/1.8 var(--sans);-webkit-font-smoothing:antialiased}
-
-#toc a{display:block;padding:5px 10px;margin:1px 0;border-radius:6px;font-size:13.5px;
-  color:var(--fg-2);text-decoration:none;line-height:1.5;
-  border-left:2px solid transparent;transition:background .13s,color .13s,border-color .13s}
-
-h2{font-size:22px;margin:58px 0 14px;padding-top:18px;border-top:1px solid var(--line);
-   display:flex;align-items:center;gap:11px}
-
-h2 .n{flex:0 0 auto;width:30px;height:30px;line-height:30px;text-align:center;
-  background:var(--fg);color:#fff;border-radius:8px;font-size:15px;
-  font-family:var(--mono);font-weight:600}
-
-code{font-family:var(--mono);font-size:.9em;background:#eef2f8;color:#0d3a7a;
-  padding:1.5px 5px;border-radius:4px;border:1px solid #dbe4f0}
-
-.k{font-family:var(--mono);font-size:.9em;background:#f2ecfd;color:#5b34b0;
-  padding:1.5px 5px;border-radius:4px;border:1px solid #ded0f7;
-  cursor:help;transition:background .12s,box-shadow .12s}
-
 /* 代码块 */
-.code-wrap{margin:16px 0;border:1px solid #2c3444;border-radius:10px;overflow:hidden;
-  background:var(--bg-code);position:relative;
-  transition:box-shadow .18s,border-color .18s,transform .18s}
-
-.code-wrap:hover{border-color:#3d4a60;box-shadow:0 6px 22px rgba(20,30,50,.18);transform:translateY(-1px)}
-
-.code-wrap .bar{display:flex;align-items:center;gap:8px;padding:7px 12px;
-  background:#171d27;border-bottom:1px solid #2c3444;
-  font-family:var(--mono);font-size:11.5px;color:#8296b0}
-
-.code-wrap .bar .cp{margin-left:auto;cursor:pointer;border:1px solid #333d4f;background:#222a37;
-  color:#9fb0c7;border-radius:5px;padding:1px 9px;font:11.5px var(--mono);
-  transition:background .13s,color .13s,border-color .13s}
-
-.code-wrap pre{margin:0;padding:14px 16px;overflow:auto;
-  font-family:var(--mono);font-size:13.5px;line-height:1.72;color:#d7e0ee}
 
 /* 输出块 */
-.out-wrap{margin:12px 0 20px;border:1px solid #d9e2ee;border-left:4px solid var(--green);
-  border-radius:0 9px 9px 0;background:var(--bg-out);overflow:hidden;
-  transition:box-shadow .18s,border-left-color .18s}
 
 .out-wrap .cap{padding:6px 13px;background:#151b22;border-bottom:1px solid #232c38;
   font-family:var(--mono);font-size:11.5px;color:#7f8f9f}
-
-.out-wrap pre{margin:0;padding:13px 16px;overflow:auto;
-  font-family:var(--mono);font-size:13.5px;line-height:1.7;color:#c9e6d5}
-
-.card{border:1px solid var(--line);border-radius:12px;padding:16px 20px;margin:18px 0;
-  background:var(--sfc);transition:box-shadow .18s,transform .18s,border-color .18s}
-
-.mnemonic{border-left:4px solid var(--amber);background:var(--amber-soft);
-  border-radius:0 9px 9px 0;padding:12px 18px;margin:16px 0;font-size:15px}
-
-.tag{display:inline-block;font-family:var(--mono);font-size:11.5px;padding:1.5px 8px;
-  border-radius:999px;background:#eef1f6;color:var(--fg-2);border:1px solid var(--line-2);
-  vertical-align:2px}
-
-footer{border-top:1px solid var(--line);margin-top:70px;padding-top:18px;font-size:13px;color:var(--fg-3)}
 
 :root{
   --bg:#ffffff; --bg-soft:#f7f9fc; --bg-code:#1e2430; --bg-out:#0f1419;
