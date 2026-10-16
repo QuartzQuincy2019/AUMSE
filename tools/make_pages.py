@@ -113,6 +113,18 @@ a.card .ds{display:block;color:var(--fg-3);font-size:13px;line-height:1.65}
 a.card.star{border-left-color:var(--gold);
   background:linear-gradient(96deg,#fffdf5,#fdf3dc)}
 a.card.star:hover{background:linear-gradient(96deg,#fffdf5,#fbe9c4)}
+/* 带题干图的卡片（.has-bg 由 home-cards.js 加上）：
+   background-image 的两层写在行内，其中**遮罩那一层是 var(--card-veil)**。
+   所以 hover 只需要换这个变量 —— 千万不要在这里写 background-image，
+   那会把第二层的图一起覆盖掉（图会整个消失）。 */
+a.card.has-bg{--card-veil:linear-gradient(100deg,
+  rgba(255,253,245,1) 0%, rgba(255,253,245,1) 16%,
+  rgba(255,253,245,.58) 46%, rgba(253,243,220,.58) 54%,
+  rgba(253,243,220,1) 84%, rgba(253,243,220,1) 100%)}
+a.card.has-bg:hover{--card-veil:linear-gradient(100deg,
+  rgba(255,253,245,1) 0%, rgba(255,253,245,.99) 16%,
+  rgba(255,253,245,.50) 46%, rgba(251,233,196,.50) 54%,
+  rgba(251,233,196,.96) 84%, rgba(251,233,196,1) 100%)}
 a.card .sb{display:inline-block;margin-top:8px;font:700 10.5px/1.8 var(--sans);
   letter-spacing:.04em;color:#fff;background:var(--gold);
   border-radius:999px;padding:0 9px}
@@ -226,6 +238,10 @@ a.card .sb{display:inline-block;margin-top:8px;font:700 10.5px/1.8 var(--sans);
   a.card.star{border-left-color:var(--gold);
     background:linear-gradient(96deg,#241d0c,#2b2210)}
   a.card.star:hover{background:linear-gradient(96deg,#2b2210,#3a2d10)}
+  a.card.has-bg:hover{--card-veil:linear-gradient(100deg,
+    rgba(43,34,16,1) 0%, rgba(43,34,16,.99) 16%,
+    rgba(43,34,16,.54) 46%, rgba(58,45,16,.54) 54%,
+    rgba(58,45,16,.98) 84%, rgba(58,45,16,1) 100%)}
   .k-c,.k-M{background:#1b2740;color:#a9c8f5;border-color:#2e4265}
   .k-cpp{background:#241d38;color:#c9b0ff;border-color:#3d3160}
   .k-extra{background:#2c2415;color:#e6c078;border-color:#4a3c1c}
