@@ -1,0 +1,33 @@
+/* =====================================================================
+   tg_D.css —— 全局暗色主题层（theme global · Dark）
+   ---------------------------------------------------------------------
+   由 tools/build_tg.py 生成，**不要手改**。
+
+   为什么暗色要单独一层
+     之前每份样式表末尾都追加了一段暗色补丁，追加了 28~30 遍 ——
+     同一批规则（code / .mnemonic / .k / --bg-soft …）在 30 个文件里
+     逐字重复。这一层把它们收成一份。
+
+   放在 tg_L.css **之后**加载，所以能覆盖亮色；
+   页面自己的 sp_<page>.css 再放在最后，个别例外仍可覆盖这里。
+
+   注意：下面每个块**自带** `@media (prefers-color-scheme: dark)`，
+   不再套一层外壳 —— 嵌两层虽然合法，但纯属冗余。
+
+   这些规则原先散在 28 份页面样式表里逐字重复（每份末尾追加一段），
+   合并时把原来的行内说明也一并收在这里，免得理由丢失：
+     code      行内代码 —— 全站最多的一块，暗色下必须是深底亮字
+     .hd       小标题条
+     .k        紫色小标记
+     .mnemonic 助记块（e02 那份当初漏了暗色，是「逐份打补丁」漏掉的典型）
+     .cpp-note C++ 备注块
+     .lv.l0/1/2 作用域层级
+     .ch.end   字符串内存图的结尾格
+     .ptr-demo 指针演示区
+   ===================================================================== */
+
+@media (prefers-color-scheme: dark){ :root:root{ --bg:#0f141b; --bg-soft:#161d26; --surface:rgba(38,44,54,.72); --surface-solid:#1b1e25; --blue-soft:#16243a; --violet-soft:#241d38; --green-soft:#13291f; --red-soft:#2e1a18; --amber-soft:#2b2314; --teal-soft:#122a2a; --blue:#6aa6f5; --violet:#b28cff; --green:#4fc98d; --red:#f07a6c; --amber:#e0b45f; --teal:#4cc4c4; --fg:#e6ecf4; --fg-2:#b9c4d2; --fg-3:#939fb0; --line:#26303c; --line-2:#374556; --bg-code:#0b0f16; --bg-out:#070a0f; } }
+
+@media (prefers-color-scheme: dark){ :root:root{ --sfc:#1b1e25; --sfc-2:#161d26; --sfc-3:#1e242e; --sfc-hover:#1e2836; --sfc-glass:rgba(38,44,54,.72); } }
+
+@media (prefers-color-scheme: dark){ code{ background:#252a33 !important;color:#9fc4ff !important; border-color:#3a414c !important; } .hd{background:#252a33 !important;color:#c3cfdd !important} .k{background:#241d38 !important;color:#c9b0ff !important;border-color:#3d3160 !important} .mnemonic{ background:linear-gradient(96deg,#10262b,#0d2024) !important; border-left-color:#3fc4d4 !important;color:#d6f0ee !important; } .mnemonic b{color:#7fd8e0 !important} .cpp-note{ background:#241d38 !important;border-color:#3d3160 !important; border-left-color:#b28cff !important;color:#e6dcf7 !important; } .lv.l0{background:#16243a !important;border-color:#2b3f5e !important} .lv.l1{background:#241d38 !important;border-color:#3d3160 !important} .lv.l2{background:#13291f !important;border-color:#25452f !important} .ch.end{background:#2e1a18 !important;border-bottom-color:#f07a6c !important} .ch.end:hover{background:#3a201d !important} .ptr-demo{background:#161d26 !important;border-color:#374556 !important} .ptr-demo .box,.ptr-demo .p{background:#1b1e25 !important;border-color:#374556 !important} .box{background:#1b1e25 !important;border-color:#374556 !important} }

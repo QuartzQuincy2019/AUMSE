@@ -260,19 +260,10 @@ body.toc-open .home-fab{display:none}
    ⚠ 金色渐变的色标（#fffdf5 / #fdf3dc / #fbe9c4 …）**不在**这套变量里 ——
      它们是主题色，不是中性表面。
    ===================================================================== */
-:root{
-  --sfc:#ffffff;
-  --sfc-2:#f2f4f8;
-  --sfc-3:#fbfcfe;
-  --sfc-hover:#f4f8fd;
-  --sfc-glass:rgba(255,255,255,.74);
-}
 
 /* ==== fe-05.html
        前端系列样式：共用设计系统 + 示例展示 + 颜色拾取器
        （每篇自带一份，保证层叠顺序与内嵌时完全一致）==== */
-
-
 
 /* ---------- 页内导航条（前后互跳） ---------- */
 .page-nav{margin:30px 0 0;padding:14px 18px;border:1px solid var(--line-2);
@@ -463,7 +454,7 @@ body.toc-open::after{pointer-events:none}
     background:linear-gradient(96deg,#10262b,#0d2024) !important;
     color:#d6f0ee !important;
   }
-  .mnemonic b{color:#7fd8e0 !important}
+  
   .mnemonic::before{background:#3fc4d4;color:#062024}
 }
 
@@ -490,17 +481,6 @@ body.toc-open::after{pointer-events:none}
   .key-mark{color:#ffd970 !important}
 }
 
-
-@media (prefers-color-scheme: dark){
-  :root:root{
-    --sfc:#1b1e25;
-    --sfc-2:#161d26;
-    --sfc-3:#1e242e;
-    --sfc-hover:#1e2836;
-    --sfc-glass:rgba(38,44,54,.72);
-  }
-}
-
 /* =====================================================================
    第 14 轮：剩余浅底的暗色覆盖
    ---------------------------------------------------------------------
@@ -512,39 +492,6 @@ body.toc-open::after{pointer-events:none}
    也出现在别处的渐变色标中，被我的「渐变色标不动」规则连带排除了。
    这里逐个选择器直接给暗色，不再依赖那套判断。
    ===================================================================== */
-@media (prefers-color-scheme: dark){
-  /* 行内代码 —— 全站 15 篇都有，是这次最大的一块 */
-  code{
-    background:#252a33 !important;color:#9fc4ff !important;
-    border-color:#3a414c !important;
-  }
-  /* 小标题条 */
-  .hd{background:#252a33 !important;color:#c3cfdd !important}
-  /* 紫色小标记 */
-  .k{background:#241d38 !important;color:#c9b0ff !important;border-color:#3d3160 !important}
-  /* 助记块（e02 那份漏了暗色） */
-  .mnemonic{
-    background:linear-gradient(96deg,#10262b,#0d2024) !important;
-    border-left-color:#3fc4d4 !important;color:#d6f0ee !important;
-  }
-  .mnemonic b{color:#7fd8e0 !important}
-  /* C++ 备注 */
-  .cpp-note{
-    background:#241d38 !important;border-color:#3d3160 !important;
-    border-left-color:#b28cff !important;color:#e6dcf7 !important;
-  }
-  /* 作用域层级 */
-  .lv.l0{background:#16243a !important;border-color:#2b3f5e !important}
-  .lv.l1{background:#241d38 !important;border-color:#3d3160 !important}
-  .lv.l2{background:#13291f !important;border-color:#25452f !important}
-  /* 字符串内存图的结尾格 */
-  .ch.end{background:#2e1a18 !important;border-bottom-color:#f07a6c !important}
-  .ch.end:hover{background:#3a201d !important}
-  /* 指针演示区 */
-  .ptr-demo{background:#161d26 !important;border-color:#374556 !important}
-  .ptr-demo .box,.ptr-demo .p{background:#1b1e25 !important;border-color:#374556 !important}
-  .box{background:#1b1e25 !important;border-color:#374556 !important}
-}
 
 /* 补齐：上一轮加了 --sfc 变量，但个别地方仍写着旧色值 */
 
@@ -557,42 +504,6 @@ body.toc-open::after{pointer-events:none}
    这里一次性补齐：改的是变量，所有引用处一起生效，
    不再需要逐个选择器打补丁。
    ===================================================================== */
-@media (prefers-color-scheme: dark){
-  :root:root{
-    /* 中性表面 */
-    --bg:#0f141b;
-    --bg-soft:#161d26;
-    --surface:rgba(38,44,54,.72);
-    --surface-solid:#1b1e25;
-
-    /* 语义色底（浅色 → 深色） */
-    --blue-soft:#16243a;
-    --violet-soft:#241d38;
-    --green-soft:#13291f;
-    --red-soft:#2e1a18;
-    --amber-soft:#2b2314;
-    --teal-soft:#122a2a;
-
-    /* 对应的前景色也要提亮，否则深底深字 */
-    --blue:#6aa6f5;
-    --violet:#b28cff;
-    --green:#4fc98d;
-    --red:#f07a6c;
-    --amber:#e0b45f;
-    --teal:#4cc4c4;
-
-    /* 文字与描边 */
-    --fg:#e6ecf4;
-    --fg-2:#b9c4d2;
-    --fg-3:#939fb0;
-    --line:#26303c;
-    --line-2:#374556;
-
-    /* 代码/输出底（本来就是深色，再压一档） */
-    --bg-code:#0b0f16;
-    --bg-out:#070a0f;
-  }
-}
 
 /* =====================================================================
    窄屏「目录」按钮：不能被顶部常驻条盖住

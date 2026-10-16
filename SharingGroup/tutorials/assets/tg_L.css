@@ -1,0 +1,13 @@
+/* =====================================================================
+   tg_L.css —— 全局亮色主题层（theme global · Light）
+   ---------------------------------------------------------------------
+   由 tools/build_tg.py 生成，**不要手改**。
+   配色数据在 tools/series_data.py 与 build_tg.py 的 LIGHT 段里。
+
+   这一层装的是「所有页面都一样」的亮色定义：
+     · --sfc / --sfc-2 / --sfc-3 / --sfc-hover / --sfc-glass  表面变量
+     · 各系列的亮色主题（见 series-theme.css）
+   加载顺序：genelayout.css → tg_L.css → tg_D.css → sp_<page>.css
+   ===================================================================== */
+
+:root{ --sfc:#ffffff; --sfc-2:#f2f4f8; --sfc-3:#fbfcfe; --sfc-hover:#f4f8fd; --sfc-glass:rgba(255,255,255,.74); }
