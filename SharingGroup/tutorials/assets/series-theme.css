@@ -737,13 +737,13 @@ body[data-series="R"][data-series="R"] .s-nav-toc a{color:var(--s-main-deep)}
 body[data-series="Q"][data-series="Q"]{
   --s-bg:#dff2ec;
   --s-bg2:#eefaf6;
-  --s-main:#0f9d76;
+  --s-main:#0c8261;
   --s-main-deep:#0a7157;
   --s-ink:#10322a;
-  --s-line:color-mix(in srgb, #0f9d76 32%, transparent);
+  --s-line:color-mix(in srgb, #0c8261 32%, transparent);
   --s-card:rgba(255,255,255,.82);
   --s-toc:rgba(255,255,255,.90);
-  --s-soft:color-mix(in srgb, #0f9d76 10%, transparent);
+  --s-soft:color-mix(in srgb, #0c8261 10%, transparent);
   color:var(--s-ink);
   background-color:#dff2ec;
   background-image:
@@ -765,8 +765,8 @@ body[data-series="Q"][data-series="Q"]::before{
   padding:5px 14px;
   font:700 12px/1.5 var(--sans,system-ui,sans-serif);
   letter-spacing:.06em;
-  color:#fff;background:#0f9d76;
-  box-shadow:0 1px 8px color-mix(in srgb, #0f9d76 42%, transparent);
+  color:#fff;background:#0c8261;
+  box-shadow:0 1px 8px color-mix(in srgb, #0c8261 42%, transparent);
 }
 body[data-series="Q"][data-series="Q"] main{padding-top:52px}
 
@@ -780,21 +780,21 @@ body[data-series="Q"][data-series="Q"] #toc a{color:color-mix(in srgb, #10322a 7
 body[data-series="Q"][data-series="Q"] #toc a:hover{background:var(--s-soft)}
 body[data-series="Q"][data-series="Q"] #toc a.on{
   background:linear-gradient(90deg,
-    color-mix(in srgb, #0f9d76 26%, transparent),
-    color-mix(in srgb, #0f9d76 8%, transparent));
+    color-mix(in srgb, #0c8261 26%, transparent),
+    color-mix(in srgb, #0c8261 8%, transparent));
   color:var(--s-main-deep);font-weight:650;
 }
 
 /* 正文层级 */
 body[data-series="Q"][data-series="Q"] h1{color:#0a7157}
 body[data-series="Q"][data-series="Q"] h2{border-bottom:1px solid var(--s-line);color:#0a7157}
-body[data-series="Q"][data-series="Q"] h2 .n{background:#0f9d76;color:#fff;
-  box-shadow:0 1px 4px color-mix(in srgb, #0f9d76 40%, transparent)}
+body[data-series="Q"][data-series="Q"] h2 .n{background:#0c8261;color:#fff;
+  box-shadow:0 1px 4px color-mix(in srgb, #0c8261 40%, transparent)}
 body[data-series="Q"][data-series="Q"] h3,
 body[data-series="Q"][data-series="Q"] h4{color:var(--s-main-deep)}
 body[data-series="Q"][data-series="Q"] .sub-title{color:color-mix(in srgb, #10322a 62%, transparent)}
 body[data-series="Q"][data-series="Q"] a{color:var(--s-main-deep)}
-body[data-series="Q"][data-series="Q"] a:hover{color:#0f9d76}
+body[data-series="Q"][data-series="Q"] a:hover{color:#0c8261}
 
 /* 卡片 / 代码 / 表格 */
 body[data-series="Q"][data-series="Q"] main > .card,
@@ -805,16 +805,16 @@ body[data-series="Q"][data-series="Q"] main > .fig,
 body[data-series="Q"][data-series="Q"] main > .umc-demo,
 body[data-series="Q"][data-series="Q"] main > .s-nav{
   background:var(--s-card);border-color:var(--s-line);
-  box-shadow:0 2px 10px color-mix(in srgb, #0f9d76 12%, transparent);
+  box-shadow:0 2px 10px color-mix(in srgb, #0c8261 12%, transparent);
   backdrop-filter:blur(4px);
 }
 body[data-series="Q"][data-series="Q"] table th{
-  background:color-mix(in srgb, #0f9d76 14%, #fff);
+  background:color-mix(in srgb, #0c8261 14%, #fff);
   color:#0a7157;border-color:var(--s-line);
 }
 body[data-series="Q"][data-series="Q"] table td{border-color:var(--s-line)}
 body[data-series="Q"][data-series="Q"] table tbody tr:nth-child(even){
-  background:color-mix(in srgb, #0f9d76 5%, transparent);
+  background:color-mix(in srgb, #0c8261 5%, transparent);
 }
 /* 代码块与输出块：底色必须不透明，而且要压过各篇自带样式表。
    08_f03 里有 body.fseries main>.code-wrap{background-color:#fff}（0,2,2），
@@ -846,16 +846,16 @@ body[data-series="Q"][data-series="Q"] .out-wrap>pre{
 body[data-series="Q"][data-series="Q"] .out-wrap .cap{color:#7fc7bb}
 body[data-series="Q"][data-series="Q"] .card.key{
   background:linear-gradient(96deg,#eefaf6,#fff 55%,#eefaf6);
-  border-left:6px solid #0f9d76;
+  border-left:6px solid #0c8261;
 }
-body[data-series="Q"][data-series="Q"] .key-mark{color:#0f9d76}
+body[data-series="Q"][data-series="Q"] .key-mark{color:#0c8261}
 body[data-series="Q"][data-series="Q"] .card-t{color:#0a7157}
 body[data-series="Q"][data-series="Q"] .card.note>.card-t{color:#175fd0}
 body[data-series="Q"][data-series="Q"] .card.tip>.card-t{color:#0f6b3a}
 body[data-series="Q"][data-series="Q"] .card.warn>.card-t{color:#a82a1c}
 body[data-series="Q"][data-series="Q"] .card.teal>.card-t{color:#0a6666}
 body[data-series="Q"][data-series="Q"] .tag{
-  background:color-mix(in srgb, #0f9d76 12%, #fff);
+  background:color-mix(in srgb, #0c8261 12%, #fff);
   border-color:var(--s-line);color:#0a7157;
 }
 
@@ -863,7 +863,7 @@ body[data-series="Q"][data-series="Q"] .tag{
 body[data-series="Q"][data-series="Q"] .home-fab{
   background:linear-gradient(140deg,#fff,#eefaf6);
   border-color:var(--s-line);color:#0a7157;
-  box-shadow:0 3px 12px color-mix(in srgb, #0f9d76 26%, transparent);
+  box-shadow:0 3px 12px color-mix(in srgb, #0c8261 26%, transparent);
 }
 body[data-series="Q"][data-series="Q"] .home-fab:hover{
   background:linear-gradient(140deg,#eefaf6,#dff2ec);color:#0a7157;
@@ -874,18 +874,18 @@ body[data-series="Q"][data-series="Q"] .s-nav{
   background:linear-gradient(135deg,#eefaf6,#fff);
 }
 body[data-series="Q"][data-series="Q"] .s-nav > .s-nav-h{color:#0a7157}
-body[data-series="Q"][data-series="Q"] .s-nav-cur{background:color-mix(in srgb,#0f9d76 20%,transparent);color:#0a7157}
+body[data-series="Q"][data-series="Q"] .s-nav-cur{background:color-mix(in srgb,#0c8261 20%,transparent);color:#0a7157}
 body[data-series="Q"][data-series="Q"] .s-nav-grid a{
   background:#fff;border-color:var(--s-line);color:#0a7157;
 }
 body[data-series="Q"][data-series="Q"] .s-nav-grid a:hover{
-  background:#eefaf6;border-color:#0f9d76;
+  background:#eefaf6;border-color:#0c8261;
 }
-body[data-series="Q"][data-series="Q"] .s-nav-grid a .s-no{background:#0f9d76;color:#fff}
+body[data-series="Q"][data-series="Q"] .s-nav-grid a .s-no{background:#0c8261;color:#fff}
 body[data-series="Q"][data-series="Q"] .s-nav-grid a[aria-current="page"]{
-  background:linear-gradient(96deg,#eefaf6,#dff2ec);border-color:#0f9d76;
+  background:linear-gradient(96deg,#eefaf6,#dff2ec);border-color:#0c8261;
 }
-body[data-series="Q"][data-series="Q"] .s-nav-cur{background:color-mix(in srgb,#0f9d76 20%,transparent);color:#0a7157}
+body[data-series="Q"][data-series="Q"] .s-nav-cur{background:color-mix(in srgb,#0c8261 20%,transparent);color:#0a7157}
 body[data-series="Q"][data-series="Q"] .s-nav-toc a{color:var(--s-main-deep)}
 
 /* 暗色 */
@@ -1287,7 +1287,7 @@ body[data-series="E"][data-series="E"] .s-nav-toc a{color:var(--s-main-deep)}
          于是浅金块直接压在暗底上，又刺眼又读不清。 */
 h2.key-h,h3.key-h,h4.key-h{
   background:linear-gradient(96deg,#fffdf5 0%,#fdf3dc 58%,#fbe9c4 100%);
-  border:1px solid #e8c877;border-left:6px solid #c8901a;
+  border:1px solid #e8c877;border-left:6px solid #9a6b0a;
 }
 .key-hint{
   background:#eef2f8;border:1px solid #ccd5e3;color:#6b7684;
@@ -1411,22 +1411,22 @@ body[data-series="R"][data-series="R"]::before{background-color:#d1435b !importa
 }
 
 /* ---------------- Q 系列：实色覆盖（替掉 color-mix 派生色） ---------------- */
-body[data-series="Q"][data-series="Q"] a{color:#0a7157}
-body[data-series="Q"][data-series="Q"] a:hover{color:#0f9d76}
+body[data-series="Q"][data-series="Q"] a{color:#0a6b52}
+body[data-series="Q"][data-series="Q"] a:hover{color:#0c8261}
 body[data-series="Q"][data-series="Q"] .sub-title{color:#40584f}
 body[data-series="Q"][data-series="Q"] #toc a{color:#40584f}
-body[data-series="Q"][data-series="Q"] table th{background:#d6efe6;color:#075c46;border-color:#0f9d76}
-body[data-series="Q"][data-series="Q"] .series-nav a.cur{background:#0f9d76 !important;color:#ffffff !important;
-  border-color:#0f9d76 !important}
+body[data-series="Q"][data-series="Q"] table th{background:#d6efe6;color:#075c46;border-color:#0c8261}
+body[data-series="Q"][data-series="Q"] .series-nav a.cur{background:#0c8261 !important;color:#ffffff !important;
+  border-color:#0c8261 !important}
 body[data-series="Q"][data-series="Q"] .series-nav b{color:#40584f}
-body[data-series="Q"][data-series="Q"] .series-nav a{color:#0a7157}
-body[data-series="Q"][data-series="Q"] .s-nav-h{color:#0a7157}
-body[data-series="Q"][data-series="Q"] .s-nav-grid a{color:#0a7157}
-body[data-series="Q"][data-series="Q"] .s-nav-toc a{color:#0a7157}
+body[data-series="Q"][data-series="Q"] .series-nav a{color:#0a6b52}
+body[data-series="Q"][data-series="Q"] .s-nav-h{color:#0a6b52}
+body[data-series="Q"][data-series="Q"] .s-nav-grid a{color:#0a6b52}
+body[data-series="Q"][data-series="Q"] .s-nav-toc a{color:#0a6b52}
 body[data-series="Q"][data-series="Q"] .home-fab{background-color:#eefaf6;
   background-image:linear-gradient(140deg,#fff,#eefaf6) !important;
-  color:#0a7157 !important}
-body[data-series="Q"][data-series="Q"]::before{background-color:#0f9d76 !important;background-image:none;
+  color:#0a6b52 !important}
+body[data-series="Q"][data-series="Q"]::before{background-color:#0c8261 !important;background-image:none;
   color:#fff !important}
 
 @media (prefers-color-scheme: dark){

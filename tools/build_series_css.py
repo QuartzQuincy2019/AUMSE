@@ -485,7 +485,7 @@ body[data-series] .s-nav-switch .ss-cur{
 FIXED = {
     "M": ("#14539f", "#4a5b70", "#1f6feb", "#ffffff", "#dbe8f8", "#12447f",
           "#8cc0ff", "#9fb0c6", "#5aa2f0", "#0d1420", "#22304a", "#cfe0f5"),
-    "Q": ("#0a7157", "#40584f", "#0f9d76", "#ffffff", "#d6efe6", "#075c46",
+    "Q": ("#0a6b52", "#40584f", "#0c8261", "#ffffff", "#d6efe6", "#075c46",
           "#7adfc4", "#9db8ae", "#3fc4a0", "#0a1614", "#1c3b33", "#c9ece1"),
     "E": ("#67289a", "#554067", "#8b3fbe", "#ffffff", "#eddcf6", "#541f80",
           "#d6a6f2", "#b9a6c8", "#b877e0", "#150d1c", "#33203f", "#ead9f5"),
@@ -578,7 +578,7 @@ EXTRA_COMMON = """
          于是浅金块直接压在暗底上，又刺眼又读不清。 */
 h2.key-h,h3.key-h,h4.key-h{
   background:linear-gradient(96deg,#fffdf5 0%,#fdf3dc 58%,#fbe9c4 100%);
-  border:1px solid #e8c877;border-left:6px solid #c8901a;
+  border:1px solid #e8c877;border-left:6px solid #9a6b0a;
 }
 .key-hint{
   background:#eef2f8;border:1px solid #ccd5e3;color:#6b7684;

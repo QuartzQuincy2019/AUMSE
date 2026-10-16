@@ -31,7 +31,7 @@ SERIES = {
         "desc": "文字、编码与字体文件：做回鹘蒙文必须先弄懂的东西",
         "cls": "tseries",
         # 主色（亮色 / 暗色）
-        "c1": "#fbe8bf", "c2": "#fdf3dc", "c3": "#c8901a", "c4": "#8a6208",
+        "c1": "#fbe8bf", "c2": "#fdf3dc", "c3": "#9a6b0a", "c4": "#8a6208",
         "ink": "#3a2f14",
         "d1": "#16120a", "d2": "#2b2210", "d3": "#e0b23f", "d4": "#f0cc72",
         "dink": "#ece3cd",
@@ -55,7 +55,7 @@ SERIES = {
         "label": "Qt · Q",
         "desc": "",   # 不写死：该系列将来会大量补充
         "cls": "qseries",
-        "c1": "#dff2ec", "c2": "#eefaf6", "c3": "#0f9d76", "c4": "#0a7157",
+        "c1": "#dff2ec", "c2": "#eefaf6", "c3": "#0c8261", "c4": "#0a7157",
         "ink": "#10322a",
         "d1": "#0a1614", "d2": "#12231f", "d3": "#3fc4a0", "d4": "#7adfc4",
         "dink": "#d6f0e8",
@@ -132,6 +132,8 @@ PAGES = [
     # ---- Q：C++ 与 Qt ----
     ("10-std-and-namespace.html",     "q01-std-and-namespace.html",
      "Q", "Q01", "std 与命名空间初步", "从这里进入 C++：std:: 是什么、using 该不该用", False),
+    ("q02-references.html",             "q02-references.html",
+     "Q", "Q02", "C++ 的引用", "重点：引用是什么、与指针的关系、const 引用", True),
 
     # ---- E：补充练习 ----
     ("08-e01-recursion.html",         "e01-recursion.html",
