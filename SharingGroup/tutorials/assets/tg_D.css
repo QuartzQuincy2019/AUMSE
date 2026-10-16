@@ -31,3 +31,34 @@
 @media (prefers-color-scheme: dark){ :root:root{ --sfc:#1b1e25; --sfc-2:#161d26; --sfc-3:#1e242e; --sfc-hover:#1e2836; --sfc-glass:rgba(38,44,54,.72); } }
 
 @media (prefers-color-scheme: dark){ code{ background:#252a33 !important;color:#9fc4ff !important; border-color:#3a414c !important; } .hd{background:#252a33 !important;color:#c3cfdd !important} .k{background:#241d38 !important;color:#c9b0ff !important;border-color:#3d3160 !important} .mnemonic{ background:linear-gradient(96deg,#10262b,#0d2024) !important; border-left-color:#3fc4d4 !important;color:#d6f0ee !important; } .mnemonic b{color:#7fd8e0 !important} .cpp-note{ background:#241d38 !important;border-color:#3d3160 !important; border-left-color:#b28cff !important;color:#e6dcf7 !important; } .lv.l0{background:#16243a !important;border-color:#2b3f5e !important} .lv.l1{background:#241d38 !important;border-color:#3d3160 !important} .lv.l2{background:#13291f !important;border-color:#25452f !important} .ch.end{background:#2e1a18 !important;border-bottom-color:#f07a6c !important} .ch.end:hover{background:#3a201d !important} .ptr-demo{background:#161d26 !important;border-color:#374556 !important} .ptr-demo .box,.ptr-demo .p{background:#1b1e25 !important;border-color:#374556 !important} .box{background:#1b1e25 !important;border-color:#374556 !important} }
+
+/* ---------- 2c：正文页共有的暗色规则 ---------- */
+@media (prefers-color-scheme: dark){
+  .capfig{background:#161d26 !important;border-color:#374556 !important;color:#e6ecf4;}
+  .capfig .cellb{color:#e6ecf4}
+  .capfig .cellb.free{background:#1e2836;color:#939fb0;border-color:#374556}
+  .capfig .lg .sq.f{background:#1e2836;border-color:#374556}
+  .capfig .t,.capfig .lg{color:#939fb0}
+  .codefig{background:#161d26;border-color:#374556;color:#e6ecf4;}
+  .codefig .t,.codefig .note{color:#939fb0}
+  .encs .c{background:#161d26;border-color:#374556;color:#e6ecf4;}
+  .encs .c .h{color:#e6ecf4}
+  .encs .c .note{color:#939fb0}
+  .encs .c .note b{color:#c3cfdd}
+  .encs .c.u16 .h{color:#6aa6f5}
+  .encs .c.u32 .h{color:#b28cff}
+  .encs .c.u8 .h{color:#4fc98d}
+  .flow .s{background:#1b1e25;border-color:#374556;color:#e6ecf4;}
+  .flow .s+.s::before{color:#939fb0}
+  .key-hint{background:#4a3a15 !important;border-color:#8a6d1e !important; color:#f4e3b4 !important;}
+  .key-mark{color:#ffd970 !important}
+  .mnemonic::before{background:#3fc4d4;color:#062024}
+  .qa .a{background:#1b1e25;color:#e6ecf4}
+  .stack .fr{background:#161d26 !important;border-color:#374556 !important;color:#e6ecf4;}
+  .stack .fr:hover{border-color:var(--blue,#6aa6f5) !important; box-shadow:0 5px 16px rgba(0,0,0,.42) !important}
+  body.fseries main>.qa, body[data-series] main>.qa{background-color:#1b1e25 !important}
+  h2.key-h .n,h3.key-h .n,h4.key-h .n{background:#f0cc72 !important;color:#2b1d02 !important;}
+  h2.key-h,h3.key-h,h4.key-h{background:linear-gradient(96deg,#3a2d10 0%,#4a3a15 52%,#2e2409 100%) !important; border-color:#8a6d1e !important; border-left:7px solid #f0cc72 !important; color:#ffe9b0 !important; box-shadow:0 0 0 1px rgba(240,204,114,.16), 0 3px 14px rgba(0,0,0,.42);}
+  tbody tr:hover{background:#1e2836}
+  tbody tr:hover td{color:#e6ecf4}
+}

@@ -12,8 +12,8 @@
    UME 项目组内部教程 · 共用样式表
    约定：所有代码与输出都用 Consolas 等宽字体
    =================================================================== */html{scroll-behavior:smooth}#toc h5{margin:0 0 12px;font-size:11px;letter-spacing:.16em;color:var(--fg-3);
-        text-transform:uppercase;font-weight:600}#toc a:hover{background:#e9eef7;color:var(--fg);border-left-color:var(--line-2)}#toc a.sub{padding-left:24px;font-size:12.5px;color:var(--fg-3)}#toc a.on{background:var(--blue-soft);color:var(--blue);font-weight:600;border-left-color:var(--blue)}#toc .sep{height:1px;background:var(--line);margin:12px 0}/* ---------------- 标题与正文 ---------------- */.sub-title{color:var(--fg-3);font-size:15px;margin:0 0 6px}h4{font-size:15px;margin:22px 0 6px;color:var(--fg-2)}a{color:var(--blue)}.k:hover{background:#e6dbfb;box-shadow:0 0 0 3px rgba(107,70,193,.13)}.code-wrap .bar .dot{width:9px;height:9px;border-radius:50%;background:#3c4658}.code-wrap .bar .dot.r{background:#e06c75}.code-wrap .bar .dot.y{background:#e5c07b}.code-wrap .bar .dot.g{background:#98c379}.code-wrap .bar .cp:hover{background:#2d3849;color:#dbe6f5;border-color:#4a586f}.out-wrap:hover{box-shadow:0 5px 18px rgba(20,30,50,.16);border-left-color:#22a35c}/* 行内高亮 */.hl-k{color:#c792ea}.hl-n{color:#f78c6c}.hl-s{color:#c3e88d}.hl-c{color:#6a7a8c;font-style:italic}.hl-f{color:#82aaff}.hl-p{color:#89ddff}.hl-bad{color:#ff6b6b;font-weight:700}.hl-ok{color:#7ee787;font-weight:700}.card:hover{box-shadow:0 5px 20px rgba(30,45,70,.09);transform:translateY(-1px)}.card.tip{border-color:#c6e6d3;background:var(--green-soft)}.card.warn{border-color:#f2d2ce;background:var(--red-soft)}.card.note{border-color:#cfe0fb;background:var(--blue-soft)}.card.key{border-color:#ded0f7;background:var(--violet-soft)}.card.tip .card-t{color:var(--green)}.card.warn .card-t{color:var(--red)}.card.note .card-t{color:var(--blue)}.card.key .card-t{color:var(--violet)}/* ---------------- 表格 ---------------- */table{border-collapse:collapse;width:100%;margin:16px 0;font-size:14px}th,td{border:1px solid var(--line);padding:8px 12px;text-align:left;vertical-align:top}th{background:var(--bg-soft);font-weight:600;font-size:13px}tbody tr:hover{background:var(--sfc-hover)}/* 流程条 */.flow .s:hover{box-shadow:0 5px 16px rgba(30,45,70,.1);transform:translateY(-2px);border-color:var(--line-2)}.flow .s+.s::before{content:"→";position:absolute;left:-19px;top:50%;transform:translateY(-50%);
-                    color:var(--fg-3);font-size:15px;font-family:var(--mono)}.flow .s .d{font-size:12px;color:var(--fg-3);line-height:1.55}.hr{height:1px;background:var(--line);margin:34px 0}.tag.g{background:var(--green-soft);border-color:#bfe2cd;color:var(--green)}.tag.r{background:var(--red-soft);border-color:#f0c8c2;color:var(--red)}.tag.b{background:var(--blue-soft);border-color:#bcd6fa;color:var(--blue)}.mnemonic b{color:var(--amber)}body{margin:0;background:var(--bg);color:var(--fg);
+        text-transform:uppercase;font-weight:600}#toc a:hover{background:#e9eef7;color:var(--fg);border-left-color:var(--line-2)}#toc a.sub{padding-left:24px;font-size:12.5px;color:var(--fg-3)}#toc a.on{background:var(--blue-soft);color:var(--blue);font-weight:600;border-left-color:var(--blue)}#toc .sep{height:1px;background:var(--line);margin:12px 0}/* ---------------- 标题与正文 ---------------- */.sub-title{color:var(--fg-3);font-size:15px;margin:0 0 6px}h4{font-size:15px;margin:22px 0 6px;color:var(--fg-2)}.code-wrap .bar .dot{width:9px;height:9px;border-radius:50%;background:#3c4658}.out-wrap:hover{box-shadow:0 5px 18px rgba(20,30,50,.16);border-left-color:#22a35c}/* 行内高亮 */.hl-c{color:#6a7a8c;font-style:italic}.hl-bad{color:#ff6b6b;font-weight:700}.hl-ok{color:#7ee787;font-weight:700}.card:hover{box-shadow:0 5px 20px rgba(30,45,70,.09);transform:translateY(-1px)}/* ---------------- 表格 ---------------- */table{border-collapse:collapse;width:100%;margin:16px 0;font-size:14px}th,td{border:1px solid var(--line);padding:8px 12px;text-align:left;vertical-align:top}th{background:var(--bg-soft);font-weight:600;font-size:13px}tbody tr:hover{background:var(--sfc-hover)}/* 流程条 */.flow .s:hover{box-shadow:0 5px 16px rgba(30,45,70,.1);transform:translateY(-2px);border-color:var(--line-2)}.flow .s+.s::before{content:"→";position:absolute;left:-19px;top:50%;transform:translateY(-50%);
+                    color:var(--fg-3);font-size:15px;font-family:var(--mono)}.flow .s .d{font-size:12px;color:var(--fg-3);line-height:1.55}.hr{height:1px;background:var(--line);margin:34px 0}body{margin:0;background:var(--bg);color:var(--fg);
   font:16px/1.8 var(--sans);-webkit-font-smoothing:antialiased}#toc a{display:block;padding:5px 10px;margin:1px 0;border-radius:6px;font-size:13.5px;
   color:var(--fg-2);text-decoration:none;line-height:1.5;
   border-left:2px solid transparent;transition:background .13s,color .13s,border-color .13s}h2{font-size:22px;margin:58px 0 14px;padding-top:18px;border-top:1px solid var(--line);
@@ -49,24 +49,23 @@
   --teal:#0d7d7d; --teal-soft:#e4f5f5;
   --mono:"Consolas","Cascadia Mono","Courier New",monospace;
   --sans:"Microsoft YaHei","PingFang SC","Hiragino Sans GB",system-ui,sans-serif;
-}.card.teal{border-color:#bfe4e4;background:var(--teal-soft)}.card.teal .card-t{color:var(--teal)}.addr .hi{color:var(--blue);font-weight:700;transition:background .14s}.addr .hi:hover{background:var(--blue-soft)}.tag.v{background:var(--violet-soft);border-color:#ded0f7;color:var(--violet)}#toc{position:sticky;top:0;width:274px;flex:0 0 274px;height:100vh;overflow:auto;
+}.addr .hi{color:var(--blue);font-weight:700;transition:background .14s}#toc{position:sticky;top:0;width:274px;flex:0 0 274px;height:100vh;overflow:auto;
   padding:32px 16px 40px 24px;border-right:1px solid var(--line);background:var(--bg-soft)}/* 箭头高亮：本讲重点 */.arw{color:#ffcb6b;font-weight:700}.arw2{color:#82aaff;font-weight:700}/* 指针关系图：变量盒 + 箭头 */.ptr-demo{
   display:flex;align-items:center;gap:0;flex-wrap:wrap;margin:18px 0;
   padding:16px;border:1px solid var(--line-2);border-radius:12px;background:#fcfdff;
 }.ptr-demo .n{width:100%;font-size:12.5px;color:var(--fg-3);margin-bottom:10px}.box{
   border:1px solid var(--line-2);border-radius:10px;padding:10px 14px;background:var(--sfc);
   min-width:120px;transition:box-shadow .16s,transform .16s,border-color .16s;cursor:default;
-}.box:hover{box-shadow:0 6px 18px rgba(30,45,70,.13);transform:translateY(-2px);border-color:var(--blue)}.box .nm{font-family:var(--mono);font-size:12px;color:var(--fg-3);margin-bottom:5px}.box.p{border-color:#bcd6fa;background:var(--blue-soft)}.box.p .vl{color:var(--blue)}.box.p:hover{border-color:var(--blue)}.link{
+}.box:hover{box-shadow:0 6px 18px rgba(30,45,70,.13);transform:translateY(-2px);border-color:var(--blue)}.box .nm{font-family:var(--mono);font-size:12px;color:var(--fg-3);margin-bottom:5px}.link{
   font-family:var(--mono);font-size:15px;color:var(--amber);padding:0 12px;
   white-space:nowrap;transition:transform .16s,color .16s;
-}.link:hover{transform:scale(1.14);color:#c99400}.link.b{color:var(--blue)}.link.b:hover{color:var(--blue)}/* 地址表 */.addr{
+}.link:hover{transform:scale(1.14);color:#c99400}/* 地址表 */.addr{
   display:grid;grid-template-columns:auto auto auto 1fr;gap:0;margin:16px 0;
   border:1px solid var(--line-2);border-radius:10px;overflow:hidden;
   font-family:var(--mono);font-size:13px;
-}.addr>div{padding:7px 12px;border-bottom:1px solid var(--line)}.addr>div:nth-child(4n+1){background:var(--bg-soft);color:var(--fg-3)}.addr>div:nth-child(4n+2){background:var(--sfc);color:var(--fg-2)}.addr>div:nth-child(4n+3){background:var(--sfc)}.addr>div:nth-child(4n){background:var(--sfc)}.addr>div:last-child,.addr>div:nth-last-child(2),
-.addr>div:nth-last-child(3),.addr>div:nth-last-child(4){border-bottom:0}.addr .hd{font-weight:700;color:var(--fg-2);background:#eef2f8 !important}.flow .s{flex:1 1 126px;border:1px solid var(--line);border-radius:9px;padding:10px 12px;
+}.addr>div{padding:7px 12px;border-bottom:1px solid var(--line)}.addr .hd{font-weight:700;color:var(--fg-2);background:#eef2f8 !important}.flow .s{flex:1 1 126px;border:1px solid var(--line);border-radius:9px;padding:10px 12px;
   background:var(--sfc);position:relative;transition:box-shadow .15s,transform .15s,border-color .15s}/* 问答式疑难块 */.qa{border:1px solid var(--line);border-radius:12px;margin:16px 0;overflow:hidden;
-  transition:box-shadow .18s,border-color .18s}.qa:hover{box-shadow:0 5px 20px rgba(30,45,70,.1);border-color:var(--line-2)}.qa .q{
+  transition:box-shadow .18s,border-color .18s}.qa .q{
   padding:11px 18px;background:var(--violet-soft);border-bottom:1px solid #ded0f7;
   font-weight:700;font-size:14.5px;color:var(--violet);
 }.qa .a{padding:12px 18px;background:var(--sfc)}/* ==== _ds_05_静态、动态内存与内存安全初步.html
@@ -178,11 +177,7 @@ h4.key-h{
    现在分工明确：
      .mnemonic  助记 / 口诀 / 小提示 —— **青蓝**（信息色）
      .key-h     重点小节标题        —— **金色**（强调色）
-   色相拉开之后，扫一眼就知道是「提示」还是「重点」。 */.mnemonic{
-  border-left:5px solid #0d8f9e;
-  background:linear-gradient(96deg,#eefafb,#e2f6f8);
-  color:var(--fg,#1a1f28);
-}.mnemonic b{color:#0a6b78}.mnemonic::before{
+   色相拉开之后，扫一眼就知道是「提示」还是「重点」。 */.mnemonic::before{
   content:"助记";
   display:inline-block;margin-right:9px;padding:1px 8px;border-radius:999px;
   font-size:11px;font-weight:700;letter-spacing:.06em;
