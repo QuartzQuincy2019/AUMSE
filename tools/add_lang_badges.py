@@ -60,6 +60,7 @@ LANG = {
     "q01-std-and-namespace.html": ("C++", "cpp"),
     "q02-references.html": ("C++", "cpp"),
     "q03-pointers-to-objects.html": ("C++", "cpp"),
+    "q04-interfaces.html": ("C++", "cpp"),
     # ---- R：相关信息 ----
     "r01-font-design-metrics.html": ("CSS", "css"),
     "r02-bubble-sort.html": ("C++", "cpp"),

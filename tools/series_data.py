@@ -136,6 +136,8 @@ PAGES = [
      "Q", "Q02", "C++ 的引用", "重点：引用是什么、与指针的关系", True),
     ("q03-pointers-to-objects.html",  "q03-pointers-to-objects.html",
      "Q", "Q03", "指针进阶：指向对象的指针与引用", "按引用传递的必要性；传递指针与传递引用的分工", True),
+    ("q04-interfaces.html",        "q04-interfaces.html",
+     "Q", "Q04", "接口", "接口的定义与常见用途；Actor 的 public 区", True),
 
     # ---- E：补充练习 ----
     ("08-e01-recursion.html",         "e01-recursion.html",
