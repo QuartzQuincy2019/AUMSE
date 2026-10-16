@@ -16,22 +16,25 @@
 
 <nav id="toc">
   <h5>目录</h5>
-  <a href="#s1">1 · 先说数学：一切归结为一个距离</a>
-  <a href="#s2">2 · 选择题里说「合适的数据类型」</a>
-  <a href="#s3">3 · 初学者的写法：把数字写死在 main 里</a>
-  <a href="#s4">4 · 老师改题了</a>
-  <a href="#s5">5 · 把「点」变成一个类型</a>
-  <a href="#s6">6 · 把「塔」和「查询」也拆开</a>
-  <a href="#s7">7 · 数据搬出去，main 就只剩流程</a>
-  <a href="#s8">8 · 提高扩展性的原则和要点</a>
-  <a href="#s9">9 · 两种写法摆在一起</a>
-  <a href="#s10">10 · 一页速查</a>
+  <a href="#s1">1 · 数学模型：点到塔心的距离判定</a>
+  <a href="#s2">2 · 与项目组的关系</a>
+  <a href="#s3">3 · 数据类型的选择</a>
+  <a href="#s4">4 · 直接实现：题面数据内嵌于主函数</a>
+  <a href="#s5">5 · C 语言的实现</a>
+  <a href="#s6">6 · C 与 C++ 的对照</a>
+  <a href="#s7">7 · 需求变更的影响范围</a>
+  <a href="#s8">8 · 第一层抽象：将坐标封装为 Point</a>
+  <a href="#s9">9 · 第二层抽象：塔与查询的分离</a>
+  <a href="#s10">10 · 数据与逻辑分离</a>
+  <a href="#s11">11 · 提高可扩展性的原则</a>
+  <a href="#s12">12 · 改造前后的对照</a>
+  <a href="#s13">13 · 小结</a>
 </nav>
 
 <main>
 <h1>代码复用性和扩展性<span class="star" title="与本项目施行密切相关">*</span></h1>
-<p class="sub-title">UME 项目组内部教程 · Q07（Q） · 从一道作业题看：数据与逻辑分开、给反复出现的东西一个类型</p>
-<p><span class="tag">设计原则</span> <span class="tag b">作业题驱动</span></p>
+<p class="sub-title">UME 项目组内部教程 · Q07（Q） · 从第 4 次作业（10 月 12 日）看：数据与逻辑分离、C 与 C++ 的写法比较</p>
+<p><span class="tag">作业题驱动</span> <span class="tag b">C / C++ 对照</span></p>
 
 <p><span class="lang cpp">C++</span></p>
 
@@ -60,7 +63,7 @@
 <b>同一道题，可以写成两种完全不同的代码</b>，
 而它们的差别在「老师改了题目」的那一刻才会暴露出来。</p>
 
-<h2 id="s1"><span class="n">1</span>先说数学：一切归结为一个距离</h2>
+<h2 id="s1"><span class="n">1</span> 数学模型：点到塔心的距离判定</h2>
 
 <p>先想清楚要算什么。塔是<b>圆柱</b>，从正上方看就是一个<b>圆面</b>：
 圆内的点是塔顶（高 10），圆外是地面（高 0）。</p>
@@ -110,7 +113,27 @@
   这没关系，因为两边的答案都是 10。</p>
 </div>
 
-<h2 id="s2"><span class="n">2</span>选择题里说「合适的数据类型」</h2>
+<h2 id="s2"><span class="n">2</span>与项目组的关系</h2>
+
+<p>这道题不是随手找来的练习 —— 它是<b>本项目组 10 月 12 日布置的第 4 次作业</b>。</p>
+
+<div class="card key">
+  <div class="card-t">为什么把它写进教程</div>
+  <p>这道题在课程里只是一次普通的作业，但它的形态和真实工程问题很接近：
+  <b>题目给一组数据（塔心、半径、高度），要求写一个查询</b>。</p>
+  <p>而 UME 项目里到处是同一形态的东西 ——
+  字形表、码位映射、推进量表，都是「<b>一份数据 + 一组查询</b>」。
+  所以这一篇的落点不在解出这道题，而在
+  <b>用这道题练「数据与逻辑怎么分」</b>。</p>
+</div>
+
+<p>它同时是一道<b>很好的反面教材</b>：题面给的都是具体数字
+（<code>±2</code>、<code>1</code>、<code>10</code>），
+非常容易顺手写死。而项目里最怕的正是这个 ——
+字体换了版本、码位范围变了、行高算法调整了，
+如果当初写死了数字，改动就会散落到各处。</p>
+
+<h2 id="s3"><span class="n">3</span> 数据类型的选择</h2>
 
 <p>题目里特意写了这一句。它是什么意思？</p>
 
@@ -139,7 +162,7 @@
   这不是考点。</p>
 </div>
 
-<h2 id="s3" class="key-h"><span class="key-mark" title="重点内容">★</span><span class="n">3</span>初学者的写法：把数字写死在 main 里</h2>
+<h2 id="s4"><span class="n">4</span> 直接实现：题面数据内嵌于主函数</h2>
 
 <p>绝大多数人第一遍会这么写 —— 直接把题面里的数字抄进代码：</p>
 
@@ -179,7 +202,175 @@
   <p>后面会看到：把坐标放进数组之后，这四段会变成<b>一个循环</b>。</p>
 </div>
 
-<h2 id="s4"><span class="n">4</span>老师改题了</h2>
+<h2 id="s5"><span class="n">5</span>C 语言的实现</h2>
+
+<p>同一道题，用 <b>C</b> 写出来是这样的。注意它的组织方式：
+<b>用 <code>struct</code> 放数据，用普通函数做操作</b>，
+数据和行为是分开的两样东西。</p>
+
+<div class="code-wrap"><div class="bar"><span class="dot r"></span><span class="dot y"></span><span class="dot g"></span><span class="name">homework.c —— C 的写法</span><span class="cp">复制</span></div><pre><span class="hl-p">#include</span> <span class="hl-s">&lt;stdio.h&gt;</span>
+<span class="hl-p">#include</span> <span class="hl-s">&lt;math.h&gt;</span>
+
+<span class="hl-c">/* 一个点：x 和 y 总是一起出现 */</span>
+<span class="hl-k">typedef struct</span> {
+    <span class="hl-k">double</span> x;
+    <span class="hl-k">double</span> y;
+} Point;
+
+<span class="hl-c">/* 一个塔 */</span>
+<span class="hl-k">typedef struct</span> {
+    Point  center;
+    <span class="hl-k">double</span> radius;
+    <span class="hl-k">double</span> height;
+} Tower;
+
+<span class="hl-c">/* 距离 —— 只能写成自由函数，第一个参数得自己传 */</span>
+<span class="hl-k">double</span> <span class="hl-f">distanceTo</span>(<span class="hl-k">const</span> Point *a, <span class="hl-k">const</span> Point *b)
+{
+    <span class="hl-k">double</span> dx = a-&gt;x - b-&gt;x;
+    <span class="hl-k">double</span> dy = a-&gt;y - b-&gt;y;
+    <span class="hl-k">return</span> <span class="hl-f">sqrt</span>(dx * dx + dy * dy);
+}
+
+<span class="hl-c">/* 这个点在不在塔顶范围内 */</span>
+<span class="hl-k">int</span> <span class="hl-f">towerCovers</span>(<span class="hl-k">const</span> Tower *t, <span class="hl-k">const</span> Point *p)
+{
+    <span class="hl-k">return</span> <span class="hl-f">distanceTo</span>(&amp;t-&gt;center, p) &lt;= t-&gt;radius;
+}
+
+<span class="hl-c">/* 查询：遍历数组 */</span>
+<span class="hl-k">double</span> <span class="hl-f">heightAt</span>(<span class="hl-k">const</span> Tower *towers, <span class="hl-k">int</span> n,
+                <span class="hl-k">const</span> Point *p)
+{
+    <span class="hl-k">for</span> (<span class="hl-k">int</span> i = <span class="hl-n">0</span>; i &lt; n; i++) {
+        <span class="hl-k">if</span> (<span class="hl-f">towerCovers</span>(&amp;towers[i], p))
+            <span class="hl-k">return</span> towers[i].height;
+    }
+    <span class="hl-k">return</span> <span class="hl-n">0.0</span>;
+}
+
+<span class="hl-k">int</span> <span class="hl-f">main</span>(<span class="hl-k">void</span>)
+{
+    <span class="hl-c">/* 题面数据 */</span>
+    Tower towers[<span class="hl-n">4</span>] = {
+        { { <span class="hl-n">2.0</span>,  <span class="hl-n">2.0</span>}, <span class="hl-n">1.0</span>, <span class="hl-n">10.0</span> },
+        { {-<span class="hl-n">2.0</span>,  <span class="hl-n">2.0</span>}, <span class="hl-n">1.0</span>, <span class="hl-n">10.0</span> },
+        { {-<span class="hl-n">2.0</span>, -<span class="hl-n">2.0</span>}, <span class="hl-n">1.0</span>, <span class="hl-n">10.0</span> },
+        { { <span class="hl-n">2.0</span>, -<span class="hl-n">2.0</span>}, <span class="hl-n">1.0</span>, <span class="hl-n">10.0</span> },
+    };
+    Point p;
+
+    <span class="hl-f">scanf</span>(<span class="hl-s">"%lf %lf"</span>, &amp;p.x, &amp;p.y);
+    <span class="hl-f">printf</span>(<span class="hl-s">"%.2f\n"</span>, <span class="hl-f">heightAt</span>(towers, <span class="hl-n">4</span>, &amp;p));
+    <span class="hl-k">return</span> <span class="hl-n">0</span>;
+}</pre></div>
+
+<div class="out-wrap"><div class="cap">运行</div><pre>输入： 2 3
+输出： 10.00
+
+输入： 0 0
+输出： 0.00</pre></div>
+
+<p>这段 C 代码<b>并不差</b>，它已经做到了数据与逻辑分离：
+<code>heightAt</code> 里同样没有题面数字。问题出在<b>表达方式</b>上。</p>
+
+<h2 id="s6"><span class="n">6</span>C 与 C++ 的对照</h2>
+
+<p>把两次「算距离」并排看 —— 它们做的是<b>同一件事</b>：</p>
+
+<div class="two">
+  <div class="side">
+    <div class="hd bad">C</div>
+<pre>/* 距离要单独写一个函数，
+   「谁到谁」得靠两个参数传进去 */
+double distanceTo(const Point *a,
+                  const Point *b)
+{
+    double dx = a-&gt;x - b-&gt;x;
+    double dy = a-&gt;y - b-&gt;y;
+    return sqrt(dx*dx + dy*dy);
+}
+
+/* 调用处 */
+distanceTo(&amp;t-&gt;center, p) &lt;= t-&gt;radius</pre>
+  </div>
+  <div class="side">
+    <div class="hd good">C++</div>
+<pre>// 距离是这个类型自己的行为
+struct Point {
+    double x = 0.0, y = 0.0;
+
+    double distanceTo(const Point&amp; other) const {
+        double dx = x - other.x;
+        double dy = y - other.y;
+        return std::sqrt(dx*dx + dy*dy);
+    }
+};
+
+// 调用处
+p.distanceTo(center) &lt;= radius</pre>
+  </div>
+</div>
+
+<div class="card key">
+  <div class="card-t">结论：同样的工作，C++ 的代码更易懂、更简单</div>
+  <p>这一点不是风格偏好，<b>是可以在代码上指出来的</b>：</p>
+  <table>
+  <thead><tr><th style="width:26%">看什么</th><th style="width:34%">C</th>
+  <th>C++</th></tr></thead>
+  <tbody>
+  <tr><td>调用处读起来像什么</td>
+      <td class="c"><code>distanceTo(&amp;a, &amp;b)</code><br>
+      ——「算 a 和 b 的距离」，主客体不明</td>
+      <td class="c"><code>a.distanceTo(b)</code><br>
+      ——「a 到 b 的距离」，<b>就是一句人话</b></td></tr>
+  <tr><td>要传几个参数</td>
+      <td class="c">2 个指针，还得记顺序</td>
+      <td class="c"><b>1 个</b>，主语写在点号前面</td></tr>
+  <tr><td>公式写在哪</td>
+      <td class="c">散在各处的自由函数里</td>
+      <td class="c">贴在类型上，<b>一看就知道去哪找</b></td></tr>
+  <tr><td>符号 Noise</td>
+      <td class="c">满屏 <code>*</code>、<code>&amp;</code>、<code>-&gt;</code></td>
+      <td class="c">用引用 <code>&amp;</code>，<code>.</code> 点点到底</td></tr>
+  <tr><td>以后要加三维</td>
+      <td class="c">所有函数的参数表都要改</td>
+      <td class="c">只改 <code>Point</code> 里那几行</td></tr>
+  <tr><td>传参数会不会误改</td>
+      <td class="c">指针可能被改成 <code>NULL</code>，
+      也可能改了指向的内容</td>
+      <td class="c"><code>const Point&amp;</code> 一句话锁死，
+      <b>不可能为空、不可能改</b></td></tr>
+  </tbody>
+  </table>
+</div>
+
+<p>用一句更具体的话说清楚这个差别：</p>
+
+<div class="mnemonic">
+  C 的写法是「<b>有个函数，你拿两个点去调它</b>」；<br>
+  C++ 的写法是「<b>这个点知道怎么算到另一个点的距离</b>」。
+</div>
+
+<p>第二种说法更接近我们思考这件事的方式 ——
+所以它读起来更简单，也更容易记住。
+下面几节讲的「把坐标封装成类型」，做的正是这个转换。</p>
+
+<div class="card note">
+  <div class="card-t">为什么后面的示例都用 C++</div>
+  <p>原因有两层：</p>
+  <ul>
+    <li><b>表达力更强</b> —— 数据和行为可以放在一起，
+    也就是上面这张表说的那些</li>
+    <li><b>项目用的是 C++ 和 Qt</b> —— UME 的排版核心基于 Qt，
+    所以教程从 Q01 起就转到了 C++</li>
+  </ul>
+  <p>但要说明一点：<b>C 的那一版在工程上并没有错。</b>
+  它同样做到了数据与逻辑分离。这一节比较的是<b>哪种写法更好读</b>，
+  不是「C 不能用」。</p>
+</div>
+
+<h2 id="s7"><span class="n">7</span> 需求变更的影响范围</h2>
 
 <p>假设你交完作业，老师把题目改一下。下面每一改，
 <b>上面那段代码都要重写多少？</b></p>
@@ -213,7 +404,7 @@
   数据和逻辑混在一起写，数据一变，逻辑就得跟着改。</p>
 </div>
 
-<h2 id="s5" class="key-h"><span class="key-mark" title="重点内容">★</span><span class="n">5</span>把「点」变成一个类型</h2>
+<h2 id="s8"><span class="n">8</span> 第一层抽象：将坐标封装为 Point</h2>
 
 <p>题目里反复出现一个东西：<b>坐标</b>。塔心有坐标，测试点也有坐标，
 两个坐标之间要算距离。</p>
@@ -264,7 +455,7 @@
   算法跟着数据走，别在外面散着写。</p>
 </div>
 
-<h2 id="s6"><span class="n">6</span>把「塔」和「查询」也拆开</h2>
+<h2 id="s9"><span class="n">9</span> 第二层抽象：塔与查询的分离</h2>
 
 <p><code>Point</code> 解决了「点怎么表示」。接下来还有两件事要分开：
 <b>塔是什么</b>、<b>怎么查高度</b>。</p>
@@ -307,7 +498,7 @@
   <p><b>逻辑和数据，到这里才真正分开了。</b></p>
 </div>
 
-<h2 id="s7"><span class="n">7</span>数据搬出去，main 就只剩流程</h2>
+<h2 id="s10"><span class="n">10</span> 数据与逻辑分离</h2>
 
 <div class="code-wrap"><div class="bar"><span class="dot r"></span><span class="dot y"></span><span class="dot g"></span><span class="name">main.cpp —— 现在 main 只做三件事</span><span class="cp">复制</span></div><pre><span class="hl-p">#include</span> <span class="hl-s">&lt;cstdio&gt;</span>
 <span class="hl-p">#include</span> <span class="hl-s">"TowerMap.h"</span>
@@ -379,7 +570,7 @@
 这正是 Q05 讲的开闭原则 —— 新需求靠「加新东西」满足，
 而不是回头改老代码。</p>
 
-<h2 id="s8" class="key-h"><span class="key-mark" title="重点内容">★</span><span class="n">8</span>提高扩展性的原则和要点</h2>
+<h2 id="s11"><span class="n">11</span> 提高可扩展性的原则</h2>
 
 <p>把上面这一路的变化总结成几条可操作的规则。
 它们不只为这道题 —— <b>换任何题目都成立</b>。</p>
@@ -496,7 +687,7 @@ for (const Tower&amp; t : towers)
   要动核心逻辑 → 说明数据和逻辑还没分开。
 </div>
 
-<h2 id="s9"><span class="n">9</span>两种写法摆在一起</h2>
+<h2 id="s12"><span class="n">12</span> 改造前后的对照</h2>
 
 <div class="vs">
 <table>
@@ -529,7 +720,7 @@ for (const Tower&amp; t : towers)
   一个只用一次、只有三行的小脚本，不需要四个类。</p>
 </div>
 
-<h2 id="s10"><span class="n">10</span>一页速查</h2>
+<h2 id="s13"><span class="n">13</span> 小结</h2>
 
 <h3>本题的数学</h3>
 
