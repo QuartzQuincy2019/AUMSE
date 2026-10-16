@@ -113,7 +113,7 @@ def main():
         print("  !! 正文片段里有 <h1>，渲染器会再加一个 —— 请删掉")
         return
 
-    heads = re.findall(r'<h2 id="(s\d+)"><span class="n">(\d+)</span>(.*?)</h2>',
+    heads = re.findall(r'<h2[^>]*id="(s\d+)"[^>]*>(?:<span class="key-mark"[^>]*>[^<]*</span>)?<span class="n">(\d+)</span>(?:<span class="key-mark"[^>]*>[^<]*</span>)?(.*?)</h2>',
                        body, re.S)
     ids = [h[0] for h in heads]
     nos = [int(h[1]) for h in heads]

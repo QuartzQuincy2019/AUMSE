@@ -38,10 +38,15 @@ for key in ("T", "F", "M", "R", "Q", "E", "FE"):
                                   else f[0].upper()) == key))
     mark = "OK " if n == truth.get(key) else "!! "
     print("      %s %-4s 现算 %d  真实 %d" % (mark, key, n, truth.get(key, -1)))
-print("      渲染处用 seriesCount(): %s"
-      % ("seriesCount(s.key)" in d))
-print("      ALL_SERIES 里还有写死的 n: %s"
-      % ("n: " in re.search(r'(?s)var ALL_SERIES = \[(.*?)\];', d).group(1)))
+print("      渲染处是现算的吗（filesOfSeries）: %s"
+      % ("filesOfSeries(k)" in d))
+# fe-data.js 已经从「手写 ALL_SERIES + 写死的 n」改成「SERIES + ORDER
+# + SERIES_FILES 现算」。这里不能再去找 ALL_SERIES —— 它已经不存在了，
+# 之前那句 re.search(...).group(1) 会直接 AttributeError。
+print("      已无手写 ALL_SERIES（改成数据驱动）: %s"
+      % ("var ALL_SERIES" not in d))
+_mo = re.search(r'(?s)var ORDER\s*=\s*\[([^\]]*)\]', d)
+print("      ORDER: %s" % (_mo.group(1).strip() if _mo else "（找不到）"))
 
 print()
 print("  series-common.js（非 FE 页尾用）：")

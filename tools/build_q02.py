@@ -149,7 +149,7 @@ BODY = open(os.path.join(os.path.dirname(os.path.abspath(__file__)),
 
 
 def main():
-    heads = re.findall(r'<h2 id="(s\d+)"><span class="n">(\d+)</span>(.*?)</h2>',
+    heads = re.findall(r'<h2[^>]*id="(s\d+)"[^>]*>(?:<span class="key-mark"[^>]*>[^<]*</span>)?<span class="n">(\d+)</span>(?:<span class="key-mark"[^>]*>[^<]*</span>)?(.*?)</h2>',
                        BODY, re.S)
     ids = [h[0] for h in heads]
     nos = [int(h[1]) for h in heads]

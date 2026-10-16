@@ -1,0 +1,469 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Q05 · 开闭原则</title>
+<link rel="stylesheet" href="assets/genelayout.css">
+<link rel="stylesheet" href="assets/q05_open_closed.css">
+<link rel="stylesheet" href="assets/series-theme.css">
+<link rel="stylesheet" href="assets/tg_L.css">
+<link rel="stylesheet" href="assets/tg_D.css">
+
+</head>
+<body class="qseries" data-series="Q">
+<div id="shell">
+
+<nav id="toc">
+  <h5>目录</h5>
+  <a href="#s1">1 · 一个类是怎么长胖的</a>
+  <a href="#s2">2 · 开闭原则</a>
+  <a href="#s3">3 · 为什么它在实际开发里这么重要</a>
+  <a href="#s4">4 · 回头看：那些 set / get 和「角色能做的事」</a>
+  <a href="#s5">5 · 大致的方向（这一篇只提思路）</a>
+  <a href="#s6">6 · 目标状态</a>
+  <a href="#s7">7 · 一页速查</a>
+</nav>
+
+<main>
+<h1>开闭原则<span class="star" title="与本项目施行密切相关">*</span></h1>
+<p class="sub-title">UME 项目组内部教程 · Q05（Q） · 为什么不能把所有事都塞进 Actor；只给方向，不给代码</p>
+<p><span class="tag">设计原则</span> <span class="tag b">不要什么都塞进一个类</span></p>
+
+<p><span class="lang cpp">C++</span></p>
+
+<p>Q04 讲了接口：数据藏起来，改动走接口函数。那一步做对了。</p>
+
+<p>但接着往下写，很容易滑到一个地方 ——
+<b>把所有「角色能做的事」都塞进 <code>Actor</code> 类</b>。</p>
+
+<div class="card warn">
+  <div class="card-t">先把话说明白</div>
+  <p>Q04 里的 <code>Actor</code> 是<b>克制</b>的：只有
+  三个改名 + 三个上限，一共六个函数，没有任何一行多余的东西。</p>
+  <p>这一篇要批的不是它，而是它<b>接下来的走向</b> ——
+  当「切换地图、攻击、防御、购买物品」这些需求一个个来时，
+  <b>顺手全加进 <code>Actor</code></b> 会发生什么。</p>
+</div>
+
+<h2 id="s1"><span class="n">1</span>一个类是怎么长胖的</h2>
+
+<p>这个过程从来不是一次发生的，而是一步一步，每一步看起来都很合理：</p>
+
+<table>
+<thead><tr><th style="width:16%">阶段</th><th style="width:44%">来需求了</th>
+<th>于是</th></tr></thead>
+<tbody>
+<tr><td><b>开始</b></td><td>「角色要有名字、血量、攻击力」</td>
+    <td class="c">一个干净的 <code>Actor</code></td></tr>
+<tr><td><b>第 1 步</b></td><td>「名字要能改」</td>
+    <td class="c">加 <code>changeName</code></td></tr>
+<tr><td><b>第 2 步</b></td><td>「血量上限要能改」</td>
+    <td class="c">加 <code>setMaxHp</code></td></tr>
+<tr><td><b>第 3 步</b></td><td>「角色要能换地图」</td>
+    <td class="c">加 <code>changeMap</code></td></tr>
+<tr><td><b>第 4 步</b></td><td>「角色要能打人」</td>
+    <td class="c">加 <code>attack</code></td></tr>
+<tr><td><b>第 5 步</b></td><td>「角色要能挨打」</td>
+    <td class="c">加 <code>defend</code></td></tr>
+<tr><td><b>第 6 步</b></td><td>「要能买东西」</td>
+    <td class="c">加 <code>buyItem</code></td></tr>
+<tr><td><b>……</b></td><td>技能、背包、组队、交易、任务、聊天</td>
+    <td class="c">继续加</td></tr>
+</tbody>
+</table>
+
+<p>每一步都只有几行代码，<b>每一步单独看都没问题</b>。
+问题是它们加起来的结果：</p>
+
+<div class="mem">
+  <div class="slot"><b>Actor</b>　一个类，什么都管</div>
+  <div class="slot">改名 / 改上限 / 改地址 —— 属性维护</div>
+  <div class="slot">切换地图 —— 地图系统的事</div>
+  <div class="slot">攻击 / 防御 —— 战斗系统的事</div>
+  <div class="slot">购买物品 —— 经济与背包系统的事</div>
+  <div class="slot">（还在继续长）</div>
+</div>
+
+<div class="card warn">
+  <div class="card-t">这时候的 <code>Actor</code> 已经不是「角色」了</div>
+  <p>它变成了<b>整个游戏的入口</b>。想知道怎么买东西要去翻
+  <code>Actor</code>；想知道地图怎么切也要去翻 <code>Actor</code>；
+  战斗出问题还是去翻 <code>Actor</code>。</p>
+  <p>一个类的职责越模糊，<b>所有人都会往里面加东西</b> ——
+  因为它「反正什么都有」。这是个自我加速的过程。</p>
+</div>
+
+<h2 id="s2"><span class="n">2</span>开闭原则</h2>
+
+<div class="card key">
+  <div class="card-t">一句话</div>
+  <p><b>对扩展开放，对修改关闭。</b></p>
+  <p>意思是：<b>来了新需求，应该靠「加新东西」来满足，
+  而不是靠「改老东西」。</b></p>
+  <p>这句话听起来像口号。它不是 —— 它是一个
+  <b>关于「改动会伤到谁」的判断工具</b>，下面两节讲它到底在防什么。</p>
+</div>
+
+<div class="card note">
+  <div class="card-t">先排除一个误会</div>
+  <p>「对修改关闭」<b>不是</b>「代码不许改」。
+  第一次写出来的设计不可能一步到位，改是必然的。</p>
+  <p>它说的是：<b>一个已经被很多人依赖、已经测过的模块，
+  应该尽量不再被改</b>。不是禁止改，而是让改动尽量落在
+  <b>没人依赖的新地方</b>。</p>
+</div>
+
+<h2 id="s3" class="key-h"><span class="n">3</span><span class="key-mark" title="重点内容">★</span>为什么它在实际开发里这么重要</h2>
+
+<p>这一节是重点。开闭原则值钱的地方，全在「改动的代价」上。</p>
+
+<h3>① 改动会波及所有人</h3>
+
+<p><code>Actor</code> 是项目里<b>被依赖最多</b>的类。战斗、背包、地图、
+界面、存档，全都在用它。它的每一次改动，都是在
+<b>所有人脚下的地面上动土</b>。</p>
+
+<p>而一个「只做自己那件事」的类（比如一个负责算伤害的类），
+改它只影响它自己。这就是差别。</p>
+
+<h3>② 改老代码要重新测老功能</h3>
+
+<p>这是最容易被低估的一条，也是最贵的。</p>
+
+<div class="vs">
+<table>
+<thead><tr><th style="width:50%">加新东西</th><th>改老东西</th></tr></thead>
+<tbody>
+<tr><td>新代码是新的 → 只需要测<b>新功能</b></td>
+    <td>老代码被动过 → <b>所有用到它的老功能都要重测</b></td></tr>
+<tr><td>出问题 → 一定在新代码里</td>
+    <td>出问题 → 可能是这次改坏的，也可能是早就有的</td></tr>
+<tr><td>可以两个人同时做两件新事</td>
+    <td>两个人同时改同一个类 → 冲突、覆盖、互相打架</td></tr>
+</tbody>
+</table>
+</div>
+
+<p>第二条特别值得记住：<b>在 <code>Actor</code> 里加一个
+<code>buyItem</code>，理论上可能弄坏「攻击」，也可能弄坏「存档」</b> ——
+因为它们在同一份代码里，共享同一批成员。你得把那些都重跑一遍。</p>
+
+<h3>③ 分支会越堆越多</h3>
+
+<p>所有逻辑挤在一个类里，最典型的后果是<b>条件判断层层套</b>：</p>
+
+<div class="mnemonic">
+  <b>加一种新道具</b> → <code>buyItem</code> 里多一个 <code>if</code><br>
+  <b>加一种新技能</b> → <code>attack</code> 里多一个 <code>if</code><br>
+  <b>加一种新地图</b> → <code>changeMap</code> 里多一个 <code>if</code><br>
+  <b>过一阵</b> → 每个函数都是一长串 <code>if / else if / else if …</code>
+</div>
+
+<p>这就是「对修改开放」的样子：<b>每来一个新东西，
+都要回头去改那几个老函数，再往里面插一条分支。</b>
+函数越长，改错的概率越高。</p>
+
+<h3>④ 编译与协作会变慢</h3>
+
+<p>成员多的类，改动时牵连的文件也多。往 <code>Actor</code> 里加一个函数，
+所有 <code>#include "Actor.h"</code> 的地方都要重新编译。
+一个只有几百行的类，能拖慢整个项目的编译时间。</p>
+
+<div class="take">
+  <b>把四条合起来看：</b>开闭原则防的不是「代码不好看」，
+  而是<b>「每来一个新需求，都要回头动那块所有人都在踩的地面」</b>。
+  改动越集中、被依赖越多，代价就越高 ——
+  这才是它在实际开发里重要的真正原因。
+</div>
+
+<h2 id="s4"><span class="n">4</span>回头看：那些 set / get 和「角色能做的事」</h2>
+
+<p>现在可以具体说 Q04 那条路的三个问题了。</p>
+
+<h3>问题一：set / get 一多，数据就重新裸露了</h3>
+
+<p>Q04 里已经讲过判据：<b>「外面直接改它会不会出问题？」</b>
+会 → 放 <code>private</code> + 开接口；不会 → 直接 <code>public</code>。</p>
+
+<p>但很多属性<b>本来就没有规则</b> —— 敏捷、幸运、防御力，
+改它不会出任何问题。给这种属性也配一对
+<code>setAgi</code> / <code>getAgi</code>，等于：</p>
+
+<div class="alias">
+  <div class="row"><span class="k">表面</span>
+    <span class="v">数据是 <code>private</code> 的，看起来封装得很好</span></div>
+  <div class="row"><span class="k">实际</span>
+    <span class="v">外面照样能随便改名、随便读 ——
+    <b>只是多绕了一层函数</b></span></div>
+  <div class="row"><span class="k">代价</span>
+    <span class="v">类的接口区被几十个 set / get 淹没，
+    <b>真正有规则的那几个（比如 <code>setMaxHp</code>）反而被埋住了</b></span></div>
+</div>
+
+<p><b>接口的价值在于「这少数几个口子有讲究」，
+不在于「口子多」。</b>口子一多，读者就分不出哪个是有规矩的。</p>
+
+<h3>问题二：把「角色是什么」和「角色能做什么」混在一起</h3>
+
+<p><code>Actor</code> 本来负责的是<b>状态</b>：
+我叫什么、我有多少血、我在哪。这是「角色是什么」。</p>
+
+<p>而攻击、防御、买物品是<b>行为</b>：它们要跟别的对象打交道 ——
+打谁？买什么？钱从哪来？地图怎么切？这些都需要
+<b>别的系统</b>参与。这是「角色能做什么」。</p>
+
+<div class="card key">
+  <div class="card-t">混在一起的后果</div>
+  <p><code>Actor</code> 为了能「攻击」，就得知道<b>伤害公式</b>；
+  为了能「买东西」，就得知道<b>价格表和背包</b>；
+  为了能「换地图」，就得知道<b>地图数据结构</b>。</p>
+  <p>于是这个类开始 <code>#include</code> 越来越多的头文件，
+  依赖越铺越广。<b>最后它谁也离不开，谁也都离不开它。</b></p>
+</div>
+
+<h3>问题三：每加一种新东西，都得回来改它</h3>
+
+<p>这正是开闭原则要防的。加一种新道具要改 <code>buyItem</code>；
+加一种新技能要改 <code>attack</code>。而这两个函数在
+<b>所有人都在用的那个类里</b>。</p>
+
+<div class="take">
+  <b>一个直接的检验方法：</b>问自己 ——
+  <b>「加一种新道具，需要改 <code>Actor</code> 吗？」</b>
+  如果答案是「要」，那就已经违反了开闭原则。
+</div>
+
+<h2 id="s5"><span class="n">5</span>大致的方向（这一篇只提思路）</h2>
+
+<p>不写具体代码，先讲清楚往哪走、为什么这么走。</p>
+
+<h3>方向一：把「角色能做的事」搬出去</h3>
+
+<p>让 <code>Actor</code> 只负责<b>状态</b>，以及状态的<b>规则</b>
+（比如血量不许超过上限）。别的都搬到各自的系统里去：</p>
+
+<table>
+<thead><tr><th style="width:30%">现在塞在 <code>Actor</code> 里</th>
+<th>应该归谁</th></tr></thead>
+<tbody>
+<tr><td class="c">改名字 / 改上限 / 改地址</td>
+    <td>留在 <code>Actor</code> —— 这就是它自己的状态，且有规则要守</td></tr>
+<tr><td class="c">攻击 / 防御</td>
+    <td><b>战斗系统</b>：伤害怎么算、谁先出手，是战斗的事</td></tr>
+<tr><td class="c">购买物品</td>
+    <td><b>商店 / 背包系统</b>：价格、库存、钱够不够，是它们的事</td></tr>
+<tr><td class="c">切换地图</td>
+    <td><b>地图系统</b>：地图长什么样、怎么走，不该由角色知道</td></tr>
+</tbody>
+</table>
+
+<p>关键在于<b>关系反过来</b>：不是「角色会换地图」，
+而是<b>「地图系统把角色挪过去」</b>。
+角色只需要知道自己现在在哪，不需要知道地图怎么运作。</p>
+
+<h3>方向二：新东西靠「加一个」，不靠「改一处」</h3>
+
+<p>这是开闭原则最直接的落地方式。目标很具体：</p>
+
+<div class="steps">
+  <div class="st"><span class="i">1</span><span class="t">出一种新道具</span>
+    只加一个新的道具定义，<b>不动 <code>Actor</code>、不动商店代码</b></div>
+  <div class="st"><span class="i">2</span><span class="t">出一种新技能</span>
+    只加一个新的技能定义，<b>不动 <code>Actor</code>、不动战斗代码</b></div>
+  <div class="st"><span class="i">3</span><span class="t">加一张新地图</span>
+    只加一份新的地图数据，<b>不动 <code>Actor</code></b></div>
+</div>
+
+<p>能不能做到这一步，就是开闭原则做没做到的<b>验收标准</b>。</p>
+
+<h3>方向三：用「能力」代替「一堆 set / get」</h3>
+
+<p>与其给每个属性配一对读写函数，不如想清楚
+<b>这个类对外真正需要暴露的「能力」是什么</b>。</p>
+
+<div class="alias">
+  <div class="row"><span class="k">不要</span>
+    <span class="v"><code>setHp</code> / <code>getHp</code> /
+    <code>setAgi</code> / <code>getAgi</code> / <code>setDef</code> …
+    —— 几十个口子，读者看不出重点</span></div>
+  <div class="row"><span class="k">而要</span>
+    <span class="v"><code>被扣血</code>、<code>被治疗</code>、
+    <code>升级</code> —— 每个都是<b>一件完整的事</b>，
+    规则写在里面，外面看不出实现</span></div>
+</div>
+
+<p>这两种写法的区别不在「封装得好不好」，
+而在于：<b>前者把内部结构漏给了所有人，后者把「角色能承受什么」表达清楚了</b>。
+前者一改内部结构，所有人跟着改；后者不用。</p>
+
+<div class="card tip">
+  <div class="card-t">判断一个 set 函数该不该存在</div>
+  <p>问一句：<b>「这个名字是在描述「一件事」，还是在描述「一个字段」？」</b></p>
+  <ul>
+    <li><code>setHp</code> —— 一个字段。为什么直接赋值不行？说不出来。</li>
+    <li><code>受伤(伤害值)</code> —— 一件事。要扣血、可能致死、可能触发护盾。</li>
+  </ul>
+  <p>是「一件事」就值得开接口；是「一个字段」，而字段又确实可以随便改，
+  那就直接公开，别包一层。</p>
+</div>
+
+<h2 id="s6"><span class="n">6</span>目标状态</h2>
+
+<p>走完上面三个方向，会得到两个明显的结果：</p>
+
+<div class="vs">
+<table>
+<thead><tr><th style="width:50%">改造前</th><th>改造后</th></tr></thead>
+<tbody>
+<tr><td>新需求 → 改 <code>Actor</code></td>
+    <td>新需求 → <b>加一个新的模块</b></td></tr>
+<tr><td>改 <code>Actor</code> → 要重测战斗、背包、地图、界面、存档</td>
+    <td>加新模块 → <b>只测新模块</b></td></tr>
+<tr><td>一个类几百上千行，谁都得读它</td>
+    <td>每个类只管一件事，<b>改动落在没人依赖的地方</b></td></tr>
+<tr><td>所有人改同一个文件</td>
+    <td>几个人可以同时各加各的</td></tr>
+</tbody>
+</table>
+</div>
+
+<div class="card key">
+  <div class="card-t">开闭原则不是一句口号，它可以被验收</div>
+  <p>就用那一个问题：<b>「加一种新道具 / 新技能 / 新地图，
+  需要改哪些已有文件？」</b></p>
+  <p>答案里<b>没有任何一个「大家都要用」的核心类</b> ——
+  那就是做到了。<br>
+  答案里有 <code>Actor</code> —— 那就是没做到。</p>
+</div>
+
+<h2 id="s7"><span class="n">7</span>一页速查</h2>
+
+<h3>三句话</h3>
+
+<div class="mnemonic">
+  <b>① 对扩展开放，对修改关闭</b> ——
+  新需求靠「加新东西」满足，不靠「改老东西」。<br>
+  <b>② 它防的是「改动波及面」</b> ——
+  一个类被依赖越多，改它的代价越大：要重测、要协调、要冒连带风险。<br>
+  <b>③ 验收标准很具体</b> ——
+  「加一种新道具，要不要改 <code>Actor</code>？」要改，就是没做到。
+</div>
+
+<h3>把「角色能做的事」塞进 <code>Actor</code> 的三宗罪</h3>
+
+<table>
+<thead><tr><th style="width:26%">问题</th><th>具体后果</th></tr></thead>
+<tbody>
+<tr><td><b>set / get 泛滥</b></td>
+    <td>封装变成走过场：外面照样随便改，只是多绕一层；
+    <b>真正有规则的那几个接口被埋在几十个字段存取里</b></td></tr>
+<tr><td><b>状态与行为混在一起</b></td>
+    <td>为了能攻击、买东西、换地图，<code>Actor</code> 不得不
+    <code>#include</code> 伤害公式、价格表、地图结构 ——
+    <b>依赖越铺越广，谁也离不开谁</b></td></tr>
+<tr><td><b>每加一种新东西都要回头改它</b></td>
+    <td>而它在所有人的脚下 ——
+    <b>改一处，所有人重测</b></td></tr>
+</tbody>
+</table>
+
+<div class="card key">
+  <div class="card-t">本篇只给方向，不给代码</div>
+  <p>具体怎么把战斗、背包、地图拆出去，涉及
+  <b>组合</b>与<b>接口</b>两件事 —— 那是接下来的内容。</p>
+  <p>这一篇只需要记住一件事：
+  <b>类应该因为「它自己的规则变了」而改，
+  而不应该因为「游戏多了一种道具」而改。</b></p>
+</div>
+
+<!-- NAV-AUTO -->
+<a class="home-fab" href="../../index.html" title="返回教程总目录">返回 home</a>
+
+</div>
+
+</div>
+<!-- /NAV-AUTO -->
+<footer>
+UME 项目组内部教程 · Q05《开闭原则》<br>
+文中所有输出与报错，均使用 g++ 13.1.0（<code>-std=c++17</code>）实际编译运行核对；
+代码示例以 <b>Consolas</b> 等宽字体呈现。
+</footer>
+</main>
+</div>
+
+<script>
+/* 目录滚动高亮 */
+(function(){
+  const links = [...document.querySelectorAll('#toc a')];
+  const targets = links.map(a => document.querySelector(a.getAttribute('href'))).filter(Boolean);
+  const setOn = id => links.forEach(a => a.classList.toggle('on', a.getAttribute('href') === '#'+id));
+  const io = new IntersectionObserver(es => {
+    const vis = es.filter(e => e.isIntersecting)
+                  .sort((a,b) => a.boundingClientRect.top - b.boundingClientRect.top);
+    if (vis[0]) setOn(vis[0].target.id);
+  }, { rootMargin:'-8% 0px -72% 0px', threshold:0 });
+  targets.forEach(t => io.observe(t));
+})();
+
+/* 复制按钮 */
+(function(){
+  document.querySelectorAll('.code-wrap').forEach(box => {
+    const btn = box.querySelector('.cp');
+    const pre = box.querySelector('pre');
+    if (!btn || !pre) return;
+    btn.addEventListener('click', async () => {
+      const text = pre.textContent;
+      try { await navigator.clipboard.writeText(text); }
+      catch (e) {
+        const ta = document.createElement('textarea');
+        ta.value = text; document.body.appendChild(ta);
+        ta.select(); document.execCommand('copy'); ta.remove();
+      }
+      const old = btn.textContent;
+      btn.textContent = '已复制 ✓';
+      setTimeout(() => { btn.textContent = old; }, 1200);
+    });
+  });
+})();
+</script>
+<script>
+/* 移动端：生成「目录」按钮，点击呼出/收起侧滑目录 */
+(function(){
+  var toc = document.getElementById('toc');
+  if (!toc) return;
+  var btn = document.createElement('button');
+  btn.id = 'tocToggle';
+  btn.type = 'button';
+  btn.setAttribute('aria-controls','toc');
+  btn.textContent = '目录';
+  document.body.appendChild(btn);
+
+  function setOpen(on){
+    toc.classList.toggle('open', on);
+    document.body.classList.toggle('toc-open', on);
+    btn.setAttribute('aria-expanded', on ? 'true' : 'false');
+    btn.textContent = on ? '收起' : '目录';
+  }
+  btn.addEventListener('click', function(){
+    setOpen(!toc.classList.contains('open'));
+  });
+  toc.addEventListener('click', function(e){
+    if (e.target.closest('a')) setOpen(false);
+  });
+  document.addEventListener('click', function(e){
+    if (!toc.classList.contains('open')) return;
+    if (e.target === toc || toc.contains(e.target) || e.target === btn) return;
+    setOpen(false);
+  });
+  document.addEventListener('keydown', function(e){
+    if (e.key === 'Escape') setOpen(false);
+  });
+  function sync(){ if (window.innerWidth > 980) setOpen(false); }
+  window.addEventListener('resize', sync);
+  sync();
+})();
+</script>
+<script src="assets/series-common.js"></script>
+</body>
+</html>

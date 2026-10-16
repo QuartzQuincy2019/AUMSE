@@ -113,7 +113,7 @@ def main():
         print("  !! 正文片段里有 <h1>，渲染器会再加一个 —— 请删掉")
         return
 
-    heads = re.findall(r'<h2 id="(s\d+)"><span class="n">(\d+)</span>(.*?)</h2>',
+    heads = re.findall(r'<h2[^>]*id="(s\d+)"[^>]*>(?:<span class="key-mark"[^>]*>[^<]*</span>)?<span class="n">(\d+)</span>(?:<span class="key-mark"[^>]*>[^<]*</span>)?(.*?)</h2>',
                        body, re.S)
     ids = [h[0] for h in heads]
     nos = [int(h[1]) for h in heads]
@@ -136,6 +136,11 @@ def main():
     n = build(FN, NUM, TITLE, body, toc)
     print("  ① 完整页面  %d 字符" % n)
 
+    # FE-09 也要列进 series —— build_fe.FE 是**手写**的列表，
+    # 新篇目不在里面；不补的话重跑本脚本会把 fe-08 的 series 退回 9 条，
+    # 页尾「全部系列」里 FE 的篇数就成了旧的。
+    # （这正是「篇目只加了一半地方」那类漂移，见 tools/register_fe09.py）
+    import build_fe09_page  # noqa: F401  确保 FE-09 已在 build_fe.FE 里
     out, blen = shell_for(build_fe.FE)
     io.open(os.path.join(TUT, FN), "w",
             encoding="utf-8", newline="").write(out)

@@ -62,7 +62,7 @@ def build(one):
 
     # 从正文抓 h2，生成目录
     heads = re.findall(
-        r'<h2 id="(s\d+)"><span class="n">(\d+)</span>(.*?)</h2>', body, re.S)
+        r'<h2[^>]*id="(s\d+)"[^>]*>(?:<span class="key-mark"[^>]*>[^<]*</span>)?<span class="n">(\d+)</span>(?:<span class="key-mark"[^>]*>[^<]*</span>)?(.*?)</h2>', body, re.S)
     if not heads:
         print("  ! %s 里没有 <h2>，跳过" % one["body"])
         return False

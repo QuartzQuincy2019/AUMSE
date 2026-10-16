@@ -138,6 +138,8 @@ PAGES = [
      "Q", "Q03", "指针进阶：指向对象的指针与引用", "按引用传递的必要性；传递指针与传递引用的分工", True),
     ("q04-interfaces.html",        "q04-interfaces.html",
      "Q", "Q04", "接口", "接口的定义与常见用途；Actor 的 public 区", True),
+    ("q05-open-closed.html",      "q05-open-closed.html",
+     "Q", "Q05", "开闭原则", "为什么不能什么都塞进一个类；只给方向不给代码", True),
 
     # ---- E：补充练习 ----
     ("08-e01-recursion.html",         "e01-recursion.html",
