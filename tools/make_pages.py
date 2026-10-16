@@ -330,9 +330,21 @@ def card(fn, num, title, desc, kind, star):
                '<br><span class="sb">&#9733; 重点</span>' if star else ""))
 
 
+# 给某张首页卡片叠一层题干图。
+# 值是**相对 index.html 的路径**（首页在仓库根，教程页在 SharingGroup/tutorials/）。
+# home-cards.js 把它当成 background-image 的第二层，上面压一层
+# 「半透明白 → 完全透明」的线性渐变：左侧留给文字，图推向右侧。
+# 只放真正需要「一眼认出题面」的卡片；不在表里的就用普通卡片样式。
+CARD_BG = {
+    "q07-homework1.html": "SharingGroup/tutorials/assets/第04次作业第1题.png",
+}
+
+
 def pack(items):
     return [{"file": a, "num": b, "title": c, "desc": d,
-             "kind": e, "star": bool(f)} for a, b, c, d, e, f in items]
+             "kind": e, "star": bool(f),
+             **({"bg": CARD_BG[a]} if a in CARD_BG else {})}
+            for a, b, c, d, e, f in items]
 
 
 def build_html():

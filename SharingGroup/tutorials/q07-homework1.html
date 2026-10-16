@@ -17,18 +17,17 @@
 <nav id="toc">
   <h5>目录</h5>
   <a href="#s1">1 · 数学模型：点到塔心的距离判定</a>
-  <a href="#s2">2 · 与项目组的关系</a>
-  <a href="#s3">3 · 数据类型的选择</a>
-  <a href="#s4">4 · 直接实现：题面数据内嵌于主函数</a>
-  <a href="#s5">5 · C 语言的实现</a>
-  <a href="#s6">6 · C 与 C++ 的对照</a>
-  <a href="#s7">7 · 需求变更的影响范围</a>
-  <a href="#s8">8 · 第一层抽象：将坐标封装为 Point</a>
-  <a href="#s9">9 · 第二层抽象：塔与查询的分离</a>
-  <a href="#s10">10 · 数据与逻辑分离</a>
-  <a href="#s11">11 · 提高可扩展性的原则</a>
-  <a href="#s12">12 · 改造前后的对照</a>
-  <a href="#s13">13 · 小结</a>
+  <a href="#s2">2 · 数据类型的选择</a>
+  <a href="#s3">3 · 直接实现：题面数据内嵌于主函数</a>
+  <a href="#s4">4 · C 语言的实现</a>
+  <a href="#s5">5 · C 与 C++ 的对照</a>
+  <a href="#s6">6 · 需求变更的影响范围</a>
+  <a href="#s7">7 · 第一层抽象：将坐标封装为 Point</a>
+  <a href="#s8">8 · 第二层抽象：塔与查询的分离</a>
+  <a href="#s9">9 · 数据与逻辑分离</a>
+  <a href="#s10">10 · 提高可扩展性的原则</a>
+  <a href="#s11">11 · 改造前后的对照</a>
+  <a href="#s12">12 · 小结</a>
 </nav>
 
 <main>
@@ -113,27 +112,7 @@
   这没关系，因为两边的答案都是 10。</p>
 </div>
 
-<h2 id="s2"><span class="n">2</span>与项目组的关系</h2>
-
-<p>这道题不是随手找来的练习 —— 它是<b>本项目组 10 月 12 日布置的第 4 次作业</b>。</p>
-
-<div class="card key">
-  <div class="card-t">为什么把它写进教程</div>
-  <p>这道题在课程里只是一次普通的作业，但它的形态和真实工程问题很接近：
-  <b>题目给一组数据（塔心、半径、高度），要求写一个查询</b>。</p>
-  <p>而 UME 项目里到处是同一形态的东西 ——
-  字形表、码位映射、推进量表，都是「<b>一份数据 + 一组查询</b>」。
-  所以这一篇的落点不在解出这道题，而在
-  <b>用这道题练「数据与逻辑怎么分」</b>。</p>
-</div>
-
-<p>它同时是一道<b>很好的反面教材</b>：题面给的都是具体数字
-（<code>±2</code>、<code>1</code>、<code>10</code>），
-非常容易顺手写死。而项目里最怕的正是这个 ——
-字体换了版本、码位范围变了、行高算法调整了，
-如果当初写死了数字，改动就会散落到各处。</p>
-
-<h2 id="s3"><span class="n">3</span> 数据类型的选择</h2>
+<h2 id="s2"><span class="n">2</span> 数据类型的选择</h2>
 
 <p>题目里特意写了这一句。它是什么意思？</p>
 
@@ -162,11 +141,11 @@
   这不是考点。</p>
 </div>
 
-<h2 id="s4"><span class="n">4</span> 直接实现：题面数据内嵌于主函数</h2>
+<h2 id="s3"><span class="n">3</span> 直接实现：题面数据内嵌于主函数</h2>
 
 <p>绝大多数人第一遍会这么写 —— 直接把题面里的数字抄进代码：</p>
 
-<div class="code-wrap"><div class="bar"><span class="dot r"></span><span class="dot y"></span><span class="dot g"></span><span class="name">hardcoded.cpp —— 能跑，但只有这一道题能跑</span><span class="cp">复制</span></div><pre><span class="hl-p">#include</span> <span class="hl-s">&lt;cstdio&gt;</span>
+<div class="code-wrap"><div class="bar"><span class="dot r"></span><span class="dot y"></span><span class="dot g"></span><span class="name">hardcoded.cpp —— 直接实现</span><span class="cp">复制</span></div><pre><span class="hl-p">#include</span> <span class="hl-s">&lt;cstdio&gt;</span>
 <span class="hl-p">#include</span> <span class="hl-s">&lt;cmath&gt;</span>
 
 <span class="hl-k">int</span> main() {
@@ -202,7 +181,7 @@
   <p>后面会看到：把坐标放进数组之后，这四段会变成<b>一个循环</b>。</p>
 </div>
 
-<h2 id="s5"><span class="n">5</span>C 语言的实现</h2>
+<h2 id="s4"><span class="n">4</span>C 语言的实现</h2>
 
 <p>同一道题，用 <b>C</b> 写出来是这样的。注意它的组织方式：
 <b>用 <code>struct</code> 放数据，用普通函数做操作</b>，
@@ -274,7 +253,7 @@
 <p>这段 C 代码<b>并不差</b>，它已经做到了数据与逻辑分离：
 <code>heightAt</code> 里同样没有题面数字。问题出在<b>表达方式</b>上。</p>
 
-<h2 id="s6"><span class="n">6</span>C 与 C++ 的对照</h2>
+<h2 id="s5"><span class="n">5</span>C 与 C++ 的对照</h2>
 
 <p>把两次「算距离」并排看 —— 它们做的是<b>同一件事</b>：</p>
 
@@ -370,7 +349,7 @@ p.distanceTo(center) &lt;= radius</pre>
   不是「C 不能用」。</p>
 </div>
 
-<h2 id="s7"><span class="n">7</span> 需求变更的影响范围</h2>
+<h2 id="s6"><span class="n">6</span> 需求变更的影响范围</h2>
 
 <p>假设你交完作业，老师把题目改一下。下面每一改，
 <b>上面那段代码都要重写多少？</b></p>
@@ -404,7 +383,7 @@ p.distanceTo(center) &lt;= radius</pre>
   数据和逻辑混在一起写，数据一变，逻辑就得跟着改。</p>
 </div>
 
-<h2 id="s8"><span class="n">8</span> 第一层抽象：将坐标封装为 Point</h2>
+<h2 id="s7"><span class="n">7</span> 第一层抽象：将坐标封装为 Point</h2>
 
 <p>题目里反复出现一个东西：<b>坐标</b>。塔心有坐标，测试点也有坐标，
 两个坐标之间要算距离。</p>
@@ -455,7 +434,17 @@ p.distanceTo(center) &lt;= radius</pre>
   算法跟着数据走，别在外面散着写。</p>
 </div>
 
-<h2 id="s9"><span class="n">9</span> 第二层抽象：塔与查询的分离</h2>
+<div class="card note">
+  <div class="card-t">另一种等价写法：全局（友元）函数</div>
+  <p><code>distanceTo</code> 也可以不写成成员，而写成<b>全局函数</b>
+  —— 若它需要访问私有成员，就在类里写一行 <code>friend</code> 声明授权。
+  这样调用处变成 <code>distanceTo(a, b)</code>，而不是
+  <code>a.distanceTo(b)</code>。两种都合法；差别在于前者把距离当成
+  <b>两个点之间的事</b>，后者当成<b>点自己的能力</b> ——
+  本题选后者，因为调用处读起来更直接。</p>
+</div>
+
+<h2 id="s8"><span class="n">8</span> 第二层抽象：塔与查询的分离</h2>
 
 <p><code>Point</code> 解决了「点怎么表示」。接下来还有两件事要分开：
 <b>塔是什么</b>、<b>怎么查高度</b>。</p>
@@ -498,7 +487,7 @@ p.distanceTo(center) &lt;= radius</pre>
   <p><b>逻辑和数据，到这里才真正分开了。</b></p>
 </div>
 
-<h2 id="s10"><span class="n">10</span> 数据与逻辑分离</h2>
+<h2 id="s9"><span class="n">9</span> 数据与逻辑分离</h2>
 
 <div class="code-wrap"><div class="bar"><span class="dot r"></span><span class="dot y"></span><span class="dot g"></span><span class="name">main.cpp —— 现在 main 只做三件事</span><span class="cp">复制</span></div><pre><span class="hl-p">#include</span> <span class="hl-s">&lt;cstdio&gt;</span>
 <span class="hl-p">#include</span> <span class="hl-s">"TowerMap.h"</span>
@@ -570,7 +559,7 @@ p.distanceTo(center) &lt;= radius</pre>
 这正是 Q05 讲的开闭原则 —— 新需求靠「加新东西」满足，
 而不是回头改老代码。</p>
 
-<h2 id="s11"><span class="n">11</span> 提高可扩展性的原则</h2>
+<h2 id="s10"><span class="n">10</span> 提高可扩展性的原则</h2>
 
 <p>把上面这一路的变化总结成几条可操作的规则。
 它们不只为这道题 —— <b>换任何题目都成立</b>。</p>
@@ -687,7 +676,7 @@ for (const Tower&amp; t : towers)
   要动核心逻辑 → 说明数据和逻辑还没分开。
 </div>
 
-<h2 id="s12"><span class="n">12</span> 改造前后的对照</h2>
+<h2 id="s11"><span class="n">11</span> 改造前后的对照</h2>
 
 <div class="vs">
 <table>
@@ -720,16 +709,7 @@ for (const Tower&amp; t : towers)
   一个只用一次、只有三行的小脚本，不需要四个类。</p>
 </div>
 
-<h2 id="s13"><span class="n">13</span> 小结</h2>
-
-<h3>本题的数学</h3>
-
-<div class="mnemonic">
-  <b>点在塔内 ⟺ 到塔心的距离 ≤ 半径</b><br>
-  dist = √( (x − cx)² + (y − cy)² )<br>
-  四个塔任一命中 → 高度 10；都不命中 → 0<br>
-  <b>边界带等号</b>（题目说圆边上也是 10 米）
-</div>
+<h2 id="s12"><span class="n">12</span> 小结</h2>
 
 <h3>分层结果</h3>
 

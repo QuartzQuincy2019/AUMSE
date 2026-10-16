@@ -40,6 +40,31 @@
     a.target = '_blank';
     a.rel = 'noopener';
 
+    /* 可选：给某张卡片叠一层题干图（c.bg 是相对首页的图片路径）。
+       做法是**两层背景叠着画**：
+         第一层 linear-gradient —— 从半透明白渐变到完全透明，
+           压在图上，保证图不会盖住文字、也不会太抢眼；
+         第二层 url(…) —— 题目本身的图，靠右居中。
+       两者都用 background-image（不是 background 简写），
+       这样 CSS 里 a.card 的 background-color / a.card.star 的浅金底
+       仍然生效，渐变只是叠加在它们之上。
+       图片再加一点透明度，让它在亮色与暗色模式下都能融进卡片。 */
+    if (c.bg) {
+      // 渐变要**覆盖到正文文字所在的整个左侧 3/4**（到 76% 才透明），
+      // 否则说明文字会压在图上、两层内容互相干扰。
+      // 图只当右下角的水印：缩到 42% 卡片高、贴右下，落进渐变已经很淡的
+      // 那一角 —— 看得见题目，但抢不走文字的注意力。
+      a.style.backgroundImage =
+        'linear-gradient(100deg, rgba(255,255,255,.97) 0%,'
+        + ' rgba(255,255,255,.80) 46%, rgba(255,255,255,.30) 68%,'
+        + ' rgba(255,255,255,0) 84%),'
+        + " url('" + c.bg + "')";
+      a.style.backgroundRepeat = 'no-repeat, no-repeat';
+      a.style.backgroundPosition = 'center, right 8px bottom 4px';
+      a.style.backgroundSize = 'auto, auto 42%';
+      a.className += ' has-bg';
+    }
+
     a.appendChild(el('span', 'no', c.num));
     if (LCLS[c.kind]) {
       a.appendChild(el('span', LCLS[c.kind], c.kind));
