@@ -75,11 +75,26 @@
 
 
 
-  /* 「全部系列」的篇数**现算**，不写死。
-     写死的代价：系列一长就没人想起来改 —— 之前这里一直显示
-     Q（1 篇）/ E（2 篇）/ FE（8 篇），全是旧的。
-     规则：看文件名前缀；fe- 开头的一律算 FE（fe-03-F01.html 也是 FE），
-     其余按第一个字母对应系列。 */
+  /* ---------- 系列定义（与 assets/series-common.js 逐字一致） ----------
+     原来这里手写了一份 ALL_SERIES，和 series-common.js 的
+     SERIES + ORDER + PAGES 是两套数据 —— 于是 R 抄的时候留了 f: null，
+     FE 页尾的「相关 · R」永远是灰色点不动的 ss-empty，而 R 其实有 3 篇。
+     现在改成同构：只留系列定义 + 现有篇目，渲染时现算篇数与跳转目标。 */
+  var SERIES = {
+    T: { label: '理论 · T' },
+    M: { label: '课本 · M' },
+    Q: { label: 'C++&Qt · Q' },
+    E: { label: 'Extra · E' },
+    F: { label: '文件 · F' },
+    R: { label: '相关 · R' },
+    FE: { label: '前端 · FE' }
+  };
+
+  /* 展示顺序，必须与 tools/series_data.py 的 ORDER 一致 */
+  var ORDER = ['T', 'F', 'M', 'R', 'Q', 'E', 'FE'];
+
+  /* 现存的篇目（除 FE 自己，FE 那份在页面数据 P.series 里）。
+     用来数篇数、并取每个系列的首篇作为跳转目标。 */
   var SERIES_FILES = [
     't01-mongolian-script-intro.html','t02-unicode-and-encoding.html',
     't03-font-file-anatomy.html',
@@ -98,55 +113,40 @@
     'fe-05.html','fe-06.html','fe-07.html','fe-08.html'
   ];
 
+  /* fe- 开头的一律算 FE（fe-03-F01.html 也是 FE），其余按首字母。 */
   function seriesKeyOf(file) {
     if (/^fe-/.test(file)) return 'FE';
     return file.charAt(0).toUpperCase();
   }
 
-  function seriesCount(key) {
+  function filesOfSeries(key) {
     if (key === 'FE') {
-      /* FE 自己的篇目表就是权威来源 */
-      return (typeof P !== 'undefined' && P.series) ? P.series.length : 0;
+      return (typeof P !== 'undefined' && P.series)
+        ? P.series.map(function (s) { return s.file; }) : [];
     }
-    var n = 0;
-    SERIES_FILES.forEach(function (f) {
-      if (seriesKeyOf(f) === key) n++;
+    return SERIES_FILES.filter(function (f) {
+      return seriesKeyOf(f) === key;
     });
-    return n;
   }
-
-  /* 「全部系列」：与其它系列页尾一致。
-     前端的外观自成一系（不走 series_data 生成的主题），
-     但它是「一个系列」，所以『全部系列』里必须有它。 */
-  var ALL_SERIES = [
-    { lab: '理论 · T',          f: 't01-mongolian-script-intro.html', key: 'T' },
-    { lab: '文件 · F',          f: 'f01-command-prompt.html', key: 'F' },
-    { lab: '课本 · M',          f: 'm01-c-arrays.html', key: 'M' },
-    { lab: '相关 · R',          f: null, key: 'R' },
-    { lab: 'C++&Qt · Q',      f: 'q01-std-and-namespace.html', key: 'Q' },
-    { lab: 'Extra · E',       f: 'e01-recursion.html', key: 'E' },
-    { lab: '前端 · FE',         f: 'fe-01.html', key: 'FE', cur: true }
-  ];
 
   function buildSeriesSwitch() {
     var box = el('div', 's-nav-switch');
     box.appendChild(el('b', null, '全部系列'));
     box.appendChild(document.createTextNode('\u3000'));
-    ALL_SERIES.forEach(function (s) {
-      var cnt = seriesCount(s.key);
-        var lab = s.lab + '（' + cnt + ' 篇' + (cnt ? '' : '，暂空') + '）';
-      if (s.cur) {
+    ORDER.forEach(function (k) {
+      var list = filesOfSeries(k);
+      var lab = (SERIES[k] ? SERIES[k].label : k) +
+                '（' + list.length + ' 篇' + (list.length ? '' : '，暂空') + '）';
+      if (k === 'FE') {                       /* FE 页自己就是当前项 */
         box.appendChild(el('span', 'ss-cur', lab + '\u3000当前'));
         return;
       }
-      if (!s.f) {
+      if (!list.length) {                     /* 真的没有篇目才灰 */
         box.appendChild(el('span', 'ss-empty', lab));
         return;
       }
-      var a = document.createElement('a');
-      a.className = 'ss-link';
-      a.href = s.f;
-      a.textContent = lab;
+      var a = el('a', 'ss-link', lab);        /* 首篇作为跳转目标 */
+      a.href = list[0];
       box.appendChild(a);
     });
     return box;
