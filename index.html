@@ -81,19 +81,20 @@ a.card .sb{display:inline-block;margin-top:8px;font:700 10.5px/1.8 var(--sans);
 .k-R{background:#fbdfe0;color:#a02b40;border:1px solid #f2c6c9}
 .k-empty{background:#f1f3f6;color:#6b7684;border:1px dashed #ccd5e3}
 
-/* 语言标注 —— 与教程页的 .lang 同一套色值（见 tools/build_tg.py）。
-   首页没有外链样式表（全部内联），所以这里必须再写一份。
-   色值改动时两处都要改：build_tg.py 的 LANG_CSS 和这里。 */
+/* ---------- 语言标注（.lang）----------
+   颜色由 tools/gen_home_lang_css.py 从 build_tg.py 的
+   LANG_CSS 生成 —— 与教程页共用同一份色值，别手工改这里。 */
 .lang{display:inline-block;font:700 11px/1.7 var(--mono);
   border-radius:999px;padding:0 9px;vertical-align:1px;
-  color:#fff;border:1px solid transparent;letter-spacing:.02em}
-.lang.html{background:#cf4520}          /* 橙红 4.64 */
-.lang.css{background:#0478ab}           /* 天蓝 4.91 */
-.lang.cpp{background:#2456c4}           /* 深蓝 6.56 */
-.lang.c{background:#7d5cd6}             /* 蓝紫 4.80 */
-.lang.sh{background:#3f6212}            /* 橄榄绿 7.34 */
-.lang.py{background:#1f6f5c}            /* 松绿 5.73 */
-.lang.js{background:#ffd400;color:#0d1110}   /* 正黄 + 深字 13.28 */
+  letter-spacing:.02em;
+  color:#fff;border:1px solid transparent}
+.lang.html{background:#cf4520}
+.lang.css{background:#0478ab}
+.lang.cpp{background:#2456c4}
+.lang.c{background:#7d5cd6}
+.lang.sh{background:#3f6212}   /* Shell：用户未指定 */
+.lang.py{background:#1f6f5c}   /* Python：用户未指定 */
+.lang.js{background:#ffd400;color:#0d1110}   /* JS：正黄 + 深字 */
 
 .note{margin-top:46px;padding:18px 20px;border:1px solid var(--line);
   border-radius:12px;background:var(--bg-soft)}
@@ -191,16 +192,16 @@ a.card .sb{display:inline-block;margin-top:8px;font:700 10.5px/1.8 var(--sans);
   .k-E{background:#22152c;color:#d6a6f2;border-color:#3d2a4d}
   .k-R{background:#291619;color:#f7a8b6;border-color:#4a2830}
   .k-empty{background:#1b1e25;color:#95a0b0;border-color:#3a414c}
-  /* 语言标注（暗色）—— 除 JS 外都反过来：浅底 + 深字。
-     JS 沿用同一个正黄 + 深字，与教程页保持一致。 */
-  .lang{color:#12161d;border-color:transparent}
-  .lang.html{background:#ffb4a2}
-  .lang.css{background:#7dd3fc}
-  .lang.cpp{background:#a5c8ff}
-  .lang.c{background:#c4b5fd}
-  .lang.sh{background:#bef264}
-  .lang.py{background:#7dd3b0}
-  .lang.js{background:#ffd400;color:#0d1110}
+    /* 语言标注（暗色）—— 与教程页同一套色值（tg_D.css） */
+    .lang{color:#12161d;border-color:transparent}
+    .lang.html{background:#ffb4a2}
+    .lang.css{background:#7dd3fc}
+    .lang.cpp{background:#a5c8ff}
+    .lang.c{background:#c4b5fd}
+    .lang.sh{background:#bef264}
+    .lang.py{background:#7dd3b0}
+    /* JS 在暗色下沿用同一个正黄底 + 深字 */
+    .lang.js{background:#ffd400;color:#0d1110}
   .note table td{border-bottom-color:var(--line)}
   .lead-msg{
     border-color:var(--gold-line);border-left-color:var(--gold);

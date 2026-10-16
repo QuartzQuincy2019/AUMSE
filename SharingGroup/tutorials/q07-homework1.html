@@ -27,7 +27,6 @@
   <a href="#s9">9 · 数据与逻辑分离</a>
   <a href="#s10">10 · 提高可扩展性的原则</a>
   <a href="#s11">11 · 改造前后的对照</a>
-  <a href="#s12">12 · 小结</a>
 </nav>
 
 <main>
@@ -179,6 +178,14 @@
   第三行是改成两个 <code>+2</code>，第四行改回来一个。
   <b>抄四遍、手改符号</b>，这种地方正是最容易写错的地方。</p>
   <p>后面会看到：把坐标放进数组之后，这四段会变成<b>一个循环</b>。</p>
+</div>
+
+<div class="take">
+  <b>说句公道话：</b>如果这道题<b>只交一次、永不再改</b>，
+  写死在 <code>main</code> 里是 <b>完全合理的</b> ——
+  更快、更短、也没有什么可维护的。
+  拆成类型是为了「<b>会变</b>」；真实的项目里需求永远在变，
+  所以这个投入是值的。
 </div>
 
 <h2 id="s4"><span class="n">4</span>C 语言的实现</h2>
@@ -699,41 +706,7 @@ for (const Tower&amp; t : towers)
 </table>
 </div>
 
-<div class="card warn">
-  <div class="card-t">说句公道话</div>
-  <p>如果这道题<b>只交一次、永不再改</b>，写死在 <code>main</code> 里是
-  <b>完全合理的</b> —— 更快、更短、也没什么可维护的。</p>
-  <p>拆成类型是为了「<b>会变</b>」。真实的项目里，
-  需求永远在变，所以这个投入是值的。</p>
-  <p>但也要记住上一节那句：<b>别为了拆而拆</b>。
-  一个只用一次、只有三行的小脚本，不需要四个类。</p>
-</div>
 
-<h2 id="s12"><span class="n">12</span> 小结</h2>
-
-<h3>分层结果</h3>
-
-<table>
-<thead><tr><th style="width:24%">类型</th><th>一句话职责</th></tr></thead>
-<tbody>
-<tr><td class="c">Point</td><td>一个坐标，以及到另一个点的距离</td></tr>
-<tr><td class="c">Tower</td><td>一个塔（塔心 + 半径 + 高），以及「我盖住这个点吗」</td></tr>
-<tr><td class="c">TowerMap</td><td>一堆塔，以及「这个点有多高」</td></tr>
-<tr><td class="c">main</td><td>读入坐标、问一次高度、打印</td></tr>
-<tr><td class="c">makeXxxMap()</td><td>题目数据单放一处 —— 改题只改这里</td></tr>
-</tbody>
-</table>
-
-<h3>提高扩展性的六条</h3>
-
-<div class="mnemonic">
-  <b>① 数据和逻辑分开</b> —— 核心逻辑里不许出现题面数字<br>
-  <b>② 反复出现的东西给一个类型</b> ——「x、y 总一起出现」→ Point<br>
-  <b>③ 用容器代替重复的变量</b> —— 4 段 if → 1 个循环<br>
-  <b>④ 每个类型只负责一件事</b> —— 一句话说不完就再拆<br>
-  <b>⑤ 先问「什么会变」</b> —— 会变的搬出去，不变的留下<br>
-  <b>⑥ 新需求靠「加」不靠「改」</b> —— 加函数，别改老代码
-</div>
 
 <div class="card key">
   <div class="card-t">一句话</div>

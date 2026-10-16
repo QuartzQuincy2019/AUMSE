@@ -143,19 +143,7 @@ a.card .sb{display:inline-block;margin-top:8px;font:700 10.5px/1.8 var(--sans);
 .k-R{background:#fbdfe0;color:#a02b40;border:1px solid #f2c6c9}
 .k-empty{background:#f1f3f6;color:#6b7684;border:1px dashed #ccd5e3}
 
-/* 语言标注 —— 与教程页的 .lang 同一套色值（见 tools/build_tg.py）。
-   首页没有外链样式表（全部内联），所以这里必须再写一份。
-   色值改动时两处都要改：build_tg.py 的 LANG_CSS 和这里。 */
-.lang{display:inline-block;font:700 11px/1.7 var(--mono);
-  border-radius:999px;padding:0 9px;vertical-align:1px;
-  color:#fff;border:1px solid transparent;letter-spacing:.02em}
-.lang.html{background:#cf4520}          /* 橙红 4.64 */
-.lang.css{background:#0478ab}           /* 天蓝 4.91 */
-.lang.cpp{background:#2456c4}           /* 深蓝 6.56 */
-.lang.c{background:#7d5cd6}             /* 蓝紫 4.80 */
-.lang.sh{background:#3f6212}            /* 橄榄绿 7.34 */
-.lang.py{background:#1f6f5c}            /* 松绿 5.73 */
-.lang.js{background:#ffd400;color:#0d1110}   /* 正黄 + 深字 13.28 */
+@@HOME_LANG_LIGHT@@
 
 .note{margin-top:46px;padding:18px 20px;border:1px solid var(--line);
   border-radius:12px;background:var(--bg-soft)}
@@ -253,16 +241,7 @@ a.card .sb{display:inline-block;margin-top:8px;font:700 10.5px/1.8 var(--sans);
   .k-E{background:#22152c;color:#d6a6f2;border-color:#3d2a4d}
   .k-R{background:#291619;color:#f7a8b6;border-color:#4a2830}
   .k-empty{background:#1b1e25;color:#95a0b0;border-color:#3a414c}
-  /* 语言标注（暗色）—— 除 JS 外都反过来：浅底 + 深字。
-     JS 沿用同一个正黄 + 深字，与教程页保持一致。 */
-  .lang{color:#12161d;border-color:transparent}
-  .lang.html{background:#ffb4a2}
-  .lang.css{background:#7dd3fc}
-  .lang.cpp{background:#a5c8ff}
-  .lang.c{background:#c4b5fd}
-  .lang.sh{background:#bef264}
-  .lang.py{background:#7dd3b0}
-  .lang.js{background:#ffd400;color:#0d1110}
+  @@HOME_LANG_DARK@@
   .note table td{border-bottom-color:var(--line)}
   .lead-msg{
     border-color:var(--gold-line);border-left-color:var(--gold);
@@ -351,6 +330,22 @@ def card(fn, num, title, desc, kind, star):
 # home-cards.js 把它当成 background-image 的第二层，上面压一层
 # 「半透明白 → 完全透明」的线性渐变：左侧留给文字，图推向右侧。
 # 只放真正需要「一眼认出题面」的卡片；不在表里的就用普通卡片样式。
+# ---------------------------------------------------------------- 语言徽章
+# 首页是全内联样式（加载不到 assets/tg_L.css / tg_D.css），所以语言徽章的
+# 规则要在这里再写一份。但**色值不手写** —— 由 tools/gen_home_lang_css.py
+# 从 build_tg.py 的 LANG_CSS / LANG_DARK_CSS 里读出来，
+# 保证首页与 38 篇教程页用的是同一套颜色。
+# （这是本会话第 4 次「把散在多处的副本换成派生」。）
+import gen_home_lang_css as _LANGCSS
+
+STYLE = STYLE.replace("@@HOME_LANG_LIGHT@@", _LANGCSS.build_light())
+# 暗色那几行在 @media 内部，逐行补两格缩进
+STYLE = STYLE.replace(
+    "@@HOME_LANG_DARK@@",
+    "\n".join(("  " + l) if l.strip() else l
+              for l in _LANGCSS.build_dark().split("\n")))
+
+
 CARD_BG = {
     "q07-homework1.html": "SharingGroup/tutorials/assets/第04次作业第1题.png",
 }
@@ -407,17 +402,16 @@ def build_html():
 
     def plain(items):
         out = ["<ul>"]
-        # noscript 兜底列表：这里不能依赖 .lang 的样式表（虽然首页的
-        # <style> 里也有），直接把颜色内联上去，确保禁用 JS 时也看得见语言。
-        INLINE = {"HTML": "#cf4520", "CSS": "#0478ab", "JS": "#ffd400",
-                  "C++": "#2456c4", "C": "#7d5cd6", "Shell": "#3f6212",
-                  "Python": "#1f6f5c"}
+        # noscript 兜底列表要把颜色**内联**写上去（禁用 JS 时只剩静态
+        # HTML，内联最稳）。色值同样不手写 —— 由 gen_home_lang_css.py 从
+        # build_tg.py 的 LANG_CSS 解析出来，连「哪些语言用深字」也一并读出。
+        INLINE, DARK_INK = _LANGCSS.chip_colors()
         for a, b, c, d, e, f in items:
             s = " <b>&#9733;</b>" if f else ""
             bg = INLINE.get(e)
             chip = ""
             if bg:
-                fg = "#0d1110" if e == "JS" else "#fff"
+                fg = DARK_INK.get(e, "#fff")
                 chip = ('<span style="display:inline-block;font:700 11px/1.7 '
                         'Consolas,monospace;border-radius:999px;padding:0 8px;'
                         'margin-right:6px;background:%s;color:%s">%s</span>'
