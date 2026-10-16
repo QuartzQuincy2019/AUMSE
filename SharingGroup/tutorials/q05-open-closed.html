@@ -20,14 +20,14 @@
   <a href="#s2">2 · 开闭原则</a>
   <a href="#s3">3 · 为什么它在实际开发里这么重要</a>
   <a href="#s4">4 · 回头看：那些 set / get 和「角色能做的事」</a>
-  <a href="#s5">5 · 大致的方向（这一篇只提思路）</a>
+  <a href="#s5">5 · 大致的方向</a>
   <a href="#s6">6 · 目标状态</a>
   <a href="#s7">7 · 一页速查</a>
 </nav>
 
 <main>
 <h1>开闭原则<span class="star" title="与本项目施行密切相关">*</span></h1>
-<p class="sub-title">UME 项目组内部教程 · Q05（Q） · 为什么不能把所有事都塞进 Actor；只给方向，不给代码</p>
+<p class="sub-title">UME 项目组内部教程 · Q05（Q） · 为什么不能把所有事都塞进 Actor；耦合的代价与拆分方向</p>
 <p><span class="tag">设计原则</span> <span class="tag b">不要什么都塞进一个类</span></p>
 
 <p><span class="lang cpp">C++</span></p>
@@ -114,7 +114,7 @@
   <b>没人依赖的新地方</b>。</p>
 </div>
 
-<h2 id="s3" class="key-h"><span class="n">3</span><span class="key-mark" title="重点内容">★</span>为什么它在实际开发里这么重要</h2>
+<span class="key-mark" title="重点内容">★</span><h2 id="s3" class="key-h"><span class="n">3</span>为什么它在实际开发里这么重要</h2>
 
 <p>这一节是重点。开闭原则值钱的地方，全在「改动的代价」上。</p>
 
@@ -234,7 +234,7 @@
   如果答案是「要」，那就已经违反了开闭原则。
 </div>
 
-<h2 id="s5"><span class="n">5</span>大致的方向（这一篇只提思路）</h2>
+<h2 id="s5"><span class="n">5</span>大致的方向</h2>
 
 <p>不写具体代码，先讲清楚往哪走、为什么这么走。</p>
 
@@ -369,7 +369,7 @@
 </table>
 
 <div class="card key">
-  <div class="card-t">本篇只给方向，不给代码</div>
+  <div class="card-t">这一篇的落点</div>
   <p>具体怎么把战斗、背包、地图拆出去，涉及
   <b>组合</b>与<b>接口</b>两件事 —— 那是接下来的内容。</p>
   <p>这一篇只需要记住一件事：

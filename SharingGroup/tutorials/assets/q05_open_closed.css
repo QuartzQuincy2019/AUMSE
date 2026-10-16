@@ -343,12 +343,3 @@
     border-bottom:1px solid var(--line-2)}
   .iface .col:last-child{border-bottom:0}
 }
-
-
-/* ---------- 重点小节的 ★ 位置 ---------- */
-/* 通用的 .key-mark 带 margin-right:8px。各页把 ★ 放在**数字之前**，所以
-   「★ → 数字」之间那 8px 是必要的留白。
-   本篇的 ★ 在**数字之后**、标题之前，同一个 margin 就变成了
-   「3  ★  为什么…」中间一道明显的空当。这里把它反过来：
-   留白放到左边，贴近后面的标题。 */
-h2.key-h .key-mark{margin-right:0;margin-left:9px}

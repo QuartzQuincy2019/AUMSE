@@ -27,26 +27,50 @@
   示例都在浏览器里跑过，输出是实际结果。</p>
 </div>
 
-<h2 id="s1"><span class="n">1</span>先建立直觉：DOM 树</h2>
+<h2 id="s1" class="key-h"><span class="key-mark" title="重点内容">★</span><span class="n">1</span>DOM 树</h2>
 
 <p>浏览器读到 <code>demo.html</code> 之后，不是把文字原样记住就完了 ——
 它把每个标签变成一个<b>对象</b>，并按嵌套关系连起来。</p>
 
-<div class="code-wrap"><div class="bar"><span class="dot r"></span><span class="dot y"></span><span class="dot g"></span><span class="name">demo.html</span><span class="cp">复制</span></div><pre><span class="hl-p">&lt;body&gt;</span>
+<div class="code-wrap"><div class="bar"><span class="dot r"></span><span class="dot y"></span><span class="dot g"></span><span class="name">demo.html</span><span class="cp">复制</span></div><pre><span class="hl-p">&lt;!DOCTYPE html&gt;</span>
+<span class="hl-p">&lt;html</span> <span class="hl-f">lang</span>=<span class="hl-s">"zh-CN"</span><span class="hl-p">&gt;</span>
+<span class="hl-p">&lt;head&gt;</span>
+  <span class="hl-p">&lt;meta</span> <span class="hl-f">charset</span>=<span class="hl-s">"utf-8"</span><span class="hl-p">&gt;</span>
+  <span class="hl-p">&lt;title&gt;</span>角色面板<span class="hl-p">&lt;/title&gt;</span>
+<span class="hl-p">&lt;/head&gt;</span>
+<span class="hl-p">&lt;body&gt;</span>
   <span class="hl-p">&lt;h1&gt;</span>角色面板<span class="hl-p">&lt;/h1&gt;</span>
-  <span class="hl-p">&lt;div</span> id=<span class="hl-s">"panel"</span><span class="hl-p">&gt;</span>
-    <span class="hl-p">&lt;p&gt;</span>忘情牛肉面<span class="hl-p">&lt;/p&gt;</span>
+
+  <span class="hl-p">&lt;div</span> <span class="hl-f">id</span>=<span class="hl-s">"panel"</span> <span class="hl-f">class</span>=<span class="hl-s">"box"</span><span class="hl-p">&gt;</span>
+    <span class="hl-p">&lt;p</span> <span class="hl-f">id</span>=<span class="hl-s">"name"</span><span class="hl-p">&gt;</span>忘情牛肉面<span class="hl-p">&lt;/p&gt;</span>
+    <span class="hl-p">&lt;p</span> <span class="hl-f">class</span>=<span class="hl-s">"lv"</span><span class="hl-p">&gt;</span>等级 60<span class="hl-p">&lt;/p&gt;</span>
+
+    <span class="hl-p">&lt;ul</span> <span class="hl-f">class</span>=<span class="hl-s">"stats"</span><span class="hl-p">&gt;</span>
+      <span class="hl-p">&lt;li&gt;</span>生命 200 / 200<span class="hl-p">&lt;/li&gt;</span>
+      <span class="hl-p">&lt;li&gt;</span>法力 120 / 120<span class="hl-p">&lt;/li&gt;</span>
+    <span class="hl-p">&lt;/ul&gt;</span>
   <span class="hl-p">&lt;/div&gt;</span>
-<span class="hl-p">&lt;/body&gt;</span></pre></div>
+
+  <span class="hl-p">&lt;button</span> <span class="hl-f">id</span>=<span class="hl-s">"btn"</span><span class="hl-p">&gt;</span>刷新<span class="hl-p">&lt;/button&gt;</span>
+<span class="hl-p">&lt;/body&gt;</span>
+<span class="hl-p">&lt;/html&gt;</span></pre></div>
 
 <p>浏览器心里的结构是这样一棵<b>树</b>：</p>
 
 <div class="domtree">
-  <div class="lv0">body</div>
-  <div class="lv1">├─ h1<span class="tx">「角色面板」</span></div>
-  <div class="lv1">└─ div <span class="at">id="panel"</span></div>
-  <div class="lv2">├─ p<span class="tx">「忘情牛肉面」</span></div>
-  <div class="lv2">└─ <span class="ph">（panel 里还能再放东西）</span></div>
+  <div class="lv0">html</div>
+  <div class="lv1">├─ head</div>
+  <div class="lv2">├─ meta<span class="at"> charset="utf-8"</span></div>
+  <div class="lv2">└─ title<span class="tx">「角色面板」</span></div>
+  <div class="lv1">└─ body</div>
+  <div class="lv2">├─ h1<span class="tx">「角色面板」</span></div>
+  <div class="lv2">├─ div <span class="at">id="panel" class="box"</span></div>
+  <div class="lv2">│　├─ p <span class="at">id="name"</span><span class="tx">「忘情牛肉面」</span></div>
+  <div class="lv2">│　├─ p <span class="at">class="lv"</span><span class="tx">「等级 60」</span></div>
+  <div class="lv2">│　└─ ul <span class="at">class="stats"</span></div>
+  <div class="lv2">│　　├─ li<span class="tx">「生命 200 / 200」</span></div>
+  <div class="lv2">│　　└─ li<span class="tx">「法力 120 / 120」</span></div>
+  <div class="lv2">└─ button <span class="at">id="btn"</span><span class="tx">「刷新」</span></div>
 </div>
 
 <p>每个方框叫一个<b>节点</b>，方框之间的连线是<b>父子关系</b>。
@@ -56,10 +80,10 @@
 <thead><tr><th style="width:26%">树上有什么</th><th>说明</th></tr></thead>
 <tbody>
 <tr><td><b>标签</b></td>
-    <td><code>body</code>、<code>div</code>、<code>p</code> ——
-    对应 HTML 里写的标签</td></tr>
+    <td><code>html</code>、<code>body</code>、<code>div</code>、<code>p</code>、
+    <code>ul</code>、<code>li</code> —— 对应 HTML 里写的标签</td></tr>
 <tr><td><b>纯文字</b></td>
-    <td>「角色面板」也是一个节点（文字节点），
+    <td>「忘情牛肉面」也是一个节点（文字节点），
     它没有标签，是某个标签的<b>孩子</b></td></tr>
 <tr><td><b>在 JS 里怎么拿</b></td>
     <td>每一个节点都是一个 JS 对象，可以读写它的属性
@@ -70,7 +94,7 @@
 <div class="card tip">
   <div class="card-t">为什么叫「树」</div>
   <p>因为每个节点<b>最多只有一个父节点</b>，但可以有任意多个子节点 ——
-  从 <code>body</code> 往下画，就像树根长出枝和叶，不会有环。</p>
+  从 <code>html</code> 往下画，就像树根长出枝和叶，不会有环。</p>
   <p>这条规则带来一个很实用的结论：<b>任何元素都有一个 parent</b>，
   所以「往某个元素里加东西」永远是有意义的操作。这正是下面要讲的核心。</p>
 </div>
@@ -79,17 +103,17 @@
 
 <p>想在 JS 里操作一个元素，先得拿到它。最直接的方式是按 <code>id</code> 找：</p>
 
-<div class="code-wrap"><div class="bar"><span class="dot r"></span><span class="dot y"></span><span class="dot g"></span><span class="name">getById.js</span><span class="cp">复制</span></div><pre><span class="hl-c">// HTML 里：&lt;div id="panel"&gt;&lt;/div&gt;</span>
+<div class="code-wrap"><div class="bar"><span class="dot r"></span><span class="dot y"></span><span class="dot g"></span><span class="name">getById.js</span><span class="cp">复制</span></div><pre><span class="hl-c">// HTML 里：&lt;div id="panel" class="box"&gt;…&lt;/div&gt;</span>
 
 <span class="hl-k">var</span> panel = document.getElementById(<span class="hl-s">"panel"</span>);
 
-console.log(panel);              <span class="hl-c">// &lt;div id="panel"&gt;&lt;/div&gt;</span>
+console.log(panel);              <span class="hl-c">// &lt;div id="panel" class="box"&gt;…&lt;/div&gt;</span>
 console.log(panel.tagName);      <span class="hl-c">// "DIV"  —— 注意是大写</span>
-console.log(panel.childNodes.length);  <span class="hl-c">// 0  —— 现在是空的</span></pre></div>
+console.log(panel.childNodes.length);  <span class="hl-c">// 3  —— 两个 p 加一个 ul</span></pre></div>
 
-<div class="out-wrap"><div class="cap">控制台输出</div><pre>&lt;div id="panel"&gt;&lt;/div&gt;
+<div class="out-wrap"><div class="cap">控制台输出</div><pre>&lt;div id="panel" class="box"&gt;…&lt;/div&gt;
 DIV
-0</pre></div>
+3</pre></div>
 
 <div class="card warn">
   <div class="card-t">两个必须知道的细节</div>
@@ -163,7 +187,7 @@ console.log(p.querySelector("b"));   // null —— 里面没有 b 元素</code>
 
 <span class="hl-c">// ② 造一个子元素</span>
 <span class="hl-k">var</span> p = document.createElement(<span class="hl-s">"p"</span>);
-p.textContent = <span class="hl-s">"忘情牛肉面"</span>;
+p.textContent = <span class="hl-s">"奶蛙"</span>;
 
 console.log(p.isConnected);    <span class="hl-c">// false —— 还没放</span>
 
@@ -171,11 +195,11 @@ console.log(p.isConnected);    <span class="hl-c">// false —— 还没放</spa
 panel.append(p);
 
 console.log(p.isConnected);    <span class="hl-c">// true —— 已经在页面上了</span>
-console.log(panel.childNodes.length);   <span class="hl-c">// 1</span></pre></div>
+console.log(panel.childNodes.length);   <span class="hl-c">// 4  —— 原来是 3，多了一个</span></pre></div>
 
 <div class="out-wrap"><div class="cap">控制台输出</div><pre>false
 true
-1</pre></div>
+4</pre></div>
 
 <p>三步连起来就是这一篇的骨架：<b>找到父元素 → 造子元素 → append</b>。</p>
 
@@ -220,47 +244,16 @@ console.log(B.childNodes.length);   // 1</code></pre>
   新代码用 <code>append</code> 就行，更好写。</p>
 </div>
 
-<h2 id="s5"><span class="n">5</span>串起来：一个能跑的小例子</h2>
+<h2 id="s5" class="key-h"><span class="key-mark" title="重点内容">★</span><span class="n">5</span>与 Qt 的联系</h2>
 
-<div class="code-wrap"><div class="bar"><span class="dot r"></span><span class="dot y"></span><span class="dot g"></span><span class="name">demo.html</span><span class="cp">复制</span></div><pre><span class="hl-p">&lt;!DOCTYPE html&gt;</span>
-<span class="hl-p">&lt;html</span> lang=<span class="hl-s">"zh-CN"</span><span class="hl-p">&gt;</span>
-<span class="hl-p">&lt;head&gt;&lt;meta</span> charset=<span class="hl-s">"utf-8"</span><span class="hl-p">&gt;&lt;/head&gt;</span>
-<span class="hl-p">&lt;body&gt;</span>
-  <span class="hl-p">&lt;h1&gt;</span>角色面板<span class="hl-p">&lt;/h1&gt;</span>
-  <span class="hl-p">&lt;div</span> id=<span class="hl-s">"panel"</span><span class="hl-p">&gt;&lt;/div&gt;</span>
-  <span class="hl-p">&lt;script</span> src=<span class="hl-s">"demo.js"</span><span class="hl-p">&gt;&lt;/script&gt;</span>
-<span class="hl-p">&lt;/body&gt;</span>
-<span class="hl-p">&lt;/html&gt;</span></pre></div>
-
-<div class="code-wrap"><div class="bar"><span class="dot r"></span><span class="dot y"></span><span class="dot g"></span><span class="name">demo.js</span><span class="cp">复制</span></div><pre><span class="hl-k">var</span> names = [<span class="hl-s">"忘情牛肉面"</span>, <span class="hl-s">"奶蛙"</span>, <span class="hl-s">"University of Naiwa"</span>];
-
-<span class="hl-k">var</span> panel = document.getElementById(<span class="hl-s">"panel"</span>);
-
-<span class="hl-k">for</span> (<span class="hl-k">var</span> i = 0; i &lt; names.length; i++) {
-    <span class="hl-k">var</span> p = document.createElement(<span class="hl-s">"p"</span>);   <span class="hl-c">// 造</span>
-    p.textContent = names[i];                    <span class="hl-c">// 填</span>
-    panel.append(p);                             <span class="hl-c">// 放</span>
-}</pre></div>
-
-<div class="out-wrap"><div class="cap">页面上出现</div><pre>角色面板
-
-忘情牛肉面
-奶蛙
-University of Naiwa</pre></div>
-
-<div class="card tip">
-  <div class="card-t">为什么这个循环每轮都要重新 createElement</div>
-  <p>因为 <code>append</code> 是移动。如果在循环外只造一个 <code>p</code>，
-  那么第二轮 append 会把它<b>从第一行的位置搬走</b> ——
-  最后页面上只剩一行。</p>
-  <p>「每轮造一个新的」是这里的固定套路。第 4 节那条「移动不是复制」
-  说的就是这件事。</p>
+<div class="card key">
+  <div class="card-t">核心就一句</div>
+  <p><b>把要添加的元素视作组件（Widget）时，
+  「向父元素添加子元素」与 Qt 的 <code>addWidget</code>
+  涉及的编程思维完全一样。</b></p>
 </div>
 
-<h2 id="s6"><span class="n">6</span>重点：这和 Qt 的 addWidget 是一回事</h2>
-
-<p>如果你写过 Qt，上面那三步其实<b>一点也不陌生</b> ——
-把它和 Qt 的写法并排看：</p>
+<p>把两边并排看，动作是同一个：</p>
 
 <div class="two">
   <div class="side">
@@ -288,18 +281,10 @@ panel.append(p);</pre>
   </div>
 </div>
 
-<p>两边都是<b>同一个动作</b>：<code>容器.add(子件)</code>。</p>
+<p>两边都是<b>同一个动作</b>：<code>容器.add(子件)</code> ——
+<b>先有容器 → 再造子件 → 把子件交给容器托管</b>。</p>
 
-<div class="card key">
-  <div class="card-t">关键认识：把 DOM 元素当成 Widget 看</div>
-  <p><b>如果将要添加的元素视作组件（Widget），那么「向父元素添加子元素」
-  和 Qt 的 <code>addWidget</code> 完全相同。</b></p>
-  <p>都是：<b>先有容器 → 再造子件 → 把子件交给容器托管</b>。
-  子件从交出那一刻起就归容器管，显示、位置、生命周期都跟着容器走。</p>
-</div>
-
-<h3>逐项对照</h3>
-
+<div class="vs">
 <table>
 <thead><tr><th style="width:30%">要做的事</th><th style="width:36%">Qt</th><th>DOM（JS）</th></tr></thead>
 <tbody>
@@ -312,36 +297,13 @@ panel.append(p);</pre>
     <td class="c"><code>parent.append(p)</code></td></tr>
 <tr><td>按名字找控件</td><td class="c"><code>findChild&lt;QWidget*&gt;("panel")</code></td>
     <td class="c"><code>document.getElementById("panel")</code></td></tr>
-<tr><td>给组件起个名字/标识</td><td class="c"><code>setObjectName("panel")</code></td>
-    <td class="c"><code>el.id = "panel"</code></td></tr>
-<tr><td>加样式类</td><td class="c"><code>setProperty("class", …)</code> + QSS</td>
-    <td class="c"><code>el.className = "name big"</code></td></tr>
-<tr><td>子件构造后立刻可见？</td><td class="c">不会，要 addWidget 之后才进布局</td>
+<tr><td>造出来就可见？</td><td class="c">不会，要 addWidget 之后才进布局</td>
     <td class="c">不会，要 append 之后才进文档</td></tr>
 </tbody>
 </table>
-
-<div class="card tip">
-  <div class="card-t">一处不同：Qt 有独立的 layout，DOM 没有</div>
-  <p>Qt 里 <code>addWidget</code> 是加在 <b>layout</b> 上，
-  widget 自己不管怎么摆孩子。DOM 里没有 layout 这个角色 ——
-  <b>元素自己既是 widget，又是容器</b>，摆放交给 CSS（flex / grid）。</p>
-  <p>所以 Qt 那句是 <code>panel-&gt;layout()-&gt;addWidget(x)</code>，
-  DOM 这句是 <code>panel.append(x)</code>。少了一层，但意思一样：
-  <b>「把这个子件交给这个容器」</b>。</p>
 </div>
 
-<div class="card warn">
-  <div class="card-t">一个对应不上的地方：生命周期</div>
-  <p>Qt 里 <code>addWidget</code> 之后，widget 归父控件所有（父子对象树），
-  父对象析构时会一起 delete。DOM 里把节点 append 进去，
-  它也只是「挂在文档上」—— 想移除要显式 <code>remove()</code>，
-  没有自动回收那一套。</p>
-  <p><b>「谁来释放」这件事，两边答案不同。</b>
-  类比能帮你快速上手，但别把它当成完全等价。</p>
-</div>
-
-<h2 id="s7"><span class="n">7</span>多行代码里常见的写法</h2>
+<h2 id="s6"><span class="n">6</span>多行代码里常见的写法</h2>
 
 <p>把「造 + 填 + 放」写成一个小函数，是实际项目里最常见的整理方式：</p>
 
@@ -363,86 +325,6 @@ addRow(panel, <span class="hl-s">"奶蛙"</span>);</pre></div>
   <p>这样这个函数<b>不关心父元素是谁</b> —— 同一个 <code>addRow</code>
   可以往任何容器里加行。和 Qt 里写
   <code>void addRow(QWidget *parent, …)</code> 是一个思路。</p>
-</div>
-
-<h2 id="s8"><span class="n">8</span>一页速查</h2>
-
-<h3>三个函数</h3>
-
-<table>
-<thead><tr><th style="width:38%">写法</th><th style="width:24%">返回</th><th>说明</th></tr></thead>
-<tbody>
-<tr><td class="c"><code>document.getElementById("panel")</code></td>
-    <td class="c">元素 或 <code>null</code></td><td>按 id 找，区分大小写</td></tr>
-<tr><td class="c"><code>document.createElement("p")</code></td>
-    <td class="c">新元素</td><td>只在内存里，还没显示</td></tr>
-<tr><td class="c"><code>parent.append(child)</code></td>
-    <td class="c"><code>undefined</code></td><td>放进去，这才显示；是<b>移动</b></td></tr>
-</tbody>
-</table>
-
-<h3>三句话</h3>
-
-<div class="mnemonic">
-  <b>① DOM 树 = 浏览器心里的结构</b> ——
-  每个标签是一个节点，节点之间有父子关系，每个节点最多一个父亲。<br>
-  <b>② 找父 → 造子 → append</b> ——
-  造出来不等于显示出来，<code>append</code> 之后才在页面上。<br>
-  <b>③ 元素就是 Widget</b> ——
-  <code>parent.append(child)</code> 与 Qt 的 <code>addWidget</code>
-  是同一个动作：把子件交给容器。
-</div>
-
-<h3>最容易踩的三个坑</h3>
-
-<table>
-<thead><tr><th style="width:44%">现象</th><th>原因</th></tr></thead>
-<tbody>
-<tr><td class="c">造了元素但页面没变化</td>
-    <td>忘了 <code>append</code>（或 append 给了错的父元素）</td></tr>
-<tr><td class="c">循环加了很多行，却只看到一行</td>
-    <td>在循环外只 <code>createElement</code> 了一次 ——
-    append 是移动，要每轮造新的</td></tr>
-<tr><td class="c">TypeError: Cannot read properties of null</td>
-    <td><code>getElementById</code> 没找到，返回了 <code>null</code>；
-    取到之后要先判空</td></tr>
-</tbody>
-</table>
-
-<div class="card key">
-  <div class="card-t">一句话</div>
-  <p><b>页面上的一切都可以用这三个函数造出来。</b>
-  先找到要往哪儿放，再造出要放的东西，最后 append 进去 ——
-  和 Qt 里「造控件、addWidget」是同一套动作。</p>
-</div>
-
-<h2 id="s9"><span class="n">9</span>动手做</h2>
-
-<div class="card tip">
-  <div class="card-t">五分钟练习</div>
-  <ol>
-    <li>写一个只含 <code>&lt;div id="panel"&gt;&lt;/div&gt;</code> 的 HTML，
-    外加一个空的 <code>demo.js</code>。</li>
-    <li>在 <code>demo.js</code> 里，用 <code>createElement</code> +
-    <code>append</code> 往 panel 里放三个 <code>&lt;p&gt;</code>。</li>
-    <li>刷新页面确认出现三行。</li>
-    <li>把 <code>createElement</code> 提到循环<b>外面</b>再跑一次 ——
-    看清「只剩一行」，就真正理解 append 是移动了。</li>
-    <li>最后把 <code>id</code> 改成一个页面上不存在的值，
-    看控制台报什么错，然后补上判空。</li>
-  </ol>
-</div>
-
-<div class="card note">
-  <div class="card-t">接下来看什么</div>
-  <p>这一篇讲的是「造和放」。往下走还有两件事值得单独看：</p>
-  <ul>
-    <li><b>事件</b> —— 造出来的按钮怎么才能点得动
-    （<code>addEventListener</code>，对应 Qt 的 <code>connect</code>）；</li>
-    <li><b>查找与遍历</b> —— <code>querySelector</code> /
-    <code>querySelectorAll</code>，按选择器找元素，
-    比 <code>getElementById</code> 通用得多。</li>
-  </ul>
 </div>
 
 <div class="see-also">

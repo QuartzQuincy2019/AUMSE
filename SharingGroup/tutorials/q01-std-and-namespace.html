@@ -17,38 +17,26 @@
 <nav id="toc">
   <h5>目录</h5>
   <a href="#s1">1 · 为什么需要命名空间</a>
-  <a href="#s2">2 · <code>std</code> 是什么</a>
-  <a href="#s3">3 · 四种写法与它们的代价</a>
-  <a href="#s4">4 · 嵌套命名空间</a>
-  <a href="#s5">5 · 匿名命名空间</a>
-  <a href="#s6">6 · 同一个程序：C 写法 vs C++ 写法</a>
-  <a href="#s7">7 · C → C++ 速查表</a>
-  <a href="#s8">8 · 标准库地图</a>
-  <a href="#s9">9 · <code>::</code> 作用域解析运算符</a>
-  <a href="#s10">10 · 常见错误</a>
-  <a href="#s11">11 · 一页速查</a>
+  <a href="#s2">2 · 谁的谁：给名字加上「姓」</a>
+  <a href="#s3">3 · :: 作用域解析运算符</a>
+  <a href="#s4">4 · std 是什么</a>
 </nav>
 
 <main>
 <h1>std 与命名空间初步</h1>
-<p class="sub-title">UME 项目组内部教程 · Q01（Qt） · 从这里开始进入 C++</p>
-<p><span class="lang cpp">C++</span> <span class="tag b">本讲：命名空间 + C++ 入门</span>
-</p>
+<p class="sub-title">UME 项目组内部教程 · Q01（Q） · 为什么需要命名空间、谁的谁、:: 运算符与 std</p>
+<p><span class="tag">命名空间</span> <span class="tag b">C++ 入门</span></p>
 
-<div class="card note">
-  <div class="card-t">这一讲是个分界线</div>
-  <p>01~08 讲的是 <b>C</b>。从这一讲起，<b>全面转向 C++</b> ——
-  因为 UME 实际用的 Qt 是 C++ 框架，我们必须跨过这一步。</p>
-  <p>好消息是：<b>C++ 基本包含 C</b>。你前面学的指针、数组、结构体、
-  作用域，在 C++ 里全都算数，不会白学。</p>
-  <p>而「入门 C++ 要跨的第一道坎」就是<b>命名空间</b> ——
-  它解释了为什么到处都写着 <code>std::</code>，
-  以及那句 <code>using namespace std;</code> 到底在干什么。</p>
-  <p>文中所有输出与报错，均使用 g++ 13.1.0（<code>-std=c++17</code>）实际编译运行核对。</p>
-</div>
+<p><span class="lang cpp">C++</span> <span class="tag b">本讲：命名空间</span></p>
 
-<!-- ============================================================ -->
-<h2 id="s1"><span class="n">1</span>为什么需要命名空间</h2>
+<p>前八讲讲的是 <b>C</b>。从这一讲起转向 <b>C++</b> ——
+而 C++ 代码里第一个让人不习惯的东西，就是一堆双冒号：
+
+<code>std::cout</code>、<code>std::string</code>、<code>Qt::AlignCenter</code>。</p>
+
+<p>它们都和同一个概念有关：<b>命名空间</b>。这一篇只讲三件事 ——
+<b>为什么要它</b>、<b>「谁的谁」怎么读</b>、<b>那个 <code>::</code> 是什么</b>。</p>
+<h2 id="s1" class="key-h"><span class="key-mark" title="重点内容">★</span><span class="n">1</span>为什么需要命名空间</h2>
 
 <p>C 有一个绕不过去的老问题：<b>全局名字只有一层，很容易撞车</b>。</p>
 
@@ -121,484 +109,69 @@ other::hello() 被调用</pre></div>
 </div>
 
 <!-- ============================================================ -->
-<h2 id="s2"><span class="n">2</span><code>std</code> 是什么</h2>
+<h2 id="s2" class="key-h"><span class="key-mark" title="重点内容">★</span><span class="n">2</span>谁的谁：给名字加上「姓」</h2>
 
-<p>你已经见过很多次了：<code>std::cout</code>、
-<code>std::string</code>、<code>std::vector</code>。
-<b><code>std</code> 就是一个命名空间</b> ——
-而且是标准库的那个。</p>
+<p>命名空间的效果，一句话就能说清：
+<b>它给名字加了一层「姓」，从此每个名字都归属于某个「谁」。</b></p>
 
 <div class="card key">
-  <div class="card-t">一句话</div>
-  <p><b><code>std</code> = 「standard（标准）」的缩写，
-  是 C++ 标准库所有东西所在的命名空间。</b></p>
-  <p>它不是关键字，就是个普通命名空间的名字，只不过<b>标准规定必须叫这个</b>。</p>
-</div>
-
-<p>所以那些写法的含义就清楚了：</p>
-
-<table>
-<thead><tr><th style="width:32%">写法</th><th>读作</th><th>是什么</th></tr></thead>
-<tbody>
-<tr><td class="c">std::cout</td><td>std 的 cout</td><td>标准库的输出流</td></tr>
-<tr><td class="c">std::string</td><td>std 的 string</td><td>标准库的字符串类型</td></tr>
-<tr><td class="c">std::vector&lt;int&gt;</td><td>std 的 vector</td>
-    <td>标准库的动态数组（09 讲学过）</td></tr>
-</tbody>
-</table>
-
-<div class="card warn">
-  <div class="card-t">为什么标准库要套一层 <code>std</code>？</div>
-  <p>因为它东西太多了 —— 上千个名字：<code>cout</code>、
-  <code>string</code>、<code>vector</code>、<code>sort</code>、
-  <code>max</code>、<code>swap</code>……</p>
-  <p>如果这些<b>直接摊在全局</b>，你自己的变量叫 <code>max</code>、
-  函数叫 <code>sort</code> 就会撞车。套一层之后，
-  <b>你的 <code>max</code> 和 <code>std::max</code> 可以同时存在</b>。</p>
-  <p>顺带一提：<code>std::</code> 后面还可以继续套，
-  比如 <code>std::chrono::seconds</code> —— 那是标准库内部的子命名空间。</p>
-</div>
-
-<!-- ============================================================ -->
-<h2 id="s3"><span class="n">3</span>四种写法与它们的代价</h2>
-
-<p>用标准库里的东西，有四种写法。按「写起来多省事」和「有多危险」排序：</p>
-
-<h4>① 完全限定名 —— 最啰嗦，但最安全</h4>
-<div class="code-wrap"><div class="bar"><span class="dot r"></span><span class="dot y"></span><span class="dot g"></span><span class="name">每次都写全</span><span class="cp">复制</span></div><pre><span class="hl-f">std::cout</span> &lt;&lt; <span class="hl-s">"hi"</span> &lt;&lt; <span class="hl-f">std::endl</span>;
-<span class="hl-k">int</span> m = <span class="hl-f">std::max</span>(<span class="hl-n">3</span>, <span class="hl-n">5</span>);</pre></div>
-<p>永远不会有歧义。<b>库的头文件里必须这么写</b>（下面会讲为什么）。</p>
-
-<h4>② <code>using namespace std;</code> —— 最省事，也最容易出事</h4>
-<div class="code-wrap"><div class="bar"><span class="dot r"></span><span class="dot y"></span><span class="dot g"></span><span class="name">把 std 整个「打开」</span><span class="cp">复制</span></div><pre><span class="hl-k">using</span> <span class="hl-k">namespace</span> std;      <span class="hl-c">// 放在文件开头</span>
-
-<span class="hl-f">cout</span> &lt;&lt; <span class="hl-s">"hi"</span> &lt;&lt; <span class="hl-f">endl</span>;      <span class="hl-c">// std:: 可以省了</span>
-<span class="hl-k">int</span> m = <span class="hl-f">max</span>(<span class="hl-n">3</span>, <span class="hl-n">5</span>);</pre></div>
-
-<p>这就是网上教程里最常见的那一行。它<b>把 std 里上千个名字全部倒进全局作用域</b>，
-于是下面的问题就来了。</p>
-
-<h4>③ <code>using std::cout;</code> —— 只引入一个，折中</h4>
-<div class="code-wrap"><div class="bar"><span class="dot r"></span><span class="dot y"></span><span class="dot g"></span><span class="name">精确引入</span><span class="cp">复制</span></div><pre><span class="hl-k">using</span> std::cout;
-<span class="hl-k">using</span> std::string;
-
-<span class="hl-f">cout</span> &lt;&lt; <span class="hl-s">"hi"</span>;              <span class="hl-c">// 只有这两个能省 std::</span>
-<span class="hl-k">int</span> m = std::<span class="hl-f">max</span>(<span class="hl-n">3</span>, <span class="hl-n">5</span>); <span class="hl-c">// max 没引入，还得写全</span></pre></div>
-
-<p>这叫 <b>using 声明</b>，只把<b>指定的那一个</b>名字拉进来。
-风险小得多，是很多团队的实际选择。</p>
-
-<h4>④ 在函数内部 <code>using</code> —— 影响范围最小</h4>
-<div class="code-wrap"><div class="bar"><span class="dot r"></span><span class="dot y"></span><span class="dot g"></span><span class="name">只在这个函数里生效</span><span class="cp">复制</span></div><pre><span class="hl-k">void</span> <span class="hl-f">report</span>() {
-    <span class="hl-k">using</span> <span class="hl-k">namespace</span> std;   <span class="hl-c">// 出了这个函数就失效</span>
-    <span class="hl-f">cout</span> &lt;&lt; <span class="hl-s">"只在 report 里能这么写"</span> &lt;&lt; <span class="hl-f">endl</span>;
-}</pre></div>
-
-<div class="card key">
-  <div class="card-t">四种写法对照</div>
-  <table style="margin:8px 0 0">
-  <thead><tr><th style="width:26%">写法</th><th style="width:22%">作用范围</th><th>建议</th></tr></thead>
+  <div class="card-t">把 <code>::</code> 读作「的」</div>
+  <p><code>A::b</code> 读成「<b>A 的 b</b>」。句子读得通，写法就对了。</p>
+  <table>
+  <thead><tr><th style="width:34%">写法</th><th style="width:22%">读作</th><th>是谁的</th></tr></thead>
   <tbody>
-  <tr><td class="c">std::cout</td><td>—</td>
-      <td><span class="tag g">推荐</span> 头文件里必须这样</td></tr>
-  <tr><td class="c">using namespace std;</td><td>整个文件</td>
-      <td><span class="tag r">避免</span> 大项目里会撞车</td></tr>
-  <tr><td class="c">using std::cout;</td><td>整个文件，但只有一个名字</td>
-      <td><span class="tag g">可以</span> 小而具体</td></tr>
-  <tr><td>函数内 <code>using namespace std;</code></td><td>那个函数</td>
-      <td><span class="tag p">可以</span> 影响面小</td></tr>
-  </tbody></table>
+  <tr><td class="c">std::cout</td><td>std 的 cout</td><td>标准库</td></tr>
+  <tr><td class="c">ume::version</td><td>ume 的 version</td><td>ume 这个命名空间</td></tr>
+  <tr><td class="c">other::version</td><td>other 的 version</td><td>other 这个命名空间</td></tr>
+  <tr><td class="c">::count</td><td>全局的 count</td><td>不属于任何命名空间</td></tr>
+  </tbody>
+  </table>
+  <p><b>同名不怕</b>：<code>ume::version</code> 和 <code>other::version</code>
+  可以同时存在，因为它们的「谁」不同。</p>
 </div>
 
-<h4>为什么 <code>using namespace std;</code> 会出事</h4>
+<p>回到开头那段代码，现在读起来应该没有障碍了 ——
+两个 <code>version</code>、两个 <code>hello</code>，各归各的：</p>
+<div class="code-wrap"><div class="bar"><span class="dot r"></span><span class="dot y"></span><span class="dot g"></span><span class="name">C++ 的写法</span><span class="cp">复制</span></div><pre><span class="hl-p">#include</span> <span class="hl-s">&lt;iostream&gt;</span>
 
-<p>因为 <code>std</code> 里有成百上千个名字，你在<b>不知情的情况下</b>
-就和它们撞上了。举个真实的例子：</p>
-
-<div class="code-wrap"><div class="bar"><span class="dot r"></span><span class="dot y"></span><span class="dot g"></span><span class="name">撞车示例</span><span class="cp">复制</span></div><pre><span class="hl-k">using</span> <span class="hl-k">namespace</span> std;
-
-<span class="hl-c">// 你自己写了一个 count（std 里也有 std::count）</span>
-<span class="hl-k">int</span> <span class="hl-f">count</span>(<span class="hl-k">int</span> a) { <span class="hl-k">return</span> a * <span class="hl-n">2</span>; }
-
-<span class="hl-k">int</span> <span class="hl-f">main</span>() {
-    <span class="hl-k">int</span> n = <span class="hl-f">count</span>(<span class="hl-n">5</span>);      <span class="hl-c">// 编译器要在 std::count 和 ::count 之间挑</span>
-    <span class="hl-f">cout</span> &lt;&lt; n;
-}</pre></div>
-
-<div class="card warn">
-  <div class="card-t">更隐蔽的一种：变量名撞上类型名</div>
-  <p>这是最坑的一类。<code>std</code> 里有 <code>string</code>、<code>vector</code>、
-  <code>list</code>、<code>count</code>、<code>distance</code>……
-  很多人习惯把变量命名为 <code>string</code> 或 <code>count</code>。</p>
-  <p>平时没事，<b>直到某天你 <code>#include</code> 了一个新头文件</b> ——
-  编译突然报一堆看不懂的错。这就是「<code>using namespace std;</code> 的
-  惩罚：错误来得晚，且难定位」。</p>
-</div>
-
-<div class="card tip">
-  <div class="card-t">那为什么教程里都写这一行？</div>
-  <p>因为<b>教学示例短</b>，写全 <code>std::</code> 会占掉半屏，
-  分散注意力。所以入门教程（包括本系列的前几讲）都用了它。</p>
-  <p><b>但要养成习惯：一旦开始写正式代码（尤其是头文件），
-  就回到 <code>std::</code> 全限定写法。</b></p>
-  <p>本讲之后的内容，我们会尽量<b>两种都示范</b>，
-  让你看清什么时候可以省、什么时候不能省。</p>
-</div>
-
-<!-- ============================================================ -->
-<h2 id="s4"><span class="n">4</span>嵌套命名空间</h2>
-
-<p>命名空间可以套命名空间，像文件夹套文件夹。</p>
-
-<div class="code-wrap"><div class="bar"><span class="dot r"></span><span class="dot y"></span><span class="dot g"></span><span class="name">套两层</span><span class="cp">复制</span></div><pre><span class="hl-k">namespace</span> ume {
-    <span class="hl-k">namespace</span> font {                <span class="hl-c">// 套在 ume 里面</span>
-        <span class="hl-k">int</span> count = <span class="hl-n">42</span>;
-        <span class="hl-k">void</span> <span class="hl-f">info</span>() {
-            <span class="hl-f">std::cout</span> &lt;&lt; <span class="hl-s">"ume::font::info()，字体数 = "</span> &lt;&lt; count &lt;&lt; <span class="hl-s">"\n"</span>;
-        }
-    }
+<span class="hl-k">namespace</span> ume {                  <span class="hl-c">// 开一个命名空间</span>
+    <span class="hl-k">int</span> version = <span class="hl-n">10</span>;
+    <span class="hl-k">void</span> <span class="hl-f">hello</span>() { <span class="hl-f">std::cout</span> &lt;&lt; <span class="hl-s">"ume::hello() 被调用\n"</span>; }
 }
 
-<span class="hl-c">// 用的时候一层层写下去</span>
-ume::font::<span class="hl-f">info</span>();</pre></div>
-
-<div class="out-wrap"><div class="cap">运行结果</div><pre>ume::font::info()，字体数 = 42</pre></div>
-
-<p>C++17 起有更短的写法，把多层用 <code>::</code> 连起来：</p>
-
-<div class="code-wrap"><div class="bar"><span class="dot r"></span><span class="dot y"></span><span class="dot g"></span><span class="name">C++17 的简写</span><span class="cp">复制</span></div><pre><span class="hl-c">// 以前要写三层</span>
-<span class="hl-k">namespace</span> a { <span class="hl-k">namespace</span> b { <span class="hl-k">namespace</span> c {
-    <span class="hl-k">int</span> deep = <span class="hl-n">7</span>;
-}}}
-
-<span class="hl-c">// C++17 起可以一行写完</span>
-<span class="hl-k">namespace</span> a::b::c {
-    <span class="hl-k">int</span> deep = <span class="hl-n">7</span>;
-}
-
-<span class="hl-c">// 用的时候</span>
-<span class="hl-k">int</span> x = a::b::c::deep;</pre></div>
-
-<div class="out-wrap"><div class="cap">运行结果</div><pre>a::b::c::deep = 7</pre></div>
-
-<div class="card tip">
-  <div class="card-t">为什么要嵌套</div>
-  <p>因为一个项目里「ume」这个名字下也可能有很多东西：
-  字体、排版、界面…… 分层之后各归各位：</p>
-  <pre class="plain-pre">ume::font::load()
-ume::font::count
-ume::layout::measure()
-ume::ui::Window</pre>
-</div>
-
-<!-- ============================================================ -->
-<h2 id="s5"><span class="n">5</span>匿名命名空间</h2>
-
-<p>还有一种没有名字的命名空间：</p>
-
-<div class="code-wrap"><div class="bar"><span class="dot r"></span><span class="dot y"></span><span class="dot g"></span><span class="name">匿名命名空间</span><span class="cp">复制</span></div><pre><span class="hl-k">namespace</span> {                    <span class="hl-c">// 注意：没有名字</span>
-    <span class="hl-k">int</span> hidden = <span class="hl-n">123</span>;
-    <span class="hl-k">void</span> <span class="hl-f">onlyHere</span>() { <span class="hl-f">std::cout</span> &lt;&lt; <span class="hl-s">"匿名命名空间里的函数\n"</span>; }
+<span class="hl-k">namespace</span> other {
+    <span class="hl-k">int</span> version = <span class="hl-n">99</span>;              <span class="hl-c">// 同名，但不冲突</span>
+    <span class="hl-k">void</span> <span class="hl-f">hello</span>() { <span class="hl-f">std::cout</span> &lt;&lt; <span class="hl-s">"other::hello() 被调用\n"</span>; }
 }
 
 <span class="hl-k">int</span> <span class="hl-f">main</span>() {
-    <span class="hl-f">std::cout</span> &lt;&lt; hidden &lt;&lt; <span class="hl-s">"\n"</span>;   <span class="hl-c">// 不用加前缀，直接用</span>
-    <span class="hl-f">onlyHere</span>();
-}</pre></div>
-
-<div class="out-wrap"><div class="cap">运行结果</div><pre>123
-匿名命名空间里的函数</pre></div>
-
-<p>它看起来「什么都没做」，其实有明确用途：</p>
-
-<div class="card key">
-  <div class="card-t">匿名命名空间 = 「只在本文档里可见」</div>
-  <p>里面的东西<b>只有当前这个 <code>.cpp</code> 能用</b>，
-  别的 <code>.cpp</code> 看不到、也链接不到。</p>
-  <p>这在 C 里是用 <code>static</code> 实现的：</p>
-  <table style="margin:8px 0 0">
-  <thead><tr><th style="width:44%">C 的写法</th><th>C++ 的写法</th></tr></thead>
-  <tbody>
-  <tr><td class="c">static int hidden = 123;</td>
-      <td class="c">namespace { int hidden = 123; }</td></tr>
-  <tr><td class="c">static void helper(void) {…}</td>
-      <td class="c">namespace { void helper() {…} }</td></tr>
-  </tbody></table>
-  <p style="margin-top:10px"><b>好处</b>：可以一次把一堆辅助函数都圈成「内部使用」，
-  不用逐个加 <code>static</code>。</p>
-</div>
-
-<div class="card tip">
-  <div class="card-t">什么时候用</div>
-  <p>写一个 <code>.cpp</code> 时，总有些<b>只给自己用的辅助函数</b>
-  （比如打印调试信息、做一次性的格式转换）。</p>
-  <p>把它们放进匿名命名空间，<b>就不会和别的文件里的同名函数撞车</b>，
-  也不会污染链接器。</p>
-</div>
-
-<!-- ============================================================ -->
-<h2 id="s6"><span class="n">6</span>同一个程序：C 写法 vs C++ 写法</h2>
-
-<p>前面都是铺垫。现在看<b>同一个程序两种写法</b>，
-你就知道 C++ 到底带来了什么。</p>
-
-<p>需求：三个玩家，各扣 30 点血，然后打印。</p>
-
-<div class="code-wrap"><div class="bar"><span class="dot r"></span><span class="dot y"></span><span class="dot g"></span><span class="name">C 写法</span><span class="cp">复制</span></div><pre><span class="hl-p">#include</span> <span class="hl-s">&lt;stdio.h&gt;</span>
-<span class="hl-p">#include</span> <span class="hl-s">&lt;string.h&gt;</span>
-<span class="hl-p">#include</span> <span class="hl-s">&lt;stdlib.h&gt;</span>
-
-<span class="hl-k">struct</span> CPlayer {
-    <span class="hl-k">char</span> name[<span class="hl-n">32</span>];            <span class="hl-c">// 得先想好够不够长</span>
-    <span class="hl-k">int</span>  hp;
-};
-
-<span class="hl-c">// 函数只能放外面，第一个参数得自己传指针</span>
-<span class="hl-k">void</span> <span class="hl-f">c_player_init</span>(CPlayer *p, <span class="hl-k">const</span> <span class="hl-k">char</span> *n, <span class="hl-k">int</span> hp) {
-    <span class="hl-f">strncpy</span>(p-&gt;name, n, <span class="hl-k">sizeof</span>(p-&gt;name) - <span class="hl-n">1</span>);
-    p-&gt;name[<span class="hl-k">sizeof</span>(p-&gt;name) - <span class="hl-n">1</span>] = <span class="hl-s">'\0'</span>;   <span class="hl-c">// 别忘了收尾</span>
-    p-&gt;hp = hp;
-}
-<span class="hl-k">void</span> <span class="hl-f">c_player_hit</span>(CPlayer *p, <span class="hl-k">int</span> d) {
-    p-&gt;hp -= d;
-    <span class="hl-k">if</span> (p-&gt;hp &lt; <span class="hl-n">0</span>) p-&gt;hp = <span class="hl-n">0</span>;
-}
-<span class="hl-k">void</span> <span class="hl-f">c_player_show</span>(<span class="hl-k">const</span> CPlayer *p) {
-    <span class="hl-f">printf</span>(<span class="hl-s">"  [C ] %s HP=%d\n"</span>, p-&gt;name, p-&gt;hp);
-}
-
-<span class="hl-k">int</span> <span class="hl-f">main</span>(<span class="hl-k">void</span>) {
-    <span class="hl-k">int</span> n = <span class="hl-n">3</span>;
-    <span class="hl-c">// 数组得 malloc，还得自己算字节数</span>
-    CPlayer *team = (CPlayer *)<span class="hl-f">malloc</span>(<span class="hl-k">sizeof</span>(CPlayer) * n);
-    <span class="hl-k">if</span> (team == <span class="hl-n">NULL</span>) <span class="hl-k">return</span> <span class="hl-n">1</span>;      <span class="hl-c">// 还得判空</span>
-
-    <span class="hl-f">c_player_init</span>(&amp;team[<span class="hl-n">0</span>], <span class="hl-s">"Archer"</span>, <span class="hl-n">100</span>);
-    <span class="hl-f">c_player_init</span>(&amp;team[<span class="hl-n">1</span>], <span class="hl-s">"Mage"</span>,   <span class="hl-n">80</span>);
-    <span class="hl-f">c_player_init</span>(&amp;team[<span class="hl-n">2</span>], <span class="hl-s">"Knight"</span>, <span class="hl-n">150</span>);
-
-    <span class="hl-k">for</span> (<span class="hl-k">int</span> i = <span class="hl-n">0</span>; i &lt; n; i++) <span class="hl-f">c_player_hit</span>(&amp;team[i], <span class="hl-n">30</span>);
-    <span class="hl-k">for</span> (<span class="hl-k">int</span> i = <span class="hl-n">0</span>; i &lt; n; i++) <span class="hl-f">c_player_show</span>(&amp;team[i]);
-
-    <span class="hl-f">free</span>(team);                    <span class="hl-c">// 忘了这行就泄漏</span>
+    <span class="hl-f">std::cout</span> &lt;&lt; <span class="hl-s">"ume::version   = "</span> &lt;&lt; ume::version   &lt;&lt; <span class="hl-s">"\n"</span>;
+    <span class="hl-f">std::cout</span> &lt;&lt; <span class="hl-s">"other::version = "</span> &lt;&lt; other::version &lt;&lt; <span class="hl-s">"\n"</span>;
+    ume::<span class="hl-f">hello</span>();
+    other::<span class="hl-f">hello</span>();
     <span class="hl-k">return</span> <span class="hl-n">0</span>;
 }</pre></div>
-
-<div class="code-wrap"><div class="bar"><span class="dot r"></span><span class="dot y"></span><span class="dot g"></span><span class="name">C++ 写法</span><span class="cpp-badge">C++</span><span class="cp">复制</span></div><pre><span class="hl-p">#include</span> <span class="hl-s">&lt;iostream&gt;</span>
-<span class="hl-p">#include</span> <span class="hl-s">&lt;string&gt;</span>
-<span class="hl-p">#include</span> <span class="hl-s">&lt;vector&gt;</span>
-
-<span class="hl-k">namespace</span> ume {
-    <span class="hl-k">struct</span> Player {
-        <span class="hl-f">std::string</span> name;        <span class="hl-c">// 不用管长度</span>
-        <span class="hl-k">int</span> hp = <span class="hl-n">100</span>;            <span class="hl-c">// 有默认值</span>
-
-        <span class="hl-c">// 函数就放在类型里</span>
-        <span class="hl-k">void</span> <span class="hl-f">hit</span>(<span class="hl-k">int</span> d) {
-            hp -= d;
-            <span class="hl-k">if</span> (hp &lt; <span class="hl-n">0</span>) hp = <span class="hl-n">0</span>;
-        }
-        <span class="hl-k">void</span> <span class="hl-f">show</span>() <span class="hl-k">const</span> {
-            <span class="hl-f">std::cout</span> &lt;&lt; <span class="hl-s">"  [C++] "</span> &lt;&lt; name &lt;&lt; <span class="hl-s">" HP="</span> &lt;&lt; hp &lt;&lt; <span class="hl-s">"\n"</span>;
-        }
-    };
-}
-
-<span class="hl-k">int</span> <span class="hl-f">main</span>() {
-    <span class="hl-c">// 会自动增长的数组，不用 malloc / free</span>
-    <span class="hl-f">std::vector</span>&lt;ume::Player&gt; team;
-
-    team.<span class="hl-f">push_back</span>({<span class="hl-s">"Archer"</span>, <span class="hl-n">100</span>});
-    team.<span class="hl-f">push_back</span>({<span class="hl-s">"Mage"</span>,   <span class="hl-n">80</span>});
-    team.<span class="hl-f">push_back</span>({<span class="hl-s">"Knight"</span>, <span class="hl-n">150</span>});
-
-    <span class="hl-k">for</span> (<span class="hl-k">auto</span> &amp;p : team) p.<span class="hl-f">hit</span>(<span class="hl-n">30</span>);          <span class="hl-c">// 范围 for + 引用</span>
-    <span class="hl-k">for</span> (<span class="hl-k">const</span> <span class="hl-k">auto</span> &amp;p : team) p.<span class="hl-f">show</span>();
-    <span class="hl-k">return</span> <span class="hl-n">0</span>;
-}</pre></div>
-
-<div class="out-wrap"><div class="cap">两份代码运行结果完全一样</div><pre>  [C ] Archer HP=70
-  [C ] Mage HP=50
-  [C ] Knight HP=120
-
-  [C++] Archer HP=70
-  [C++] Mage HP=50
-  [C++] Knight HP=120</pre></div>
-
-<div class="card key">
-  <div class="card-t">C++ 版少了什么</div>
-  <table style="margin:8px 0 0">
-  <thead><tr><th style="width:44%">C 版必须做的事</th><th>C++ 版</th></tr></thead>
-  <tbody>
-  <tr><td><code>malloc</code> 算字节数</td><td><b>不用</b>，<code>vector</code> 自己管</td></tr>
-  <tr><td>判断 <code>NULL</code></td><td><b>不用</b></td></tr>
-  <tr><td>记住写 <code>free</code></td><td><b>不用</b>，自动</td></tr>
-  <tr><td><code>char name[32]</code> 想长度</td><td><code>std::string</code> 自动伸缩</td></tr>
-  <tr><td><code>strncpy</code> + 手动补 <code>'\0'</code></td><td>直接赋值</td></tr>
-  <tr><td>函数放外面、传指针</td><td>方法放在类型里</td></tr>
-  <tr><td>手写循环下标</td><td>范围 <code>for</code></td></tr>
-  <tr><td><code>%s</code> / <code>%d</code> 格式串</td><td><code>&lt;&lt;</code> 自动认类型</td></tr>
-  </tbody></table>
-</div>
-
-<div class="card warn">
-  <div class="card-t">C++ 也不是全是好处</div>
-  <p><code>&lt;&lt;</code> 输出比 <code>printf</code> <b>慢一些</b>
-  （不过日常足够用）；编译错误信息<b>更长更难读</b>；
-  语言本身也大得多。</p>
-  <p>但换来的是<b>更少的内存错误</b>和<b>更少的样板代码</b> ——
-  对一个要长期维护的项目，这笔账是划算的。</p>
-</div>
-
-<!-- ============================================================ -->
-<h2 id="s7"><span class="n">7</span>C → C++ 速查表</h2>
-
-<p>你已经会的东西，在 C++ 里怎么写。这张表建议收藏。</p>
-
-<table>
-<thead><tr><th style="width:26%">想做的事</th><th style="width:34%">C 写法</th><th>C++ 写法</th></tr></thead>
-<tbody>
-<tr><td>头文件</td>
-    <td class="c">#include &lt;stdio.h&gt;</td>
-    <td class="c">#include &lt;iostream&gt;</td></tr>
-<tr><td>打印</td>
-    <td class="c">printf("%d\n", x);</td>
-    <td class="c">std::cout &lt;&lt; x &lt;&lt; "\n";</td></tr>
-<tr><td>读入</td>
-    <td class="c">scanf("%d", &amp;x);</td>
-    <td class="c">std::cin &gt;&gt; x;</td></tr>
-<tr><td>字符串</td>
-    <td class="c">char s[32]; strcpy(s, "hi");</td>
-    <td class="c">std::string s = "hi";</td></tr>
-<tr><td>拼接字符串</td>
-    <td class="c">strcat(a, b);</td>
-    <td class="c">std::string c = a + b;</td></tr>
-<tr><td>比较字符串</td>
-    <td class="c">strcmp(a, b) == 0</td>
-    <td class="c">a == b</td></tr>
-<tr><td>取长度</td>
-    <td class="c">strlen(s)</td>
-    <td class="c">s.size()</td></tr>
-<tr><td>动态数组</td>
-    <td class="c">malloc / realloc / free</td>
-    <td class="c">std::vector&lt;int&gt; v;</td></tr>
-<tr><td>加元素</td>
-    <td class="c">自己扩容、自己搬</td>
-    <td class="c">v.push_back(x);</td></tr>
-<tr><td>数组长度</td>
-    <td class="c">sizeof(a)/sizeof(a[0])</td>
-    <td class="c">v.size()</td></tr>
-<tr><td>遍历数组</td>
-    <td class="c">for (int i=0;i&lt;n;i++)</td>
-    <td class="c">for (auto &amp;x : v)</td></tr>
-<tr><td>排序</td>
-    <td class="c">自己写 qsort 或冒泡</td>
-    <td class="c">std::sort(v.begin(), v.end());</td></tr>
-<tr><td>结构体</td>
-    <td class="c">struct P { int hp; };</td>
-    <td class="c">struct P { int hp; void hit(); };</td></tr>
-<tr><td>常量</td>
-    <td class="c">#define MAX 100</td>
-    <td class="c">const int kMax = 100;</td></tr>
-<tr><td>布尔</td>
-    <td class="c">int ok = 1;</td>
-    <td class="c">bool ok = true;</td></tr>
-<tr><td>空指针</td>
-    <td class="c">NULL</td>
-    <td class="c">nullptr</td></tr>
-<tr><td>类型别名</td>
-    <td class="c">typedef int MyInt;</td>
-    <td class="c">using MyInt = int;</td></tr>
-<tr><td>函数改外部变量</td>
-    <td class="c">传指针 void f(int *p)</td>
-    <td class="c">传引用 void f(int &amp;x)</td></tr>
-</tbody>
-</table>
-
-<div class="card key">
-  <div class="card-t">最该先习惯的三个</div>
-  <ol>
-    <li><b><code>std::string</code> 代替 <code>char[]</code></b> ——
-      从此不用想长度、不用担心 <code>'\0'</code>、能直接 <code>+</code> 和 <code>==</code>。</li>
-    <li><b><code>std::vector</code> 代替 <code>malloc</code></b> ——
-      不用 free，不会泄漏。</li>
-    <li><b><code>std::cout</code> 代替 <code>printf</code></b> ——
-      不用记 <code>%d</code> / <code>%s</code>，类型自动认。</li>
-  </ol>
-  <p style="margin-top:10px">这三个能立刻消掉你之前踩过的大半坑。</p>
-</div>
-
+<div class="out-wrap"><div class="cap">运行结果</div><pre>ume::version   = 10
+other::version = 99
+ume::hello() 被调用
+other::hello() 被调用</pre></div>
 <div class="card tip">
-  <div class="card-t">好消息：C 的东西还能用</div>
-  <p><code>printf</code>、<code>malloc</code>、<code>char*</code>
-  在 C++ 里<b>依然能用</b>（头文件写 <code>&lt;cstdio&gt;</code>
-  或 <code>&lt;cstdlib&gt;</code>），只是不推荐。</p>
-  <p>你甚至可以在 C++ 里写纯 C 的代码 ——
-  这正是前面 01~08 讲的代码能在 <code>g++</code> 下编译的原因。</p>
+  <div class="card-t">「谁的谁」这个读法为什么值得养成</div>
+  <p>因为它把<b>「这个名字从哪来」</b>变成了看一眼就知道的事。</p>
+  <p>读 <code>QMessageBox::warning(...)</code> 时，你不需要知道
+  <code>QMessageBox</code> 内部长什么样，就知道
+  <b>这个函数是它家的</b>；读 <code>::count</code> 就知道
+  <b>这是全局那个</b>，不是某个局部的同名变量。</p>
+  <p>以后看别人的代码，<b>先看 <code>::</code> 左边是谁</b>，
+  一半的疑问就没了。</p>
 </div>
+<h2 id="s3" class="key-h"><span class="key-mark" title="重点内容">★</span><span class="n">3</span><code>::</code> 作用域解析运算符</h2>
 
-<!-- ============================================================ -->
-<h2 id="s8"><span class="n">8</span>标准库地图</h2>
+<p>你已经一直在写 <code>std::cout</code>，但可能没细看中间那两个冒号。
+它叫 <b>作用域解析运算符</b>（scope resolution operator），
+是 C++ 里最不起眼、出现频率却最高的运算符之一。</p>
 
-<p>命名空间解决了「怎么放」。那 <code>std</code> 里<b>到底有什么</b>？
-下面这张表够你用很久。</p>
-
-<h4>已经学过的</h4>
-<table>
-<thead><tr><th style="width:28%">头文件</th><th style="width:26%">提供什么</th><th>备注</th></tr></thead>
-<tbody>
-<tr><td class="c">&lt;iostream&gt;</td><td>cout / cin / cerr</td><td>输入输出</td></tr>
-<tr><td class="c">&lt;string&gt;</td><td>std::string</td><td>字符串</td></tr>
-<tr><td class="c">&lt;vector&gt;</td><td>std::vector</td><td>动态数组（09 讲）</td></tr>
-<tr><td class="c">&lt;array&gt;</td><td>std::array</td><td>固定长度数组（09 讲）</td></tr>
-<tr><td class="c">&lt;algorithm&gt;</td><td>sort / find / max / min</td><td>常用算法（09 讲）</td></tr>
-</tbody>
-</table>
-
-<h4>马上会用到的</h4>
-<table>
-<thead><tr><th style="width:28%">头文件</th><th style="width:26%">提供什么</th><th>什么时候需要</th></tr></thead>
-<tbody>
-<tr><td class="c">&lt;map&gt;</td><td>std::map / std::unordered_map</td>
-    <td>「按名字查东西」—— 词汇检索表就是它</td></tr>
-<tr><td class="c">&lt;set&gt;</td><td>std::set</td><td>去重、判断「在不在里面」</td></tr>
-<tr><td class="c">&lt;fstream&gt;</td><td>ifstream / ofstream</td><td>读写文件</td></tr>
-<tr><td class="c">&lt;sstream&gt;</td><td>stringstream</td>
-    <td>把数字转成字符串、把字符串拆开</td></tr>
-<tr><td class="c">&lt;memory&gt;</td><td>shared_ptr / unique_ptr</td>
-    <td>会自己释放的指针</td></tr>
-<tr><td class="c">&lt;optional&gt;</td><td>std::optional</td>
-    <td>「可能有值，也可能没有」（C++17）</td></tr>
-<tr><td class="c">&lt;chrono&gt;</td><td>时间与计时</td><td>测性能、算时间差</td></tr>
-<tr><td class="c">&lt;cmath&gt;</td><td>sqrt / sin / floor</td><td>数学（C 里是 math.h）</td></tr>
-</tbody>
-</table>
-
-<div class="card tip">
-  <div class="card-t">C 头文件在 C++ 里的名字</div>
-  <p>规律：<b>C 的 <code>xxx.h</code> → C++ 的 <code>cxxx</code></b>，
-  而且里面的东西会进 <code>std</code>。</p>
-  <table style="margin:8px 0 0">
-  <thead><tr><th style="width:34%">C</th><th>C++</th></tr></thead>
-  <tbody>
-  <tr><td class="c">stdio.h</td><td class="c">cstdio</td></tr>
-  <tr><td class="c">stdlib.h</td><td class="c">cstdlib</td></tr>
-  <tr><td class="c">string.h</td><td class="c">cstring</td></tr>
-  <tr><td class="c">math.h</td><td class="c">cmath</td></tr>
-  </tbody></table>
-  <p style="margin-top:10px">写 <code>&lt;cstdio&gt;</code> 之后，
-  <code>printf</code> 的规范名字是 <code>std::printf</code> ——
-  不过多数编译器也允许直接写 <code>printf</code>。</p>
-</div>
-
-<!-- ============================================================ -->
-
-<h2 id="s9"><span class="n">9</span><code>::</code> 作用域解析运算符</h2>
-
-<p>前面你一直在写 <code>std::cout</code>，但一直没细看中间那两个冒号。
-它是 C++ 里最不起眼、出现频率却最高的运算符之一 ——
-<b>Qt 的代码里几乎每一行都有它</b>。</p>
-
+<p>它只有两种读法，记住这两个就够：</p>
 <div class="card key">
   <div class="card-t">一句话</div>
   <p><b><code>::</code> = 「左边的名字里，找右边那个名字」。</b></p>
@@ -609,8 +182,6 @@ ume::ui::Window</pre>
     <li><b>没左操作数</b>：<code>::b</code> —— 读作「<b>全局的 b</b>」（强制点名外层的那个）</li>
   </ul>
 </div>
-
-<p>下面把它的四种用法一次讲完，每种都配「什么情况下非用不可」。</p>
 
 <h4>① 定位命名空间里的东西</h4>
 
@@ -630,103 +201,6 @@ Qt::AlignCenter;                          <span class="hl-c">// 写了 ::，因�
   <div class="cap">编译器看到的</div>
 <pre>std::cout        →  标准库命名空间 std 里的 cout
 Qt::AlignCenter  →  命名空间 Qt 里的 AlignCenter（一个枚举值）</pre>
-</div>
-
-<h4>② 访问类的静态成员</h4>
-
-<p>类的静态成员<b>属于类本身，不属于某个对象</b>，所以不能用 <code>obj.成员</code>，
-  只能用 <code>类名::成员</code>：</p>
-
-<div class="code-wrap">
-  <div class="bar"><span class="dot r"></span><span class="dot y"></span><span class="dot g"></span>
-    <span class="name">静态成员</span><span class="cp">复制</span></div>
-<pre><span class="hl-k">class</span> Counter {
-<span class="hl-k">public</span>:
-    <span class="hl-k">static</span> <span class="hl-k">int</span> total;          <span class="hl-c">// 静态成员变量：所有对象共用一份</span>
-    <span class="hl-k">static</span> <span class="hl-k">int</span> get() { <span class="hl-k">return</span> total; }   <span class="hl-c">// 静态成员函数</span>
-};
-
-<span class="hl-k">int</span> Counter::total = 0;      <span class="hl-c">// 类外定义，必须写 Counter::</span>
-
-<span class="hl-k">int</span> main() {
-    Counter::total = 5;       <span class="hl-c">// 用类名访问，不写 Counter:: 会编译错</span>
-    <span class="hl-k">int</span> n = Counter::get();
-    std::cout &lt;&lt; n &lt;&lt; <span class="hl-s">"\n"</span>;
-}</pre>
-</div>
-<div class="out-wrap">
-  <div class="cap">输出</div>
-<pre>5</pre>
-</div>
-
-<div class="card tip">
-  <div class="card-t">Qt 里到处都是这种写法</div>
-  <p>Qt 的常量、枚举、单例几乎都靠 <code>类名::成员</code> 取：</p>
-  <table>
-  <thead><tr><th style="width:44%">写法</th><th>是什么</th></tr></thead>
-  <tbody>
-  <tr><td class="c">Qt::AlignCenter</td><td>对齐方式枚举值</td></tr>
-  <tr><td class="c">Qt::red</td><td>预定义颜色枚举</td></tr>
-  <tr><td class="c">Qt::Horizontal</td><td>水平方向</td></tr>
-  <tr><td class="c">QIODevice::ReadOnly</td><td>打开文件的模式</td></tr>
-  <tr><td class="c">QIODevice::WriteOnly</td><td>打开文件的模式</td></tr>
-  <tr><td class="c">QMessageBox::warning(...)</td><td>静态函数，直接弹一个警告框</td></tr>
-  <tr><td class="c">QMessageBox::Yes</td><td>按钮返回值</td></tr>
-  <tr><td class="c">QFont::Bold</td><td>字重</td></tr>
-  <tr><td class="c">QPainter::Antialiasing</td><td>抗锯齿渲染提示</td></tr>
-  <tr><td class="c">QDir::homePath()</td><td>取用户主目录</td></tr>
-  <tr><td class="c">QFileInfo::exists(...)</td><td>判断文件是否存在</td></tr>
-  <tr><td class="c">QDateTime::currentDateTime()</td><td>取当前时间</td></tr>
-  <tr><td class="c">QRegularExpression::CaseInsensitiveOption</td><td>正则选项</td></tr>
-  <tr><td class="c">QTextCursor::End</td><td>光标移动到末尾</td></tr>
-  <tr><td class="c">QStandardPaths::AppDataLocation</td><td>标准数据目录枚举</td></tr>
-  </tbody>
-  </table>
-  <p>看出来了吗 —— 这些<b>全都不用先创建对象</b>。
-  <code>::</code> 就是在告诉你：「这个名字挂在类上，不在某个具体对象上」。</p>
-</div>
-
-<h4>③ 定义类自己的成员函数（<code>类名::函数名</code>）</h4>
-
-<p>函数如果<b>在类里只声明、在类外写实现</b>，实现处必须加 <code>类名::</code>，
-  否则编译器认为那是个普通全局函数：</p>
-
-<div class="code-wrap">
-  <div class="bar"><span class="dot r"></span><span class="dot y"></span><span class="dot g"></span>
-    <span class="name">类外实现</span><span class="cp">复制</span></div>
-<pre><span class="hl-c">// widget.h —— 只声明</span>
-<span class="hl-k">class</span> Widget {
-<span class="hl-k">public</span>:
-    <span class="hl-k">void</span> show();
-    <span class="hl-k">int</span>  width() <span class="hl-k">const</span>;
-};
-
-<span class="hl-c">// widget.cpp —— 写实现，必须写 Widget::</span>
-<span class="hl-k">void</span> Widget::show() {          <span class="hl-c">// ← 少了 Widget:: 就成了全局函数</span>
-    std::cout &lt;&lt; <span class="hl-s">"显示"</span> &lt;&lt; <span class="hl-s">"\n"</span>;
-}
-
-<span class="hl-k">int</span> Widget::width() <span class="hl-k">const</span> {   <span class="hl-c">// const 写在参数表后面</span>
-    <span class="hl-k">return</span> 100;
-}</pre>
-</div>
-<div class="out-wrap">
-  <div class="cap">输出</div>
-<pre>显示</pre>
-</div>
-
-<div class="card note">
-  <div class="card-t">这就是 Qt 项目「头文件 / 源文件」成对出现的原因</div>
-  <p>你在 F03 学过头文件。Qt 的每个类基本都是这样一套：</p>
-  <table>
-  <thead><tr><th style="width:38%">文件</th><th>内容</th></tr></thead>
-  <tbody>
-  <tr><td class="c">mainwindow.h</td><td><code>class MainWindow { ... };</code> 只声明</td></tr>
-  <tr><td class="c">mainwindow.cpp</td><td><code>MainWindow::MainWindow(...)</code>、<code>MainWindow::onClicked()</code> 等实现</td></tr>
-  </tbody>
-  </table>
-  <p>看到 <code>MainWindow::onClicked()</code> 就知道：这是 <code>MainWindow</code> 类的成员函数。
-  <b>没有 <code>::</code> 的就是全局函数或者别的类的</b> —— 一眼就能分辨。</p>
 </div>
 
 <h4>④ 前面什么都不写：<code>::name</code> 强制用外层的那个</h4>
@@ -779,243 +253,45 @@ Qt::AlignCenter  →  命名空间 Qt 里的 AlignCenter（一个枚举值）</p
   <p>一旦写了它，<code>count</code> 到底是你的还是 <code>std::count</code> 就说不清了；
   而 <b><code>::count</code> 永远指全局</b>，
   <code>std::count</code> 永远指标准库 —— <b>只有老老实实写 <code>::</code>，名字才没有歧义</b>。</p>
+</div><h2 id="s4"><span class="n">4</span><code>std</code> 是什么</h2>
+
+<p>你已经见过很多次了：<code>std::cout</code>、
+<code>std::string</code>、<code>std::vector</code>。
+<b><code>std</code> 就是一个命名空间</b> ——
+而且是标准库的那个。</p>
+
+<div class="card key">
+  <div class="card-t">一句话</div>
+  <p><b><code>std</code> = 「standard（标准）」的缩写，
+  是 C++ 标准库所有东西所在的命名空间。</b></p>
+  <p>它不是关键字，就是个普通命名空间的名字，只不过<b>标准规定必须叫这个</b>。</p>
 </div>
 
-<h4>Qt 真实代码里的 <code>::</code> 长什么样</h4>
-
-<p>把上面四种用法放到真实的 Qt 代码里，你会发现<b>它无处不在</b>：</p>
-
-<div class="code-wrap">
-  <div class="bar"><span class="dot r"></span><span class="dot y"></span><span class="dot g"></span>
-    <span class="name">一段典型 Qt 代码</span><span class="cp">复制</span></div>
-<pre><span class="hl-p">#include</span> <span class="hl-s">&lt;QApplication&gt;</span>
-<span class="hl-p">#include</span> <span class="hl-s">&lt;QMessageBox&gt;</span>
-
-<span class="hl-c">// ① 类外实现成员函数：MainWindow::</span>
-MainWindow::MainWindow(QWidget *parent)
-    : QMainWindow(parent)                <span class="hl-c">// ② 调用基类构造：QMainWindow::</span>
-{
-    <span class="hl-c">// ③ 类的静态函数：QMessageBox::question</span>
-    <span class="hl-k">auto</span> r = QMessageBox::question(
-        <span class="hl-k">this</span>,
-        QStringLiteral(<span class="hl-s">"确认"</span>),
-        QStringLiteral(<span class="hl-s">"要保存吗？"</span>),
-        QMessageBox::Yes | QMessageBox::No);   <span class="hl-c">// ④ 类里的枚举值</span>
-
-    <span class="hl-k">if</span> (r == QMessageBox::Yes)
-        save();
-}</pre>
-</div>
-<div class="out-wrap">
-  <div class="cap">这四个 <code>::</code> 分别是</div>
-<pre>MainWindow::MainWindow    →  ③ 定义类自己的成员函数
-QMainWindow(parent)       →  ① 定位基类的构造函数
-QMessageBox::question     →  ② 类的静态成员函数（不用 new 就能调）
-QMessageBox::Yes          →  ② 类的静态枚举值</pre>
-</div>
-
-<p>再看几个 Qt 里高频的：</p>
+<p>所以那些写法的含义就清楚了：</p>
 
 <table>
-<thead><tr><th style="width:12%">用法</th><th style="width:46%">例子</th><th>含义</th></tr></thead>
+<thead><tr><th style="width:32%">写法</th><th>读作</th><th>是什么</th></tr></thead>
 <tbody>
-<tr><td>信号槽</td><td class="c">connect(btn, &amp;QPushButton::clicked, this, &amp;MainWindow::onClicked)</td><td>取成员函数指针，必须带类名</td></tr>
-<tr><td>继承</td><td class="c">class MainWindow : public QMainWindow</td><td>冒号不是 <code>::</code>，别混（见下方提醒）</td></tr>
-<tr><td>基类调用</td><td class="c">QWidget::paintEvent(e)</td><td>显式调用基类的实现</td></tr>
-<tr><td>嵌套类</td><td class="c">QList&lt;QString&gt;::const_iterator</td><td>类里再定义的类，一层层往里点</td></tr>
-<tr><td>模板里的类型</td><td class="c">QVector&lt;int&gt;::size_type</td><td>模板类内部的类型名</td></tr>
-<tr><td>全局函数</td><td class="c">qApp、qDebug()</td><td>这些是全局的，<b>不</b>带 <code>::</code></td></tr>
+<tr><td class="c">std::cout</td><td>std 的 cout</td><td>标准库的输出流</td></tr>
+<tr><td class="c">std::string</td><td>std 的 string</td><td>标准库的字符串类型</td></tr>
+<tr><td class="c">std::vector&lt;int&gt;</td><td>std 的 vector</td>
+    <td>标准库的动态数组（09 讲学过）</td></tr>
 </tbody>
 </table>
 
 <div class="card warn">
-  <div class="card-t">别把 <code>::</code> 和继承的 <code>:</code> 弄混</div>
-  <p>两个冒号是<b>作用域</b>，一个冒号是<b>继承 / 初始化列表</b>：</p>
-  <table>
-  <thead><tr><th style="width:52%">写法</th><th>含义</th></tr></thead>
-  <tbody>
-  <tr><td class="c">class Dog : public Animal</td><td>Dog <b>继承</b> Animal（一个冒号）</td></tr>
-  <tr><td class="c">Animal::eat()</td><td>Animal <b>里的</b> eat（两个冒号）</td></tr>
-  <tr><td class="c">Dog::Dog() : Animal()</td><td>前后各一个：定义 Dog 的构造函数，并<b>初始化</b>基类</td></tr>
-  </tbody>
-  </table>
-  <p>最后一行最典型 —— <b>一行里两个冒号的意思完全不同</b>。
-  记住：<b><code>::</code> 是「谁的」，<code>:</code> 是「是什么的」。</b></p>
+  <div class="card-t">为什么标准库要套一层 <code>std</code>？</div>
+  <p>因为它东西太多了 —— 上千个名字：<code>cout</code>、
+  <code>string</code>、<code>vector</code>、<code>sort</code>、
+  <code>max</code>、<code>swap</code>……</p>
+  <p>如果这些<b>直接摊在全局</b>，你自己的变量叫 <code>max</code>、
+  函数叫 <code>sort</code> 就会撞车。套一层之后，
+  <b>你的 <code>max</code> 和 <code>std::max</code> 可以同时存在</b>。</p>
+  <p>顺带一提：<code>std::</code> 后面还可以继续套，
+  比如 <code>std::chrono::seconds</code> —— 那是标准库内部的子命名空间。</p>
 </div>
-
-<h4>一个坑：<code>::</code> 不总是作用域运算符</h4>
-
-<div class="card note">
-  <div class="card-t">它还能当「拼接符号」用</div>
-  <p>C 语言里 <code>::</code> 根本没有意义，所以有些老代码拿它当<b>标记</b>使，
-  预处理器会把整个 <code>X::Y</code> 换掉。比如 Windows 头文件里：</p>
-  <div class="code-wrap">
-    <div class="bar"><span class="dot r"></span><span class="dot y"></span><span class="dot g"></span>
-      <span class="name">当记号用</span><span class="cp">复制</span></div>
-  <pre><span class="hl-c">// 某些库的自定义标记，展开后 :: 会消失</span>
-GUI_EXPORT::QWidget        <span class="hl-c">// 展开后是 __declspec(dllexport) QWidget</span></pre>
-  </div>
-  <p>所以看到 <code>A::B</code> 一时想不通时，先确认一下
-  <b><code>A</code> 到底是不是个命名空间或类</b> —— 不是的话，多半是宏。</p>
-</div>
-
-<h4>一页速查</h4>
-
-<table>
-<thead><tr><th style="width:26%">写法</th><th style="width:26%">读作</th><th>什么时候用</th></tr></thead>
-<tbody>
-<tr><td class="c">std::cout</td><td>std 里的 cout</td><td>用标准库</td></tr>
-<tr><td class="c">Qt::AlignCenter</td><td>Qt 里的 AlignCenter</td><td>用 Qt 的枚举 / 常量</td></tr>
-<tr><td class="c">Counter::total</td><td>Counter 里的 total</td><td>访问静态成员</td></tr>
-<tr><td class="c">Widget::show()</td><td>Widget 里的 show</td><td>类外定义成员函数</td></tr>
-<tr><td class="c">::count</td><td>全局的 count</td><td>局部变量挡住了全局变量</td></tr>
-<tr><td class="c">QMessageBox::question()</td><td>QMessageBox 里的 question</td><td>调类的静态函数，不用建对象</td></tr>
-<tr><td class="c">Outer::Inner</td><td>Outer 里的 Inner</td><td>嵌套类 / 模板里的类型</td></tr>
-</tbody>
-</table>
-
-<div class="mnemonic">
-  <b>口诀：<code>::</code> 读作「的」。</b>
-  <code>std::cout</code> 是「std 的 cout」，
-  <code>Widget::show</code> 是「Widget 的 show」，
-  <code>::count</code> 是「全局的 count」。
-  句子读得通，写法就对了。
-</div>
-
-<h2 id="s10"><span class="n">10</span>常见错误</h2>
-
-<h4>错误 1 · 忘了写命名空间前缀</h4>
-<div class="code-wrap"><div class="bar"><span class="dot r"></span><span class="dot y"></span><span class="dot g"></span><span class="name">对比</span><span class="cp">复制</span></div><pre><span class="hl-k">namespace</span> ume { <span class="hl-k">int</span> version = <span class="hl-n">10</span>; }
-
-<span class="hl-k">int</span> <span class="hl-f">main</span>() {
-    <span class="hl-f">std::cout</span> &lt;&lt; version;        <span class="hl-c">// ❌ 找不到 version</span>
-    <span class="hl-f">std::cout</span> &lt;&lt; ume::version;   <span class="hl-c">// ✅</span>
-}</pre></div>
-
-<div class="out-wrap"><div class="cap">报错形状（具体措辞随编译器版本略有差异）</div><pre>error: 'version' was not declared in this scope;
-       did you mean 'ume::version'?
-note:  'ume::version' declared here</pre></div>
-
-<p><b>注意那句 <code>did you mean 'ume::version'?</code></b> ——
-现代编译器会直接告诉你答案。看到 <code>was not declared in this scope</code>，
-第一反应就该是「<b>我是不是漏了 <code>某某::</code>？</b>」</p>
-
-<h4>错误 2 · 两个命名空间都 using，导致二义性</h4>
-<div class="code-wrap"><div class="bar"><span class="dot r"></span><span class="dot y"></span><span class="dot g"></span><span class="name">对比</span><span class="cp">复制</span></div><pre><span class="hl-k">namespace</span> A { <span class="hl-k">void</span> <span class="hl-f">hello</span>(); }
-<span class="hl-k">namespace</span> B { <span class="hl-k">void</span> <span class="hl-f">hello</span>(); }
-
-<span class="hl-k">using</span> <span class="hl-k">namespace</span> A;
-<span class="hl-k">using</span> <span class="hl-k">namespace</span> B;
-
-<span class="hl-f">hello</span>();                     <span class="hl-c">// ❌ 到底要哪个？</span>
-A::<span class="hl-f">hello</span>();                  <span class="hl-c">// ✅ 说清楚</span></pre></div>
-
-<div class="out-wrap"><div class="cap">报错形状（具体措辞随编译器版本略有差异）</div><pre>error: call of overloaded 'hello()' is ambiguous
-note:  candidate: 'void A::hello()'
-note:  candidate: 'void B::hello()'</pre></div>
-
-<p><code>ambiguous</code> 就是「<b>有歧义</b>」。
-报错里把两个候选都列出来了 —— 看清楚你要哪个，然后写上前缀。</p>
-
-<h4>错误 3 · 头文件里写 <code>using namespace</code></h4>
-<div class="code-wrap"><div class="bar"><span class="dot r"></span><span class="dot y"></span><span class="dot g"></span><span class="name">对比</span><span class="cp">复制</span></div><pre><span class="hl-c">/* ❌ mylib.h —— 把头文件写成这样，会污染所有包含它的文件 */</span>
-<span class="hl-p">#pragma once</span>
-<span class="hl-k">using</span> <span class="hl-k">namespace</span> std;
-<span class="hl-k">void</span> <span class="hl-f">report</span>(string s);
-
-<span class="hl-c">/* ✅ 头文件里一律写全 */</span>
-<span class="hl-p">#pragma once</span>
-<span class="hl-p">#include</span> <span class="hl-s">&lt;string&gt;</span>
-<span class="hl-k">void</span> <span class="hl-f">report</span>(std::string s);</pre></div>
-<p>这是<b>硬规矩</b>：头文件会被别人 <code>#include</code>，
-你在里面 <code>using namespace std;</code> 等于<b>替别人做了这个危险决定</b>。</p>
-
-<h4>错误 4 · 命名空间只写了开没写闭</h4>
-<div class="code-wrap"><div class="bar"><span class="dot r"></span><span class="dot y"></span><span class="dot g"></span><span class="name">对比</span><span class="cp">复制</span></div><pre><span class="hl-k">namespace</span> ume {
-    <span class="hl-k">int</span> a = <span class="hl-n">1</span>;
-<span class="hl-c">// ❌ 忘了 }</span>
-
-<span class="hl-c">// 后果：后面所有东西都被「吃」进 ume 里，报错位置离真正的问题很远</span>
-
-<span class="hl-k">namespace</span> ume {
-    <span class="hl-k">int</span> a = <span class="hl-n">1</span>;
-}                          <span class="hl-c">// ✅</span></pre></div>
-<p>和M05「结构体忘了分号」是同一类问题：
-<b>漏一个符号，报错却出现在很远的地方。</b></p>
-
-<h4>错误 5 · 在 .cpp 里定义、忘了也在命名空间里</h4>
-<div class="code-wrap"><div class="bar"><span class="dot r"></span><span class="dot y"></span><span class="dot g"></span><span class="name">对比</span><span class="cp">复制</span></div><pre><span class="hl-c">/* mylib.h */</span>
-<span class="hl-k">namespace</span> ume { <span class="hl-k">void</span> <span class="hl-f">hello</span>(); }
-
-<span class="hl-c">/* mylib.cpp */</span>
-<span class="hl-k">void</span> <span class="hl-f">hello</span>() { }                 <span class="hl-c">// ❌ 这是全局的 hello，不是 ume::hello</span>
-
-<span class="hl-k">namespace</span> ume {
-    <span class="hl-k">void</span> <span class="hl-f">hello</span>() { }             <span class="hl-c">// ✅</span>
-}
-<span class="hl-c">// 或者写成</span>
-<span class="hl-k">void</span> ume::<span class="hl-f">hello</span>() { }          <span class="hl-c">// ✅ 也可以用 :: 限定</span></pre></div>
-<p><b>症状</b>：编译能过，链接时报
-<code>undefined reference to `ume::hello()'</code> ——
-因为你定义的其实是另一个函数。这正是 F03 讲过的链接错误。</p>
 
 <!-- ============================================================ -->
-<h2 id="s11"><span class="n">11</span>一页速查</h2>
-
-<table>
-<thead><tr><th style="width:40%">想做的事</th><th>写法</th></tr></thead>
-<tbody>
-<tr><td>定义命名空间</td><td class="c">namespace ume { ... }</td></tr>
-<tr><td>嵌套（C++17 起）</td><td class="c">namespace ume::font { ... }</td></tr>
-<tr><td>匿名命名空间（仅本文件可见）</td><td class="c">namespace { ... }</td></tr>
-<tr><td>用里面的东西</td><td class="c">ume::version</td></tr>
-<tr><td>标准库的东西</td><td class="c">std::cout&nbsp;&nbsp;std::string&nbsp;&nbsp;std::vector</td></tr>
-<tr><td>只引入一个名字</td><td class="c">using std::cout;</td></tr>
-<tr><td>引入整个命名空间（慎用）</td><td class="c">using namespace std;</td></tr>
-<tr><td>头文件里该怎么做</td><td class="c"><b>一律写全 <code>std::</code></b>，不要 using</td></tr>
-<tr><td><code>::</code> 读作</td><td>「的」—— <code>ume::font</code> = ume 的 font</td></tr>
-<tr><td>C 的 <code>static</code> 函数</td><td class="c">改用匿名命名空间</td></tr>
-</tbody>
-</table>
-
-<div class="card key">
-  <div class="card-t">这一讲要记住的五句话</div>
-  <ol>
-    <li><b>命名空间给名字加了一层「姓」</b>，解决全局重名 ——
-      像文件夹之于文件。</li>
-    <li><b><code>std</code> 是标准库的命名空间</b>，
-      <code>std::cout</code> 读作「std 的 cout」。</li>
-    <li><b><code>using namespace std;</code> 图省事但有风险</b>；
-      <code>using std::cout;</code> 更精确；
-      <b>头文件里一律写全名。</b></li>
-    <li><b>匿名命名空间 = 只在本文档可见</b>，
-      相当于一堆 <code>static</code>。</li>
-    <li><b>看到 <code>was not declared in this scope</code>，
-      先想「是不是漏了 <code>::</code>」</b>；
-      看到 <code>ambiguous</code>，就是两个命名空间撞了。</li>
-  </ol>
-</div>
-
-<div class="card note">
-  <div class="card-t">下一步</div>
-  <p>命名空间是<b>语法层面</b>的第一道坎，跨过去之后，
-  接下来是 C++ 真正好用的部分：</p>
-  <table style="margin:8px 0 0">
-  <thead><tr><th style="width:30%">主题</th><th>能解决什么</th></tr></thead>
-  <tbody>
-  <tr><td><b>引用与函数进阶</b></td><td>不再传指针、默认参数、函数重载</td></tr>
-  <tr><td><b>构造函数与析构函数</b></td><td>对象自动初始化、自动清理</td></tr>
-  <tr><td><b>string 深入</b></td><td>彻底告别 <code>char[]</code></td></tr>
-  <tr><td><b>map / set</b></td><td>词汇检索表的实现基础</td></tr>
-  <tr><td><b>RAII 与智能指针</b></td><td>再也不用手写 <code>delete</code></td></tr>
-  <tr><td><b>类与继承</b></td><td>Qt 的整个框架都建立在这上面</td></tr>
-  </tbody></table>
-  <p style="margin-top:10px">建议顺序：<b>先把 <code>string</code> 和
-  <code>vector</code> 用熟</b>（这两个能立刻改善你写的每一行代码），
-  再往类与继承走。</p>
-</div>
-
-
 
 <!-- NAV-AUTO -->
 <a class="home-fab" href="../../index.html" title="返回教程总目录">返回 home</a>
@@ -1088,7 +364,6 @@ UME 项目组内部教程 · Q01《std 与命名空间初步》<br>
   btn.addEventListener('click', function(){
     setOpen(!toc.classList.contains('open'));
   });
-  /* 点目录里的链接后自动收起；点遮罩（#toc 之外的区域）也收起 */
   toc.addEventListener('click', function(e){
     if (e.target.closest('a')) setOpen(false);
   });
@@ -1100,7 +375,6 @@ UME 项目组内部教程 · Q01《std 与命名空间初步》<br>
   document.addEventListener('keydown', function(e){
     if (e.key === 'Escape') setOpen(false);
   });
-  /* 窄屏进入页面时默认收起，宽屏则清掉状态 */
   function sync(){ if (window.innerWidth > 980) setOpen(false); }
   window.addEventListener('resize', sync);
   sync();

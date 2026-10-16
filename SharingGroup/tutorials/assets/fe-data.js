@@ -106,7 +106,7 @@
     'r01-font-design-metrics.html','r02-bubble-sort.html',
     'r03-collation.html',
     'q01-std-and-namespace.html','q02-references.html',
-    'q03-pointers-to-objects.html','q04-interfaces.html','q05-open-closed.html',
+    'q03-pointers-to-objects.html','q04-interfaces.html','q05-open-closed.html','q06-components.html',
     'e01-recursion.html','e02-batch-and-cmd.html',
     'e03-syntactic-sugar.html',
     'fe-01.html','fe-02.html','fe-03-F01.html','fe-03.html','fe-04.html',

@@ -1,0 +1,496 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Q06 · 组件化编程与解耦合</title>
+<link rel="stylesheet" href="assets/genelayout.css">
+<link rel="stylesheet" href="assets/q06_components.css">
+<link rel="stylesheet" href="assets/series-theme.css">
+<link rel="stylesheet" href="assets/tg_L.css">
+<link rel="stylesheet" href="assets/tg_D.css">
+
+</head>
+<body class="qseries" data-series="Q">
+<div id="shell">
+
+<nav id="toc">
+  <h5>目录</h5>
+  <a href="#s1">1 · 什么是耦合</a>
+  <a href="#s2">2 · 高耦合与低耦合</a>
+  <a href="#s3">3 · 为什么低耦合这么重要</a>
+  <a href="#s4">4 · 怎么解耦：组件化</a>
+  <a href="#s5">5 · 组件之间怎么说话</a>
+  <a href="#s6">6 · 组件化之后长什么样</a>
+</nav>
+
+<main>
+<h1>组件化编程与解耦合<span class="star" title="与本项目施行密切相关">*</span></h1>
+<p class="sub-title">UME 项目组内部教程 · Q06（Q） · 什么叫耦合、高耦合的代价、组件化的三条准则</p>
+<p><span class="tag">设计原则</span> <span class="tag b">组件化</span></p>
+
+<p><span class="lang cpp">C++</span></p>
+
+<p>Q05 的结论是：<b>不能什么需求都往 <code>Actor</code> 里加</b>。</p>
+
+<p>这一篇接着说下去 —— 不能那样加，那<b>该怎么加</b>。
+在给方案之前，先把「为什么那样加会出事」说成一个有名字的概念：
+<b>耦合</b>。</p>
+
+<div class="card key">
+  <div class="card-t">一句话</div>
+  <p><b>耦合 = 两段代码之间的牵连程度。</b></p>
+  <p>牵连越多，改一个地方要动的地方就越多。
+  所谓「解耦」，就是把这种牵连<b>减少到刚好够用</b>。</p>
+</div>
+
+<h2 id="s1"><span class="n">1</span>什么是耦合</h2>
+
+<p>没有牵连的代码是不存在的 —— 只要能一起工作，就有牵连。
+问题不在「有没有」，而在<b>有多少、是哪种</b>。</p>
+
+<div class="vs">
+<table>
+<thead><tr><th style="width:50%">牵连少</th><th>牵连多</th></tr></thead>
+<tbody>
+<tr><td>我知道你叫什么名字、怎么用你</td>
+    <td>我还知道你<b>内部怎么实现的</b></td></tr>
+<tr><td>你改了内部实现，我不用改</td>
+    <td>你改了内部实现，我跟着崩</td></tr>
+<tr><td>想换掉你，只改一处</td>
+    <td>想换掉你，要翻遍半个项目</td></tr>
+</tbody>
+</table>
+</div>
+
+<p>三种最常见的「牵连」是这个样子：</p>
+
+<table>
+<thead><tr><th style="width:24%">类型</th><th style="width:34%">表现</th><th>例子</th></tr></thead>
+<tbody>
+<tr><td><b>知道别人的内部</b></td>
+    <td>直接读写了不该碰的数据</td>
+    <td class="c">战斗代码直接改 <code>actor.hp</code>，
+    绕过了 <code>Actor</code> 自己的规则</td></tr>
+<tr><td><b>依赖具体实现</b></td>
+    <td>写死了「用哪一个」</td>
+    <td class="c">刷怪逻辑里写死 <code>new 史莱姆</code>，
+    加一种怪就得改它</td></tr>
+<tr><td><b>职责缠在一起</b></td>
+    <td>一个类里有好几件事</td>
+    <td class="c"><code>Actor</code> 同时管属性、战斗、背包、地图</td></tr>
+</tbody>
+</table>
+
+<h2 id="s2" class="key-h"><span class="key-mark" title="重点内容">★</span><span class="n">2</span>高耦合与低耦合</h2>
+
+<p>用 Q05 那个例子，两种写法摆在一起看最清楚。同一个需求：
+<b>角色受到伤害时，要扣血、要触发护盾、要记日志。</b></p>
+
+<h3>高耦合：什么都写在一个类里</h3>
+
+<div class="code-wrap"><div class="bar"><span class="dot r"></span><span class="dot y"></span><span class="dot g"></span><span class="name">高耦合的样子</span><span class="cp">复制</span></div><pre><span class="hl-k">class</span> Actor {
+    <span class="hl-c">// ……属性……</span>
+
+    <span class="hl-k">void</span> takeDamage(<span class="hl-k">int</span> dmg) {
+        hp -= dmg;
+        <span class="hl-k">if</span> (shield &gt; <span class="hl-n">0</span>) { <span class="hl-c">/* 护盾的事 */</span> }
+        <span class="hl-k">if</span> (hp &lt;= <span class="hl-n">0</span>) { <span class="hl-c">/* 死亡的事：掉落、经验、复活点 */</span> }
+        log(<span class="hl-s">"受伤"</span>);              <span class="hl-c">// 日志的事</span>
+        refreshUI();              <span class="hl-c">// 界面的事</span>
+        <span class="hl-k">if</span> (inParty()) { <span class="hl-c">/* 队友的事 */</span> }
+    }
+
+    <span class="hl-k">void</span> buyItem(<span class="hl-k">int</span> id) { <span class="hl-c">/* 商城、价格、库存、货币 */</span> }
+    <span class="hl-k">void</span> changeMap(<span class="hl-k">int</span> id) { <span class="hl-c">/* 地图数据、传送点、加载 */</span> }
+};</pre></div>
+
+<div class="card warn">
+  <div class="card-t">它的症状</div>
+  <ul>
+    <li><b>一个类要认识所有人</b> —— 护盾、日志、界面、队友、商城、地图，
+    全得 <code>#include</code> 进来。</li>
+    <li><b>改一处，全都得重测</b> —— 加一种护盾类型要动
+    <code>takeDamage</code>，而死亡判定也在里面。</li>
+    <li><b>没法单独用</b> —— 想只测试「扣血」这一件事？
+    得先把日志、界面、队友都准备好。</li>
+    <li><b>所有人都在改它</b> —— 管战斗的和管商城的改同一个文件。</li>
+  </ul>
+</div>
+
+<h3>低耦合：各管各的</h3>
+
+<div class="code-wrap"><div class="bar"><span class="dot r"></span><span class="dot y"></span><span class="dot g"></span><span class="name">低耦合的样子</span><span class="cp">复制</span></div><pre><span class="hl-c">// ① 角色只管自己的状态和规则</span>
+<span class="hl-k">class</span> Actor {
+    <span class="hl-k">public</span>:
+        <span class="hl-k">void</span> takeDamage(<span class="hl-k">int</span> dmg);   <span class="hl-c">// 只负责改 hp，别的不管</span>
+        <span class="hl-k">bool</span> isDead() <span class="hl-k">const</span>;
+};
+
+<span class="hl-c">// ② 战斗管流程，它“知道有 Actor 这回事”，但不知道 Actor 内部</span>
+<span class="hl-k">class</span> BattleSystem {
+    <span class="hl-k">public</span>:
+        <span class="hl-k">void</span> hit(Actor&amp; who, <span class="hl-k">int</span> dmg);
+};
+
+<span class="hl-c">// ③ 别的事各归各的</span>
+<span class="hl-k">class</span> ShieldSystem  { <span class="hl-c">/* 护盾 */</span> };
+<span class="hl-k">class</span> LootSystem    { <span class="hl-c">/* 掉落 */</span> };
+<span class="hl-k">class</span> BattleLog     { <span class="hl-c">/* 日志 */</span> };</pre></div>
+
+<p>战斗流程变成了「<b>把几件事串起来</b>」，而不是「自己做完所有事」：</p>
+
+<div class="code-wrap"><div class="bar"><span class="dot r"></span><span class="dot y"></span><span class="dot g"></span><span class="name">BattleSystem::hit 要做的</span><span class="cp">复制</span></div><pre><span class="hl-k">void</span> BattleSystem::hit(Actor&amp; who, <span class="hl-k">int</span> dmg) {
+    <span class="hl-k">int</span> left = shield_.absorb(who, dmg);   <span class="hl-c">// 先问护盾</span>
+    who.takeDamage(left);                 <span class="hl-c">// 剩下的给角色</span>
+    log_.write(who, left);                <span class="hl-c">// 记一笔</span>
+    <span class="hl-k">if</span> (who.isDead()) loot_.drop(who);     <span class="hl-c">// 死了才掉落</span>
+}</pre></div>
+
+<h3>两种写法差在哪</h3>
+
+<div class="vs">
+<table>
+<thead><tr><th style="width:26%">看什么</th><th style="width:37%">高耦合</th><th>低耦合</th></tr></thead>
+<tbody>
+<tr><td><b>Actor 认识谁</b></td>
+    <td>护盾、日志、界面、队友、商城、地图</td>
+    <td>只有它自己</td></tr>
+<tr><td><b>加一种护盾</b></td>
+    <td>改 <code>Actor::takeDamage</code></td>
+    <td>只改 <code>ShieldSystem</code></td></tr>
+<tr><td><b>改日志格式</b></td>
+    <td>也在 <code>Actor</code> 里改 —— 有碰坏战斗的风险</td>
+    <td>只改 <code>BattleLog</code>，碰不到战斗</td></tr>
+<tr><td><b>单独测「扣血」</b></td>
+    <td>得先备好日志、界面、队友</td>
+    <td>直接建一个 <code>Actor</code> 就行</td></tr>
+<tr><td><b>谁在读这个文件</b></td>
+    <td>所有人</td>
+    <td>各自读自己那个</td></tr>
+</tbody>
+</table>
+</div>
+
+<div class="card key">
+  <div class="card-t">低耦合的好处，说白了三条</div>
+  <ol>
+    <li><b>改动不外溢</b> —— 改一处只影响一处，不用重测一大片。</li>
+    <li><b>能单独替换</b> —— 想换掉日志实现，改一个类就够。</li>
+    <li><b>能单独理解</b> —— 想知道护盾怎么算，只看 <code>ShieldSystem</code>。</li>
+  </ol>
+</div>
+
+<div class="take">
+  <b>注意：耦合不是越低越好。</b>把两件事拆得谁也不认识谁，
+  它们就没法一起工作了 —— 最后要靠一个「谁都认识」的中枢去连，
+  耦合只是换了个地方。目标是<b>「够用的耦合」</b>，
+  而不是零耦合。
+</div>
+
+<h2 id="s3"><span class="n">3</span>为什么低耦合这么重要</h2>
+
+<p>Q05 讲过的四条代价，根子都在耦合上。换个说法再点一遍：</p>
+
+<table>
+<thead><tr><th style="width:30%">代价</th><th>因为耦合而放大</th></tr></thead>
+<tbody>
+<tr><td><b>改动波及面</b></td>
+    <td>牵连越多，一次改动牵动的文件越多</td></tr>
+<tr><td><b>回归测试成本</b></td>
+    <td>被动过的代码若被别人依赖，所有依赖者都要重测</td></tr>
+<tr><td><b>协作冲突</b></td>
+    <td>耦合把多个人的改动挤进同一个文件</td></tr>
+<tr><td><b>理解成本</b></td>
+    <td>想知道一件事，得先读懂牵连到的另外几件</td></tr>
+</tbody>
+</table>
+
+<div class="card tip">
+  <div class="card-t">一个立刻能用的判断方法</div>
+  <p>想问自己「这段代码耦合高不高」，就问：</p>
+  <p><b>「如果我要把这部分整个删掉重写，需要动几个文件？」</b></p>
+  <p>答案是「一个」→ 低耦合；答案是「一片」→ 高耦合。</p>
+</div>
+
+<h2 id="s4" class="key-h"><span class="key-mark" title="重点内容">★</span><span class="n">4</span>怎么解耦：组件化</h2>
+
+<p>解耦不是一句口号，它有一个成型的做法：
+<b>把系统拆成一块块「组件」，让组件之间的牵连减到最少。</b></p>
+
+<p>组件化有三条准则，正好对应第 1 节那三种「牵连」。</p>
+
+<h3>准则一：一个组件只做一件事</h3>
+
+<p>这条直接治「职责缠在一起」。拆完之后，
+<b>每个组件都能用一句话说完自己是干什么的</b>：</p>
+
+<div class="alias">
+  <div class="row"><span class="k">Actor</span>
+    <span class="v">保管角色的状态，并守住状态的规则（血量不超上限）</span></div>
+  <div class="row"><span class="k">BattleSystem</span>
+    <span class="v">按顺序组织一次攻击：护盾 → 扣血 → 日志 → 掉落</span></div>
+  <div class="row"><span class="k">ShieldSystem</span>
+    <span class="v">算出护盾能挡掉多少伤害</span></div>
+  <div class="row"><span class="k">Inventory</span>
+    <span class="v">保管背包里有什么、有多少</span></div>
+  <div class="row"><span class="k">MapManager</span>
+    <span class="v">保管地图数据，负责把角色挪过去</span></div>
+</div>
+
+<p>注意最后一条的<b>方向变了</b>：不是「角色会换地图」，
+而是「<b>地图管理器把角色挪过去</b>」。角色只需要知道自己现在在哪。</p>
+
+<div class="card tip">
+  <div class="card-t">怎么判断「一件事」的边界</div>
+  <p>如果一句话里出现了「<b>并且</b>」，那多半是两件事：</p>
+  <ul>
+    <li>❌「保管角色状态 <b>并且</b> 算伤害」→ 拆</li>
+    <li>✅「保管角色状态」→ 一件事</li>
+    <li>✅「算伤害」→ 一件事</li>
+  </ul>
+</div>
+
+<h3>准则二：只依赖「接口」，不依赖「实现」</h3>
+
+<p>这条治「依赖具体实现」。想让「加一种新的」不用改老代码，
+就得让调用方<b>只知道有个接口，不知道背后是谁</b>。</p>
+
+<p>Q04 讲过的接口在这里正好派上用场。以护盾为例 ——
+调用方只需要知道「<b>有个东西能吸收伤害</b>」：</p>
+
+<div class="code-wrap"><div class="bar"><span class="dot r"></span><span class="dot y"></span><span class="dot g"></span><span class="name">依赖接口，而不是依赖某一个类</span><span class="cp">复制</span></div><pre><span class="hl-c">// 接口：只说“能做什么”，不说“怎么做”</span>
+<span class="hl-k">class</span> IShield {
+<span class="hl-k">public</span>:
+    <span class="hl-k">virtual</span> ~IShield() = <span class="hl-k">default</span>;
+    <span class="hl-k">virtual</span> <span class="hl-k">int</span> absorb(Actor&amp; who, <span class="hl-k">int</span> dmg) = <span class="hl-n">0</span>;
+};
+
+<span class="hl-c">// 想加多少种护盾，就加多少个实现 —— 都不用改调用方</span>
+<span class="hl-k">class</span> FireShield : <span class="hl-k">public</span> IShield { <span class="hl-c">/* … */</span> };
+<span class="hl-k">class</span> HolyShield : <span class="hl-k">public</span> IShield { <span class="hl-c">/* … */</span> };
+
+<span class="hl-c">// BattleSystem 只认识 IShield，不认识具体是哪一种</span>
+<span class="hl-k">void</span> BattleSystem::hit(Actor&amp; who, <span class="hl-k">int</span> dmg) {
+    <span class="hl-k">int</span> left = shield_-&gt;absorb(who, dmg);
+    who.takeDamage(left);
+}</pre></div>
+
+<div class="card key">
+  <div class="card-t">这条准则就是 Q05 那个验收标准的答案</div>
+  <p>Q05 留了一个问题：<b>「加一种新道具，需要改 <code>Actor</code> 吗？」</b></p>
+  <p>依赖接口之后，答案变成「不用」——
+  新护盾是一个<b>新类</b>，一个老文件都不用动。</p>
+</div>
+
+<h3>准则三：让数据只从一个口子进出</h3>
+
+<p>这条治「知道别人的内部」。Q04 讲过的做法在这里继续用：
+<b>状态留在自己家里，外面只能通过接口函数来改</b>。</p>
+
+<div class="code-wrap"><div class="bar"><span class="dot r"></span><span class="dot y"></span><span class="dot g"></span><span class="name">不要这样</span><span class="cp">复制</span></div><pre><span class="hl-c">// 战斗代码直接改 hp —— 它现在必须知道</span>
+<span class="hl-c">// “hp 不能小于 0”“要检查是否死亡”这些规则</span>
+actor.hp -= dmg;
+<span class="hl-k">if</span> (actor.hp &lt; <span class="hl-n">0</span>) actor.hp = <span class="hl-n">0</span>;
+
+<span class="hl-c">// 于是每个改 hp 的地方都得抄一遍这段 —— 漏一处就是 bug</span>
+
+<span class="hl-c">// 换成：规则留在 Actor 里，外面只说“受到伤害”</span>
+actor.takeDamage(dmg);</pre></div>
+
+<p>改完之后，<code>hp</code> 的规则<b>只有一份</b>，
+而且它写在 <code>Actor</code> 里 —— 谁也不用知道。</p>
+
+<div class="card warn">
+  <div class="card-t">Q04 那些 set / get 的问题，也是这一条</div>
+  <p>给每个字段配一对 <code>setX</code> / <code>getX</code>，
+  表面上是「通过接口改」，但那个接口<b>只是在搬运字段</b> ——
+  调用方照样得知道「有几个字段、各是什么类型、改的顺序有没有讲究」。</p>
+  <p>真正的解耦是让接口表达<b>一件事</b>（<code>受到伤害</code>），
+  而不是暴露<b>一个字段</b>（<code>setHp</code>）。</p>
+</div>
+
+<h2 id="s5"><span class="n">5</span>组件之间怎么说话</h2>
+
+<p>拆开之后，组件总要互相通知。这里有个很容易走偏的地方。</p>
+
+<div class="two">
+  <div class="side">
+    <div class="hd bad">❌ 直接互相调用</div>
+<pre>// 角色死了，自己去通知一圈
+void Actor::die() {
+    loot_.drop(*this);
+    log_.write(*this);
+    ui_.refresh();
+    party_.notify(*this);
+}
+
+// Actor 又认识了 4 个组件</pre>
+  </div>
+  <div class="side">
+    <div class="hd good">✅ 只发一个通知</div>
+<pre>// 角色只报告“我死了”
+void Actor::die() {
+    dead_ = true;
+    onDied(*this);      // 发出去，不关心谁听
+}
+
+// 谁关心谁自己订阅：
+//   LootSystem 订阅 → 掉落
+//   BattleLog  订阅 → 记日志
+//   UI         订阅 → 刷新
+//   PartySystem 订阅 → 通知队友</pre>
+  </div>
+</div>
+
+<p>右边这种做法（<b>发布 / 订阅</b>）的好处是：
+<b>加一个新关心方，<code>Actor</code> 一个字都不用改。</b>
+想加个「死亡成就」系统，它自己订阅就行。</p>
+
+<div class="card tip">
+  <div class="card-t">这套东西你在 Qt 里已经见过</div>
+  <p>Qt 的<b>信号与槽</b>就是发布 / 订阅：
+
+  <code>connect(btn, &amp;QPushButton::clicked, this, &amp;MainWindow::onClicked)</code>。</p>
+  <p>按钮<b>不认识</b> <code>MainWindow</code> —— 它只是发出
+  <code>clicked</code>，谁想听谁自己 <code>connect</code>。
+  所以同一个按钮可以同时被十处关心，而按钮的代码一行不动。</p>
+  <p><b>Qt 把这件解耦的事做成了框架能力</b>，
+  这也是 Qt 代码里很少见到「一个类认识所有人」的原因。</p>
+</div>
+
+<h2 id="s6"><span class="n">6</span>组件化之后长什么样</h2>
+
+<div class="vs">
+<table>
+<thead><tr><th style="width:50%">Q05 那个越加越胖的 Actor</th><th>组件化之后</th></tr></thead>
+<tbody>
+<tr><td>一个类几百上千行</td><td>每个组件几十到一两百行</td></tr>
+<tr><td>改属性、战斗、背包、地图都在里面</td>
+    <td>各在各的组件里</td></tr>
+<tr><td>加一种新道具要改 <code>Actor</code></td>
+    <td>加一个新类 / 一份新数据</td></tr>
+<tr><td>改一处 → 重测半个项目</td>
+    <td>改一处 → 只测那一处</td></tr>
+<tr><td>所有人都要读、都要改同一个文件</td>
+    <td>各读各的，可以并行改</td></tr>
+</tbody>
+</table>
+</div>
+
+<div class="mnemonic">
+  <b>三句话记住这一篇：</b><br>
+  ① <b>耦合 = 牵连程度</b>。牵连多 → 高耦合；牵连少 → 低耦合。<br>
+  ② <b>高耦合的代价是「改动会外溢」</b> ——
+  波及面大、要重测、难替换、难读懂。<br>
+  ③ <b>解耦靠组件化</b> ——
+  一个组件一件事、只依赖接口不依赖实现、数据只从一个口子进出。
+</div>
+
+<div class="card key">
+  <div class="card-t">一句话</div>
+  <p><b>好的组件，是可以被整个删掉重写、而不影响别人的那种。</b></p>
+  <p>反过来也成立：<b>如果一个组件你不敢动，那它一定耦合得太紧了。</b></p>
+</div>
+
+<div class="see-also">
+  <div class="hd">延伸阅读</div>
+  <ul>
+    <li><a href="q05-open-closed.html">Q05 · 开闭原则</a>
+      <span class="why">—— 那一篇讲「为什么不能什么都塞进一个类」，
+      这一篇讲「那该怎么拆」。两篇连着看。</span></li>
+    <li><a href="q04-interfaces.html">Q04 · 接口</a>
+      <span class="why">—— 本篇「只依赖接口」那条准则用的就是它。</span></li>
+  </ul>
+</div>
+
+<!-- NAV-AUTO -->
+<a class="home-fab" href="../../index.html" title="返回教程总目录">返回 home</a>
+
+</div>
+
+</div>
+<!-- /NAV-AUTO -->
+<footer>
+UME 项目组内部教程 · Q06《组件化编程与解耦合》<br>
+文中所有输出与报错，均使用 g++ 13.1.0（<code>-std=c++17</code>）实际编译运行核对；
+代码示例以 <b>Consolas</b> 等宽字体呈现。
+</footer>
+</main>
+</div>
+
+<script>
+/* 目录滚动高亮 */
+(function(){
+  const links = [...document.querySelectorAll('#toc a')];
+  const targets = links.map(a => document.querySelector(a.getAttribute('href'))).filter(Boolean);
+  const setOn = id => links.forEach(a => a.classList.toggle('on', a.getAttribute('href') === '#'+id));
+  const io = new IntersectionObserver(es => {
+    const vis = es.filter(e => e.isIntersecting)
+                  .sort((a,b) => a.boundingClientRect.top - b.boundingClientRect.top);
+    if (vis[0]) setOn(vis[0].target.id);
+  }, { rootMargin:'-8% 0px -72% 0px', threshold:0 });
+  targets.forEach(t => io.observe(t));
+})();
+
+/* 复制按钮 */
+(function(){
+  document.querySelectorAll('.code-wrap').forEach(box => {
+    const btn = box.querySelector('.cp');
+    const pre = box.querySelector('pre');
+    if (!btn || !pre) return;
+    btn.addEventListener('click', async () => {
+      const text = pre.textContent;
+      try { await navigator.clipboard.writeText(text); }
+      catch (e) {
+        const ta = document.createElement('textarea');
+        ta.value = text; document.body.appendChild(ta);
+        ta.select(); document.execCommand('copy'); ta.remove();
+      }
+      const old = btn.textContent;
+      btn.textContent = '已复制 ✓';
+      setTimeout(() => { btn.textContent = old; }, 1200);
+    });
+  });
+})();
+</script>
+<script>
+/* 移动端：生成「目录」按钮，点击呼出/收起侧滑目录 */
+(function(){
+  var toc = document.getElementById('toc');
+  if (!toc) return;
+  var btn = document.createElement('button');
+  btn.id = 'tocToggle';
+  btn.type = 'button';
+  btn.setAttribute('aria-controls','toc');
+  btn.textContent = '目录';
+  document.body.appendChild(btn);
+
+  function setOpen(on){
+    toc.classList.toggle('open', on);
+    document.body.classList.toggle('toc-open', on);
+    btn.setAttribute('aria-expanded', on ? 'true' : 'false');
+    btn.textContent = on ? '收起' : '目录';
+  }
+  btn.addEventListener('click', function(){
+    setOpen(!toc.classList.contains('open'));
+  });
+  toc.addEventListener('click', function(e){
+    if (e.target.closest('a')) setOpen(false);
+  });
+  document.addEventListener('click', function(e){
+    if (!toc.classList.contains('open')) return;
+    if (e.target === toc || toc.contains(e.target) || e.target === btn) return;
+    setOpen(false);
+  });
+  document.addEventListener('keydown', function(e){
+    if (e.key === 'Escape') setOpen(false);
+  });
+  function sync(){ if (window.innerWidth > 980) setOpen(false); }
+  window.addEventListener('resize', sync);
+  sync();
+})();
+</script>
+<script src="assets/series-common.js"></script>
+</body>
+</html>

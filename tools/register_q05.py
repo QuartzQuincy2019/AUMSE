@@ -45,7 +45,7 @@ def main():
     else:
         lines = t.split("\n")
         new = ('    ("%s",      "%s",\n'
-               '     "Q", "%s", "%s", "为什么不能什么都塞进一个类；只给方向不给代码", True),'
+               '     "Q", "%s", "%s", "为什么不能什么都塞进一个类；耦合的代价与拆分方向", True),'
                % (FN, FN, NUM, TITLE))
         out = insert_after(lines, '"q04-interfaces.html",', new)
         if out is None:

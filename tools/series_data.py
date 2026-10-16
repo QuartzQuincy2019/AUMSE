@@ -139,7 +139,9 @@ PAGES = [
     ("q04-interfaces.html",        "q04-interfaces.html",
      "Q", "Q04", "接口", "接口的定义与常见用途；Actor 的 public 区", True),
     ("q05-open-closed.html",      "q05-open-closed.html",
-     "Q", "Q05", "开闭原则", "为什么不能什么都塞进一个类；只给方向不给代码", True),
+     "Q", "Q05", "开闭原则", "为什么不能什么都塞进一个类；耦合的代价与拆分方向", True),
+    ("q06-components.html",      "q06-components.html",
+     "Q", "Q06", "组件化编程与解耦合", "什么叫耦合、高耦合的代价、组件化的三条准则", True),
 
     # ---- E：补充练习 ----
     ("08-e01-recursion.html",         "e01-recursion.html",
@@ -191,7 +193,7 @@ FE_PAGES = [
     ("fe-07.html",     "FE-07",     "鼠标悬停与 transition",          "hover、过渡、缓动、常用动效",                "CSS",  False),
     ("fe-08.html",     "FE-08",     "JavaScript 语法初步",           "与 C/C++ 的相似性、console.log / var / alert / prompt", "JS", False),
     ("fe-09.html",     "FE-09",     "DOM 操作基础",
-     "getElementById / createElement / append；DOM 树与 Qt addWidget 的对照", "JS", False),
+     "getElementById / createElement / append；DOM 树与 Qt addWidget 的对照", "JS", True),
 ]
 
 # ---------------------------------------------------------------- 派生量

@@ -61,6 +61,7 @@
 
     { f: 'q04-interfaces.html', n: 'Q04', t: '接口', s: 'Q' },
     { f: 'q05-open-closed.html', n: 'Q05', t: '开闭原则', s: 'Q' },
+    { f: 'q06-components.html', n: 'Q06', t: '组件化编程与解耦合', s: 'Q' },
 
     { f: 'e01-recursion.html',      n: 'E01', t: '递归',                       s: 'E' },
     { f: 'e02-batch-and-cmd.html',  n: 'E02', t: '批处理与命令提示符进阶',       s: 'E' },

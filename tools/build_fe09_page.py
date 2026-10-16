@@ -1,7 +1,9 @@
 # -*- coding: utf-8 -*-
 """FE-09《DOM 操作基础》—— 从正文片段生成页面。
 
-正文放在 tools/_fe09_body.html，这个脚本只负责外壳与流水线。
+正文放在 tools/_fe09_body_v2.html（改版：9 节 → 6 节，
+§1 改名为「DOM 树」并扩写示例，§5 改为「与 Qt 的联系」），
+这个脚本只负责外壳与流水线。
 结构与 build_fe08_page.py 一致（两级流水线：完整页面 → 数据壳）。
 
 本篇的写作要求（用户指定）
@@ -30,8 +32,7 @@ TUT = os.path.join(R, "SharingGroup", "tutorials")
 TOOLS = os.path.join(R, "tools")
 
 FN, NUM, TITLE = "fe-09.html", "FE-09", "DOM 操作基础"
-FOOTER_NOTE = ("本篇的 DOM 示例与返回值均在浏览器中实际运行核对"
-               "（Chromium 内核，21 项断言全过）；"
+FOOTER_NOTE = ("本篇的 DOM 示例与返回值均在浏览器中实际运行核对；"
                "Qt 那段对照代码本机无 Qt 工具链，未编译，"
                "按 Qt 文档语义整理。")
 
@@ -92,7 +93,7 @@ def shell_for(entries):
             raise SystemExit("  !! 正文里仍有 %s —— 会重复渲染" % bad)
 
     data = {
-        "file": FN, "num": NUM, "title": TITLE, "star": False,
+        "file": FN, "num": NUM, "title": TITLE, "star": True,   # 用户要求设为重点项目
         # 按篇的页脚补充（fe-data.js 会拼在公共那句之后）
         "footerNote": FOOTER_NOTE,
         "body": body,
@@ -106,7 +107,7 @@ def shell_for(entries):
 
 
 def main():
-    body = io.open(os.path.join(TOOLS, "_fe09_body.html"),
+    body = io.open(os.path.join(TOOLS, "_fe09_body_v2.html"),
                    encoding="utf-8").read()
 
     if re.search(r'<h1[\s>]', body):
@@ -128,7 +129,7 @@ def main():
 
     import build_fe
     if not any(m[0] == FN for m in build_fe.FE):
-        build_fe.FE.append((FN, NUM, TITLE, DESC, False))
+        build_fe.FE.append((FN, NUM, TITLE, DESC, True))
     # FE-09 要排在 FE-08 之后
     build_fe.FE.sort(key=lambda m: m[0])
 
