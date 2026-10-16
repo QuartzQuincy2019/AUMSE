@@ -59,3 +59,17 @@ a{color:var(--blue)}
 @media (max-width:980px){
   body.toc-open #tocToggle{background:var(--fg);color:#fff;border-color:var(--fg)}
 }
+
+/* ---------- 语言标注（.lang）---------- */
+/* 浅色：实色底 + 白字。括号内是白字实测对比度，均 ≥ 4.5:1 */
+.lang{display:inline-block;font-family:var(--mono);font-size:11.5px;
+  font-weight:700;padding:1.5px 9px;border-radius:999px;
+  color:#fff;border:1px solid transparent;vertical-align:2px;
+  letter-spacing:.02em}
+.lang.html{background:#cf4520}          /* 橙红 4.64 */
+.lang.css{background:#0478ab}           /* 天蓝 4.91 */
+.lang.js{background:#8a5f05}            /* 黄   5.65（压暗，纯黄不达标）*/
+.lang.cpp{background:#2456c4}           /* 深蓝 6.56 */
+.lang.c{background:#7d5cd6}             /* 蓝紫 4.80 */
+.lang.sh{background:#3f6212}            /* Shell：用户未指定，补一个橄榄绿 */
+.lang.py{background:#1f6f5c}            /* Python：用户未指定，补一个松绿 */

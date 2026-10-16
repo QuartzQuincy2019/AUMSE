@@ -163,14 +163,71 @@ HEAD_D = """/* =================================================================
 
 TAIL_D = ""
 
-outL = HEAD_L + "\n".join(sorted(light)) + "\n"
-outD = HEAD_D + "\n\n".join(d.strip() for d in sorted(dark)) + "\n"
+# =====================================================================
+# 语言标注（.lang）—— 每个语言一个专属色
+# ---------------------------------------------------------------------
+# 需求（用户指定，浅色模式）：
+#     CSS  天蓝色底 + 白字        HTML 橙红色底 + 白字
+#     JS   黄色底   + 白字        C++  深蓝色底 + 白字
+#     C    蓝紫色底 + 白字
+#
+# 为什么色值比「标准色」暗
+#     纯正的黄（#eab308）配白字只有 1.92:1，远低于 WCAG 的 4.5:1 ——
+#     黄天生太亮。所以 JS 用的是「压暗但仍明显是黄」的 #8a5f05（5.65:1）。
+#     CSS 的天蓝同理（#0ea5e9 只有 2.77:1，压到 #0478ab 才有 4.91:1）。
+#     下面每个色值都标注了实测对比度，改动前请重新验算。
+#
+# 为什么不用 .tag.X
+#     .tag.b/.g/.r/.v 这套已经被「本讲：…」「可以/不要这样写」等
+#     语义标签用掉了，M06 还用它做权限标记（.tag.pub/.pri/.pro）。
+#     语言标注单开一个 .lang.X 命名空间，避免和它们抢颜色。
+LANG_CSS = """/* ---------- 语言标注（.lang）---------- */
+/* 浅色：实色底 + 白字。括号内是白字实测对比度，均 ≥ 4.5:1 */
+.lang{display:inline-block;font-family:var(--mono);font-size:11.5px;
+  font-weight:700;padding:1.5px 9px;border-radius:999px;
+  color:#fff;border:1px solid transparent;vertical-align:2px;
+  letter-spacing:.02em}
+.lang.html{background:#cf4520}          /* 橙红 4.64 */
+.lang.css{background:#0478ab}           /* 天蓝 4.91 */
+.lang.js{background:#8a5f05}            /* 黄   5.65（压暗，纯黄不达标）*/
+.lang.cpp{background:#2456c4}           /* 深蓝 6.56 */
+.lang.c{background:#7d5cd6}             /* 蓝紫 4.80 */
+.lang.sh{background:#3f6212}            /* Shell：用户未指定，补一个橄榄绿 */
+.lang.py{background:#1f6f5c}            /* Python：用户未指定，补一个松绿 */"""
+
+LANG_DARK_CSS = """@media (prefers-color-scheme: dark){
+  /* 暗色：反过来 —— 浅底 + 深字，在深色卡片上更跳也更易读 */
+  .lang{color:#12161d;border-color:transparent}
+  .lang.html{background:#ffb4a2}        /* 9.77 */
+  .lang.css{background:#7dd3fc}         /* 10.00 */
+  .lang.js{background:#fcd34d}          /* 11.57 */
+  .lang.cpp{background:#a5c8ff}         /* 9.77 */
+  .lang.c{background:#c4b5fd}           /* 9.03 */
+  .lang.sh{background:#bef264}          /* 12.44 */
+  .lang.py{background:#7dd3b0}          /* 9.29 */
+}"""
+
+outL = HEAD_L + "\n".join(sorted(light)) + "\n\n" + LANG_CSS + "\n"
+outD = (HEAD_D + "\n\n".join(d.strip() for d in sorted(dark))
+        + "\n\n" + LANG_DARK_CSS + "\n")
 
 # ---------- 防呆：抽不到块时**不要**覆盖已有产物 ----------
 # 搬块脚本跑过之后，各页里那些块已经删掉了，再跑本脚本就会「抽到 0 个块」，
 # 然后把好好的 tg_L/tg_D 覆盖成空壳 —— 第一次就踩了这个坑。
 # 所以：抽不到就保留原文件，并明确提示。
 if not light and not dark:
+    # 注意：即使「没有可抽的块」，语言标注（.lang）这一段也要保证写进去 ——
+    # 它不是从页面里抽出来的，而是这里直接定义的。早退之前先补上。
+    for fn, seg, marker in (("tg_L.css", LANG_CSS, "/* ---------- 语言标注"),
+                            ("tg_D.css", LANG_DARK_CSS, "@media (prefers-color-scheme: dark){\n  /* 暗色：反过来")):
+        p0 = os.path.join(A, fn)
+        if not os.path.exists(p0):
+            continue
+        c0 = io.open(p0, encoding="utf-8").read()
+        if ".lang{" in c0:
+            continue
+        io.open(p0, "a", encoding="utf-8", newline="\n").write("\n" + seg + "\n")
+        print("  + 已向 %s 补上语言标注（.lang）" % fn)
     keep = []
     for fn, _ in (("tg_L.css", light), ("tg_D.css", dark)):
         p0 = os.path.join(A, fn)

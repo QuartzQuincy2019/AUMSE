@@ -16,22 +16,22 @@
 
 <nav id="toc">
   <h5>目录</h5>
-  <a href="#s1">1 · 引用是什么：给变量起别名</a>
-  <a href="#s2">2 · 三条铁律：必须初始化、不能改绑、不能为空</a>
-  <a href="#s3">3 · 与指针的关系（一）：语法上的区别</a>
-  <a href="#s4">4 · 与指针的关系（二）：它们常常一起出现</a>
-  <a href="#s5">5 · 函数参数里的引用：Qt 里遍地都是</a>
-  <a href="#s6">6 · 作为返回值：一个必须知道的陷阱</a>
-  <a href="#s7">7 · const 引用：只读的那把锁</a>
-  <a href="#s8">8 · 底层：引用通常就是指针</a>
-  <a href="#s9">9 · 常见错误</a>
+  <a href="#s1">1 · 先看两层：实现层与语法层</a>
+  <a href="#s2">2 · 实现层：它确实是一个指针</a>
+  <a href="#s3">3 · 语法层：为什么叫「别名」而不是「指针」</a>
+  <a href="#s4">4 · 好处一：免拷贝</a>
+  <a href="#s5">5 · 好处二：绑定不可改</a>
+  <a href="#s6">6 · 两条铁律与常见错误</a>
+  <a href="#s7">7 · 回到 Qt：const T& 为什么无处不在</a>
+  <a href="#s8">8 · const 引用：只读的那把锁</a>
+  <a href="#s9">9 · 这个模型的边界：与指针的关系</a>
   <a href="#s10">10 · 一页速查</a>
 </nav>
 
 <main>
 <h1>C++ 的引用<span class="star" title="与本项目施行密切相关">*</span></h1>
 <p class="sub-title">UME 项目组内部教程 · Q02（Qt） · 引用与指针的关系</p>
-<p><span class="tag">要求 C++</span> <span class="tag b">本讲：给同一份数据起第二个名字</span></p>
+<p><span class="lang cpp">C++</span> <span class="tag b">本讲：给同一份数据起第二个名字</span></p>
 <p>上一篇（Q01）讲的是 <code>::</code>。这一篇讲另一个你很快就会到处遇到的符号：
 一个 <code>&amp;</code>。</p>
 
@@ -39,89 +39,457 @@
 你随手翻一段 Qt 代码，函数参数里全是 <code>const QString &amp;name</code>
 这种写法。学会读它，很多「为什么这么写」的疑问会一起消失。</p>
 
+<div class="card key">
+  <div class="card-t">本篇的论述主线</div>
+  <p><b>引用是「语法上的别名、实现上的指针」。</b>
+  把这句话拆成两层，引用的一切性质都能推出来：</p>
+  <ul>
+    <li><b>实现层</b> —— 它本质上是一个<b>绑定到被引用变量上的指针</b>，
+    里面存的是那个变量的地址；</li>
+    <li><b>语法层</b> —— 它被<b>当作别名</b>使用，读写时不需要写解引用运算符 <code>*</code>。</li>
+  </ul>
+  <p>下面各节按这个主线展开：先看两层各是什么，再看它带来的两个好处
+  （<b>免拷贝</b>、<b>绑定不可改</b>），最后看这个模型在哪里要收着用。</p>
+</div>
+
 <div class="card note">
   <div class="card-t">这一篇的定位</div>
   <p>M04《指针初步》已经把<b>指针</b>讲透了。这一篇<b>只讲引用</b>，
-  指针只在一个地方出场：<b>第 3 节</b>做对比，和第 8 节看底层实现。
-  没有读过 M04 也能看懂，但要真正吃透，建议先过一遍 M04。</p>
+  指针只在第 9 节做对比。没有读过 M04 也能看懂，
+  但要真正吃透，建议先过一遍 M04。</p>
 </div>
 
-<div class="card key">
-  <div class="card-t">一句话</div>
-  <p><b>引用 = 给已经存在的变量起第二个名字。</b></p>
-  <p>没有新变量、没有新内存，只是又多了一个称呼它的方式。
-  所以 C++ 里管引用叫 <b>alias（别名）</b>。</p>
+<h2 id="s1"><span class="n">1</span>先看两层：实现层与语法层</h2>
+
+<p>把「引用」当成一个东西去描述，很容易说不清。分成两层就清楚了。</p>
+
+<div class="vs">
+<table>
+<thead><tr><th style="width:16%">层面</th><th style="width:38%">它是什么</th><th>表现</th></tr></thead>
+<tbody>
+<tr><td><b>实现层</b></td>
+    <td>一个指针 —— 存着被引用变量的<b>地址</b></td>
+    <td>真实存在，占用存储（通常 8 字节），指向那块存着数据的内存</td></tr>
+<tr><td><b>语法层</b></td>
+    <td>那个变量的<b>别名</b></td>
+    <td>写 <code>r</code> 就等于写 <code>x</code>；
+        不用写 <code>*r</code>，编译器替你做解引用</td></tr>
+</tbody>
+</table>
 </div>
 
-<h2 id="s1"><span class="n">1</span>引用是什么：给变量起别名</h2>
-
-<p>先看最简单的写法。<code>&amp;</code> 加在类型后面，表示「引用类型」：</p>
+<p>用一个具体例子把两层对齐：</p>
 
 <div class="code-wrap">
   <div class="bar"><span class="dot r"></span><span class="dot y"></span><span class="dot g"></span>
-    <span class="name">ref1.cpp —— 第一个引用</span><span class="cp">复制</span></div>
+    <span class="name">ref1.cpp —— 同一个东西的两层</span><span class="cp">复制</span></div>
 <pre><span class="hl-p">#include</span> <span class="hl-s">&lt;iostream&gt;</span>
 
 <span class="hl-k">int</span> main() {
     <span class="hl-k">int</span> x = 10;
 
-    <span class="hl-k">int</span>&amp; r = x;        <span class="hl-c">// r 是 x 的引用（另一个名字）</span>
+    <span class="hl-k">int</span>&amp; r = x;        <span class="hl-c">// 绑定：r 从此代表 x</span>
 
-    r = 20;              <span class="hl-c">// 改 r —— 其实就是改 x</span>
-    std::cout &lt;&lt; <span class="hl-s">"x = "</span> &lt;&lt; x &lt;&lt; <span class="hl-s">"\n"</span>;
-    std::cout &lt;&lt; <span class="hl-s">"r = "</span> &lt;&lt; r &lt;&lt; <span class="hl-s">"\n"</span>;
+    r = 20;              <span class="hl-c">// 语法层：像在改别名</span>
+                         <span class="hl-c">// 实现层：改的是 r 里那个地址所指的内存 —— 也就是 x</span>
 
+    std::cout &lt;&lt; <span class="hl-s">"x  = "</span> &lt;&lt; x  &lt;&lt; <span class="hl-s">"\n"</span>;   <span class="hl-c">// 20</span>
+    std::cout &lt;&lt; <span class="hl-s">"r  = "</span> &lt;&lt; r  &lt;&lt; <span class="hl-s">"\n"</span>;   <span class="hl-c">// 20</span>
     std::cout &lt;&lt; <span class="hl-s">"&amp;x = "</span> &lt;&lt; &amp;x &lt;&lt; <span class="hl-s">"\n"</span>;
     std::cout &lt;&lt; <span class="hl-s">"&amp;r = "</span> &lt;&lt; &amp;r &lt;&lt; <span class="hl-s">"\n"</span>;
 }</pre>
 </div>
 <div class="out-wrap">
   <div class="cap">输出</div>
-<pre>x = 20
-r = 20
+<pre>x  = 20
+r  = 20
 &amp;x = 0x7ffd3f2a1b4c
 &amp;r = 0x7ffd3f2a1b4c      ← 和 &amp;x 完全一样</pre>
 </div>
 
-<p>最后两行是关键：<b>取 <code>x</code> 的地址和取 <code>r</code> 的地址，结果一模一样</b>。
-因为 <code>r</code> 根本不是变量 —— 它只是 <code>x</code> 的另一个名字。</p>
+<p>最后两行是<b>语法层</b>给出的证据：对引用取地址，得到的就是被引用变量的地址。
+说明 <code>r</code> 不是一块新内存，它代表的就是 <code>x</code>。</p>
+
+<div class="card tip">
+  <div class="card-t">两层各解释了什么</div>
+  <table>
+  <thead><tr><th style="width:46%">现象</th><th>由哪一层解释</th></tr></thead>
+  <tbody>
+  <tr><td><code>r = 20</code> 改的是 <code>x</code></td>
+      <td>实现层（存的是 <code>x</code> 的地址）</td></tr>
+  <tr><td>访问时不用写 <code>*r</code></td>
+      <td>语法层（编译器自动解引用）</td></tr>
+  <tr><td>函数传引用<b>不产生拷贝</b></td>
+      <td>实现层（只传了地址，没搬数据）</td></tr>
+  <tr><td>引用<b>不能改绑</b></td>
+      <td>绑定发生在初始化那一刻，之后由编译器锁死</td></tr>
+  <tr><td>引用<b>没有空引用</b></td>
+      <td>语法层的硬性要求：声明时必须绑一个真实对象</td></tr>
+  </tbody>
+  </table>
+</div>
+
+<h2 id="s2"><span class="n">2</span>实现层：它确实是一个指针</h2>
+
+<p>编译器实现引用最常见的做法，就是<b>在底层放一个指针</b>，
+然后在你每次写 <code>r</code> 的地方自动替你解引用。</p>
+
+<div class="card key">
+  <div class="card-t">两句源码的对应关系</div>
+  <div class="two">
+    <div class="side">
+      <div class="hd">你写的（语法层）</div>
+<pre>int x = 10;
+int&amp; r = x;
+r = 20;</pre>
+    </div>
+    <div class="side">
+      <div class="hd good">编译器大致生成的（实现层）</div>
+<pre>int x = 10;
+int* r = &amp;x;      // 存地址
+*r = 20;          // 自动解引用</pre>
+    </div>
+  </div>
+  <p><b>差别只在「自动」两个字上</b> —— 那个 <code>*</code> 由编译器替你补。
+  你写不出来：写 <code>*r</code> 是在对 <code>x</code> 再解引用一次，类型不对。</p>
+</div>
+
+<p>顺着这个模型，几个常被搞混的地方就清楚了：</p>
+
+<div class="alias">
+  <div class="row"><span class="k">引用占内存吗</span>
+    <span class="v"><b>实现层：占</b>（那个指针要地方放）。
+    <b>语义层：不占</b> —— C++ 标准规定引用<b>不是对象</b>，
+    所以 <code>sizeof(r)</code> 得到的是<b>被引用类型</b>的大小
+    （<code>int&amp;</code> 的 <code>sizeof</code> 是 4，不是 8）。</span></div>
+  <div class="row"><span class="k">这个指针能改吗</span>
+    <span class="v">不能。<b>它在初始化之后就被锁死了</b> ——
+    这正是第 5 节「内存更安全」的由来。</span></div>
+  <div class="row"><span class="k">一定会有这个指针吗</span>
+    <span class="v">不一定。标准只要求<b>行为</b>正确，不要求实现方式。
+    如果引用只用于局部、编译器看得清，它可能被<b>完全优化掉</b>，
+    变成直接操作原变量 —— 这也是「引用更快」的一个来源。</span></div>
+</div>
+
+<div class="card warn">
+  <div class="card-t">一个必须说清的边界</div>
+  <p>「引用就是一个自动解引用的指针」这句话，<b>作为理解工具非常好用</b>，
+  但不要拿它去推语法。</p>
+  <p>反例：如果引用真的只是 <code>T* const</code>，那
+  <code>int&amp; r;</code> 就应该像 <code>int* const p;</code> 一样
+  <b>可以只声明不初始化</b>（只是之后不能改）。但引用<b>必须当场绑定</b>。
+  说明引用在<b>语言规则</b>上就不是指针，只是<b>实现上常常用指针</b>。</p>
+</div>
+
+<h2 id="s3"><span class="n">3</span>语法层：为什么叫「别名」而不是「指针」</h2>
+
+<p>既然底层是指针，为什么不干脆让你用指针？因为<b>别名</b>这个说法更贴合它的用法。</p>
 
 <div class="alias">
   <div class="row"><span class="k">int x = 10;</span>
     <span class="v">内存里开一块地方，名字叫 <code>x</code>，里面放 10</span></div>
   <div class="row"><span class="k">int&amp; r = x;</span>
-    <span class="v">没有开新地方。<code>r</code> 是<code>x</code> 的别名 —— 同一块内存，两个名字</span></div>
+    <span class="v">没有开新地方放数据。<code>r</code> 是 <code>x</code> 的别名 ——
+    同一份数据，两个名字</span></div>
   <div class="row"><span class="k">r = 20;</span>
-    <span class="v">通过 <code>r</code> 找到那块内存，写入 20。所以 <code>x</code> 也变成 20</span></div>
+    <span class="v">通过 <code>r</code> 找到那份数据，写入 20。所以 <code>x</code> 也是 20</span></div>
 </div>
 
 <div class="mnemonic">
   <b>把引用想成「外号」。</b>
   一个人可以有大名和小名，但<b>只有一个人</b>。
-  叫小名让他做事，和叫大名让他做事，是同一件事。
+  叫小名让他做事，和叫大名让他做事，是同一件事 ——
+  你不需要先「按小名找到这个人」，那正是解引用要做的事。
 </div>
-
-<h2 id="s2"><span class="n">2</span>三条铁律：必须初始化、不能改绑、不能为空</h2>
-
-<p>引用只有三条规则，但每一条都对应一类常见错误。</p>
 
 <div class="card key">
-  <div class="card-t">铁律</div>
-  <ol>
-    <li><b>声明时必须初始化。</b>不存在「先声明、以后再绑定」的引用。</li>
-    <li><b>一旦绑定，不能改绑到别的变量。</b>之后所有对它的赋值，都是改它绑定的那个变量。</li>
-    <li><b>没有「空引用」。</b>引用一定指着某个真实存在的对象。</li>
-  </ol>
+  <div class="card-t">「别名」这个说法买到了什么</div>
+  <table>
+  <thead><tr><th style="width:36%">写法</th><th>含义</th></tr></thead>
+  <tbody>
+  <tr><td class="c">int* p = &amp;x; &nbsp;*p = 20;</td>
+      <td>「先把 <code>x</code> 的地址交给 <code>p</code>，
+          再<b>顺着地址</b>去改那个值」—— 两步，第二步容易忘</td></tr>
+  <tr><td class="c">int&amp; r = x; &nbsp;r = 20;</td>
+      <td>「<code>r</code> 就是 <code>x</code>，改 <code>r</code>」—— 一步，
+          不可能忘 <code>*</code></td></tr>
+  </tbody>
+  </table>
+  <p>语法层省掉的那个 <code>*</code>，<b>不只是少打一个字符</b>：
+  它去掉了「忘记解引用」和「多解引用一次」这两类错误。
+  这是引用比指针<b>好用</b>的地方（安全性留到第 5 节）。</p>
 </div>
 
-<h3>① 必须初始化</h3>
+<h3>一个立刻能看出的好处：调用处不用改写法</h3>
 
 <div class="code-wrap">
   <div class="bar"><span class="dot r"></span><span class="dot y"></span><span class="dot g"></span>
-    <span class="name">ref2.cpp —— 不初始化就编译不过</span><span class="cp">复制</span></div>
+    <span class="name">call.cpp —— 调用处看不出区别</span><span class="cp">复制</span></div>
+<pre><span class="hl-k">void</span> byValue(<span class="hl-k">int</span> n)      { n = 99; }   <span class="hl-c">// 改副本</span>
+<span class="hl-k">void</span> byRef(<span class="hl-k">int</span>&amp; n)      { n = 99; }   <span class="hl-c">// 改原对象</span>
+
+<span class="hl-k">int</span> a = 1, b = 1;
+byValue(a);      <span class="hl-c">// 调用处：a —— 看不出会不会被改</span>
+byRef(b);        <span class="hl-c">// 调用处：b —— 长得一模一样</span>
+
+std::cout &lt;&lt; a &lt;&lt; <span class="hl-s">" "</span> &lt;&lt; b &lt;&lt; <span class="hl-s">"\n"</span>;   <span class="hl-c">// 1 99</span></pre>
+</div>
+<div class="out-wrap">
+  <div class="cap">输出</div>
+<pre>1 99</pre>
+</div>
+
+<p><b>这正是「别名」的体现</b>：函数内部拿到的是 <code>b</code> 本身，不是它的副本；
+而调用处写起来和传值完全一样。</p>
+
+<div class="card warn">
+  <div class="card-t">但这个「一样」也是坑</div>
+  <p>调用处看不出 <code>byRef</code> 会改参数 —— 这是引用被批评最多的地方。
+  所以业界有一条惯例：</p>
+  <ul>
+    <li><b>只读</b>就用 <code>const T&amp;</code>（第 8 节），读代码时一眼知道不会被改；</li>
+    <li><b>要改</b>就明确一点，别在注释里藏。</li>
+  </ul>
+</div>
+
+<h2 id="s4"><span class="n">4</span>好处一：免拷贝</h2>
+
+<p>你的描述里这一句是关键：<b>被引用的变量不亲自参与到函数内部的语句，
+从而无需拷贝资源。</b>下面把它拆开。</p>
+
+<div class="card key">
+  <div class="card-t">传值的时候，函数里那个变量是「另一个人」</div>
+  <p>写 <code>void f(std::string s)</code> 时，调用 <code>f(name)</code> 发生的事情是：</p>
+  <div class="steps">
+    <div class="st"><span class="i">1</span><span class="t">分配新内存</span>
+      在函数栈上开一块新地方，类型同样是 <code>std::string</code></div>
+    <div class="st"><span class="i">2</span><span class="t">搬一份数据</span>
+      把 <code>name</code> 的内容拷过去（堆上的字符也要拷）</div>
+    <div class="st"><span class="i">3</span><span class="t">函数改的是副本</span>
+      函数里所有操作都作用在副本上，<code>name</code> 原封不动</div>
+    <div class="st"><span class="i">4</span><span class="t">返回时销毁副本</span>
+      又一次开销（析构、释放堆内存）</div>
+  </div>
+  <p><b>改成 <code>void f(std::string&amp; s)</code>，第 1、2、4 步全部消失</b> ——
+  函数里那个 <code>s</code> <b>就是</b> <code>name</code>，
+  没有第二块内存、没有搬运、也没有销毁。</p>
+</div>
+
+<h3>代价有多大：看两个例子</h3>
+
+<div class="two">
+  <div class="side">
+    <div class="hd bad">传值：每次调用都搬一整份</div>
+<pre>struct Big {
+  int data[1024];   // 4 KB
+};
+
+void f(Big v) {     // 拷 4 KB
+  v.data[0] = 1;
+}
+
+Big b;
+f(b);               // 搬 4096 字节
+f(b);               // 再搬 4096
+f(b);               // 又搬 4096</pre>
+  </div>
+  <div class="side">
+    <div class="hd good">传引用：只传一个地址</div>
+<pre>struct Big {
+  int data[1024];   // 4 KB
+};
+
+void f(Big&amp; v) {    // 只传地址
+  v.data[0] = 1;
+}
+
+Big b;
+f(b);               // 传 8 字节
+f(b);               // 传 8 字节
+f(b);               // 传 8 字节</pre>
+  </div>
+</div>
+
+<p>三次调用：<b>12 KB 的搬运 vs 24 字节的搬运</b>。
+而且第二栏还有一层：它改的是<b>原来那个 <code>b</code></b>，第一栏改完就丢了。</p>
+
+<div class="code-wrap">
+  <div class="bar"><span class="dot r"></span><span class="dot y"></span><span class="dot g"></span>
+    <span class="name">nocopy.cpp —— 完整可跑：改到没改到，一目了然</span><span class="cp">复制</span></div>
+<pre><span class="hl-p">#include</span> <span class="hl-s">&lt;iostream&gt;</span>
+<span class="hl-p">#include</span> <span class="hl-s">&lt;string&gt;</span>
+
+<span class="hl-k">void</span> byValue(std::string s)  { s += <span class="hl-s">"!"</span>; }   <span class="hl-c">// 改副本</span>
+<span class="hl-k">void</span> byRef(std::string&amp; s)  { s += <span class="hl-s">"!"</span>; }   <span class="hl-c">// 改原对象</span>
+
+<span class="hl-k">int</span> main() {
+    std::string a = <span class="hl-s">"UME"</span>, b = <span class="hl-s">"UME"</span>;
+    byValue(a);
+    byRef(b);
+    std::cout &lt;&lt; <span class="hl-s">"a = "</span> &lt;&lt; a &lt;&lt; <span class="hl-s">"\n"</span>;   <span class="hl-c">// 没变</span>
+    std::cout &lt;&lt; <span class="hl-s">"b = "</span> &lt;&lt; b &lt;&lt; <span class="hl-s">"\n"</span>;   <span class="hl-c">// 变了</span>
+}</pre>
+</div>
+<div class="out-wrap">
+  <div class="cap">输出</div>
+<pre>a = UME
+b = UME!</pre>
+</div>
+
+<div class="card tip">
+  <div class="card-t">「不拷贝」和「能被改」是同一件事的两面</div>
+  <p>因为函数里拿到的<b>就是原来那个对象</b>（不是副本），所以：</p>
+  <ul>
+    <li>省掉了拷贝 —— 这是<b>效率</b>；</li>
+    <li>但函数里的修改会作用到调用者身上 —— 这是<b>需要小心的副作用</b>。</li>
+  </ul>
+  <p>两者无法分开。如果你<b>只想要效率、不想要副作用</b>，就用 <code>const T&amp;</code>：
+  不拷贝，同时也不许改（第 8 节）。</p>
+</div>
+
+<h3>什么时候「不拷贝」才真的有收益</h3>
+
+<table>
+<thead><tr><th style="width:40%">类型</th><th>传值 vs 传 const 引用</th></tr></thead>
+<tbody>
+<tr><td class="c">int / double / char / 指针</td>
+    <td>只有 4~8 字节，<b>复制和传地址一样快</b>。这类<b>直接传值</b>更好</td></tr>
+<tr><td class="c">std::string / QString</td>
+    <td>要拷贝字符缓冲、维护引用计数 —— <b>传 <code>const&amp;</code> 明显更好</b></td></tr>
+<tr><td class="c">std::vector / QList / 大结构体</td>
+    <td>拷贝 = 整块内存搬运 —— <b>必须传 <code>const&amp;</code></b></td></tr>
+<tr><td class="c">小 POD 结构体（两三个 int）</td>
+    <td>差别很小，按团队习惯即可</td></tr>
+</tbody>
+</table>
+
+<div class="mnemonic">
+  <b>一句话判断：这个东西「搬一次」贵不贵？</b><br>
+  贵（字符串、容器、大结构体）→ <code>const T&amp;</code>；<br>
+  不贵（<code>int</code>、<code>double</code>）→ 直接 <code>T</code>，写起来还更短。
+</div>
+
+<h2 id="s5"><span class="n">5</span>好处二：绑定不可改</h2>
+
+<p>你的描述里第二句是：<b>由于引用的「绑定」机制，一个引用从声明之后再也不能更改
+所指向的变量，内存更加安全。</b>这一节把「为什么更安全」讲透。</p>
+
+<h3>绑定发生在哪一刻</h3>
+
+<div class="card key">
+  <div class="card-t">绑定 = 初始化那一刻，而且只发生一次</div>
+  <p><code>int&amp; r = x;</code> 里的 <code>=</code> <b>不是赋值，是绑定</b> ——
+  这是 C++ 里少见的「<code>=</code> 不表示赋值」的地方。
+  从这一刻起，<code>r</code> 和 <code>x</code> 的关系<b>由编译器锁死</b>，
+  没有任何语法能把它解绑。</p>
+</div>
+
+<div class="code-wrap">
+  <div class="bar"><span class="dot r"></span><span class="dot y"></span><span class="dot g"></span>
+    <span class="name">rebind.cpp —— 看起来像改绑，其实不是</span><span class="cp">复制</span></div>
+<pre><span class="hl-k">int</span> x = 10, y = 99;
+
+<span class="hl-k">int</span>&amp; r = x;      <span class="hl-c">// 绑定到 x</span>
+r = y;              <span class="hl-c">// ✗ 这不是「让 r 改绑 y」</span>
+                    <span class="hl-c">// ✓ 而是「把 y 的值 99 赋给 r 所指的 x」</span>
+
+std::cout &lt;&lt; <span class="hl-s">"x = "</span> &lt;&lt; x &lt;&lt; <span class="hl-s">"\n"</span>;                    <span class="hl-c">// 99（被改了）</span>
+std::cout &lt;&lt; <span class="hl-s">"y = "</span> &lt;&lt; y &lt;&lt; <span class="hl-s">"\n"</span>;                    <span class="hl-c">// 99（没动）</span>
+std::cout &lt;&lt; <span class="hl-s">"&amp;r == &amp;x ? "</span> &lt;&lt; (&amp;r == &amp;x) &lt;&lt; <span class="hl-s">"\n"</span>;    <span class="hl-c">// 1（仍绑着 x）</span></pre>
+</div>
+<div class="out-wrap">
+  <div class="cap">输出</div>
+<pre>x = 99
+y = 99
+&amp;r == &amp;x ? 1</pre>
+</div>
+
+<p><code>r = y;</code> 这一行等价于 <code>x = y;</code>。
+<b>引用一旦绑好，任何操作都作用在它绑定的那个对象上</b>，包括 <code>=</code>。
+想换目标，引用做不到 —— 那是指针的活（<code>p = &amp;y;</code>）。</p>
+
+<h3>「不能改绑」为什么等于「更安全」</h3>
+
+<p>因为指针能改绑，所以读代码时必须<b>一路追踪它现在指向谁</b>：</p>
+
+<div class="two">
+  <div class="side">
+    <div class="hd bad">指针：目标会变，必须追踪</div>
+<pre>void f(int* p) {
+  // p 现在指向谁？
+  if (cond) p = &amp;other;  // ← 变了
+  *p = 1;                // 改的是哪一个？
+}</pre>
+  </div>
+  <div class="side">
+    <div class="hd good">引用：目标从一而终</div>
+<pre>void f(int&amp; r) {
+  // r 从进入函数起就绑着一个
+  // 固定对象，永远是它
+  r = 1;                 // 改的一定是它
+}</pre>
+  </div>
+</div>
+
+<p>由此带来三件具体的「安全」：</p>
+
+<div class="alias">
+  <div class="row"><span class="k">① 不用担心改绑</span>
+    <span class="v">读 <code>f(r)</code> 时，从函数第一行到最后一行，
+    <code>r</code> 指的都是同一个对象。不需要在脑子里维护「它现在指向谁」</span></div>
+  <div class="row"><span class="k">② 不可能为空</span>
+    <span class="v">引用必须绑定真实对象，所以<b>没有空引用</b>。
+    函数里不用写 <code>if (!p) return;</code>，也不可能出现「解引用空指针」</span></div>
+  <div class="row"><span class="k">③ 不可能忘记初始化</span>
+    <span class="v">这一条是编译器强制的，不是「建议」。
+    <code>int&amp; r;</code> 直接编译不过</span></div>
+</div>
+
+<div class="code-wrap">
+  <div class="bar"><span class="dot r"></span><span class="dot y"></span><span class="dot g"></span>
+    <span class="name">safe.cpp —— 指针要查空，引用不用</span><span class="cp">复制</span></div>
+<pre><span class="hl-c">// 用指针：调用者可能传 nullptr，你必须防</span>
+<span class="hl-k">void</span> printPtr(<span class="hl-k">const</span> std::string* s) {
+    <span class="hl-k">if</span> (!s) <span class="hl-k">return</span>;              <span class="hl-c">// ← 这一句不能省</span>
+    std::cout &lt;&lt; *s &lt;&lt; <span class="hl-s">"\n"</span>;      <span class="hl-c">// ← 还要记得解引用</span>
+}
+
+<span class="hl-c">// 用引用：一定绑着真实对象，两件事都不用做</span>
+<span class="hl-k">void</span> printRef(<span class="hl-k">const</span> std::string&amp; s) {
+    std::cout &lt;&lt; s &lt;&lt; <span class="hl-s">"\n"</span>;       <span class="hl-c">// ← 直接就是对象本身</span>
+}</pre>
+</div>
+
+<div class="card warn">
+  <div class="card-t">「绑定不可改」不是万能的</div>
+  <p>它只保证<b>引用本身</b>不换目标。<b>它不保证那个对象一直活着。</b></p>
+  <p>如果被引用的对象先销毁了，引用就变成<b>悬空引用</b>。
+  这时候「不能改绑」反而成了麻烦 —— 你没法把它改成别的东西，只能不再使用它。
+  第 6 节和 Qt 的用法里都会遇到这个边界。</p>
+</div>
+
+<h2 id="s6"><span class="n">6</span>两条铁律与常见错误</h2>
+
+<p>把前几节的结论收成两条规则，再列出对应的错误写法。</p>
+
+<div class="card key">
+  <div class="card-t">两条铁律</div>
+  <ol>
+    <li><b>声明时必须绑定。</b>不存在「先声明、以后再绑」的引用。
+    <code>int&amp; r;</code> 编译不过。</li>
+    <li><b>绑定之后不能改绑。</b>之后所有对它的操作，
+    都作用在它绑定的那个对象上。</li>
+  </ol>
+</div>
+
+<h3>① 必须绑定：编译器的报错</h3>
+
+<div class="code-wrap">
+  <div class="bar"><span class="dot r"></span><span class="dot y"></span><span class="dot g"></span>
+    <span class="name">ref2.cpp —— 不绑定就编译不过</span><span class="cp">复制</span></div>
 <pre><span class="hl-k">int</span> x = 10;
 
-<span class="hl-k">int</span>&amp; a;          <span class="hl-c">// ✗ 编译错误：declared as a reference but not initialized</span>
+<span class="hl-k">int</span>&amp; a;          <span class="hl-c">// ✗ 编译错误</span>
 <span class="hl-k">int</span>&amp; b = x;       <span class="hl-c">// ✓ 必须像这样一开始就指定绑谁</span></pre>
 </div>
 <div class="out-wrap">
@@ -131,183 +499,85 @@ r = 20
          ^</pre>
 </div>
 
-<h3>② 不能改绑 —— 最容易误会的一条</h3>
+<h3>② 不能改绑：最容易误会的一条</h3>
 
-<p>下面这段代码<b>看起来像</b>「把 r 改成绑定 y」，实际完全不是：</p>
+<p>这一条在第 5 节已经用 <code>r = y;</code> 演示过。要记住的是：
+<b><code>=</code> 在这里是赋值，不是绑定。</b>绑定只在初始化时发生一次。</p>
 
-<div class="code-wrap">
-  <div class="bar"><span class="dot r"></span><span class="dot y"></span><span class="dot g"></span>
-    <span class="name">ref3.cpp —— 赋值 ≠ 改绑</span><span class="cp">复制</span></div>
-<pre><span class="hl-k">int</span> x = 10, y = 99;
+<h3>完整错误清单</h3>
 
-<span class="hl-k">int</span>&amp; r = x;
-r = y;                  <span class="hl-c">// ✗ 这不是「让 r 改绑 y」</span>
-                        <span class="hl-c">// ✓ 而是「把 y 的值 99 赋给 r 所指的 x」</span>
-
-std::cout &lt;&lt; <span class="hl-s">"x = "</span> &lt;&lt; x &lt;&lt; <span class="hl-s">"\n"</span>;   <span class="hl-c">// 99（被改了）</span>
-std::cout &lt;&lt; <span class="hl-s">"y = "</span> &lt;&lt; y &lt;&lt; <span class="hl-s">"\n"</span>;   <span class="hl-c">// 99（没动）</span>
-std::cout &lt;&lt; <span class="hl-s">"&amp;r == &amp;x ? "</span> &lt;&lt; (&amp;r == &amp;x) &lt;&lt; <span class="hl-s">"\n"</span>;   <span class="hl-c">// 1（仍绑着 x）</span></pre>
-</div>
-<div class="out-wrap">
-  <div class="cap">输出</div>
-<pre>x = 99
-y = 99
-&amp;r == &amp;x ? 1</pre>
-</div>
-
-<div class="card warn">
-  <div class="card-t">这是初学者最常踩的坑</div>
-  <p><code>r = y;</code> 里的 <code>=</code> <b>不是「绑定」的意思，是「赋值」的意思</b>。</p>
-  <p>引用一旦绑好，<b>任何操作都是作用在它绑定的那个对象上</b> ——
-  包括 <code>=</code>。所以这一行等价于 <code>x = y;</code>。</p>
-  <p>想「换一个目标」，引用做不到 —— 那是指针的活（<code>p = &amp;y;</code>）。</p>
-</div>
-
-<h3>③ 没有空引用</h3>
-
-<p>引用一定指着真实对象，所以<b>用引用时不需要检查「它是不是空的」</b>。
-这是引用比指针省心的地方：</p>
-
-<div class="code-wrap">
-  <div class="bar"><span class="dot r"></span><span class="dot y"></span><span class="dot g"></span>
-    <span class="name">ref4.cpp —— 指针要查空，引用不用</span><span class="cp">复制</span></div>
-<pre><span class="hl-c">// 用指针：调用者可能传 nullptr，你必须防</span>
-<span class="hl-k">void</span> printPtr(<span class="hl-k">const</span> std::string* s) {
-    <span class="hl-k">if</span> (!s) <span class="hl-k">return</span>;                 <span class="hl-c">// ← 这一句不能省</span>
-    std::cout &lt;&lt; *s &lt;&lt; <span class="hl-s">"\n"</span>;
-}
-
-<span class="hl-c">// 用引用：一定指向某个真实对象，不需要查</span>
-<span class="hl-k">void</span> printRef(<span class="hl-k">const</span> std::string&amp; s) {
-    std::cout &lt;&lt; s &lt;&lt; <span class="hl-s">"\n"</span>;         <span class="hl-c">// ← 直接就是对象本身</span>
-}</pre>
-</div>
-<div class="out-wrap">
-  <div class="cap">注意</div>
-<pre>printPtr 里要写 *s —— 因为 s 是「地址」，得解引用才拿到对象
-printRef 里直接写 s —— 因为 s 就是那个对象本身（只是换了个名字）</pre>
-</div>
-
-<h2 id="s3"><span class="n">3</span>与指针的关系（一）：语法上的区别</h2>
-
-<p>这一节回答最常被问的问题：<b>引用和指针到底差在哪？</b>
-先看语法，第 8 节再看底层。</p>
-
-<div class="vs">
 <table>
-<thead><tr><th style="width:20%">对比项</th><th style="width:40%">指针 <code>T*</code></th>
-<th>引用 <code>T&amp;</code></th></tr></thead>
+<thead><tr><th style="width:40%">写法 / 想法</th><th>问题</th></tr></thead>
 <tbody>
-<tr><td>是什么</td><td>一个<b>变量</b>，里面存着地址</td><td>一个<b>别名</b>，不是变量</td></tr>
-<tr><td>必须初始化</td><td class="c">不必须<br><code>int* p;</code> 合法</td>
-    <td class="c">必须<br><code>int&amp; r;</code> 编译错</td></tr>
-<tr><td>能否为空</td><td class="c">可以（nullptr）</td><td class="c">不可以</td></tr>
-<tr><td>能否改指向</td><td class="c">可以 <code>p = &amp;y;</code></td><td class="c">不可以</td></tr>
-<tr><td>访问目标</td><td class="c">要解引用 <code>*p</code></td><td class="c">直接用 <code>r</code></td></tr>
-<tr><td>取目标地址</td><td class="c"><code>p</code> 本身就是</td><td class="c">要写 <code>&amp;r</code></td></tr>
-<tr><td>占内存</td><td>占一个指针大小（64 位上是 8 字节）</td>
-    <td>通常不占（见第 8 节）</td></tr>
-<tr><td>算术运算</td><td class="c">可以 <code>p + 1</code>、<code>p++</code></td>
-    <td class="c">不可以</td></tr>
-<tr><td>典型用途</td><td>可选的、可能不存在的对象；数组遍历</td>
-    <td>一定存在的对象；函数参数</td></tr>
+<tr><td class="c">int&amp; r;</td><td>必须绑定，编译错</td></tr>
+<tr><td class="c">r = y; 想「改绑」</td><td>那是赋值：把 <code>y</code> 的值写进 <code>r</code> 绑定的对象</td></tr>
+<tr><td class="c">int&amp; r = *p; 且 p 可能为空</td><td>未定义行为；先确认非空</td></tr>
+<tr><td class="c">返回局部变量的引用</td><td>悬空引用（下面详述）</td></tr>
+<tr><td class="c">用引用当「可空的参数」</td><td>表达不了「没有」；这种情况该用指针</td></tr>
+<tr><td class="c">给大对象写 <code>T v</code> 传参</td><td>每次调用都复制一份；改 <code>const T&amp; v</code></td></tr>
+<tr><td class="c">给 <code>int</code> 也写 <code>const int&amp;</code></td><td>不算错，但没收益（见第 4 节末尾）</td></tr>
+<tr><td class="c">for (auto n : v) 改 n</td><td>改的是副本，原容器没变；要改写 <code>auto&amp;</code></td></tr>
+<tr><td class="c">以为 <code>sizeof(r)</code> 是指针大小</td><td>是<b>被引用类型</b>的大小（引用不是对象）</td></tr>
 </tbody>
 </table>
-</div>
 
-<div class="mnemonic">
-  <b>选哪个？先问一句：这个东西可能「不存在」吗？</b><br>
-  可能不存在（比如查找失败）→ 用<b>指针</b>，返回 <code>nullptr</code>；<br>
-  一定存在 → 用<b>引用</b>，语法干净，调用者也不用查空。
-</div>
-
-<h2 id="s4"><span class="n">4</span>与指针的关系（二）：它们常常一起出现</h2>
-
-<p>虽然语法不同，两者并不是对立的。有三处「接口」在它们之间来回转换：</p>
-
-<div class="alias">
-  <div class="row"><span class="k">引用 → 指针</span>
-    <span class="v"><code>int* p = &amp;r;</code> —— 对引用取地址，得到它绑定对象的地址</span></div>
-  <div class="row"><span class="k">指针 → 引用</span>
-    <span class="v"><code>int&amp; r = *p;</code> —— 解引用指针，得到对象的引用（前提：<code>p</code> 不是空）</span></div>
-  <div class="row"><span class="k">函数传参</span>
-    <span class="v">形参写引用，实参可以直接传对象；写指针就得显式传 <code>&amp;x</code></span></div>
-</div>
-
-<div class="card warn">
-  <div class="card-t">第二行是危险动作</div>
-  <p><code>int&amp; r = *p;</code> 在 <code>p == nullptr</code> 时是<b>未定义行为</b>。
-  编译器不一定报错，程序可能「看起来正常」跑很久。</p>
-  <p>所以「指针转引用」只在你<b>刚刚确认过非空</b>的紧邻位置才安全。
-  这也是为什么很多老代码宁可在函数里继续用指针。</p>
-</div>
-
-<p>反过来「引用转指针」是绝对安全的：引用一定绑着真实对象，所以 <code>&amp;r</code> 一定有效。</p>
-
-<h2 id="s5"><span class="n">5</span>函数参数里的引用：Qt 里遍地都是</h2>
-
-<p>这是引用<b>最重要</b>的用途，也是你在 Qt 代码里看到它的主要原因。</p>
-
-<h3>三种传参方式对比</h3>
+<h3>最容易漏的一个：悬空引用</h3>
 
 <div class="code-wrap">
   <div class="bar"><span class="dot r"></span><span class="dot y"></span><span class="dot g"></span>
-    <span class="name">param.cpp —— 值传递 vs 引用 vs const 引用</span><span class="cp">复制</span></div>
-<pre><span class="hl-p">#include</span> <span class="hl-s">&lt;iostream&gt;</span>
-<span class="hl-p">#include</span> <span class="hl-s">&lt;string&gt;</span>
-
-<span class="hl-c">// ① 值传递：把整个字符串【复制】一份给函数</span>
-<span class="hl-k">void</span> byValue(std::string s) { s += <span class="hl-s">"!"</span>; }        <span class="hl-c">// 改的是副本</span>
-
-<span class="hl-c">// ② 引用传递：不复制，直接操作调用者的那个对象</span>
-<span class="hl-k">void</span> byRef(std::string&amp; s)  { s += <span class="hl-s">"!"</span>; }        <span class="hl-c">// 改的就是原对象</span>
-
-<span class="hl-c">// ③ const 引用：不复制，也不许改</span>
-<span class="hl-k">void</span> byCRef(<span class="hl-k">const</span> std::string&amp; s) {
-    std::cout &lt;&lt; s.size() &lt;&lt; <span class="hl-s">"\n"</span>;                <span class="hl-c">// 只读</span>
-    <span class="hl-c">// s += "!";   ← 取消注释会编译错</span>
+    <span class="name">dangling.cpp —— 绝不要返回局部变量的引用</span><span class="cp">复制</span></div>
+<pre><span class="hl-k">int</span>&amp; bad() {
+    <span class="hl-k">int</span> local = 42;
+    <span class="hl-k">return</span> local;      <span class="hl-c">// ✗ local 在函数返回时已经死了</span>
 }
 
-<span class="hl-k">int</span> main() {
-    std::string a = <span class="hl-s">"UME"</span>, b = <span class="hl-s">"UME"</span>, c = <span class="hl-s">"UME"</span>;
-    byValue(a); byRef(b); byCRef(c);
-    std::cout &lt;&lt; a &lt;&lt; <span class="hl-s">" "</span> &lt;&lt; b &lt;&lt; <span class="hl-s">" "</span> &lt;&lt; c &lt;&lt; <span class="hl-s">"\n"</span>;
-}</pre>
-</div>
-<div class="out-wrap">
-  <div class="cap">输出</div>
-<pre>3
-UME UME! UME</pre>
+<span class="hl-k">int</span>&amp; r = bad();       <span class="hl-c">// r 绑着一块已销毁的内存 —— 未定义行为</span>
+std::cout &lt;&lt; r;        <span class="hl-c">// 可能打印 42，也可能打印垃圾</span></pre>
 </div>
 
-<p>结果说明：<code>a</code> 没变（改的是副本）、<code>b</code> 变了、<code>c</code> 没变（只读了它的长度）。</p>
-
-<div class="card key">
-  <div class="card-t">选哪种？一张表定下来</div>
-  <table>
-  <thead><tr><th style="width:34%">你想要的效果</th><th>怎么写</th></tr></thead>
-  <tbody>
-  <tr><td>只读，且类型很小（<code>int</code>、<code>double</code>、指针）</td>
-      <td class="c">T v</td></tr>
-  <tr><td>只读，且类型较大（<code>std::string</code>、<code>QString</code>、容器）</td>
-      <td class="c">const T&amp; v &nbsp;← Qt 里最常见</td></tr>
-  <tr><td>要修改调用者的对象</td><td class="c">T&amp; v</td></tr>
-  <tr><td>可以接受「没有」，或要重新指向别处</td><td class="c">T* v</td></tr>
-  </tbody>
-  </table>
-</div>
-
-<div class="card tip">
-  <div class="card-t">为什么 Qt 的函数几乎都写 <code>const QString&amp;</code></div>
-  <p>两个理由叠在一起：</p>
+<div class="card warn">
+  <div class="card-t">为什么这类错误特别难查</div>
   <ul>
-    <li><b>不复制</b>：<code>QString</code> 内部是隐式共享的，但传值仍要维护引用计数，
-    传 <code>const&amp;</code> 连这个都省了；</li>
-    <li><b>不修改</b>：<code>const</code> 让编译器帮你保证这个参数在函数里不会被改。</li>
+    <li><b>编译不一定报错</b>（好编译器给 warning）；</li>
+    <li><b>运行时经常「碰巧正常」</b> —— 那块栈内存还没被覆盖，值还是 42；</li>
+    <li>等到某次调用把它覆盖了，才突然出错，而且错在别处。</li>
   </ul>
-  <p>所以 <code>void setWindowTitle(const QString &amp;title)</code>
-  读作：「我要用你的字符串，但不会改它，也不会拷一份」。</p>
+  <p>安全的做法：函数里创建的东西，<b>按值返回</b>（<code>int</code> 而不是 <code>int&amp;</code>）。</p>
 </div>
+
+<h2 id="s7"><span class="n">7</span>回到 Qt：const T& 为什么无处不在</h2>
+
+<p>前面几节的结论合起来，正好解释了 Qt 里那种签名：
+<code>void setWindowTitle(const QString &amp;title)</code>。</p>
+
+<div class="alias">
+  <div class="row"><span class="k">为什么不传值</span>
+    <span class="v"><code>QString</code> 内部有字符缓冲和引用计数，传值要维护那一套
+    —— <b>免拷贝</b>（第 4 节）</span></div>
+  <div class="row"><span class="k">为什么不传 <code>QString&amp;</code></span>
+    <span class="v">那样函数就能改调用者的字符串，而 setter 不该改参数
+    —— <b>用 <code>const</code> 锁住</b></span></div>
+  <div class="row"><span class="k">为什么不传 <code>QString*</code></span>
+    <span class="v">标题一定存在，不存在「没有标题」这种情况
+    —— <b>用引用表达「一定有效」</b>（第 5 节）</span></div>
+</div>
+
+<p>所以 <code>const QString &amp;title</code> 读作：
+<b>「我要用你的字符串，不会拷一份，也不会改它，而且你不用担心它是不是空的。」</b></p>
+
+<h3>一张表定下来怎么选</h3>
+
+<table>
+<thead><tr><th style="width:34%">你想要的效果</th><th>怎么写</th></tr></thead>
+<tbody>
+<tr><td>只读，类型很小（<code>int</code>、<code>double</code>、指针）</td>
+    <td class="c">T v</td></tr>
+<tr><td>只读，类型较大（<code>QString</code>、容器）</td>
+    <td class="c">const T&amp; v &nbsp;← Qt 里最常见</td></tr>
+<tr><td>要修改调用者的对象</td><td class="c">T&amp; v</td></tr>
+<tr><td>可以接受「没有」，或要重新指向别处</td><td class="c">T* v</td></tr>
+</tbody>
+</table>
 
 <h3>Qt 里真实的样子</h3>
 
@@ -325,16 +595,15 @@ UME UME! UME</pre>
 
 <div class="card note">
   <div class="card-t">注意最后两行：Qt 不是「一律用引用」</div>
-  <p>Qt 的老接口（尤其事件、<code>connect</code>）大量用<b>指针</b>，
-  因为它们诞生于「可能为空」的语义。新一些的接口（getter/setter）则普遍用
-  <code>const T&amp;</code>。</p>
+  <p>Qt 的老接口（事件、<code>connect</code>）大量用<b>指针</b>，
+  因为它们诞生于「可能为空」的语义。新一些的接口（getter/setter）
+  则普遍用 <code>const T&amp;</code>。</p>
   <p>看到参数是 <code>*</code>，先想「它可能是空的吗」；
-  看到 <code>&amp;</code>，就可以放心直接用。</p>
+  看到 <code>&amp;</code>，就可以放心直接用 ——
+  <b>这正是第 5 节说的「更安全」在工程上的体现</b>。</p>
 </div>
 
-<h2 id="s6"><span class="n">6</span>作为返回值：一个必须知道的陷阱</h2>
-
-<p>函数也可以返回引用。这么做有明确的目的，但用错了会导致悬空引用。</p>
+<h3>作为返回值：引用让「改到本体」成为可能</h3>
 
 <div class="code-wrap">
   <div class="bar"><span class="dot r"></span><span class="dot y"></span><span class="dot g"></span>
@@ -344,11 +613,10 @@ UME UME! UME</pre>
 
 std::vector&lt;<span class="hl-k">int</span>&gt; v{1, 2, 3};
 
-<span class="hl-c">// 返回引用：调用者拿到的是容器里那个元素的【别名】</span>
-<span class="hl-k">int</span>&amp; at(<span class="hl-k">int</span> i) { <span class="hl-k">return</span> v[i]; }
+<span class="hl-k">int</span>&amp; at(<span class="hl-k">int</span> i) { <span class="hl-k">return</span> v[i]; }   <span class="hl-c">// 返回容器里那个元素的别名</span>
 
 <span class="hl-k">int</span> main() {
-    at(1) = 99;                       <span class="hl-c">// 直接改到容器里</span>
+    at(1) = 99;                        <span class="hl-c">// 直接改到容器里</span>
     std::cout &lt;&lt; v[0] &lt;&lt; <span class="hl-s">" "</span> &lt;&lt; v[1] &lt;&lt; <span class="hl-s">" "</span> &lt;&lt; v[2] &lt;&lt; <span class="hl-s">"\n"</span>;
 }</pre>
 </div>
@@ -358,31 +626,12 @@ std::vector&lt;<span class="hl-k">int</span>&gt; v{1, 2, 3};
 </div>
 
 <p><code>at(1) = 99;</code> 能编译通过，正是因为 <code>at(1)</code> 返回的是引用
-（<code>v[1]</code> 的别名），而不是一个临时副本。这也是 <code>std::vector::operator[]</code>
-能赋值的原因。</p>
+（<code>v[1]</code> 的别名），而不是一个临时副本。
+<b>这也是 <code>std::vector::operator[]</code> 能赋值的原因</b> —— 它返回的就是引用。</p>
 
-<div class="card warn">
-  <div class="card-t">陷阱：绝不要返回局部变量的引用</div>
-  <p>局部变量在函数返回时就销毁了，返回它的引用 = 返回一块已经失效的内存。</p>
-  <div class="code-wrap">
-    <div class="bar"><span class="dot r"></span><span class="dot y"></span><span class="dot g"></span>
-      <span class="name">悬空引用</span><span class="cp">复制</span></div>
-  <pre><span class="hl-k">int</span>&amp; bad() {
-    <span class="hl-k">int</span> local = 42;
-    <span class="hl-k">return</span> local;      <span class="hl-c">// ✗ local 在函数返回时已经死了</span>
-}
+<h2 id="s8"><span class="n">8</span>const 引用：只读的那把锁</h2>
 
-<span class="hl-k">int</span>&amp; r = bad();       <span class="hl-c">// r 指向已销毁的内存 —— 未定义行为</span>
-std::cout &lt;&lt; r;        <span class="hl-c">// 可能打印 42，也可能打印垃圾</span></pre>
-  </div>
-  <p>这类错误<b>编译不一定报错</b>（好编译器会给 warning），
-  运行时也可能「碰巧正常」，是典型的难查 bug。</p>
-  <p>安全的做法：函数里创建的东西，<b>按值返回</b>（<code>int</code> 而不是 <code>int&amp;</code>）。</p>
-</div>
-
-<h2 id="s7"><span class="n">7</span>const 引用：只读的那把锁</h2>
-
-<p><code>const T&amp;</code> 是引用里出现最多的一种组合，值得单独说清楚它到底锁住了什么。</p>
+<p><code>const T&amp;</code> 是引用里出现最多的一种组合，值得单独说清它锁住了什么。</p>
 
 <div class="card key">
   <div class="card-t"><code>const int&amp; r = x;</code> 锁的是「通过 r 修改」这条路</div>
@@ -408,7 +657,7 @@ std::cout &lt;&lt; r;   <span class="hl-c">// 20 —— r 看到的是最新的�
     普通引用绑不了临时值，<code>const</code> 引用可以（编译器会延长它的生命期）</span></div>
   <div class="row"><span class="k">接住任意类型</span>
     <span class="v"><code>const auto&amp; x = expr;</code> ——
-    不复制、也不怕 <code>expr</code> 是个临时值，是很常用的写法</span></div>
+    不复制、也不怕 <code>expr</code> 是个临时值，很常用的写法</span></div>
 </div>
 
 <div class="code-wrap">
@@ -441,72 +690,92 @@ std::vector&lt;std::string&gt; names{<span class="hl-s">"A"</span>, <span class=
   </table>
 </div>
 
-<h2 id="s8"><span class="n">8</span>底层：引用通常就是指针</h2>
+<h2 id="s9"><span class="n">9</span>这个模型的边界：与指针的关系</h2>
 
-<p>前面说「引用不是变量、不占内存」。这句话在<b>语法层面</b>完全正确，
-  但在<b>实现层面</b>要补一句：</p>
+<p>「实现上是指针、语法上是别名」这句话在绝大多数场合够用。
+但有几处必须收着点，否则会推出错误结论。</p>
+
+<h3>逐项对比</h3>
+
+<div class="vs">
+<table>
+<thead><tr><th style="width:20%">对比项</th><th style="width:40%">指针 <code>T*</code></th>
+<th>引用 <code>T&amp;</code></th></tr></thead>
+<tbody>
+<tr><td>语法上是什么</td><td>一个<b>变量</b>，里面存着地址</td><td>一个<b>别名</b>，不是对象</td></tr>
+<tr><td>必须初始化</td><td class="c">不必须 <code>int* p;</code></td>
+    <td class="c">必须 <code>int&amp; r;</code> 编译错</td></tr>
+<tr><td>能否为空</td><td class="c">可以（nullptr）</td><td class="c">不可以</td></tr>
+<tr><td>能否改指向</td><td class="c">可以 <code>p = &amp;y;</code></td><td class="c">不可以</td></tr>
+<tr><td>访问目标</td><td class="c">要解引用 <code>*p</code></td><td class="c">直接用 <code>r</code></td></tr>
+<tr><td>取目标地址</td><td class="c"><code>p</code> 本身就是</td><td class="c">要写 <code>&amp;r</code></td></tr>
+<tr><td><code>sizeof</code></td><td>指针大小（64 位上是 8）</td>
+    <td><b>被引用类型</b>的大小</td></tr>
+<tr><td>算术运算</td><td class="c">可以 <code>p + 1</code>、<code>p++</code></td>
+    <td class="c">不可以</td></tr>
+</tbody>
+</table>
+</div>
+
+<h3>三处「不能类推」的地方</h3>
+
+<div class="alias">
+  <div class="row"><span class="k">① <code>sizeof</code></span>
+    <span class="v">如果引用真是一个指针，<code>sizeof(int&amp;)</code> 应该是 8。
+    实际是 <b>4</b>。因为标准规定引用<b>不是对象</b>，
+    <code>sizeof</code> 作用在它身上就等于作用在被引用对象上</span></div>
+  <div class="row"><span class="k">② 「不允许只声明」</span>
+    <span class="v"><code>int* const p;</code> 是合法的（只是不能改）；
+    <code>int&amp; r;</code> 不合法。说明引用在语言规则上比「常量指针」还严
+    —— 它不是常量指针</span></div>
+  <div class="row"><span class="k">③ 「一定占 8 字节」</span>
+    <span class="v">局部引用经常被编译器<b>完全优化掉</b>，
+    直接对原变量操作，机器码里根本没有那个指针。
+    成员引用（<code>struct</code> 里的引用）则确实会占空间</span></div>
+</div>
 
 <div class="card key">
-  <div class="card-t">编译之后，引用基本就是指针</div>
-  <p>编译器实现引用最常见的做法，就是<b>在底层用一个指针</b>，
-  然后在你每次写 <code>r</code> 的地方自动替你解引用。</p>
-  <p>也就是说：<code>int&amp; r = x; r = 20;</code>
-  在机器码层面很可能是 <code>int* const r = &amp;x; *r = 20;</code>。</p>
+  <div class="card-t">正确的说法</div>
+  <p><b>引用在实现上通常是一个指针，但在语义上不是。</b></p>
+  <p>所以：<b>用「指针」去理解它的行为和性能</b>（为什么不拷贝、为什么改得到本体）；
+  <b>用「别名」去理解它的语法和规则</b>（为什么不用 <code>*</code>、为什么不能改绑）。</p>
+  <p>两个模型各管一半，合起来才是完整的引用。</p>
 </div>
 
-<div class="mem">
-  <div class="slot"><div class="a">x 的地址</div>
-    <div class="n">x</div><div>10 → 20</div></div>
-  <div class="slot"><div class="a">r 的地址（若真的分配了）</div>
-    <div class="n">r</div><div>存着 x 的地址</div></div>
+<h3>它们之间可以互相转换（但一半是危险动作）</h3>
+
+<div class="alias">
+  <div class="row"><span class="k">引用 → 指针</span>
+    <span class="v"><code>int* p = &amp;r;</code> —— 对引用取地址，得到被引用对象的地址。
+    <b>绝对安全</b>：引用一定绑着真实对象</span></div>
+  <div class="row"><span class="k">指针 → 引用</span>
+    <span class="v"><code>int&amp; r = *p;</code> —— 解引用指针，得到对象的引用。
+    <b>前提：<code>p</code> 不是空</b>，否则是未定义行为</span></div>
 </div>
 
-<p>但要注意三件事，别把这个类比用过头：</p>
-
-<table>
-<thead><tr><th style="width:46%">说法</th><th>是否准确</th></tr></thead>
-<tbody>
-<tr><td>引用在语法上是别名，不是对象</td><td>✅ 准确。所以 <code>sizeof(r)</code> 是目标类型的大小，
-  不是指针大小</td></tr>
-<tr><td>引用在实现上通常用指针做</td><td>✅ 通常如此，但<b>标准不保证</b>，
-  编译器完全可以优化掉</td></tr>
-<tr><td>「引用就是一个自动解引用的指针」</td><td>⚠ 作为<b>理解工具</b>很好用，
-  但别拿它解释语法（比如「引用不能改绑」用指针就解释不通）</td></tr>
-<tr><td>「引用一定占 8 字节」</td><td>❌ 错。成员引用可能占空间，
-  但局部引用经常被完全优化掉</td></tr>
-</tbody>
-</table>
-
-<div class="card note">
-  <div class="card-t">那为什么还要有引用？</div>
-  <p>因为<b>语法更安全、更干净</b>。用引用的话：</p>
-  <ul>
-    <li>不可能忘记初始化（编译期强制）；</li>
-    <li>不可能为空，函数里不用写一堆 <code>if (!p) return;</code>；</li>
-    <li>调用处不用写 <code>&amp;</code>，读起来更像「传了对象本身」；</li>
-    <li>不会手滑写成 <code>p + 1</code> 这类指针算术。</li>
-  </ul>
-  <p>换句话说：<b>引用是把「一定有效」这件事交给编译器去保证的指针</b>。</p>
+<div class="card warn">
+  <div class="card-t">第二行是危险动作</div>
+  <p><code>int&amp; r = *p;</code> 在 <code>p == nullptr</code> 时是<b>未定义行为</b>。
+  编译器不一定报错，程序可能「看起来正常」跑很久。</p>
+  <p>所以「指针转引用」只在你<b>刚刚确认过非空</b>的紧邻位置才安全。
+  这也是为什么很多老代码宁可在函数里继续用指针。</p>
 </div>
-
-<h2 id="s9"><span class="n">9</span>常见错误</h2>
-
-<table>
-<thead><tr><th style="width:42%">写法 / 想法</th><th>问题</th></tr></thead>
-<tbody>
-<tr><td class="c">int&amp; r;</td><td>引用必须初始化，编译错</td></tr>
-<tr><td class="c">r = y; 想「改绑」</td><td>那是赋值：把 y 的值写进 r 绑定的对象</td></tr>
-<tr><td class="c">int&amp; r = *p; 且 p 可能为空</td><td>未定义行为；先确认非空</td></tr>
-<tr><td class="c">返回局部变量的引用</td><td>悬空引用；按值返回</td></tr>
-<tr><td class="c">用引用当「可空的参数」</td><td>表达不了「没有」；这种情况该用指针</td></tr>
-<tr><td class="c">给大对象写 <code>T v</code> 传参</td><td>每次调用都复制一份；改 <code>const T&amp; v</code></td></tr>
-<tr><td class="c">给 <code>int</code> 也写 <code>const int&amp;</code></td><td>不算错，但没收益（<code>int</code> 就 4 字节，复制更便宜）</td></tr>
-<tr><td class="c">for (auto n : v) 改 n</td><td>改的是副本，原容器没变；要改写 <code>auto&amp;</code></td></tr>
-<tr><td class="c">以为 <code>sizeof(r)</code> 是指针大小</td><td>是目标类型的大小（引用不是对象）</td></tr>
-</tbody>
-</table>
 
 <h2 id="s10"><span class="n">10</span>一页速查</h2>
+
+<h3>五句话</h3>
+
+<div class="mnemonic">
+  <b>① 实现层：它是一个指针</b> —— 里面存着被引用变量的地址。<br>
+  <b>② 语法层：它是一个别名</b> —— 访问时不用写 <code>*</code>，编译器替你解引用。<br>
+  <b>③ 免拷贝</b> —— 被引用的变量不参与函数内部的语句，函数直接操作本体，省掉整份拷贝。<br>
+  <b>④ 绑定不可改</b> —— 绑定只在初始化时发生一次，之后由编译器锁死；
+  不可能为空、不可能忘初始化。<br>
+  <b>⑤ 边界</b> —— <code>sizeof</code> 和「必须初始化」这两处不能按指针类推；
+  另外「不能改绑」不保证对象一直活着（悬空引用要自己防）。
+</div>
+
+<h3>写法速查</h3>
 
 <table>
 <thead><tr><th style="width:26%">写法</th><th style="width:30%">读作</th><th>用途</th></tr></thead>
@@ -520,20 +789,26 @@ std::vector&lt;std::string&gt; names{<span class="hl-s">"A"</span>, <span class=
 </tbody>
 </table>
 
-<div class="mnemonic">
-  <b>三句话记住引用：</b><br>
-  ① <b>引用是别名，不是变量</b> —— 不占地方、不用解引用、改它就是改本体。<br>
-  ② <b>必须初始化、不能改绑、不能为空</b> —— 三条铁律，违反了就是编译错或未定义行为。<br>
-  ③ <b>底层通常是指针，语法上是「一定有效的指针」</b> ——
-  所以「可能不存在」就用指针，「一定存在」就用引用。
-</div>
+<h3>选择规则</h3>
+
+<table>
+<thead><tr><th style="width:44%">情况</th><th>选什么</th></tr></thead>
+<tbody>
+<tr><td>对象一定存在</td><td class="c">引用</td></tr>
+<tr><td>对象可能不存在（查找失败等）</td><td class="c">指针，返回 nullptr</td></tr>
+<tr><td>要大对象、且不修改</td><td class="c">const T&amp;</td></tr>
+<tr><td>要修改调用者的对象</td><td class="c">T&amp;</td></tr>
+<tr><td>类型很小（<code>int</code>、<code>double</code>）</td><td class="c">直接传值 T</td></tr>
+</tbody>
+</table>
 
 <div class="card tip">
   <div class="card-t">接下来看什么</div>
-  <p>引用的下一站是<b>移动语义</b>（<code>T&amp;&amp;</code> 右值引用）——
-  那是 C++11 之后另一套语法，Qt 里也有（<code>std::move</code>、容器扩容）。
+  <p>引用的下一站是<b>右值引用</b>（<code>T&amp;&amp;</code> 与移动语义）——
+  那是另一套语法，解决的是「连一次拷贝都不想付」的场景。
   另外<b>智能指针</b>（<code>std::unique_ptr</code> / <code>QSharedPointer</code>）
-  是把「指针」和「自动释放」结合起来的东西，两者都值得单独一篇。</p>
+  是把「指针」和「自动释放」结合起来的东西，正好补上前面的悬空问题。
+  两者都值得单独一篇。</p>
 </div>
 
 <!-- NAV-AUTO -->

@@ -32,6 +32,7 @@ FE = [
     ("fe-05.html",     "FE-05",     "Display 与盒模型尺寸",          "block / inline-block / inline、边框、阴影、宽高", False),
     ("fe-06.html",     "FE-06",     "Writing Mode 与溢出滚动",       "writing-mode 与 word-break",                True),
     ("fe-07.html",     "FE-07",     "鼠标悬停与 transition",         "hover、过渡、缓动、常用动效",               False),
+    ("fe-08.html",     "FE-08",     "JavaScript 语法初步",          "内联/外联、与 C/C++ 的异同、console.log / alert / prompt", False),
 ]
 
 # 前端专属主题（暖色渐变 + 玻璃拟态），单独放一个文件方便调

@@ -62,3 +62,15 @@
   tbody tr:hover{background:#1e2836}
   tbody tr:hover td{color:#e6ecf4}
 }
+
+@media (prefers-color-scheme: dark){
+  /* 暗色：反过来 —— 浅底 + 深字，在深色卡片上更跳也更易读 */
+  .lang{color:#12161d;border-color:transparent}
+  .lang.html{background:#ffb4a2}        /* 9.77 */
+  .lang.css{background:#7dd3fc}         /* 10.00 */
+  .lang.js{background:#fcd34d}          /* 11.57 */
+  .lang.cpp{background:#a5c8ff}         /* 9.77 */
+  .lang.c{background:#c4b5fd}           /* 9.03 */
+  .lang.sh{background:#bef264}          /* 12.44 */
+  .lang.py{background:#7dd3b0}          /* 9.29 */
+}

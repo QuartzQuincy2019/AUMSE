@@ -1,0 +1,971 @@
+<p><span class="tag">语言：JS</span> <span class="tag b">JavaScript</span>
+<span class="tag b">需要 HTML / CSS 基础</span></p>
+
+<div class="card note">
+  <div class="card-t">这一篇讲什么</div>
+  <p>前七篇讲的是 HTML 与 CSS —— 它们决定网页<b>长什么样</b>。
+  这一篇开始讲 <b>JavaScript</b>，它决定网页<b>怎么动</b>。</p>
+  <p>先说结论，让你放心：<b>JS 的语法比 C / C++ 简单得多。</b>
+  它是<b>弱类型</b>的、<b>解释执行</b>的 —— 不用写类型，也不用编译。
+  你已经会的变量、<code>if</code>、<code>for</code>、函数在这里几乎原样能用。</p>
+</div>
+
+<div class="card key">
+  <div class="card-t">一句话定位</div>
+  <p><b>HTML 是骨架，CSS 是外观，JavaScript 是行为。</b></p>
+  <table>
+  <thead><tr><th style="width:22%">语言</th><th style="width:26%">管什么</th><th>例子</th></tr></thead>
+  <tbody>
+  <tr><td class="c">HTML</td><td>有什么东西</td><td>一个按钮、一段文字、一张图</td></tr>
+  <tr><td class="c">CSS</td><td>它们长什么样</td><td>按钮是红的、文字 16px、圆角</td></tr>
+  <tr><td class="c">JS</td><td>它们<b>做什么</b></td><td>点按钮弹出提示、输入框校验、改变颜色</td></tr>
+  </tbody>
+  </table>
+</div>
+
+<h2 id="s1"><span class="n">1</span>JS 在网页里干什么</h2>
+
+<p>先看它最朴素的样子 —— 只是一段能被浏览器执行的文字：</p>
+
+<div class="code-wrap">
+  <div class="bar"><span class="dot r"></span><span class="dot y"></span><span class="dot g"></span>
+    <span class="name">最小的一段 JS</span><span class="cp">复制</span></div>
+<pre><span class="hl-k">var</span> name = <span class="hl-s">"UME"</span>;
+<span class="hl-f">console</span>.log(<span class="hl-s">"你好，"</span> + name);</pre>
+</div>
+<div class="out-wrap">
+  <div class="cap">在浏览器控制台里看到</div>
+<pre>你好，UME</pre>
+</div>
+
+<p>就这两行，已经包含了 JS 的两个基本要素：<b>变量</b>和<b>函数调用</b> ——
+和 C / C++ 长得几乎一样，只是 <code>var</code> 后面不用写类型。</p>
+
+<div class="card key">
+  <div class="card-t">JS 能做的事情，大致四类</div>
+  <ol>
+    <li><b>响应操作</b> —— 点击、输入、滚动、按键。</li>
+    <li><b>修改页面</b> —— 换文字、换颜色、显示/隐藏元素。</li>
+    <li><b>和服务器通信</b> —— 不用刷新页面就取回数据。</li>
+    <li><b>算东西</b> —— 校验表单、格式化数字、处理数组。</li>
+  </ol>
+</div>
+
+<h2 id="s2"><span class="n">2</span>弱类型：不用写类型</h2>
+
+<p>这是 JS 比 C / C++ 简单的<b>第一个原因</b>。看两段等价的代码：</p>
+
+<div class="code-wrap">
+  <div class="bar"><span class="dot r"></span><span class="dot y"></span><span class="dot g"></span>
+    <span class="name">同一件事：声明几个变量</span><span class="cp">复制</span></div>
+<pre><span class="hl-c">// C / C++ —— 每个变量都要写明类型</span>
+<span class="hl-k">int</span>    age  = 20;
+<span class="hl-k">double</span> pi   = 3.14;
+<span class="hl-k">char</span>   ch   = <span class="hl-s">'A'</span>;
+<span class="hl-k">bool</span>   ok   = <span class="hl-k">true</span>;
+
+<span class="hl-c">// JavaScript —— 一个 var 全搞定</span>
+<span class="hl-k">var</span> age  = 20;
+<span class="hl-k">var</span> pi   = 3.14;
+<span class="hl-k">var</span> ch   = <span class="hl-s">'A'</span>;
+<span class="hl-k">var</span> ok   = <span class="hl-k">true</span>;</pre>
+</div>
+
+<div class="card key">
+  <div class="card-t">「弱类型」是什么意思</div>
+  <p><b>变量的类型由它当前存的值决定，不由声明决定。</b>
+  <code>var</code> 自己看右边是什么就存什么。</p>
+  <p>更关键的是：<b>同一个变量可以先后装不同类型的东西</b> ——
+  在 C++ 里这是编译错误，在 JS 里完全合法。</p>
+</div>
+
+<div class="code-wrap">
+  <div class="bar"><span class="dot r"></span><span class="dot y"></span><span class="dot g"></span>
+    <span class="name">同一个变量，三种类型</span><span class="cp">复制</span></div>
+<pre><span class="hl-k">var</span> x = 1;            <span class="hl-c">// 现在是数字</span>
+x = <span class="hl-s">"hello"</span>;          <span class="hl-c">// 改成字符串 —— 合法</span>
+x = <span class="hl-k">true</span>;             <span class="hl-c">// 再改成布尔 —— 也合法</span>
+
+<span class="hl-c">// typeof 可以问它「现在是什么」</span>
+console.log(<span class="hl-k">typeof</span> x);    <span class="hl-c">// "boolean"</span></pre>
+</div>
+<div class="out-wrap">
+  <div class="cap">输出</div>
+<pre>boolean</pre>
+</div>
+
+<h3>弱类型带来的方便与代价</h3>
+
+<div class="alias">
+  <div class="row"><span class="k">方便</span>
+    <span class="v">少写一大堆类型声明。写个小脚本、调个页面，
+    不用先想清楚「这个到底该是 int 还是 long」</span></div>
+  <div class="row"><span class="k">方便</span>
+    <span class="v">不用管类型转换的细节 —— 需要的时候 JS 自己转</span></div>
+  <div class="row"><span class="k">代价</span>
+    <span class="v"><b>编译器不再帮你检查类型错误</b>。
+    C++ 里 <code>1 + "2"</code> 直接编译不过，JS 里它会给出一个
+    你意想不到的结果，而且不报错</span></div>
+</div>
+
+<div class="card warn">
+  <div class="card-t">代价的具体样子</div>
+  <div class="code-wrap">
+    <div class="bar"><span class="dot r"></span><span class="dot y"></span><span class="dot g"></span>
+      <span class="name">弱类型最容易踩的两个坑</span><span class="cp">复制</span></div>
+  <pre>console.log(1 + <span class="hl-s">"2"</span>);    <span class="hl-c">// "12"  —— 字符串拼接，不是加法</span>
+console.log(1 == <span class="hl-s">"1"</span>);   <span class="hl-c">// true  —— 只比值，不比较类型</span>
+console.log(1 === <span class="hl-s">"1"</span>);  <span class="hl-c">// false —— 全等：值和类型都要一样</span></pre>
+  </div>
+  <p><b>所以有一条规矩要一开始就养成：比较一律用 <code>===</code>，
+  不用 <code>==</code>。</b>（第 7 节还会再讲一次。）</p>
+</div>
+
+<div class="card tip">
+  <div class="card-t">还有一件事：JS 没有指针</div>
+  <p>C / C++ 里最难的 <code>&amp;</code>、<code>*</code>、内存管理，
+  <b>JS 里全都没有</b>。你拿不到变量的地址，也不用手动释放内存 ——
+  浏览器会自己回收不再使用的对象。</p>
+  <p>这是「语法更简单」里省掉的最大一块。</p>
+</div>
+
+<h2 id="s3"><span class="n">3</span>console.log：JS 的 printf</h2>
+
+<p>这是 JS 比 C / C++ 简单的<b>第二个原因</b>：<b>它不需要编译</b>。</p>
+
+<div class="card key">
+  <div class="card-t">两种语言从代码到运行，路径完全不同</div>
+  <div class="vs">
+  <table>
+  <thead><tr><th style="width:14%">步骤</th><th style="width:40%">C / C++</th><th>JavaScript</th></tr></thead>
+  <tbody>
+  <tr><td>①</td><td class="c">写代码</td><td class="c">写代码</td></tr>
+  <tr><td>②</td><td class="c"><b>编译</b>（还要链接）</td>
+      <td class="c"><b>— 没有这一步 —</b></td></tr>
+  <tr><td>③</td><td class="c">生成 .exe，再运行</td>
+      <td class="c">浏览器直接读源码执行</td></tr>
+  <tr><td>④</td><td class="c">改了要重新编译</td>
+      <td class="c">改了<b>刷新一下</b>就行</td></tr>
+  </tbody>
+  </table>
+  </div>
+</div>
+
+<p>所以你的开发循环从「改 → 编译 → 运行 → 看」缩短成了
+<b>「改 → 刷新 → 看」</b>。</p>
+
+<h3>解释执行还有一个表现：错误是「跑到那一行才报」</h3>
+
+<div class="code-wrap">
+  <div class="bar"><span class="dot r"></span><span class="dot y"></span><span class="dot g"></span>
+    <span class="name">没跑到就不报错</span><span class="cp">复制</span></div>
+<pre>console.log(<span class="hl-s">"第一行没问题"</span>);
+
+<span class="hl-c">// 下面这行的变量名拼错了（应该是 userName）</span>
+console.log(userNmae);
+
+console.log(<span class="hl-s">"这行不会执行"</span>);</pre>
+</div>
+<div class="out-wrap">
+  <div class="cap">控制台里的结果</div>
+<pre>第一行没问题
+Uncaught ReferenceError: userNmae is not defined
+    at demo.js:4</pre>
+</div>
+
+<div class="alias">
+  <div class="row"><span class="k">前面照常执行</span>
+    <span class="v">出错之前的代码<b>已经跑完了</b> —— 不像 C++ 在编译期就拦下来</span></div>
+  <div class="row"><span class="k">出错后面的不执行</span>
+    <span class="v">当前这段脚本从出错那一行起<b>停下</b>，后面的语句不再运行</span></div>
+  <div class="row"><span class="k">给出文件名和行号</span>
+    <span class="v">报错里带 <code>at 文件:行号</code>，
+    这是排查问题的第一手线索</span></div>
+</div>
+
+<div class="card tip">
+  <div class="card-t">所以第一件事是学会看控制台</div>
+  <p>按 <b>F12</b>（或右键 → 检查），切到 <b>Console</b> 面板。
+  页面「没反应」的时候，<b>先看这里有没有红字</b> ——
+  十有八九问题就写在上面。</p>
+</div>
+
+<h2 id="s4"><span class="n">4</span>解释性：改完刷新就见效</h2>
+
+<p>前面一直在用 <code>console.log</code>。这一节专门讲它，因为
+<b>它是你以后最常用的一个函数</b>。</p>
+
+<div class="card key">
+  <div class="card-t">等价关系</div>
+  <p><b>调试页面时，<code>console.log()</code> 就是 JS 里的 <code>printf()</code>。</b>
+  作用完全对等 —— 都是「把值打出来，让我看看现在是什么」。</p>
+  <table>
+  <thead><tr><th style="width:34%">你想做的事</th><th style="width:33%">C / C++</th><th>JS</th></tr></thead>
+  <tbody>
+  <tr><td>看一个变量的值</td><td class="c">printf("%d", x);</td>
+      <td class="c">console.log(x);</td></tr>
+  <tr><td>看一段文字</td><td class="c">printf("hello");</td>
+      <td class="c">console.log("hello");</td></tr>
+  <tr><td>看多个值</td><td class="c">printf("%d %d", a, b);</td>
+      <td class="c">console.log(a, b);</td></tr>
+  <tr><td>确认「跑到这里了」</td><td class="c">printf("here\n");</td>
+      <td class="c">console.log("here");</td></tr>
+  </tbody>
+  </table>
+  <p><b>最大的区别</b>：<code>printf</code> 要写格式符（<code>%d</code>、<code>%s</code>）
+  还得自己加 <code>\n</code>；<code>console.log</code>
+  <b>直接给什么就打什么</b>，多个值用逗号隔开，而且自动换行。</p>
+</div>
+
+<div class="code-wrap">
+  <div class="bar"><span class="dot r"></span><span class="dot y"></span><span class="dot g"></span>
+    <span class="name">console.log 的各种用法</span><span class="cp">复制</span></div>
+<pre><span class="hl-c">// 打印一个值</span>
+console.log(<span class="hl-s">"hello"</span>);
+
+<span class="hl-c">// 打印多个值（自动用空格隔开）—— 相当于 printf("%d %d", a, b)</span>
+console.log(<span class="hl-s">"x ="</span>, 10, <span class="hl-s">"y ="</span>, 20);
+
+<span class="hl-c">// 打印变量</span>
+<span class="hl-k">var</span> name = <span class="hl-s">"UME"</span>;
+console.log(name);
+
+<span class="hl-c">// 打印算式结果</span>
+console.log(1 + 2);
+
+<span class="hl-c">// 打印对象和数组（在控制台里可以点开看）</span>
+console.log({ a: 1, b: 2 });
+console.log([1, 2, 3]);</pre>
+</div>
+<div class="out-wrap">
+  <div class="cap">控制台里的输出</div>
+<pre>hello
+x = 10 y = 20
+UME
+3
+{a: 1, b: 2}
+[1, 2, 3]</pre>
+</div>
+
+<div class="card tip">
+  <div class="card-t">为什么调试不要用 alert</div>
+  <p><code>alert()</code> 会<b>打断页面</b>、必须点确定才能继续，
+  而且只能显示一段文字、不能打印对象。</p>
+  <p>调试一律用 <code>console.log</code>：不打断、能打印对象、能看历史记录。
+  <code>alert</code> 只适合「确认脚本有没有跑起来」这种一次性的检查
+  （第 9 节会讲）。</p>
+</div>
+
+<div class="card note">
+  <div class="card-t">console 还有别的成员</div>
+  <p>常用的还有
+  <code>console.warn()</code>（黄色警告）、
+  <code>console.error()</code>（红色错误）、
+  <code>console.table()</code>（把数组/对象打成表格）。</p>
+</div>
+
+<h2 id="s5"><span class="n">5</span>三种放进网页的方式</h2>
+
+<p>写完的 JS 得让浏览器知道去哪找。有三种放法。</p>
+
+<h3>① 行内（写在标签属性里）</h3>
+
+<div class="code-wrap">
+  <div class="bar"><span class="dot r"></span><span class="dot y"></span><span class="dot g"></span>
+    <span class="name">行内写法</span><span class="cp">复制</span></div>
+<pre><span class="hl-p">&lt;button</span> <span class="hl-f">onclick</span>=<span class="hl-s">"alert('你好')"</span><span class="hl-p">&gt;</span>点我<span class="hl-p">&lt;/button&gt;</span></pre>
+</div>
+
+<p>最短，但<b>不好维护</b>：行为和结构混在一起。适合「就试一下」的场合。</p>
+
+<h3>② 内联（写在 &lt;script&gt; 里）</h3>
+
+<div class="code-wrap">
+  <div class="bar"><span class="dot r"></span><span class="dot y"></span><span class="dot g"></span>
+    <span class="name">内联写法</span><span class="cp">复制</span></div>
+<pre><span class="hl-p">&lt;body&gt;</span>
+  <span class="hl-p">&lt;button</span> <span class="hl-f">id</span>=<span class="hl-s">"btn"</span><span class="hl-p">&gt;</span>点我<span class="hl-p">&lt;/button&gt;</span>
+
+  <span class="hl-p">&lt;script&gt;</span>
+    console.log(<span class="hl-s">"脚本跑起来了"</span>);
+    <span class="hl-c">// 后面第 10 节会在这个位置操作那个按钮</span>
+  <span class="hl-p">&lt;/script&gt;</span>
+<span class="hl-p">&lt;/body&gt;</span></pre>
+</div>
+
+<h3>③ 外联（单独的 .js 文件）—— 推荐</h3>
+
+<div class="code-wrap">
+  <div class="bar"><span class="dot r"></span><span class="dot y"></span><span class="dot g"></span>
+    <span class="name">外联写法</span><span class="cp">复制</span></div>
+<pre><span class="hl-c">&lt;!-- 在 HTML 里引进来 --&gt;</span>
+<span class="hl-p">&lt;script</span> <span class="hl-f">src</span>=<span class="hl-s">"demo.js"</span><span class="hl-p">&gt;&lt;/script&gt;</span></pre>
+</div>
+
+<div class="card key">
+  <div class="card-t">三种方式怎么选</div>
+  <table>
+  <thead><tr><th style="width:26%">方式</th><th style="width:30%">用在哪</th><th>说明</th></tr></thead>
+  <tbody>
+  <tr><td class="c">行内 onclick</td><td>试一下、临时演示</td><td>别用在正式代码里</td></tr>
+  <tr><td class="c">内联 &lt;script&gt;</td><td>只有这一页用的短脚本</td>
+      <td>本教程前几篇的示例用这种</td></tr>
+  <tr><td class="c">外联 .js</td><td><b>正式项目</b></td>
+      <td>能被浏览器缓存、能被多个页面共用</td></tr>
+  </tbody>
+  </table>
+  <p>和我们前面讲 CSS 时的结论一模一样：<b>能外联就外联</b>。
+  第 10 节就给一个完整的三文件项目。</p>
+</div>
+
+<div class="card warn">
+  <div class="card-t">脚本放的位置会影响你能不能拿到元素</div>
+  <p>浏览器是<b>从上往下</b>执行的。如果脚本写在 <code>&lt;head&gt;</code> 里，
+  而此时 <code>&lt;body&gt;</code> 还没被解析，那么
+  <code>document.getElementById("btn")</code> 会返回 <code>null</code> ——
+  <b>因为那个按钮还不存在</b>。</p>
+  <p>最省心的做法：<b>把 &lt;script&gt; 放在 &lt;/body&gt; 之前</b>，
+  此时页面上所有元素都已就绪。</p>
+</div>
+
+<h2 id="s6"><span class="n">6</span>JS 与 C / C++ 像在哪</h2>
+
+<p>这是「语法更简单」的具体体现：<b>你已经会的写法，大部分原样可用。</b></p>
+
+<h3>运算符与表达式</h3>
+
+<div class="code-wrap">
+  <div class="bar"><span class="dot r"></span><span class="dot y"></span><span class="dot g"></span>
+    <span class="name">运算符：一模一样</span><span class="cp">复制</span></div>
+<pre><span class="hl-k">var</span> a = 7, b = 3;
+
+a + b     <span class="hl-c">// 10</span>
+a - b     <span class="hl-c">// 4</span>
+a * b     <span class="hl-c">// 21</span>
+a / b     <span class="hl-c">// 2.333…  —— 注意：不是整除</span>
+a % b     <span class="hl-c">// 1</span>
+
+a++;   a--;              <span class="hl-c">// 自增自减</span>
+a += 5;   a *= 2;        <span class="hl-c">// 复合赋值</span>
+
+a &gt; b    a &lt;= b    a != b          <span class="hl-c">// 比较</span>
+a &gt; 0 &amp;&amp; b &gt; 0    !(a &gt; 0)        <span class="hl-c">// 逻辑</span></pre>
+</div>
+
+<p>这些运算符的<b>优先级和结合性也和 C / C++ 一致</b>，
+所以你在 C++ 里养成的直觉可以直接用。</p>
+
+<h3>if / else</h3>
+
+<div class="code-wrap">
+  <div class="bar"><span class="dot r"></span><span class="dot y"></span><span class="dot g"></span>
+    <span class="name">分支：连大括号的位置都一样</span><span class="cp">复制</span></div>
+<pre><span class="hl-k">var</span> score = 85;
+
+<span class="hl-k">if</span> (score &gt;= 90) {
+  console.log(<span class="hl-s">"优"</span>);
+} <span class="hl-k">else</span> <span class="hl-k">if</span> (score &gt;= 60) {
+  console.log(<span class="hl-s">"及格"</span>);
+} <span class="hl-k">else</span> {
+  console.log(<span class="hl-s">"不及格"</span>);
+}</pre>
+</div>
+<div class="out-wrap">
+  <div class="cap">输出</div>
+<pre>及格</pre>
+</div>
+
+<h3>for 与 while</h3>
+
+<div class="code-wrap">
+  <div class="bar"><span class="dot r"></span><span class="dot y"></span><span class="dot g"></span>
+    <span class="name">循环：基本一样</span><span class="cp">复制</span></div>
+<pre><span class="hl-k">for</span> (<span class="hl-k">var</span> i = 0; i &lt; 5; i++) {
+  console.log(i);
+}
+
+<span class="hl-k">var</span> n = 3;
+<span class="hl-k">while</span> (n &gt; 0) {
+  console.log(n);
+  n--;
+}</pre>
+</div>
+<div class="out-wrap">
+  <div class="cap">输出</div>
+<pre>0
+1
+2
+3
+4
+3
+2
+1</pre>
+</div>
+
+<h3>函数</h3>
+
+<div class="code-wrap">
+  <div class="bar"><span class="dot r"></span><span class="dot y"></span><span class="dot g"></span>
+    <span class="name">函数：两种写法都对</span><span class="cp">复制</span></div>
+<pre><span class="hl-c">// 写法一：和 C / C++ 最像 —— 只是参数也不用写类型</span>
+<span class="hl-k">function</span> add(a, b) {
+  <span class="hl-k">return</span> a + b;
+}
+
+<span class="hl-c">// 写法二：函数也是一种值，可以装进变量</span>
+<span class="hl-k">var</span> sub = <span class="hl-k">function</span> (a, b) {
+  <span class="hl-k">return</span> a - b;
+};
+
+console.log(add(3, 4));   <span class="hl-c">// 7</span>
+console.log(sub(3, 4));   <span class="hl-c">// -1</span></pre>
+</div>
+<div class="out-wrap">
+  <div class="cap">输出</div>
+<pre>7
+-1</pre>
+</div>
+
+<p>注意 C++ 的 <code>int add(int a, int b)</code> 在 JS 里
+<b>只剩 <code>function add(a, b)</code></b> —— 返回类型和参数类型都不用写。</p>
+
+<h3>数组</h3>
+
+<div class="code-wrap">
+  <div class="bar"><span class="dot r"></span><span class="dot y"></span><span class="dot g"></span>
+    <span class="name">数组：下标从 0 开始，一样</span><span class="cp">复制</span></div>
+<pre><span class="hl-k">var</span> nums = [10, 20, 30, 40];
+
+console.log(nums[0]);          <span class="hl-c">// 10</span>
+console.log(nums.length);      <span class="hl-c">// 4</span>
+nums[1] = 99;                  <span class="hl-c">// 直接改</span>
+
+<span class="hl-k">for</span> (<span class="hl-k">var</span> i = 0; i &lt; nums.length; i++) {
+  console.log(nums[i]);
+}</pre>
+</div>
+
+<div class="card key">
+  <div class="card-t">相似性小结</div>
+  <table>
+  <thead><tr><th style="width:36%">你在 C / C++ 里学的</th><th>JS 里怎么写</th></tr></thead>
+  <tbody>
+  <tr><td>变量声明</td><td class="c">var x = 1; &nbsp;（省掉类型）</td></tr>
+  <tr><td>算术 / 比较 / 逻辑运算符</td><td class="c">完全一样</td></tr>
+  <tr><td>if / else if / else</td><td class="c">完全一样</td></tr>
+  <tr><td>for / while</td><td class="c">完全一样</td></tr>
+  <tr><td>函数（参数、返回值）</td><td class="c">function f(a, b) { return …; }</td></tr>
+  <tr><td>数组与下标</td><td class="c">一样，下标从 0 开始</td></tr>
+  <tr><td>代码块用 { }</td><td class="c">一样</td></tr>
+  <tr><td>语句以 ; 结尾</td><td class="c">一样（但 JS 里可以省，不推荐省）</td></tr>
+  <tr><td>注释 // 与 /* */</td><td class="c">一样</td></tr>
+  </tbody>
+  </table>
+  <p><b>结论：语法层面你几乎没有新东西要学</b>，
+  而且每一处都<b>少写一点</b>（类型、返回类型、格式符）。</p>
+</div>
+<h2 id="s7"><span class="n">7</span>和 C / C++ 不一样的地方</h2>
+
+<p>相似的地方很多，但有几处<b>必须改掉 C++ 的习惯</b>。</p>
+
+<h3>① 相等：用 === 而不是 ==</h3>
+
+<p>第 2 节已经提过，这里说清原因。</p>
+
+<div class="code-wrap">
+  <div class="bar"><span class="dot r"></span><span class="dot y"></span><span class="dot g"></span>
+    <span class="name">== 会偷偷转换类型</span><span class="cp">复制</span></div>
+<pre>1 == <span class="hl-s">"1"</span>              <span class="hl-c">// true   == 先把两边转成同一类型再比</span>
+1 === <span class="hl-s">"1"</span>             <span class="hl-c">// false  === 值和类型都要一样</span>
+
+0 == <span class="hl-s">""</span>               <span class="hl-c">// true</span>
+0 == <span class="hl-k">false</span>            <span class="hl-c">// true</span>
+<span class="hl-k">null</span> == <span class="hl-k">undefined</span>      <span class="hl-c">// true</span></pre>
+</div>
+
+<div class="card warn">
+  <div class="card-t">这一条记死</div>
+  <p><b>比较一律用 <code>===</code> 和 <code>!==</code>，
+  永远不用 <code>==</code> 和 <code>!=</code>。</b></p>
+  <p>在 C++ 里 <code>==</code> 就是「相等」，很安全；
+  在 JS 里 <code>==</code> 带着一堆隐式转换规则，<b>是 bug 的常见来源</b>。</p>
+</div>
+
+<h3>② 加号 + 有两种意思</h3>
+
+<div class="code-wrap">
+  <div class="bar"><span class="dot r"></span><span class="dot y"></span><span class="dot g"></span>
+    <span class="name">+ 是加法还是拼接，看两边是什么</span><span class="cp">复制</span></div>
+<pre>1 + 2          <span class="hl-c">// 3     两个数字 → 加法</span>
+<span class="hl-s">"a"</span> + <span class="hl-s">"b"</span>      <span class="hl-c">// "ab"  两个字符串 → 拼接</span>
+1 + <span class="hl-s">"2"</span>        <span class="hl-c">// "12"  只要有一个是字符串 → 拼接！</span>
+<span class="hl-s">"3"</span> - 1        <span class="hl-c">// 2     减号没有拼接含义，会转成数字</span>
+<span class="hl-s">"3"</span> * <span class="hl-s">"4"</span>      <span class="hl-c">// 12    乘号同理</span></pre>
+</div>
+
+<p>这是弱类型的直接后果：<b>同一个运算符，结果由操作数的类型决定。</b>
+第 9 节的 <code>prompt</code> 就会踩到这个坑。</p>
+
+<h3>③ 没有指针，也没有手动内存管理</h3>
+
+<p>JS 里<b>拿不到变量的地址</b>。对象默认就是「引用语义」，
+但你看不见也管不了那个引用 —— 没有 <code>&amp;</code>，也没有 <code>*</code>。</p>
+
+<div class="code-wrap">
+  <div class="bar"><span class="dot r"></span><span class="dot y"></span><span class="dot g"></span>
+    <span class="name">对象是引用、基本类型是值</span><span class="cp">复制</span></div>
+<pre><span class="hl-k">var</span> a = { n: 1 };
+<span class="hl-k">var</span> b = a;          <span class="hl-c">// b 和 a 指向同一个对象</span>
+
+b.n = 99;
+console.log(a.n);     <span class="hl-c">// 99 —— a 也变了</span>
+
+<span class="hl-c">// 但数字、字符串是「值」语义</span>
+<span class="hl-k">var</span> p = 1, q = p;
+q = 99;
+console.log(p);       <span class="hl-c">// 1 —— 没变</span></pre>
+</div>
+<div class="out-wrap">
+  <div class="cap">输出</div>
+<pre>99
+1</pre>
+</div>
+
+<p>这个区别和 C++ 里「传对象引用会改到本体、传 <code>int</code> 不会」
+是同一个道理 —— 只是 JS <b>不让你选</b>，它按类型自动决定。</p>
+
+<h3>④ 数组不是固定长度的</h3>
+
+<div class="code-wrap">
+  <div class="bar"><span class="dot r"></span><span class="dot y"></span><span class="dot g"></span>
+    <span class="name">数组：想加就加</span><span class="cp">复制</span></div>
+<pre><span class="hl-k">var</span> arr = [1, 2, 3];
+
+arr.push(4);            <span class="hl-c">// 末尾追加 → [1, 2, 3, 4]</span>
+arr.pop();              <span class="hl-c">// 删掉末尾 → [1, 2, 3]</span>
+arr.unshift(0);         <span class="hl-c">// 开头插入 → [0, 1, 2, 3]</span>
+
+console.log(arr.length);   <span class="hl-c">// 4</span></pre>
+</div>
+
+<p>没有 <code>sizeof</code>，也没有「容量」的概念 —— 长度随时可变。</p>
+
+<h2 id="s8"><span class="n">8</span>var / let / const</h2>
+
+<p>JS 里声明变量有三种写法。这一节说清它们的区别。</p>
+
+<div class="code-wrap">
+  <div class="bar"><span class="dot r"></span><span class="dot y"></span><span class="dot g"></span>
+    <span class="name">var 会「漏」出代码块</span><span class="cp">复制</span></div>
+<pre><span class="hl-k">if</span> (<span class="hl-k">true</span>) {
+  <span class="hl-k">var</span> leaked = <span class="hl-s">"我漏出来了"</span>;
+}
+console.log(leaked);     <span class="hl-c">// "我漏出来了" —— var 不受 { } 限制</span>
+
+<span class="hl-k">if</span> (<span class="hl-k">true</span>) {
+  <span class="hl-k">let</span> scoped = <span class="hl-s">"我出不去"</span>;
+}
+<span class="hl-c">// console.log(scoped);   ← 报错：scoped is not defined</span></pre>
+</div>
+
+<div class="card key">
+  <div class="card-t">三种声明怎么选</div>
+  <table>
+  <thead><tr><th style="width:18%">写法</th><th style="width:30%">作用域</th><th>什么时候用</th></tr></thead>
+  <tbody>
+  <tr><td class="c">var</td><td><b>函数</b>作用域，会漏出 { }</td>
+      <td>老代码里到处都是；新代码<b>别再用</b></td></tr>
+  <tr><td class="c">let</td><td>块作用域，和 C++ 一样</td>
+      <td>需要改变的变量</td></tr>
+  <tr><td class="c">const</td><td>块作用域，且<b>不能重新赋值</b></td>
+      <td><b>默认就写 const</b>，确实要改时再换 let</td></tr>
+  </tbody>
+  </table>
+  <p>本教程为了和旧代码接轨，示例里用 <code>var</code>；
+  你自己写新代码时，<b>优先 <code>const</code>，其次 <code>let</code></b>。</p>
+</div>
+
+<h3>const 不能重新赋值</h3>
+
+<div class="code-wrap">
+  <div class="bar"><span class="dot r"></span><span class="dot y"></span><span class="dot g"></span>
+    <span class="name">const 锁的是变量，不是内容</span><span class="cp">复制</span></div>
+<pre><span class="hl-k">const</span> PI = 3.14;
+<span class="hl-c">// PI = 3.15;      ← 报错：Assignment to constant variable.</span>
+
+<span class="hl-k">const</span> arr = [1, 2, 3];
+arr.push(4);            <span class="hl-c">// 合法！arr 仍然指向同一个数组</span>
+<span class="hl-c">// arr = [9];           ← 报错：不能让它指向别的数组</span>
+
+console.log(arr);       <span class="hl-c">// [1, 2, 3, 4]</span></pre>
+</div>
+
+<div class="card warn">
+  <div class="card-t">这一点和 C++ 的 const 不同</div>
+  <p>C++ 里 <code>const std::vector&lt;int&gt; v</code> 之后，
+  <code>v.push_back()</code> 是<b>编译错误</b> —— const 会传到对象内部。</p>
+  <p>JS 里 <code>const arr = []</code> 只保证<b>变量不重新赋值</b>，
+  <b>不影响对象内容</b>。想冻结内容要用 <code>Object.freeze()</code>。</p>
+</div>
+<h2 id="s9"><span class="n">9</span>alert 与 prompt</h2>
+
+<p>这两个是浏览器提供的「弹窗」函数。它们很土，但<b>写一行就能看到效果</b> ——
+适合拿来确认「我的脚本真的跑起来了」。</p>
+
+<h3>alert：只显示，不返回东西</h3>
+
+<div class="code-wrap">
+  <div class="bar"><span class="dot r"></span><span class="dot y"></span><span class="dot g"></span>
+    <span class="name">alert 的用法</span><span class="cp">复制</span></div>
+<pre><span class="hl-p">&lt;script&gt;</span>
+  alert(<span class="hl-s">"脚本跑起来了"</span>);
+
+  <span class="hl-k">var</span> n = 3;
+  alert(<span class="hl-s">"n 的值是 "</span> + n);
+
+  <span class="hl-c">// 换行用 \n —— 和 printf 一样</span>
+  alert(<span class="hl-s">"第一行\n第二行"</span>);
+<span class="hl-p">&lt;/script&gt;</span></pre>
+</div>
+
+<div class="card warn">
+  <div class="card-t">alert 会「卡住」页面</div>
+  <p>弹出期间，<b>整个页面停止响应</b> —— 后面的代码不会执行，动画也停。
+  所以它只适合调试，<b>正式项目里不要用</b>。</p>
+</div>
+
+<h3>prompt：向用户要一个输入</h3>
+
+<div class="code-wrap">
+  <div class="bar"><span class="dot r"></span><span class="dot y"></span><span class="dot g"></span>
+    <span class="name">输入 → 处理 → 输出</span><span class="cp">复制</span></div>
+<pre><span class="hl-p">&lt;script&gt;</span>
+  <span class="hl-k">var</span> name = prompt(<span class="hl-s">"你叫什么名字？"</span>);
+  alert(<span class="hl-s">"你好，"</span> + name);
+<span class="hl-p">&lt;/script&gt;</span></pre>
+</div>
+
+<div class="card key">
+  <div class="card-t">prompt 的返回值：三种情况</div>
+  <table>
+  <thead><tr><th style="width:32%">用户动作</th><th>返回什么</th></tr></thead>
+  <tbody>
+  <tr><td>输入了内容，点「确定」</td><td class="c">"UME" &nbsp;（字符串）</td></tr>
+  <tr><td>什么都没输入，点「确定」</td><td class="c">"" &nbsp;（空字符串）</td></tr>
+  <tr><td>点「取消」或按 Esc</td><td class="c">null</td></tr>
+  </tbody>
+  </table>
+</div>
+
+<div class="card warn">
+  <div class="card-t">最容易踩的坑：prompt 返回的永远是字符串</div>
+  <p>即使用户输入 <code>7</code>，拿到的也是<b>字符串</b> <code>"7"</code>。</p>
+  <p>于是 <code>input + 1</code> 会得到 <code>"71"</code>（拼接），不是 <code>8</code>。
+  必须先 <code>Number(input)</code> 转一下。</p>
+  <p><b>这正是第 7 节「+ 有两种意思」在现实里的后果。</b></p>
+</div>
+
+<div class="code-wrap">
+  <div class="bar"><span class="dot r"></span><span class="dot y"></span><span class="dot g"></span>
+    <span class="name">完整例子：判断 + 类型转换</span><span class="cp">复制</span></div>
+<pre><span class="hl-p">&lt;script&gt;</span>
+  <span class="hl-k">var</span> input = prompt(<span class="hl-s">"请输入一个数字："</span>);
+
+  <span class="hl-c">// ① 判断用户有没有取消</span>
+  <span class="hl-k">if</span> (input === <span class="hl-k">null</span>) {
+    alert(<span class="hl-s">"你取消了"</span>);
+  } <span class="hl-k">else</span> {
+    <span class="hl-c">// ② prompt 返回的是字符串，做算术要先转数字</span>
+    <span class="hl-k">var</span> n = Number(input);
+
+    <span class="hl-c">// ③ NaN = Not a Number，用来判断转成功没有</span>
+    <span class="hl-k">if</span> (isNaN(n)) {
+      alert(<span class="hl-s">"这不是一个数字"</span>);
+    } <span class="hl-k">else</span> {
+      alert(<span class="hl-s">"它的两倍是 "</span> + (n * 2));
+    }
+  }
+<span class="hl-p">&lt;/script&gt;</span></pre>
+</div>
+
+<h3>串起来：猜数字</h3>
+
+<div class="code-wrap">
+  <div class="bar"><span class="dot r"></span><span class="dot y"></span><span class="dot g"></span>
+    <span class="name">猜数字（约 20 行）</span><span class="cp">复制</span></div>
+<pre><span class="hl-p">&lt;script&gt;</span>
+  <span class="hl-k">var</span> secret = 42;
+  <span class="hl-k">var</span> tries  = 0;
+
+  <span class="hl-k">while</span> (<span class="hl-k">true</span>) {
+    <span class="hl-k">var</span> raw = prompt(<span class="hl-s">"猜一个 1~100 的数字："</span>);
+    <span class="hl-k">if</span> (raw === <span class="hl-k">null</span>) { alert(<span class="hl-s">"放弃了？"</span>); <span class="hl-k">break</span>; }
+
+    <span class="hl-k">var</span> g = Number(raw);
+    <span class="hl-k">if</span> (isNaN(g)) { alert(<span class="hl-s">"请输入数字"</span>); <span class="hl-k">continue</span>; }
+
+    tries++;
+
+    <span class="hl-k">if</span> (g &gt; secret)      alert(<span class="hl-s">"大了"</span>);
+    <span class="hl-k">else</span> <span class="hl-k">if</span> (g &lt; secret) alert(<span class="hl-s">"小了"</span>);
+    <span class="hl-k">else</span> {
+      alert(<span class="hl-s">"猜对了！用了 "</span> + tries + <span class="hl-s">" 次"</span>);
+      <span class="hl-k">break</span>;
+    }
+  }
+<span class="hl-p">&lt;/script&gt;</span></pre>
+</div>
+
+<p>这一段里 <code>while</code>、<code>if / else</code>、<code>break</code>、
+<code>continue</code>、变量自增全是<b>你已经会的写法</b>。
+新的只有 <code>prompt</code> / <code>alert</code> / <code>Number</code> /
+<code>isNaN</code> 这几个名字。</p>
+<h2 id="s10"><span class="n">10</span>动手做：三文件小项目</h2>
+
+<p>最后一步：<b>把 HTML、CSS、JS 分成三个文件，做成一个真正的小项目。</b></p>
+
+<div class="card key">
+  <div class="card-t">三步走</div>
+  <ol>
+  <li>新建一个文件夹（例如 <code>myproject</code>）。</li>
+  <li>在里面新建 <b>三个文件</b>：<code>demo.html</code>、<code>demo.css</code>、<code>demo.js</code>。</li>
+  <li>把下面三段代码分别抄进去，保存，然后<b>双击 demo.html</b>。</li>
+  </ol>
+  <p><b>三个文件必须在同一个目录下</b> —— 因为 HTML 里是用
+  <code>"demo.css"</code> 这样的<b>相对路径</b>去找它们的。</p>
+</div>
+
+<div class="mem">
+  <div class="slot"><div class="a">文件夹</div><div class="n">myproject\</div></div>
+  <div class="slot"><div class="a">结构</div><div class="n">demo.html</div></div>
+  <div class="slot"><div class="a">样式</div><div class="n">demo.css</div></div>
+  <div class="slot"><div class="a">行为</div><div class="n">demo.js</div></div>
+</div>
+
+<h3>文件一：demo.html</h3>
+
+<p>注意两件事：<b>CSS 用 <code>&lt;link&gt;</code> 引入</b>，
+<b>JS 用 <code>&lt;script src="…"&gt;</code> 引入</b>，
+而且 <code>&lt;script&gt;</code> 放在 <code>&lt;/body&gt;</code> <b>之前</b>
+（这样脚本执行时按钮已经存在）。</p>
+
+<div class="code-wrap">
+  <div class="bar"><span class="dot r"></span><span class="dot y"></span><span class="dot g"></span>
+    <span class="name">demo.html</span><span class="cp">复制</span></div>
+<pre><span class="hl-p">&lt;!DOCTYPE html&gt;</span>
+<span class="hl-p">&lt;html</span> <span class="hl-f">lang</span>=<span class="hl-s">"zh-CN"</span><span class="hl-p">&gt;</span>
+<span class="hl-p">&lt;head&gt;</span>
+  <span class="hl-p">&lt;meta</span> <span class="hl-f">charset</span>=<span class="hl-s">"utf-8"</span><span class="hl-p">&gt;</span>
+  <span class="hl-p">&lt;title&gt;</span>我的第一个小项目<span class="hl-p">&lt;/title&gt;</span>
+
+  <span class="hl-c">&lt;!-- ① 引入样式 --&gt;</span>
+  <span class="hl-p">&lt;link</span> <span class="hl-f">rel</span>=<span class="hl-s">"stylesheet"</span> <span class="hl-f">href</span>=<span class="hl-s">"demo.css"</span><span class="hl-p">&gt;</span>
+<span class="hl-p">&lt;/head&gt;</span>
+<span class="hl-p">&lt;body&gt;</span>
+
+  <span class="hl-p">&lt;h1&gt;</span>你好，JS<span class="hl-p">&lt;/h1&gt;</span>
+  <span class="hl-p">&lt;p</span> <span class="hl-f">id</span>=<span class="hl-s">"msg"</span><span class="hl-p">&gt;</span>这行字等一下会被脚本改掉<span class="hl-p">&lt;/p&gt;</span>
+  <span class="hl-p">&lt;button</span> <span class="hl-f">id</span>=<span class="hl-s">"btn"</span><span class="hl-p">&gt;</span>点我<span class="hl-p">&lt;/button&gt;</span>
+
+  <span class="hl-c">&lt;!-- ② 引入脚本。放在 &lt;/body&gt; 之前，元素都已存在 --&gt;</span>
+  <span class="hl-p">&lt;script</span> <span class="hl-f">src</span>=<span class="hl-s">"demo.js"</span><span class="hl-p">&gt;&lt;/script&gt;</span>
+<span class="hl-p">&lt;/body&gt;</span>
+<span class="hl-p">&lt;/html&gt;</span></pre>
+</div>
+
+<h3>文件二：demo.css</h3>
+
+<div class="code-wrap">
+  <div class="bar"><span class="dot r"></span><span class="dot y"></span><span class="dot g"></span>
+    <span class="name">demo.css</span><span class="cp">复制</span></div>
+<pre>body {
+  margin: 40px;
+  font-family: sans-serif;
+  color: #222;
+}
+
+h1 {
+  color: #7c3aed;
+}
+
+#msg {
+  font-size: 18px;
+  padding: 10px 14px;
+  background: #f3f0ff;
+  border-left: 4px solid #7c3aed;
+}
+
+button {
+  margin-top: 12px;
+  padding: 8px 18px;
+  font-size: 15px;
+  color: #fff;
+  background: #7c3aed;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+}</pre>
+</div>
+
+<h3>文件三：demo.js</h3>
+
+<p>这个脚本做三件事，正好把这一篇的东西串一遍：
+<b>打印日志</b>、<b>改页面上的文字和样式</b>、<b>响应按钮点击</b>。</p>
+
+<div class="code-wrap">
+  <div class="bar"><span class="dot r"></span><span class="dot y"></span><span class="dot g"></span>
+    <span class="name">demo.js</span><span class="cp">复制</span></div>
+<pre><span class="hl-c">// ① 先确认脚本加载成功 —— console.log 就是 JS 的 printf</span>
+console.log(<span class="hl-s">"demo.js 已加载"</span>);
+
+<span class="hl-c">// ② 找到页面上那两个元素</span>
+<span class="hl-k">var</span> msg = document.getElementById(<span class="hl-s">"msg"</span>);
+<span class="hl-k">var</span> btn = document.getElementById(<span class="hl-s">"btn"</span>);
+
+<span class="hl-c">// ③ 页面一打开，就改掉那段文字和它的颜色</span>
+msg.textContent = <span class="hl-s">"这行字已经被 JS 改过了"</span>;
+msg.style.color = <span class="hl-s">"#7c3aed"</span>;
+
+<span class="hl-c">// ④ 给按钮绑一个点击动作</span>
+<span class="hl-k">var</span> count = 0;
+
+btn.onclick = <span class="hl-k">function</span> () {
+  count++;
+  msg.textContent = <span class="hl-s">"你点了 "</span> + count + <span class="hl-s">" 次"</span>;
+  console.log(<span class="hl-s">"点击次数："</span>, count);
+};</pre>
+</div>
+
+<div class="out-wrap">
+  <div class="cap">打开 demo.html 之后应该看到</div>
+<pre>页面上：
+  · 紫色的「你好，JS」标题
+  · 一段浅紫底、左边有紫竖线的文字，内容是
+      「这行字已经被 JS 改过了」   ← 脚本改的，不是 HTML 里写的原话
+  · 一个紫色圆角按钮「点我」
+  · 点一次按钮，那段文字变成「你点了 1 次」，再点变 2 次……
+
+按 F12 打开控制台：
+  demo.js 已加载
+  点击次数： 1
+  点击次数： 2</pre>
+</div>
+
+<div class="card tip">
+  <div class="card-t">怎么确认它真的生效了</div>
+  <table>
+  <thead><tr><th style="width:40%">现象</th><th>说明</th></tr></thead>
+  <tbody>
+  <tr><td>标题是紫色的</td><td><code>demo.css</code> 加载成功</td></tr>
+  <tr><td>文字是「被 JS 改过了」</td><td><code>demo.js</code> 加载成功</td></tr>
+  <tr><td>控制台有「demo.js 已加载」</td><td>脚本确实跑到了第一行</td></tr>
+  <tr><td>点按钮数字在涨</td><td>事件绑定成功，变量能累加</td></tr>
+  </tbody>
+  </table>
+</div>
+
+<div class="card warn">
+  <div class="card-t">如果没效果，按这个顺序查</div>
+  <ol>
+  <li><b>先看控制台有没有红字。</b>报错会写清楚是哪个文件的第几行。</li>
+  <li><b>确认三个文件在同一个目录下</b>，而且文件名拼写完全一致
+  （是 <code>demo.js</code> 不是 <code>Demo.js</code>；
+  Windows 不区分大小写，但传到服务器就会出问题）。</li>
+  <li><b>确认 <code>&lt;link&gt;</code> 和 <code>&lt;script&gt;</code> 的路径对</b>：
+  同目录下直接写文件名即可，不要写成 <code>C:\…</code> 这样的绝对路径。</li>
+  <li><b>确认 <code>&lt;script&gt;</code> 在 <code>&lt;/body&gt;</code> 之前。</b>
+  放到 <code>&lt;head&gt;</code> 里会因为按钮还不存在而失败。</li>
+  <li>改完记得<b>保存文件再刷新浏览器</b>。</li>
+  </ol>
+</div>
+
+<div class="card note">
+  <div class="card-t">这个结构就是真实项目的样子</div>
+  <p>你已经见过的三层分工，现在变成了三个文件：</p>
+  <table>
+  <thead><tr><th style="width:22%">文件</th><th style="width:22%">语言</th><th>负责</th></tr></thead>
+  <tbody>
+  <tr><td class="c">demo.html</td><td class="c">HTML</td><td>有什么东西</td></tr>
+  <tr><td class="c">demo.css</td><td class="c">CSS</td><td>长什么样</td></tr>
+  <tr><td class="c">demo.js</td><td class="c">JS</td><td>做什么</td></tr>
+  </tbody>
+  </table>
+  <p>真实项目无非是这三个文件变多、分到子目录里。
+  <b>把这一篇的三文件跑通，你就已经会「组织」一个网页项目了。</b></p>
+</div>
+
+<h2 id="s11"><span class="n">11</span>一页速查</h2>
+
+<h3>JS 比 C / C++ 简单在哪</h3>
+
+<table>
+<thead><tr><th style="width:26%">特点</th><th>含义</th></tr></thead>
+<tbody>
+<tr><td><b>弱类型</b></td><td>不用写类型；同一个变量可以先后装不同类型</td></tr>
+<tr><td><b>解释性</b></td><td>不用编译，改完刷新就见效；错误在跑到那一行时才报</td></tr>
+<tr><td><b>没有指针</b></td><td>没有 <code>&amp;</code> 和 <code>*</code>，也不用手动释放内存</td></tr>
+<tr><td><b>语法接近 C</b></td><td><code>if</code> / <code>for</code> / <code>while</code> /
+    <code>function</code> / 运算符 / 注释都一样</td></tr>
+</tbody>
+</table>
+
+<h3>三种引入方式</h3>
+
+<table>
+<thead><tr><th style="width:26%">方式</th><th>写法</th></tr></thead>
+<tbody>
+<tr><td>行内</td><td class="c">&lt;button onclick="alert('hi')"&gt;</td></tr>
+<tr><td>内联</td><td class="c">&lt;script&gt; … &lt;/script&gt;</td></tr>
+<tr><td><b>外联</b></td><td class="c">&lt;script src="demo.js"&gt;&lt;/script&gt;</td></tr>
+</tbody>
+</table>
+
+<p>脚本放在 <code>&lt;/body&gt;</code> 之前最省心。</p>
+
+<h3>与 C / C++ 的对照</h3>
+
+<table>
+<thead><tr><th style="width:28%">项目</th><th style="width:34%">C / C++</th><th>JS</th></tr></thead>
+<tbody>
+<tr><td>变量</td><td class="c">int x = 1;</td><td class="c">var x = 1;</td></tr>
+<tr><td>输出 / 调试</td><td class="c">printf / cout</td><td class="c">console.log()</td></tr>
+<tr><td>编译</td><td class="c">必须编译链接</td><td class="c"><b>不需要</b></td></tr>
+<tr><td>运算符</td><td class="c">+ - * / % &amp;&amp; || !</td><td class="c">完全一样</td></tr>
+<tr><td>相等</td><td class="c">==</td><td class="c"><b>===</b>（不要用 ==）</td></tr>
+<tr><td>分支 / 循环</td><td class="c">if / for / while</td><td class="c">完全一样</td></tr>
+<tr><td>函数</td><td class="c">int f(int a)</td><td class="c">function f(a)</td></tr>
+<tr><td>数组长度</td><td class="c">sizeof(arr)/sizeof(arr[0])</td><td class="c">arr.length</td></tr>
+<tr><td>指针</td><td class="c">&amp; 和 *</td><td class="c"><b>没有</b></td></tr>
+<tr><td>内存释放</td><td class="c">new / delete</td><td class="c">不用管（自动回收）</td></tr>
+<tr><td>类型</td><td class="c">写死，编译期检查</td><td class="c">动态，运行期才对</td></tr>
+</tbody>
+</table>
+
+<h3>本篇出现的函数</h3>
+
+<table>
+<thead><tr><th style="width:34%">函数</th><th>作用</th></tr></thead>
+<tbody>
+<tr><td class="c">console.log(x)</td><td>往控制台打印 —— <b>JS 的 printf，调试首选</b></td></tr>
+<tr><td class="c">typeof x</td><td>问一个变量现在是什么类型</td></tr>
+<tr><td class="c">alert(msg)</td><td>弹一个提示框（会卡住页面，只用于调试）</td></tr>
+<tr><td class="c">prompt(msg)</td><td>弹一个输入框，返回<b>字符串</b>或 <code>null</code></td></tr>
+<tr><td class="c">Number(x)</td><td>把字符串转成数字</td></tr>
+<tr><td class="c">isNaN(x)</td><td>判断「是不是不是数字」—— 检查转换是否成功</td></tr>
+<tr><td class="c">document.getElementById(id)</td><td>按 id 找到页面上的元素</td></tr>
+</tbody>
+</table>
+
+<div class="mnemonic">
+  <b>五句话记住这一篇：</b><br>
+  ① <b>HTML 骨架、CSS 外观、JS 行为</b> —— 三者分工不同。<br>
+  ② <b>JS 是弱类型的</b> —— 不用写类型，但也就没有编译期类型检查，
+  所以比较一律用 <code>===</code>。<br>
+  ③ <b>JS 是解释性的</b> —— 不用编译，改完刷新就见效；
+  出错在跑到那一行时才报，所以第一件事是学会看控制台。<br>
+  ④ <b>语法比 C / C++ 简单</b> —— 运算符、if、for、函数、数组都能直接迁移，
+  而且没有指针、不用管内存。<br>
+  ⑤ <b><code>console.log</code> 就是 JS 的 <code>printf</code></b>；
+  把它和 <code>alert</code> / <code>prompt</code> 用熟，
+  再把第 10 节那三个文件跑通，就可以往下走了。
+</div>

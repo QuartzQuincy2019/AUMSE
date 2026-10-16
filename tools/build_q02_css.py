@@ -60,6 +60,40 @@ EXTRA = """
 .mem .slot:last-child{border-right:0}
 .mem .slot .a{font-family:var(--mono);color:var(--fg-3);font-size:11.5px}
 .mem .slot .n{font-family:var(--mono);font-weight:700;color:var(--fg-2)}
+
+/* 两份代码并排对照（左边「复制的代价」，右边「引用的做法」） */
+.two{margin:18px 0;display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.two .side{border:1px solid var(--line-2);border-radius:11px;overflow:hidden;
+  background:var(--sfc)}
+.two .side .hd{padding:8px 13px;font-size:12.5px;font-weight:700;
+  color:var(--fg-2);background:var(--bg-soft);
+  border-bottom:1px solid var(--line-2)}
+.two .side .hd.bad{color:#b4232f}
+.two .side .hd.good{color:#0a6b52}
+.two .side pre{margin:0;padding:11px 13px;overflow:auto;
+  font-family:var(--mono);font-size:12.5px;line-height:1.75;
+  background:#1d1530;color:#e8e3f5}
+.two .side pre code{background:none;color:inherit}
+@media (max-width:720px){.two{grid-template-columns:1fr}}
+
+/* 「三步走」流程：绑定 → 存地址 → 自动解引用 */
+.steps{margin:16px 0;display:flex;flex-wrap:wrap;gap:0;align-items:stretch}
+.steps .st{flex:1 1 150px;padding:11px 13px;border:1px solid var(--line-2);
+  border-right:0;background:var(--sfc);font-size:13px;line-height:1.65}
+.steps .st:first-child{border-radius:9px 0 0 9px}
+.steps .st:last-child{border-right:1px solid var(--line-2);
+  border-radius:0 9px 9px 0}
+.steps .st .i{display:inline-block;min-width:18px;height:18px;line-height:18px;
+  margin-right:6px;border-radius:5px;text-align:center;
+  font:700 11px/18px var(--mono);background:var(--s-main,#0f9d76);color:#fff}
+.steps .st .t{font-weight:700;color:var(--fg-2);display:block;margin-bottom:3px}
+@media (max-width:720px){
+  .steps{display:block}
+  .steps .st{border-right:1px solid var(--line-2);border-bottom:0;border-radius:0}
+  .steps .st:first-child{border-radius:9px 9px 0 0}
+  .steps .st:last-child{border-bottom:1px solid var(--line-2);
+    border-radius:0 0 9px 9px}
+}
 """
 
 

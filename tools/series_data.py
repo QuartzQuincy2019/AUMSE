@@ -140,6 +140,8 @@ PAGES = [
      "E", "E01", "递归", "函数自己调用自己", False),
     ("08-e02-batch-and-cmd.html",     "e02-batch-and-cmd.html",
      "E", "E02", "批处理与命令提示符进阶", "把命令写成 .bat 一键重跑，接上 node / npm / python", False),
+    ("e03-syntactic-sugar.html",      "e03-syntactic-sugar.html",
+     "E", "E03", "语法糖", "arr[i] 与 arr[i][j] 背后的东西；跨语言的概念", False),
 
     # ---- F：文件操作基础 ----
     ("08-f01-command-prompt.html",    "f01-command-prompt.html",
@@ -181,6 +183,7 @@ FE_PAGES = [
     ("fe-05.html",     "FE-05",     "Display 与盒模型尺寸",           "block / inline-block / inline、边框、阴影、宽高", "CSS", False),
     ("fe-06.html",     "FE-06",     "Writing Mode 与溢出滚动",        "重点：writing-mode、word-break",             "CSS",  True),
     ("fe-07.html",     "FE-07",     "鼠标悬停与 transition",          "hover、过渡、缓动、常用动效",                "CSS",  False),
+    ("fe-08.html",     "FE-08",     "JavaScript 语法初步",           "与 C/C++ 的相似性、console.log / var / alert / prompt", "JS", False),
 ]
 
 # ---------------------------------------------------------------- 派生量

@@ -59,6 +59,7 @@
 
     { f: 'e01-recursion.html',      n: 'E01', t: '递归',                       s: 'E' },
     { f: 'e02-batch-and-cmd.html',  n: 'E02', t: '批处理与命令提示符进阶',       s: 'E' },
+    { f: 'e03-syntactic-sugar.html', n: 'E03', t: '语法糖', s: 'E' },
 
     { f: 'f01-command-prompt.html', n: 'F01', t: '命令提示符（cmd）初步',       s: 'F' },
     { f: 'f02-paths-and-env.html',  n: 'F02', t: '相对文件路径与宏',            s: 'F' },
@@ -73,6 +74,7 @@
     { f: 'fe-05.html', n: 'FE-05', t: 'Display 与盒模型尺寸', s: 'FE' },
     { f: 'fe-06.html', n: 'FE-06', t: 'Writing Mode 与溢出滚动', s: 'FE' },
     { f: 'fe-07.html', n: 'FE-07', t: '鼠标悬停与 transition', s: 'FE' },
+    { f: 'fe-08.html', n: 'FE-08', t: 'JavaScript 语法初步', s: 'FE' },
 
     /* 相关 R：背景知识与实用工具，配色走 series-theme 的红色主题。
        注意：这一段必须留在数组里，否则 R 篇的页尾导航会是空的 ——
