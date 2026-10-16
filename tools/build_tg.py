@@ -168,43 +168,54 @@ TAIL_D = ""
 # ---------------------------------------------------------------------
 # 需求（用户指定，浅色模式）：
 #     CSS  天蓝色底 + 白字        HTML 橙红色底 + 白字
-#     JS   黄色底   + 白字        C++  深蓝色底 + 白字
-#     C    蓝紫色底 + 白字
+#     C++  深蓝色底 + 白字        C    蓝紫色底 + 白字
+#     JS   黄底 + 深字 —— 见下面「为什么 JS 是唯一深字的」
 #
-# 为什么色值比「标准色」暗
-#     纯正的黄（#eab308）配白字只有 1.92:1，远低于 WCAG 的 4.5:1 ——
-#     黄天生太亮。所以 JS 用的是「压暗但仍明显是黄」的 #8a5f05（5.65:1）。
-#     CSS 的天蓝同理（#0ea5e9 只有 2.77:1，压到 #0478ab 才有 4.91:1）。
-#     下面每个色值都标注了实测对比度，改动前请重新验算。
+# 为什么多数色值比「标准色」暗
+#     纯正的黄（#eab308）配白字只有 1.92:1，天蓝（#0ea5e9）配白字只有 2.77:1 ——
+#     都远低于 WCAG 的 4.5:1。所以往同色调的深处压，压到刚好达标为止
+#     （CSS 压到 #0478ab 得 4.91:1）。下面每个色值都标了实测对比度，
+#     改动前请重新验算。
+#
+# 为什么 JS 是唯一「深字」的
+#     黄不能用「压暗 + 白字」来解决 —— 压到 #8a5f05 虽然达标（5.65:1），
+#     但那时它已经不像黄了。用户给的方案更对：
+#         底 #FFD400 + 字 #0D1110  →  13.28:1
+#     保留真正的黄色，靠**换成深字**拿到对比度。这比压暗底色好得多，
+#     所以 JS 单独走这一套，其余四个语言维持「实色底 + 白字」。
 #
 # 为什么不用 .tag.X
 #     .tag.b/.g/.r/.v 这套已经被「本讲：…」「可以/不要这样写」等
 #     语义标签用掉了，M06 还用它做权限标记（.tag.pub/.pri/.pro）。
 #     语言标注单开一个 .lang.X 命名空间，避免和它们抢颜色。
 LANG_CSS = """/* ---------- 语言标注（.lang）---------- */
-/* 浅色：实色底 + 白字。括号内是白字实测对比度，均 ≥ 4.5:1 */
+/* 浅色：实色底 + 白字（JS 例外，用深字）。括号内是实测对比度，均 ≥ 4.5:1 */
 .lang{display:inline-block;font-family:var(--mono);font-size:11.5px;
   font-weight:700;padding:1.5px 9px;border-radius:999px;
   color:#fff;border:1px solid transparent;vertical-align:2px;
   letter-spacing:.02em}
-.lang.html{background:#cf4520}          /* 橙红 4.64 */
-.lang.css{background:#0478ab}           /* 天蓝 4.91 */
-.lang.js{background:#8a5f05}            /* 黄   5.65（压暗，纯黄不达标）*/
-.lang.cpp{background:#2456c4}           /* 深蓝 6.56 */
-.lang.c{background:#7d5cd6}             /* 蓝紫 4.80 */
-.lang.sh{background:#3f6212}            /* Shell：用户未指定，补一个橄榄绿 */
-.lang.py{background:#1f6f5c}            /* Python：用户未指定，补一个松绿 */"""
+.lang.html{background:#cf4520}          /* 橙红 + 白字 4.64 */
+.lang.css{background:#0478ab}           /* 天蓝 + 白字 4.91 */
+.lang.cpp{background:#2456c4}           /* 深蓝 + 白字 6.56 */
+.lang.c{background:#7d5cd6}             /* 蓝紫 + 白字 4.80 */
+.lang.sh{background:#3f6212}            /* Shell：用户未指定，橄榄绿 + 白字 7.34 */
+.lang.py{background:#1f6f5c}            /* Python：用户未指定，松绿 + 白字 5.73 */
+/* JS 单独一套：保留正黄，改用深字 —— 比压暗底色好看得多 */
+.lang.js{background:#ffd400;color:#0d1110}   /* 正黄 + 深字 13.28 */"""
 
 LANG_DARK_CSS = """@media (prefers-color-scheme: dark){
-  /* 暗色：反过来 —— 浅底 + 深字，在深色卡片上更跳也更易读 */
+  /* 暗色：除了 JS，其余反过来 —— 浅底 + 深字，在深色卡片上更跳也更好读 */
   .lang{color:#12161d;border-color:transparent}
-  .lang.html{background:#ffb4a2}        /* 9.77 */
-  .lang.css{background:#7dd3fc}         /* 10.00 */
-  .lang.js{background:#fcd34d}          /* 11.57 */
-  .lang.cpp{background:#a5c8ff}         /* 9.77 */
+  .lang.html{background:#ffb4a2}        /* 10.62 */
+  .lang.css{background:#7dd3fc}         /* 10.87 */
+  .lang.cpp{background:#a5c8ff}         /* 10.62 */
   .lang.c{background:#c4b5fd}           /* 9.03 */
   .lang.sh{background:#bef264}          /* 12.44 */
   .lang.py{background:#7dd3b0}          /* 9.29 */
+  /* JS 在暗色下**沿用同一个正黄底 + 深字** —— 不改成浅黄。
+     理由：① 正黄配深字无论明暗都达标（13.28 对底、对深色页面一样清晰）；
+           ② 语言色卡在两种模式下保持同一个黄，认起来更稳。 */
+  .lang.js{background:#ffd400;color:#0d1110}
 }"""
 
 outL = HEAD_L + "\n".join(sorted(light)) + "\n\n" + LANG_CSS + "\n"
@@ -216,18 +227,48 @@ outD = (HEAD_D + "\n\n".join(d.strip() for d in sorted(dark))
 # 然后把好好的 tg_L/tg_D 覆盖成空壳 —— 第一次就踩了这个坑。
 # 所以：抽不到就保留原文件，并明确提示。
 if not light and not dark:
-    # 注意：即使「没有可抽的块」，语言标注（.lang）这一段也要保证写进去 ——
-    # 它不是从页面里抽出来的，而是这里直接定义的。早退之前先补上。
-    for fn, seg, marker in (("tg_L.css", LANG_CSS, "/* ---------- 语言标注"),
-                            ("tg_D.css", LANG_DARK_CSS, "@media (prefers-color-scheme: dark){\n  /* 暗色：反过来")):
+    # 注意：即使「没有可抽的块」，语言标注（.lang）这一段也要保证是**最新**的 ——
+    # 它不是从页面里抽出来的，而是这里直接定义的。
+    #
+    # 关键：不能「已经有 .lang 就跳过」—— 那样改了 LANG_CSS 以后永远写不进去。
+    # 正确做法是**先剪掉旧的 .lang 段，再追加新的**（幂等：内容相同则原样保留）。
+    LANGS = {
+        "tg_L.css": (LANG_CSS, True),
+        "tg_D.css": (LANG_DARK_CSS, False),
+    }
+    for fn, (seg, is_light) in LANGS.items():
         p0 = os.path.join(A, fn)
         if not os.path.exists(p0):
             continue
-        c0 = io.open(p0, encoding="utf-8").read()
-        if ".lang{" in c0:
-            continue
-        io.open(p0, "a", encoding="utf-8", newline="\n").write("\n" + seg + "\n")
-        print("  + 已向 %s 补上语言标注（.lang）" % fn)
+        raw = io.open(p0, encoding="utf-8").read()
+        c0 = raw
+        # 剪掉旧的 .lang 段。
+        # 别用「固定的注释文字」当标记 —— 一改注释就对不上，
+        # 于是切不掉旧段、每跑一次就在末尾再追加一份（踩过这个坑：
+        # tg_D.css 尾部堆了 6 个空 @media 壳）。
+        # 改为按**结构**定位：找到 `.lang` 规则，再回退到包着它的
+        # @media / 注释起点，从那里截断到文件末尾。
+        i = c0.find(".lang")
+        if i >= 0:
+            if is_light:
+                # 亮色段是平铺规则，回退到它上面的注释块起点
+                j = c0.rfind("/* ---------- 语言标注", 0, i)
+                if j < 0:
+                    j = c0.rfind("/*", 0, i)
+                cut = j if j >= 0 else i
+            else:
+                # 暗色段外面包着 @media，回退到该 @media 的起点
+                j = c0.rfind("@media (prefers-color-scheme: dark){", 0, i)
+                cut = j if j >= 0 else i
+            c0 = c0[:cut].rstrip() + "\n"
+        # 与「剪掉旧段后的内容」比较，而不是与原文件比较 ——
+        # 原文件带着旧段，拿它比永远不会相等，于是每跑一次都报「已更新」。
+        new = c0.rstrip() + "\n\n" + seg + "\n"
+        if new == raw:
+            print("  = %s 的语言标注已是最新" % fn)
+        else:
+            io.open(p0, "w", encoding="utf-8", newline="\n").write(new)
+            print("  + 已更新 %s 的语言标注（.lang）" % fn)
     keep = []
     for fn, _ in (("tg_L.css", light), ("tg_D.css", dark)):
         p0 = os.path.join(A, fn)

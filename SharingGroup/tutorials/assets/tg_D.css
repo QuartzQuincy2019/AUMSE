@@ -64,13 +64,16 @@
 }
 
 @media (prefers-color-scheme: dark){
-  /* 暗色：反过来 —— 浅底 + 深字，在深色卡片上更跳也更易读 */
+  /* 暗色：除了 JS，其余反过来 —— 浅底 + 深字，在深色卡片上更跳也更好读 */
   .lang{color:#12161d;border-color:transparent}
-  .lang.html{background:#ffb4a2}        /* 9.77 */
-  .lang.css{background:#7dd3fc}         /* 10.00 */
-  .lang.js{background:#fcd34d}          /* 11.57 */
-  .lang.cpp{background:#a5c8ff}         /* 9.77 */
+  .lang.html{background:#ffb4a2}        /* 10.62 */
+  .lang.css{background:#7dd3fc}         /* 10.87 */
+  .lang.cpp{background:#a5c8ff}         /* 10.62 */
   .lang.c{background:#c4b5fd}           /* 9.03 */
   .lang.sh{background:#bef264}          /* 12.44 */
   .lang.py{background:#7dd3b0}          /* 9.29 */
+  /* JS 在暗色下**沿用同一个正黄底 + 深字** —— 不改成浅黄。
+     理由：① 正黄配深字无论明暗都达标（13.28 对底、对深色页面一样清晰）；
+           ② 语言色卡在两种模式下保持同一个黄，认起来更稳。 */
+  .lang.js{background:#ffd400;color:#0d1110}
 }
