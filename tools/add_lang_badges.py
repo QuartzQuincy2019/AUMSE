@@ -35,54 +35,12 @@ except Exception:
 T = r"E:\QKMansion\CSX10\w\UME\SharingGroup\tutorials"
 
 # 页面 → 语言（徽章文字, .lang 的类名）
-LANG = {
-    # ---- T：回鹘蒙文理论 ----
-    "t01-mongolian-script-intro.html": ("HTML", "html"),
-    "t02-unicode-and-encoding.html": ("HTML", "html"),
-    "t03-font-file-anatomy.html": ("HTML", "html"),
-    # ---- F：文件操作（命令行 + 编译链接）----
-    "f01-command-prompt.html": ("Shell", "sh"),
-    "f02-paths-and-env.html": ("Shell", "sh"),
-    # F03 讲的是编译/链接这套**工具链**（cl 命令行、静态库、LNK 报错），
-    # 代码只是被编译的素材 —— 所以归 Shell，与首页保持一致。
-    "f03-compile-and-link.html": ("Shell", "sh"),
-    # ---- M：课本内容 ----
-    "m01-c-arrays.html": ("C++", "cpp"),
-    "m02-c-functions.html": ("C++", "cpp"),
-    "m03-c-types.html": ("C++", "cpp"),
-    "m04-c-pointers.html": ("C++", "cpp"),
-    "m05-memory.html": ("C++", "cpp"),
-    "m06-class-struct.html": ("C++", "cpp"),
-    "m07-scope.html": ("C++", "cpp"),
-    "m08-c-strings.html": ("C++", "cpp"),
-    "m09-vector-and-array.html": ("C++", "cpp"),
-    # ---- Q：Qt / C++ 开发事项 ----
-    "q01-std-and-namespace.html": ("C++", "cpp"),
-    "q02-references.html": ("C++", "cpp"),
-    "q03-pointers-to-objects.html": ("C++", "cpp"),
-    "q04-interfaces.html": ("C++", "cpp"),
-    "q05-open-closed.html": ("C++", "cpp"),
-    "q06-components.html": ("C++", "cpp"),
-    "q07-homework1.html": ("C++", "cpp"),
-    # ---- R：相关信息 ----
-    "r01-font-design-metrics.html": ("CSS", "css"),
-    "r02-bubble-sort.html": ("C++", "cpp"),
-    "r03-collation.html": ("C++", "cpp"),
-    # ---- E：补充练习 ----
-    "e01-recursion.html": ("C++", "cpp"),
-    "e02-batch-and-cmd.html": ("Shell", "sh"),
-    "e03-syntactic-sugar.html": ("C++", "cpp"),
-    # ---- FE：前端 ----
-    "fe-01.html": ("HTML", "html"),
-    "fe-02.html": ("HTML", "html"),
-    "fe-03-F01.html": ("CSS", "css"),
-    "fe-03.html": ("CSS", "css"),
-    "fe-04.html": ("CSS", "css"),
-    "fe-05.html": ("CSS", "css"),
-    "fe-06.html": ("CSS", "css"),
-    "fe-07.html": ("CSS", "css"),
-    "fe-08.html": ("JS", "js"),
-}
+# 语言映射不再手写 —— 权威定义在 tools/series_data.py 里
+# （SERIES_LANG 按系列给 + PAGE_LANG 单篇覆盖，FE 各篇取自
+#   FE_PAGES 的语言字段），这里只做导入。
+# 手写那张 38 行的表已经因为漏同步出过问题（加 Q07 / FE-09 时）。
+sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+from series_data import LANG_OF as LANG  # noqa: E402
 
 TAGROW = re.compile(r'(<p)(>)(\s*<span class="tag)', re.S)
 

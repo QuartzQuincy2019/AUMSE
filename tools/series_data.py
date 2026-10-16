@@ -260,3 +260,49 @@ if __name__ == "__main__":
     print("=== 改名（%d 个）===" % len(RENAME))
     for a, b in RENAME.items():
         print("  %-36s → %s" % (a, b))
+
+
+# ------------------------------------------------------------ 语言标注
+# 每篇教程「用的是什么语言」，供语言徽章（.lang）与首页卡片使用。
+#
+#   SERIES_LANG  按系列给默认语言（这几组的主线语言各自统一）
+#   PAGE_LANG    单篇覆盖（系列默认不合适时）
+#   LANG_CLS     语言 → CSS 类名
+#   LANG_OF      导出的**权威表**：文件名 → (显示名, class)
+#
+# FE 各篇的语言不在上表里 —— 它本来就写在 FE_PAGES 的第 5 项，
+# 直接从那里取，避免又造一份副本。
+SERIES_LANG = {
+    "T": "HTML",    # 理论三篇：示例都是 HTML
+    "F": "Shell",   # F01/F02 命令提示符、F03 编译与链接的工具链
+    "M": "C++",
+    "Q": "C++",
+    "R": "C++",
+    "E": "C++",     # E01/E03 是 C++，E02 见下面的单篇覆盖
+}
+PAGE_LANG = {
+    # E02 是批处理（.bat），与 E 系列默认的 C++ 不同
+    "e02-batch-and-cmd.html": "Shell",
+    # R01 只讲字体度量（EM Square / x 字高 / 行高），一个编程语言例子都没有；
+    # 它讲的东西正是 CSS 关心的，所以归 CSS（与首页卡片一致）。
+    "r01-font-design-metrics.html": "CSS",
+}
+LANG_CLS = {"HTML": "html", "CSS": "css", "JS": "js",
+            "C++": "cpp", "C": "c", "Shell": "sh", "Python": "py"}
+
+
+def _lang_of_pages():
+    out = {}
+    for key in PAGE_ORDER:
+        if key == "FE":
+            continue
+        for p in pages_of(key):
+            fn = p[1]
+            out[fn] = PAGE_LANG.get(fn, SERIES_LANG[key])
+    for p in FE_PAGES:
+        out[p[0]] = p[4]          # FE_PAGES 的第 5 项就是语言
+    return out
+
+
+# 文件名 → (显示名, class)
+LANG_OF = {fn: (lang, LANG_CLS[lang]) for fn, lang in _lang_of_pages().items()}
