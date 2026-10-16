@@ -24,9 +24,9 @@
   var SERIES = {
     T: { label: '理论 · T', banner: 'T 系列 · 核心理论和底层逻辑' },
     M: { label: '课本 · M', banner: 'M 系列 · 课本内容速成与补充' },
-    Q: { label: 'Qt · Q',   banner: 'Q 系列 · C++ 开发事项和 Qt 基础' },
+    Q: { label: 'C++&Qt · Q',   banner: 'Q 系列 · C++ 开发事项和 Qt 基础' },
     E: { label: 'Extra · E', banner: 'E 系列 · 补充练习与进阶' },
-    F: { label: 'File · F', banner: 'F 系列 · 文件操作基础' },
+    F: { label: '文件 · F', banner: 'F 系列 · 文件操作基础' },
     R: { label: '相关 · R', banner: 'R 系列 · 相关信息与理论' },
     FE: { label: '前端 · FE', banner: 'FE 系列 · 前端基础' }
   };

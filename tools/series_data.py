@@ -52,7 +52,7 @@ SERIES = {
         "name": "Qt",
         "num": "Q",
         "banner": "Q 系列 · C++ 开发事项和 Qt 基础",
-        "label": "Qt · Q",
+        "label": "C++&Qt · Q",
         "desc": "",   # 不写死：该系列将来会大量补充
         "cls": "qseries",
         "c1": "#dff2ec", "c2": "#eefaf6", "c3": "#0c8261", "c4": "#0a7157",
@@ -76,7 +76,7 @@ SERIES = {
         "name": "File",
         "num": "F",
         "banner": "F 系列 · 文件操作基础",
-        "label": "File · F",
+        "label": "文件 · F",
         "desc": "",   # 不写死：该系列将来会大量补充
         "cls": "fseries",
         # F 保持原先的蓝色皮肤（用户要求「为 F 保留之前的样式」）。

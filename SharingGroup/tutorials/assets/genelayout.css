@@ -202,3 +202,16 @@ ul,ol{margin:10px 0;padding-left:24px}
   .code-wrap pre, .out-wrap pre, .term pre, .plain-pre, pre.tree, .pv-wrap pre{white-space:pre-wrap !important; overflow-wrap:anywhere !important; word-break:break-word !important;}
   code,td.c,th.c{overflow-wrap:anywhere;word-break:break-word}
 }
+
+/* ---------- 延伸阅读（跨篇链接） ---------- */
+/* 这类链接以后会经常加，所以单开一个样式，别用临时的行内写法。
+   放在正文末尾、NAV-AUTO 之前。 */
+.see-also{margin:26px 0 0;padding:14px 18px;border:1px solid var(--line-2);
+  border-left:5px solid var(--s-main,var(--blue));border-radius:0 10px 10px 0;
+  background:var(--bg-soft)}
+.see-also .hd{font-weight:700;font-size:13.5px;color:var(--fg-2);
+  margin-bottom:8px}
+.see-also ul{margin:0;padding-left:20px}
+.see-also li{font-size:14px;line-height:1.85;margin:4px 0}
+.see-also a{font-weight:700}
+.see-also .why{color:var(--fg-3);font-size:13px}

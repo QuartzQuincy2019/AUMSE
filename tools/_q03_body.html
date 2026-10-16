@@ -35,9 +35,9 @@
 
 <span class="hl-k">class</span> Actor {
 <span class="hl-k">private</span>:
-    std::string full_name;   <span class="hl-c">// 全名，比如「灰羽·夜行者」</span>
-    std::string nickname;    <span class="hl-c">// 昵称，比如「小灰」</span>
-    std::string address;     <span class="hl-c">// 所在地图坐标名，比如「北境·霜牙岭」</span>
+    std::string full_name;   <span class="hl-c">// 全名，比如「忘情牛肉面」</span>
+    std::string nickname;    <span class="hl-c">// 昵称，比如「奶蛙」</span>
+    std::string address;     <span class="hl-c">// 所在地图坐标名，比如「University of Naiwa」</span>
     <span class="hl-k">int</span> maxLevel;            <span class="hl-c">// 等级上限</span>
 
 <span class="hl-k">public</span>:
@@ -217,8 +217,8 @@ sizeof(Actor*)      = 8</pre>
   <div class="side">
     <div class="hd bad">名字短（走 SSO）</div>
 <pre>Actor a;              // 132 B
-a.full_name = "小灰";  // 3 字符
-a.nickname  = "灰羽";  // 2 字符
+a.full_name = "奶蛙";  // 3 字符
+a.nickname  = "牛肉面";  // 2 字符
 
 heal(a, 30);
 // 拷贝 132 B，无堆分配</pre>
@@ -226,8 +226,8 @@ heal(a, 30);
   <div class="side">
     <div class="hd bad">名字长（走堆）</div>
 <pre>Actor a;
-a.full_name = "灰羽·夜行者·第三形态";
-a.nickname  = "北境霜牙岭的守望者";
+a.full_name = "忘情牛肉面·第三形态";
+a.nickname  = "Naiwa 大学城的守望者";
 
 heal(a, 30);
 // 拷贝 132 B + 3 次 malloc + 3 次 free</pre>
@@ -634,11 +634,11 @@ Actor* findByName(std::vector&lt;Actor&gt;&amp; team, <span class="hl-k">const</
     <span class="name">调用处的区别</span><span class="cp">复制</span></div>
 <pre>leaderOf(team).hp = 999;         <span class="hl-c">// 引用：直接用，不用判</span>
 
-Actor* p = findByName(team, <span class="hl-s">"小灰"</span>);
+Actor* p = findByName(team, <span class="hl-s">"奶蛙"</span>);
 <span class="hl-k">if</span> (p) {                          <span class="hl-c">// 指针：必须判</span>
     p-&gt;hp = 999;
 } <span class="hl-k">else</span> {
-    std::cout &lt;&lt; <span class="hl-s">"队伍里没有叫小灰的\n"</span>;
+    std::cout &lt;&lt; <span class="hl-s">"队伍里没有叫奶蛙的\n"</span>;
 }</pre>
 </div>
 

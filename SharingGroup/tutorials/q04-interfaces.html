@@ -81,7 +81,7 @@
     <span class="name">main.cpp —— 碰壁</span><span class="cp">复制</span></div>
 <pre><span class="hl-k">int</span> main() {
     Actor hero;
-    hero.full_name = <span class="hl-s">"灰羽·夜行者"</span>;   <span class="hl-c">// ❌ 编译错误：'full_name' is private</span>
+    hero.full_name = <span class="hl-s">"忘情牛肉面"</span>;   <span class="hl-c">// ❌ 编译错误：'full_name' is private</span>
     hero.maxLevel  = 60;                       <span class="hl-c">// ❌ 同样是 private</span>
 
     hero.hp = 80;                              <span class="hl-c">// ✅ 这个可以，hp 是 public</span>
@@ -190,13 +190,13 @@ error: 'maxLevel' is a private member of 'Actor'</pre>
     hero.maxMp = 50;
 
     <span class="hl-c">// ① 要改私有成员，先准备一个变量</span>
-    std::string n = <span class="hl-s">"灰羽·夜行者"</span>;
+    std::string n = <span class="hl-s">"忘情牛肉面"</span>;
     hero.changeName(n);            <span class="hl-c">// 传进去的是 n 的引用</span>
 
-    std::string nick = <span class="hl-s">"小灰"</span>;
+    std::string nick = <span class="hl-s">"奶蛙"</span>;
     hero.changeNickname(nick);
 
-    std::string where = <span class="hl-s">"北境·霜牙岭"</span>;
+    std::string where = <span class="hl-s">"University of Naiwa"</span>;
     hero.changeAddress(where);
 
     <span class="hl-c">// ② 数值上限直接给</span>
@@ -218,7 +218,7 @@ maxMp = 120</pre>
   <div class="card-t">为什么前三个要先写一个变量</div>
   <p>因为它们要的是 <code>std::string&amp;</code> —— <b>引用必须绑一个真实存在的对象</b>
   （Q02 讲过的三条铁律之一）。</p>
-  <p>所以 <code>hero.changeName("灰羽")</code> 这种写法<b>编译不过</b>：
+  <p>所以 <code>hero.changeName("牛肉面")</code> 这种写法<b>编译不过</b>：
   字符串字面量是个临时值，绑不到普通引用上。得先把它放进一个变量。</p>
   <p>后三个要的是 <code>int</code>，<code>hero.setMaxHp(200)</code> 直接写就行。</p>
 </div>

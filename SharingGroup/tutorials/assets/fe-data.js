@@ -74,17 +74,58 @@
   }
 
 
+
+  /* 「全部系列」的篇数**现算**，不写死。
+     写死的代价：系列一长就没人想起来改 —— 之前这里一直显示
+     Q（1 篇）/ E（2 篇）/ FE（8 篇），全是旧的。
+     规则：看文件名前缀；fe- 开头的一律算 FE（fe-03-F01.html 也是 FE），
+     其余按第一个字母对应系列。 */
+  var SERIES_FILES = [
+    't01-mongolian-script-intro.html','t02-unicode-and-encoding.html',
+    't03-font-file-anatomy.html',
+    'f01-command-prompt.html','f02-paths-and-env.html',
+    'f03-compile-and-link.html',
+    'm01-c-arrays.html','m02-c-functions.html','m03-c-types.html',
+    'm04-c-pointers.html','m05-memory.html','m06-class-struct.html',
+    'm07-scope.html','m08-c-strings.html','m09-vector-and-array.html',
+    'r01-font-design-metrics.html','r02-bubble-sort.html',
+    'r03-collation.html',
+    'q01-std-and-namespace.html','q02-references.html',
+    'q03-pointers-to-objects.html','q04-interfaces.html',
+    'e01-recursion.html','e02-batch-and-cmd.html',
+    'e03-syntactic-sugar.html',
+    'fe-01.html','fe-02.html','fe-03-F01.html','fe-03.html','fe-04.html',
+    'fe-05.html','fe-06.html','fe-07.html','fe-08.html'
+  ];
+
+  function seriesKeyOf(file) {
+    if (/^fe-/.test(file)) return 'FE';
+    return file.charAt(0).toUpperCase();
+  }
+
+  function seriesCount(key) {
+    if (key === 'FE') {
+      /* FE 自己的篇目表就是权威来源 */
+      return (typeof P !== 'undefined' && P.series) ? P.series.length : 0;
+    }
+    var n = 0;
+    SERIES_FILES.forEach(function (f) {
+      if (seriesKeyOf(f) === key) n++;
+    });
+    return n;
+  }
+
   /* 「全部系列」：与其它系列页尾一致。
      前端的外观自成一系（不走 series_data 生成的主题），
      但它是「一个系列」，所以『全部系列』里必须有它。 */
   var ALL_SERIES = [
-    { lab: '理论 · T',  f: 't01-mongolian-script-intro.html', n: 3 },
-    { lab: 'File · F',  f: 'f01-command-prompt.html',         n: 3 },
-    { lab: '课本 · M',  f: 'm01-c-arrays.html',               n: 9 },
-    { lab: '相关 · R',  f: null,                              n: 0 },
-    { lab: 'Qt · Q',    f: 'q01-std-and-namespace.html',      n: 1 },
-    { lab: 'Extra · E', f: 'e01-recursion.html',              n: 2 },
-    { lab: '前端 · FE', f: 'fe-01.html',                      n: 8, cur: true }
+    { lab: '理论 · T',          f: 't01-mongolian-script-intro.html', key: 'T' },
+    { lab: '文件 · F',          f: 'f01-command-prompt.html', key: 'F' },
+    { lab: '课本 · M',          f: 'm01-c-arrays.html', key: 'M' },
+    { lab: '相关 · R',          f: null, key: 'R' },
+    { lab: 'C++&Qt · Q',      f: 'q01-std-and-namespace.html', key: 'Q' },
+    { lab: 'Extra · E',       f: 'e01-recursion.html', key: 'E' },
+    { lab: '前端 · FE',         f: 'fe-01.html', key: 'FE', cur: true }
   ];
 
   function buildSeriesSwitch() {
@@ -92,7 +133,8 @@
     box.appendChild(el('b', null, '全部系列'));
     box.appendChild(document.createTextNode('\u3000'));
     ALL_SERIES.forEach(function (s) {
-      var lab = s.lab + '（' + s.n + ' 篇' + (s.n ? '' : '，暂空') + '）';
+      var cnt = seriesCount(s.key);
+        var lab = s.lab + '（' + cnt + ' 篇' + (cnt ? '' : '，暂空') + '）';
       if (s.cur) {
         box.appendChild(el('span', 'ss-cur', lab + '\u3000当前'));
         return;
