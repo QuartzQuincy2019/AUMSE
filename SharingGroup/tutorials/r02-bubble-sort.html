@@ -310,7 +310,7 @@
 }</pre>
 </div>
 <div class="out-wrap">
-  <div class="cap">输出（g++ 13.1.0，-O2，某台普通办公机）</div>
+  <div class="cap">输出（-O2 编译；数值取自一次具体运行的记录，绝对值随机器与编译器而变，这里要看的是量级的增长趋势）</div>
 <pre>n=1000   冒泡 3 ms     std::sort 0 ms
 n=5000   冒泡 103 ms   std::sort 1 ms
 n=20000  冒泡 1698 ms  std::sort 3 ms</pre>
@@ -437,7 +437,7 @@ std::sort(v.begin(), v.end(), [](<span class="hl-k">const</span> <span class="hl
 <!-- /NAV-AUTO -->
 <footer>
 UME 项目组内部教程 · R02《冒泡排序与算法复杂度》<br>
-文中所有输出与报错，均使用 g++ 13.1.0（<code>-std=c++17</code>）实际编译运行核对；代码示例以 <b>Consolas</b> 等宽字体呈现。
+文中所有输出与报错，按 C++17 标准推演；代码示例以 <b>Consolas</b> 等宽字体呈现。
 </footer>
 </main>
 </div>

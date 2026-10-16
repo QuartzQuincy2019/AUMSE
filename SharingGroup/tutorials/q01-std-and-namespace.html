@@ -44,7 +44,7 @@
   <p>而「入门 C++ 要跨的第一道坎」就是<b>命名空间</b> ——
   它解释了为什么到处都写着 <code>std::</code>，
   以及那句 <code>using namespace std;</code> 到底在干什么。</p>
-  <p>文中所有输出与报错，均使用 g++ 13.1.0（<code>-std=c++17</code>）实际编译运行核对。</p>
+  <p>文中所有输出与报错，按 C++17 标准推演。</p>
 </div>
 
 <!-- ============================================================ -->
@@ -892,7 +892,7 @@ GUI_EXPORT::QWidget        <span class="hl-c">// 展开后是 __declspec(dllexpo
     <span class="hl-f">std::cout</span> &lt;&lt; ume::version;   <span class="hl-c">// ✅</span>
 }</pre></div>
 
-<div class="out-wrap"><div class="cap">真实报错（g++ 13.1.0）</div><pre>error: 'version' was not declared in this scope;
+<div class="out-wrap"><div class="cap">报错形状（具体措辞随编译器版本略有差异）</div><pre>error: 'version' was not declared in this scope;
        did you mean 'ume::version'?
 note:  'ume::version' declared here</pre></div>
 
@@ -910,7 +910,7 @@ note:  'ume::version' declared here</pre></div>
 <span class="hl-f">hello</span>();                     <span class="hl-c">// ❌ 到底要哪个？</span>
 A::<span class="hl-f">hello</span>();                  <span class="hl-c">// ✅ 说清楚</span></pre></div>
 
-<div class="out-wrap"><div class="cap">真实报错（g++ 13.1.0）</div><pre>error: call of overloaded 'hello()' is ambiguous
+<div class="out-wrap"><div class="cap">报错形状（具体措辞随编译器版本略有差异）</div><pre>error: call of overloaded 'hello()' is ambiguous
 note:  candidate: 'void A::hello()'
 note:  candidate: 'void B::hello()'</pre></div>
 
@@ -1026,7 +1026,7 @@ note:  candidate: 'void B::hello()'</pre></div>
 <!-- /NAV-AUTO -->
 <footer>
 UME 项目组内部教程 · Q01《std 与命名空间初步》<br>
-文中所有输出与报错，均使用 g++ 13.1.0（<code>-std=c++17</code>）实际编译运行核对；
+文中所有输出与报错，按 C++17 标准推演；
 代码示例以 <b>Consolas</b> 等宽字体呈现。
 </footer>
 </main>

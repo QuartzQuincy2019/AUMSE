@@ -50,7 +50,7 @@ m.content=d?'dark light':'light dark';document.head.appendChild(m);})();
     <li>为什么编辑器打开文件要「选编码」？</li>
     <li>Qt 里为什么到处都是 <code>QString</code>，而不是 <code>char*</code>？</li>
   </ul>
-  <p>文中所有字节值与二进制形状均使用 gcc 13.1.0 实际运行核对。</p>
+  <p>文中所有字节值与二进制形状按 C99 标准推演。</p>
 </div>
 
 <!-- ============================================================ -->
@@ -717,7 +717,7 @@ QByteArray b = s.toUtf8();                <span class="hl-c">/* 文字 → 字�
 <footer>
 UME 项目组内部教程 · 09-F04（File）《Unicode 和编码》<br>
 代码示例均以 <b>Consolas</b> 等宽字体呈现；文中所有字节值
-均使用 gcc 13.1.0（<code>-std=c99</code>）实际运行核对。
+按 C99 标准推演。
 </footer>
 </main>
 </div>
