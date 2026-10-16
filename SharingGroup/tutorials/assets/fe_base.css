@@ -140,7 +140,10 @@
 .tag.p{background:var(--violet-soft);border-color:rgba(124,58,237,.3);color:var(--violet)}
 .tag.r{background:var(--red-soft);border-color:rgba(224,66,107,.3);color:var(--red)}
 .tag.y{background:var(--amber-soft);border-color:rgba(194,116,10,.3);color:var(--amber)}
-:root{--bg:#fdf7fb; --surface:rgba(255,255,255,.74); --surface-solid:#ffffff; --line:rgba(124,58,237,.14); --line-2:rgba(124,58,237,.26); --fg:#241b35; --fg-2:#4f4363; --fg-3:#8b7fa3; --blue:#7c3aed; --blue-soft:rgba(124,58,237,.10); --green:#0f9d76; --green-soft:rgba(15,157,118,.11); --red:#e0426b; --red-soft:rgba(224,66,107,.10); --amber:#c2740a; --amber-soft:rgba(194,116,10,.12); --violet:#7c3aed; --violet-soft:rgba(124,58,237,.10); --teal:#0d8f9e; --teal-soft:rgba(13,143,158,.11); --gold:#c8901a; --pink:#db2777; --coral:#fb7185; --mono:"Consolas","Cascadia Mono","Courier New",monospace; --sans:"Microsoft YaHei","PingFang SC","Hiragino Sans GB",system-ui,sans-serif;}
+:root{--bg:#fdf7fb; --surface:rgba(255,255,255,.74);
+  /* 表单/卡片里的浅底块（文档页一直有这个变量，FE 侧原先漏了 ——
+     fe_09.css 的 .domtree 用它，缺了就整条 background 失效） */
+  --bg-soft:#f5f1f8; --surface-solid:#ffffff; --line:rgba(124,58,237,.14); --line-2:rgba(124,58,237,.26); --fg:#241b35; --fg-2:#4f4363; --fg-3:#8b7fa3; --blue:#7c3aed; --blue-soft:rgba(124,58,237,.10); --green:#0f9d76; --green-soft:rgba(15,157,118,.11); --red:#e0426b; --red-soft:rgba(224,66,107,.10); --amber:#c2740a; --amber-soft:rgba(194,116,10,.12); --violet:#7c3aed; --violet-soft:rgba(124,58,237,.10); --teal:#0d8f9e; --teal-soft:rgba(13,143,158,.11); --gold:#c8901a; --pink:#db2777; --coral:#fb7185; --mono:"Consolas","Cascadia Mono","Courier New",monospace; --sans:"Microsoft YaHei","PingFang SC","Hiragino Sans GB",system-ui,sans-serif;}
 a{color:var(--blue)}
 body{margin:0;color:var(--fg);font:16px/1.8 var(--sans); -webkit-font-smoothing:antialiased; background: radial-gradient(1100px 620px at 8% -8%, #ffe4f1 0%, transparent 60%), radial-gradient(980px 560px at 96% 4%, #e6e2ff 0%, transparent 58%), radial-gradient(880px 700px at 50% 108%, #d9f6ef 0%, transparent 62%), linear-gradient(168deg, #fdf7fb 0%, #f6f2ff 46%, #eef9f6 100%); background-attachment:fixed; min-height:100vh;}
 body.toc-open .home-fab{display:none}
@@ -197,7 +200,8 @@ ul,ol{margin:0 0 14px;padding-left:26px}
   .stack .fr:hover{border-color:var(--blue,#6aa6f5) !important; box-shadow:0 5px 16px rgba(0,0,0,.42) !important}
   h2.key-h .n,h3.key-h .n,h4.key-h .n{background:#f0cc72 !important;color:#2b1d02 !important;}
   h2.key-h,h3.key-h,h4.key-h{background:linear-gradient(96deg,#3a2d10 0%,#4a3a15 52%,#2e2409 100%) !important; border-color:#8a6d1e !important; border-left:7px solid #f0cc72 !important; color:#ffe9b0 !important; box-shadow:0 0 0 1px rgba(240,204,114,.16), 0 3px 14px rgba(0,0,0,.42);}
-}
+
+  :root{--bg-soft:#161d26}}
 @media (max-width:720px){
   .code-wrap pre code,.out-wrap pre code{white-space:pre-wrap !important}
   .code-wrap pre, .out-wrap pre, .term pre, .plain-pre, pre.tree, .pv-wrap pre{white-space:pre-wrap !important; overflow-wrap:anywhere !important; word-break:break-word !important;}

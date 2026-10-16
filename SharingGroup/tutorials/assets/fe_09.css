@@ -1,0 +1,58 @@
+/* =====================================================================
+   fe_09.css —— FE-09《DOM 操作基础》页专属样式
+   ---------------------------------------------------------------------
+   为什么这一页需要自己的样式表（FE-08 那份是空的）
+
+   FE 页面加载的是：
+       fe_base.css → tg_L.css → tg_D.css → series-theme.css
+       → fe_09.css → fe-dark.css
+
+   **genelayout.css 不在 FE 的加载列表里** —— 而 .two / .side /
+   .alias / .vs / .mnemonic 这些展示块都定义在 genelayout.css。
+   也就是说：如果直接在正文里用 .two，会渲染成两个普通 div 上下堆着
+   （FE-08 里的 .alias/.vs/.mem 就是这个下场，一直没被发现）。
+
+   所以这一页要用到的、FE 侧没有的类，在这里补上。
+   （.card / .code-wrap / .out-wrap / .mnemonic 在 fe_base.css 里有，
+     不用重复定义。）
+   ===================================================================== */
+
+/* ---------- 左右两栏并排（Qt 代码 vs DOM 代码） ---------- */
+.two{display:flex;gap:14px;margin:18px 0;flex-wrap:wrap}
+.two .side{flex:1 1 320px;min-width:0}
+.two .side .hd{font-size:13px;font-weight:700;color:var(--fg-2);
+  margin-bottom:7px}
+.two .side .hd.good{color:#0a6b52}
+.two .side .hd.bad{color:#b4232f}
+@media (max-width:720px){
+  .two .side{flex:1 1 100%}
+}
+
+/* ---------- DOM 树示意 ---------- */
+/* 手画一棵树：用等宽字体 + 缩进层级，不依赖任何图片。
+   左右两条线用 border-left 画，保证缩放时对齐。 */
+.domtree{margin:16px 0;padding:14px 18px;border:1px solid var(--line-2);
+  border-radius:11px;background:var(--bg-soft);
+  font-family:var(--mono);font-size:13.5px;line-height:1.95;
+  overflow-x:auto;white-space:nowrap}
+.domtree .lv0{font-weight:700;color:var(--fg)}
+.domtree .lv1{padding-left:1.6em;color:var(--fg-2)}
+.domtree .lv2{padding-left:3.2em;color:var(--fg-2)}
+.domtree .at{color:#8a5a06}
+.domtree .tx{color:#0a6b52}
+.domtree .ph{color:var(--fg-3);font-style:italic}
+
+/* ---------- 延伸阅读（跨篇链接） ---------- */
+/* 这个块在文档页是 genelayout.css 提供的，FE 侧同样加载不到 ——
+   不补上就会渲染成一段没有左边框、没有底色的裸文字。
+   色值改用 FE 的变量（--blue / --fg-2 / --fg-3），
+   它们在本页 :root 里都有定义。 */
+.see-also{margin:26px 0 0;padding:14px 18px;border:1px solid var(--line-2);
+  border-left:5px solid var(--blue);border-radius:0 10px 10px 0;
+  background:var(--bg-soft)}
+.see-also .hd{font-weight:700;font-size:13.5px;color:var(--fg-2);
+  margin-bottom:8px}
+.see-also ul{margin:0;padding-left:20px}
+.see-also li{font-size:14px;line-height:1.85;margin:4px 0}
+.see-also a{font-weight:700}
+.see-also .why{color:var(--fg-3);font-size:13px}

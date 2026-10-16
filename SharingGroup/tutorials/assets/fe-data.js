@@ -110,7 +110,7 @@
     'e01-recursion.html','e02-batch-and-cmd.html',
     'e03-syntactic-sugar.html',
     'fe-01.html','fe-02.html','fe-03-F01.html','fe-03.html','fe-04.html',
-    'fe-05.html','fe-06.html','fe-07.html','fe-08.html'
+    'fe-05.html','fe-06.html','fe-07.html','fe-08.html','fe-09.html'
   ];
 
   /* fe- 开头的一律算 FE（fe-03-F01.html 也是 FE），其余按首字母。 */
@@ -182,9 +182,15 @@
     main.appendChild(buildSeriesNav());
     main.appendChild(buildSeriesSwitch());
     var f = el('footer');
+    /* 页脚分两段：
+       ① 所有 FE 页共有的一句（示例渲染说明）
+       ② 本篇自己的补充 —— 放在数据里的 P.footerNote。
+          必须**按篇**写：FE-09《DOM 操作基础》里没有「示例展示」
+          那种会真的渲染出来的代码块，笼统说「都会渲染」就不对了。 */
     f.innerHTML = 'UME 项目组内部教程 · 前端系列 ' + P.num + '《' + P.title + '》<br>'
       + '示例均以 <b>Consolas</b> 等宽字体呈现；'
-      + '标着「示例展示」的代码块会把效果真的渲染出来。';
+      + '标着「示例展示」的代码块会把效果真的渲染出来。'
+      + (P.footerNote ? ('<br>' + P.footerNote) : '');
     main.appendChild(f);
 
     shell.appendChild(main);

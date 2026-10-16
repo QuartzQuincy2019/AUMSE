@@ -188,6 +188,8 @@ FE_PAGES = [
     ("fe-06.html",     "FE-06",     "Writing Mode 与溢出滚动",        "重点：writing-mode、word-break",             "CSS",  True),
     ("fe-07.html",     "FE-07",     "鼠标悬停与 transition",          "hover、过渡、缓动、常用动效",                "CSS",  False),
     ("fe-08.html",     "FE-08",     "JavaScript 语法初步",           "与 C/C++ 的相似性、console.log / var / alert / prompt", "JS", False),
+    ("fe-09.html",     "FE-09",     "DOM 操作基础",
+     "getElementById / createElement / append；DOM 树与 Qt addWidget 的对照", "JS", False),
 ]
 
 # ---------------------------------------------------------------- 派生量

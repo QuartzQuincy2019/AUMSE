@@ -79,6 +79,7 @@
     { f: 'fe-06.html', n: 'FE-06', t: 'Writing Mode 与溢出滚动', s: 'FE' },
     { f: 'fe-07.html', n: 'FE-07', t: '鼠标悬停与 transition', s: 'FE' },
     { f: 'fe-08.html', n: 'FE-08', t: 'JavaScript 语法初步', s: 'FE' },
+    { f: 'fe-09.html', n: 'FE-09', t: 'DOM 操作基础', s: 'FE' },
 
     /* 相关 R：背景知识与实用工具，配色走 series-theme 的红色主题。
        注意：这一段必须留在数组里，否则 R 篇的页尾导航会是空的 ——
