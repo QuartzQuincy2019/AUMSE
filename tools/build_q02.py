@@ -164,16 +164,24 @@ def main():
             print("       " + e)
         return
 
-    toc = "\n".join('  <a href="#%s">%d · %s</a>' % (i, k + 1, h[2].strip())
-                    for k, (i, n, h) in enumerate([(h[0], h[1], h[2]) for h in heads]))
+    # 目录文字直接取 h2 里 <span class="n"> 之后的那段标题。
+    # 踩过的坑：这里原先写成
+    #     for k, (i, n, h) in enumerate([(h[0], h[1], h[2]) for h in heads])
+    # 内层把三元组原样重排了一遍，结果 (i,n,h) 拿到的其实是
+    # (id, 编号, 标题)，但外层又用 h[2] 去取标题 —— h 已经是字符串「标题」，
+    # h[2] 取的是它的**第三个字符**，于是目录全变成「1 · 是」「2 · 铁」。
+    # 直接遍历三元组即可，不要再套一层。
+    toc = "\n".join('  <a href="#%s">%s · %s</a>' % (hid, num, title.strip())
+                    for hid, num, title in heads)
     html = (HEAD.format(toc=toc) + BODY.rstrip() + "\n\n" + TAIL)
     p = os.path.join(T, "q02-references.html")
     io.open(p, "w", encoding="utf-8", newline="").write(html)
     print("  ✓ q02-references.html  %d 节  目录 %d 条  %d B"
           % (len(ids), len(heads), len(html)))
     print()
-    for i, n, h in [(h[0], h[1], h[2]) for h in heads]:
-        print("     %-5s %-3s %s" % (i, n, re.sub(r'<[^>]+>', '', h).strip()[:46]))
+    for hid, num, title in heads:
+        print("     %-5s %-3s %s" % (hid, num,
+                                     re.sub(r'<[^>]+>', '', title).strip()[:46]))
 
 
 if __name__ == "__main__":
