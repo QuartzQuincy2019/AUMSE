@@ -1,4 +1,3 @@
-
 /* =====================================================================
    表面变量（亮色）
    ---------------------------------------------------------------------
@@ -8,210 +7,37 @@
 
    ⚠ 金色渐变的色标（#fffdf5 / #fdf3dc / #fbe9c4 …）**不在**这套变量里 ——
      它们是主题色，不是中性表面。
-   ===================================================================== */
-
-/* ==== f01-command-prompt.html
-       本篇样式表 = 通用（tutorial.css）+ 本篇专属，已合并并按「媒体查询在后」重排 ==== */
-
-/* ===================================================================
+   ===================================================================== *//* ==== f01-command-prompt.html
+       本篇样式表 = 通用（tutorial.css）+ 本篇专属，已合并并按「媒体查询在后」重排 ==== *//* ===================================================================
    UME 项目组内部教程 · 共用样式表
    约定：所有代码与输出都用 Consolas 等宽字体
-   =================================================================== */
-*{box-sizing:border-box}
-
-html{scroll-behavior:smooth}
-
-#shell{display:flex;align-items:flex-start;max-width:1400px;margin:0 auto}
-
-#toc h5{margin:0 0 12px;font-size:11px;letter-spacing:.16em;color:var(--fg-3);
-        text-transform:uppercase;font-weight:600}
-
-#toc a:hover{background:#e9eef7;color:var(--fg);border-left-color:var(--line-2)}
-
-#toc a.sub{padding-left:24px;font-size:12.5px;color:var(--fg-3)}
-
-#toc a.on{background:var(--blue-soft);color:var(--blue);font-weight:600;border-left-color:var(--blue)}
-
-#toc .sep{height:1px;background:var(--line);margin:12px 0}
-
-main{flex:1;min-width:0;padding:44px 52px 140px}
-
-/* ---------------- 标题与正文 ---------------- */
-h1{font-size:32px;line-height:1.25;margin:0 0 8px;letter-spacing:-.01em}
-
-.sub-title{color:var(--fg-3);font-size:15px;margin:0 0 6px}
-
-h3{font-size:17px;margin:30px 0 8px}
-
-h4{font-size:15px;margin:22px 0 6px;color:var(--fg-2)}
-
-p{margin:11px 0}
-
-ul,ol{margin:10px 0;padding-left:24px}
-
-li{margin:5px 0}
-
-a{color:var(--blue)}
-
-.k:hover{background:#e6dbfb;box-shadow:0 0 0 3px rgba(107,70,193,.13)}
-
-.code-wrap .bar .dot{width:9px;height:9px;border-radius:50%;background:#3c4658}
-
-.code-wrap .bar .dot.r{background:#e06c75}
-
-.code-wrap .bar .dot.y{background:#e5c07b}
-
-.code-wrap .bar .dot.g{background:#98c379}
-
-.code-wrap .bar .name{margin-left:4px}
-
-.code-wrap .bar .cp:hover{background:#2d3849;color:#dbe6f5;border-color:#4a586f}
-
-.out-wrap:hover{box-shadow:0 5px 18px rgba(20,30,50,.16);border-left-color:#22a35c}
-
-/* 行内高亮 */
-.hl-k{color:#c792ea}
-
-.hl-n{color:#f78c6c}
-
-.hl-s{color:#c3e88d}
-
-.hl-c{color:#6a7a8c;font-style:italic}
-
-.hl-f{color:#82aaff}
-
-.hl-p{color:#89ddff}
-
-.hl-bad{color:#ff6b6b;font-weight:700}
-
-.hl-ok{color:#7ee787;font-weight:700}
-
-.card:hover{box-shadow:0 5px 20px rgba(30,45,70,.09);transform:translateY(-1px)}
-
-.card h4{margin-top:0}
-
-.card.tip{border-color:#c6e6d3;background:var(--green-soft)}
-
-.card.warn{border-color:#f2d2ce;background:var(--red-soft)}
-
-.card.note{border-color:#cfe0fb;background:var(--blue-soft)}
-
-.card.key{border-color:#ded0f7;background:var(--violet-soft)}
-
-.card .card-t{font-weight:700;font-size:14.5px;margin-bottom:6px;display:flex;gap:7px;align-items:center}
-
-.card.tip .card-t{color:var(--green)}
-
-.card.warn .card-t{color:var(--red)}
-
-.card.note .card-t{color:var(--blue)}
-
-.card.key .card-t{color:var(--violet)}
-
-.card p:last-child,.card ul:last-child,.card ol:last-child{margin-bottom:0}
-
-/* ---------------- 表格 ---------------- */
-table{border-collapse:collapse;width:100%;margin:16px 0;font-size:14px}
-
-th,td{border:1px solid var(--line);padding:8px 12px;text-align:left;vertical-align:top}
-
-th{background:var(--bg-soft);font-weight:600;font-size:13px}
-
-tbody tr{transition:background .12s}
-
-tbody tr:hover{background:var(--sfc-hover)}
-
-td.c,th.c{font-family:var(--mono);font-size:13px}
-
-/* 流程条 */
-.flow{display:flex;flex-wrap:wrap;gap:0;margin:16px 0;align-items:stretch}
-
-.flow .s:hover{box-shadow:0 5px 16px rgba(30,45,70,.1);transform:translateY(-2px);border-color:var(--line-2)}
-
-.flow .s+.s{margin-left:24px}
-
-.flow .s+.s::before{content:"→";position:absolute;left:-19px;top:50%;transform:translateY(-50%);
-                    color:var(--fg-3);font-size:15px;font-family:var(--mono)}
-
-.flow .s .t{font-weight:650;font-size:13.5px;margin-bottom:2px}
-
-.flow .s .d{font-size:12px;color:var(--fg-3);line-height:1.55}
-
-.hr{height:1px;background:var(--line);margin:34px 0}
-
-.tag.g{background:var(--green-soft);border-color:#bfe2cd;color:var(--green)}
-
-.tag.r{background:var(--red-soft);border-color:#f0c8c2;color:var(--red)}
-
-.tag.b{background:var(--blue-soft);border-color:#bcd6fa;color:var(--blue)}
-
-.mnemonic b{color:var(--amber)}
-
-#toc{scrollbar-width:thin}
-
-body{margin:0;background:var(--bg);color:var(--fg);
-  font:16px/1.8 var(--sans);-webkit-font-smoothing:antialiased}
-
-#toc a{display:block;padding:5px 10px;margin:1px 0;border-radius:6px;font-size:13.5px;
+   =================================================================== */html{scroll-behavior:smooth}#toc h5{margin:0 0 12px;font-size:11px;letter-spacing:.16em;color:var(--fg-3);
+        text-transform:uppercase;font-weight:600}#toc a:hover{background:#e9eef7;color:var(--fg);border-left-color:var(--line-2)}#toc a.sub{padding-left:24px;font-size:12.5px;color:var(--fg-3)}#toc a.on{background:var(--blue-soft);color:var(--blue);font-weight:600;border-left-color:var(--blue)}#toc .sep{height:1px;background:var(--line);margin:12px 0}/* ---------------- 标题与正文 ---------------- */.sub-title{color:var(--fg-3);font-size:15px;margin:0 0 6px}h4{font-size:15px;margin:22px 0 6px;color:var(--fg-2)}a{color:var(--blue)}.k:hover{background:#e6dbfb;box-shadow:0 0 0 3px rgba(107,70,193,.13)}.code-wrap .bar .dot{width:9px;height:9px;border-radius:50%;background:#3c4658}.code-wrap .bar .dot.r{background:#e06c75}.code-wrap .bar .dot.y{background:#e5c07b}.code-wrap .bar .dot.g{background:#98c379}.code-wrap .bar .cp:hover{background:#2d3849;color:#dbe6f5;border-color:#4a586f}.out-wrap:hover{box-shadow:0 5px 18px rgba(20,30,50,.16);border-left-color:#22a35c}/* 行内高亮 */.hl-k{color:#c792ea}.hl-n{color:#f78c6c}.hl-s{color:#c3e88d}.hl-c{color:#6a7a8c;font-style:italic}.hl-f{color:#82aaff}.hl-p{color:#89ddff}.hl-bad{color:#ff6b6b;font-weight:700}.hl-ok{color:#7ee787;font-weight:700}.card:hover{box-shadow:0 5px 20px rgba(30,45,70,.09);transform:translateY(-1px)}.card.tip{border-color:#c6e6d3;background:var(--green-soft)}.card.warn{border-color:#f2d2ce;background:var(--red-soft)}.card.note{border-color:#cfe0fb;background:var(--blue-soft)}.card.key{border-color:#ded0f7;background:var(--violet-soft)}.card.tip .card-t{color:var(--green)}.card.warn .card-t{color:var(--red)}.card.note .card-t{color:var(--blue)}.card.key .card-t{color:var(--violet)}/* ---------------- 表格 ---------------- */table{border-collapse:collapse;width:100%;margin:16px 0;font-size:14px}th,td{border:1px solid var(--line);padding:8px 12px;text-align:left;vertical-align:top}th{background:var(--bg-soft);font-weight:600;font-size:13px}tbody tr:hover{background:var(--sfc-hover)}/* 流程条 */.flow .s:hover{box-shadow:0 5px 16px rgba(30,45,70,.1);transform:translateY(-2px);border-color:var(--line-2)}.flow .s+.s::before{content:"→";position:absolute;left:-19px;top:50%;transform:translateY(-50%);
+                    color:var(--fg-3);font-size:15px;font-family:var(--mono)}.flow .s .d{font-size:12px;color:var(--fg-3);line-height:1.55}.hr{height:1px;background:var(--line);margin:34px 0}.tag.g{background:var(--green-soft);border-color:#bfe2cd;color:var(--green)}.tag.r{background:var(--red-soft);border-color:#f0c8c2;color:var(--red)}.tag.b{background:var(--blue-soft);border-color:#bcd6fa;color:var(--blue)}.mnemonic b{color:var(--amber)}body{margin:0;background:var(--bg);color:var(--fg);
+  font:16px/1.8 var(--sans);-webkit-font-smoothing:antialiased}#toc a{display:block;padding:5px 10px;margin:1px 0;border-radius:6px;font-size:13.5px;
   color:var(--fg-2);text-decoration:none;line-height:1.5;
-  border-left:2px solid transparent;transition:background .13s,color .13s,border-color .13s}
-
-h2{font-size:22px;margin:58px 0 14px;padding-top:18px;border-top:1px solid var(--line);
-   display:flex;align-items:center;gap:11px}
-
-h2 .n{flex:0 0 auto;width:30px;height:30px;line-height:30px;text-align:center;
+  border-left:2px solid transparent;transition:background .13s,color .13s,border-color .13s}h2{font-size:22px;margin:58px 0 14px;padding-top:18px;border-top:1px solid var(--line);
+   display:flex;align-items:center;gap:11px}h2 .n{flex:0 0 auto;width:30px;height:30px;line-height:30px;text-align:center;
   background:var(--fg);color:#fff;border-radius:8px;font-size:15px;
-  font-family:var(--mono);font-weight:600}
-
-code{font-family:var(--mono);font-size:.9em;background:#eef2f8;color:#0d3a7a;
-  padding:1.5px 5px;border-radius:4px;border:1px solid #dbe4f0}
-
-.k{font-family:var(--mono);font-size:.9em;background:#f2ecfd;color:#5b34b0;
+  font-family:var(--mono);font-weight:600}code{font-family:var(--mono);font-size:.9em;background:#eef2f8;color:#0d3a7a;
+  padding:1.5px 5px;border-radius:4px;border:1px solid #dbe4f0}.k{font-family:var(--mono);font-size:.9em;background:#f2ecfd;color:#5b34b0;
   padding:1.5px 5px;border-radius:4px;border:1px solid #ded0f7;
-  cursor:help;transition:background .12s,box-shadow .12s}
-
-/* 代码块 */
-.code-wrap{margin:16px 0;border:1px solid #2c3444;border-radius:10px;overflow:hidden;
+  cursor:help;transition:background .12s,box-shadow .12s}/* 代码块 */.code-wrap{margin:16px 0;border:1px solid #2c3444;border-radius:10px;overflow:hidden;
   background:var(--bg-code);position:relative;
-  transition:box-shadow .18s,border-color .18s,transform .18s}
-
-.code-wrap:hover{border-color:#3d4a60;box-shadow:0 6px 22px rgba(20,30,50,.18);transform:translateY(-1px)}
-
-.code-wrap .bar{display:flex;align-items:center;gap:8px;padding:7px 12px;
+  transition:box-shadow .18s,border-color .18s,transform .18s}.code-wrap:hover{border-color:#3d4a60;box-shadow:0 6px 22px rgba(20,30,50,.18);transform:translateY(-1px)}.code-wrap .bar{display:flex;align-items:center;gap:8px;padding:7px 12px;
   background:#171d27;border-bottom:1px solid #2c3444;
-  font-family:var(--mono);font-size:11.5px;color:#8296b0}
-
-.code-wrap .bar .cp{margin-left:auto;cursor:pointer;border:1px solid #333d4f;background:#222a37;
+  font-family:var(--mono);font-size:11.5px;color:#8296b0}.code-wrap .bar .cp{margin-left:auto;cursor:pointer;border:1px solid #333d4f;background:#222a37;
   color:#9fb0c7;border-radius:5px;padding:1px 9px;font:11.5px var(--mono);
-  transition:background .13s,color .13s,border-color .13s}
-
-.code-wrap pre{margin:0;padding:14px 16px;overflow:auto;
-  font-family:var(--mono);font-size:13.5px;line-height:1.72;color:#d7e0ee}
-
-/* 输出块 */
-.out-wrap{margin:12px 0 20px;border:1px solid #d9e2ee;border-left:4px solid var(--green);
+  transition:background .13s,color .13s,border-color .13s}.code-wrap pre{margin:0;padding:14px 16px;overflow:auto;
+  font-family:var(--mono);font-size:13.5px;line-height:1.72;color:#d7e0ee}/* 输出块 */.out-wrap{margin:12px 0 20px;border:1px solid #d9e2ee;border-left:4px solid var(--green);
   border-radius:0 9px 9px 0;background:var(--bg-out);overflow:hidden;
-  transition:box-shadow .18s,border-left-color .18s}
-
-.out-wrap .cap{padding:6px 13px;background:#151b22;border-bottom:1px solid #232c38;
-  font-family:var(--mono);font-size:11.5px;color:#7f8f9f}
-
-.out-wrap pre{margin:0;padding:13px 16px;overflow:auto;
-  font-family:var(--mono);font-size:13.5px;line-height:1.7;color:#c9e6d5}
-
-.card{border:1px solid var(--line);border-radius:12px;padding:16px 20px;margin:18px 0;
-  background:var(--sfc);transition:box-shadow .18s,transform .18s,border-color .18s}
-
-.mnemonic{border-left:4px solid var(--amber);background:var(--amber-soft);
-  border-radius:0 9px 9px 0;padding:12px 18px;margin:16px 0;font-size:15px}
-
-.tag{display:inline-block;font-family:var(--mono);font-size:11.5px;padding:1.5px 8px;
+  transition:box-shadow .18s,border-left-color .18s}.out-wrap .cap{padding:6px 13px;background:#151b22;border-bottom:1px solid #232c38;
+  font-family:var(--mono);font-size:11.5px;color:#7f8f9f}.out-wrap pre{margin:0;padding:13px 16px;overflow:auto;
+  font-family:var(--mono);font-size:13.5px;line-height:1.7;color:#c9e6d5}.card{border:1px solid var(--line);border-radius:12px;padding:16px 20px;margin:18px 0;
+  background:var(--sfc);transition:box-shadow .18s,transform .18s,border-color .18s}.mnemonic{border-left:4px solid var(--amber);background:var(--amber-soft);
+  border-radius:0 9px 9px 0;padding:12px 18px;margin:16px 0;font-size:15px}.tag{display:inline-block;font-family:var(--mono);font-size:11.5px;padding:1.5px 8px;
   border-radius:999px;background:#eef1f6;color:var(--fg-2);border:1px solid var(--line-2);
-  vertical-align:2px}
-
-footer{border-top:1px solid var(--line);margin-top:70px;padding-top:18px;font-size:13px;color:var(--fg-3)}
-
-:root{
+  vertical-align:2px}footer{border-top:1px solid var(--line);margin-top:70px;padding-top:18px;font-size:13px;color:var(--fg-3)}:root{
   --bg:#ffffff; --bg-soft:#f7f9fc; --bg-code:#1e2430; --bg-out:#0f1419;
   --line:#e3e8f0; --line-2:#ccd5e3;
   --fg:#1a1f28; --fg-2:#4b5563; --fg-3:#8b95a5;
@@ -223,163 +49,38 @@ footer{border-top:1px solid var(--line);margin-top:70px;padding-top:18px;font-si
   --teal:#0d7d7d; --teal-soft:#e4f5f5;
   --mono:"Consolas","Cascadia Mono","Courier New",monospace;
   --sans:"Microsoft YaHei","PingFang SC","Hiragino Sans GB",system-ui,sans-serif;
-}
-
-.card.teal{border-color:#bfe4e4;background:var(--teal-soft)}
-
-.card.teal .card-t{color:var(--teal)}
-
-.addr .hi{color:var(--blue);font-weight:700;transition:background .14s}
-
-.addr .hi:hover{background:var(--blue-soft)}
-
-.tag.v{background:var(--violet-soft);border-color:#ded0f7;color:var(--violet)}
-
-#toc{position:sticky;top:0;width:274px;flex:0 0 274px;height:100vh;overflow:auto;
-  padding:32px 16px 40px 24px;border-right:1px solid var(--line);background:var(--bg-soft)}
-
-/* 箭头高亮：本讲重点 */
-.arw{color:#ffcb6b;font-weight:700}
-
-.arw2{color:#82aaff;font-weight:700}
-
-/* 指针关系图：变量盒 + 箭头 */
-.ptr-demo{
+}.card.teal{border-color:#bfe4e4;background:var(--teal-soft)}.card.teal .card-t{color:var(--teal)}.addr .hi{color:var(--blue);font-weight:700;transition:background .14s}.addr .hi:hover{background:var(--blue-soft)}.tag.v{background:var(--violet-soft);border-color:#ded0f7;color:var(--violet)}#toc{position:sticky;top:0;width:274px;flex:0 0 274px;height:100vh;overflow:auto;
+  padding:32px 16px 40px 24px;border-right:1px solid var(--line);background:var(--bg-soft)}/* 箭头高亮：本讲重点 */.arw{color:#ffcb6b;font-weight:700}.arw2{color:#82aaff;font-weight:700}/* 指针关系图：变量盒 + 箭头 */.ptr-demo{
   display:flex;align-items:center;gap:0;flex-wrap:wrap;margin:18px 0;
   padding:16px;border:1px solid var(--line-2);border-radius:12px;background:#fcfdff;
-}
-
-.ptr-demo .n{width:100%;font-size:12.5px;color:var(--fg-3);margin-bottom:10px}
-
-.box{
+}.ptr-demo .n{width:100%;font-size:12.5px;color:var(--fg-3);margin-bottom:10px}.box{
   border:1px solid var(--line-2);border-radius:10px;padding:10px 14px;background:var(--sfc);
   min-width:120px;transition:box-shadow .16s,transform .16s,border-color .16s;cursor:default;
-}
-
-.box:hover{box-shadow:0 6px 18px rgba(30,45,70,.13);transform:translateY(-2px);border-color:var(--blue)}
-
-.box .nm{font-family:var(--mono);font-size:12px;color:var(--fg-3);margin-bottom:5px}
-
-.box .vl{font-family:var(--mono);font-size:16px;font-weight:600}
-
-.box.p{border-color:#bcd6fa;background:var(--blue-soft)}
-
-.box.p .vl{color:var(--blue)}
-
-.box.p:hover{border-color:var(--blue)}
-
-.link{
+}.box:hover{box-shadow:0 6px 18px rgba(30,45,70,.13);transform:translateY(-2px);border-color:var(--blue)}.box .nm{font-family:var(--mono);font-size:12px;color:var(--fg-3);margin-bottom:5px}.box.p{border-color:#bcd6fa;background:var(--blue-soft)}.box.p .vl{color:var(--blue)}.box.p:hover{border-color:var(--blue)}.link{
   font-family:var(--mono);font-size:15px;color:var(--amber);padding:0 12px;
   white-space:nowrap;transition:transform .16s,color .16s;
-}
-
-.link:hover{transform:scale(1.14);color:#c99400}
-
-.link.b{color:var(--blue)}
-
-.link.b:hover{color:var(--blue)}
-
-/* 地址表 */
-.addr{
+}.link:hover{transform:scale(1.14);color:#c99400}.link.b{color:var(--blue)}.link.b:hover{color:var(--blue)}/* 地址表 */.addr{
   display:grid;grid-template-columns:auto auto auto 1fr;gap:0;margin:16px 0;
   border:1px solid var(--line-2);border-radius:10px;overflow:hidden;
   font-family:var(--mono);font-size:13px;
-}
-
-.addr>div{padding:7px 12px;border-bottom:1px solid var(--line)}
-
-.addr>div:nth-child(4n+1){background:var(--bg-soft);color:var(--fg-3)}
-
-.addr>div:nth-child(4n+2){background:var(--sfc);color:var(--fg-2)}
-
-.addr>div:nth-child(4n+3){background:var(--sfc)}
-
-.addr>div:nth-child(4n){background:var(--sfc)}
-
-.addr>div:last-child,.addr>div:nth-last-child(2),
-.addr>div:nth-last-child(3),.addr>div:nth-last-child(4){border-bottom:0}
-
-.addr .hd{font-weight:700;color:var(--fg-2);background:#eef2f8 !important}
-
-.flow .s{flex:1 1 126px;border:1px solid var(--line);border-radius:9px;padding:10px 12px;
-  background:var(--sfc);position:relative;transition:box-shadow .15s,transform .15s,border-color .15s}
-
-/* 问答式疑难块 */
-.qa{border:1px solid var(--line);border-radius:12px;margin:16px 0;overflow:hidden;
-  transition:box-shadow .18s,border-color .18s}
-
-.qa:hover{box-shadow:0 5px 20px rgba(30,45,70,.1);border-color:var(--line-2)}
-
-.qa .q{
+}.addr>div{padding:7px 12px;border-bottom:1px solid var(--line)}.addr>div:nth-child(4n+1){background:var(--bg-soft);color:var(--fg-3)}.addr>div:nth-child(4n+2){background:var(--sfc);color:var(--fg-2)}.addr>div:nth-child(4n+3){background:var(--sfc)}.addr>div:nth-child(4n){background:var(--sfc)}.addr>div:last-child,.addr>div:nth-last-child(2),
+.addr>div:nth-last-child(3),.addr>div:nth-last-child(4){border-bottom:0}.addr .hd{font-weight:700;color:var(--fg-2);background:#eef2f8 !important}.flow .s{flex:1 1 126px;border:1px solid var(--line);border-radius:9px;padding:10px 12px;
+  background:var(--sfc);position:relative;transition:box-shadow .15s,transform .15s,border-color .15s}/* 问答式疑难块 */.qa{border:1px solid var(--line);border-radius:12px;margin:16px 0;overflow:hidden;
+  transition:box-shadow .18s,border-color .18s}.qa:hover{box-shadow:0 5px 20px rgba(30,45,70,.1);border-color:var(--line-2)}.qa .q{
   padding:11px 18px;background:var(--violet-soft);border-bottom:1px solid #ded0f7;
   font-weight:700;font-size:14.5px;color:var(--violet);
-}
-
-.qa .a{padding:12px 18px;background:var(--sfc)}
-
-.qa .a p:first-child{margin-top:0}
-
-.qa .a p:last-child{margin-bottom:0}
-
-/* ==== _ds_08_F01_命令提示符初步.html
-       本篇专属样式（通用部分见 tutorial.css）==== */
-/* 终端窗口示意 */
-.term{
+}.qa .a{padding:12px 18px;background:var(--sfc)}/* ==== _ds_08_F01_命令提示符初步.html
+       本篇专属样式（通用部分见 tutorial.css）==== *//* 终端窗口示意 */.term{
   margin:16px 0;border-radius:10px;overflow:hidden;border:1px solid #2c3444;
   background:#0c1116;transition:box-shadow .18s,transform .18s;
-}
-
-.term:hover{box-shadow:0 6px 22px rgba(20,30,50,.22);transform:translateY(-1px)}
-
-.term .tbar{display:flex;align-items:center;gap:7px;padding:7px 11px;background:#151b22;
-  border-bottom:1px solid #232c38;font-family:var(--mono);font-size:11.5px;color:#7f8f9f}
-
-.term .tbar .d{width:9px;height:9px;border-radius:50%;background:#3c4658}
-
-.term .tbar .d.r{background:#e06c75}
-
-.term .tbar .d.y{background:#e5c07b}
-
-.term .tbar .d.g{background:#98c379}
-
-.term pre{margin:0;padding:12px 14px;font-family:var(--mono);font-size:13.5px;
-  line-height:1.7;color:#c9e6d5;overflow:auto;white-space:pre}
-
-.term .pr{color:#7ee787;font-weight:700}
-
-/* 提示符 */
-.term .cmd{color:#e6edf3}
-
-/* 你敲的命令 */
-.term .out{color:#9fb3c8}
-
-/* 输出 */
-.term .warn{color:#ffcb6b}
-
-/* 警告/提示 */
-.term .err{color:#ff8a80}
-
-/* 错误 */
-/* 命令小卡 */
-.cmds{display:grid;grid-template-columns:repeat(auto-fit,minmax(230px,1fr));gap:12px;margin:16px 0}
-
-.cmds .c{border:1px solid var(--line-2);border-radius:10px;padding:11px 13px;background:var(--sfc);
-  transition:box-shadow .15s,transform .15s,border-color .15s}
-
-.cmds .c:hover{box-shadow:0 5px 16px rgba(30,45,70,.12);transform:translateY(-2px);
-  border-color:var(--blue)}
-
-.cmds .c .n{font-family:var(--mono);font-weight:700;font-size:14px;color:var(--blue);
-  margin-bottom:4px}
-
-.cmds .c .d{font-size:12.5px;color:var(--fg-3);line-height:1.6}
-
-.cmds .c .e{font-family:var(--mono);font-size:12px;color:var(--fg-2);margin-top:6px;
+}.term:hover{box-shadow:0 6px 22px rgba(20,30,50,.22);transform:translateY(-1px)}.term .tbar{display:flex;align-items:center;gap:7px;padding:7px 11px;background:#151b22;
+  border-bottom:1px solid #232c38;font-family:var(--mono);font-size:11.5px;color:#7f8f9f}.term .tbar .d{width:9px;height:9px;border-radius:50%;background:#3c4658}.term .tbar .d.r{background:#e06c75}.term .tbar .d.y{background:#e5c07b}.term .tbar .d.g{background:#98c379}.term pre{margin:0;padding:12px 14px;font-family:var(--mono);font-size:13.5px;
+  line-height:1.7;color:#c9e6d5;overflow:auto;white-space:pre}.term .pr{color:#7ee787;font-weight:700}/* 提示符 */.term .cmd{color:#e6edf3}/* 你敲的命令 */.term .out{color:#9fb3c8}/* 输出 */.term .warn{color:#ffcb6b}/* 警告/提示 */.term .err{color:#ff8a80}/* 错误 *//* 命令小卡 */.cmds{display:grid;grid-template-columns:repeat(auto-fit,minmax(230px,1fr));gap:12px;margin:16px 0}.cmds .c{border:1px solid var(--line-2);border-radius:10px;padding:11px 13px;background:var(--sfc);
+  transition:box-shadow .15s,transform .15s,border-color .15s}.cmds .c:hover{box-shadow:0 5px 16px rgba(30,45,70,.12);transform:translateY(-2px);
+  border-color:var(--blue)}.cmds .c .n{font-family:var(--mono);font-weight:700;font-size:14px;color:var(--blue);
+  margin-bottom:4px}.cmds .c .d{font-size:12.5px;color:var(--fg-3);line-height:1.6}.cmds .c .e{font-family:var(--mono);font-size:12px;color:var(--fg-2);margin-top:6px;
   background:var(--sfc-2);border:1px solid var(--line);border-radius:5px;padding:4px 7px;
-  overflow:auto;white-space:pre}
-
-/* ===== F 系列主题：与本项目施行密切相关的实用文档 ===== */
-body.fseries{
+  overflow:auto;white-space:pre}/* ===== F 系列主题：与本项目施行密切相关的实用文档 ===== */body.fseries{
   --f-bg:#eef3f9;
   --f-grid:rgba(31,111,235,.055);
   background-color:var(--f-bg);
@@ -387,27 +88,13 @@ body.fseries{
     linear-gradient(var(--f-grid) 1px,transparent 1px),
     linear-gradient(90deg,var(--f-grid) 1px,transparent 1px);
   background-size:26px 26px;
-}
-
-body.fseries #toc{background:#e4ecf6;border-right-color:#c8d8ea}
-
-body.fseries main{padding-top:52px}
-
-/* 顶部一条明显的标记，说明这是 F 系列 */
-body.fseries::before{
+}body.fseries #toc{background:#e4ecf6;border-right-color:#c8d8ea}body.fseries main{padding-top:52px}/* 顶部一条明显的标记，说明这是 F 系列 */body.fseries::before{
   content:"F 系列 · 与本项目施行密切相关";
   position:fixed;top:0;left:0;right:0;z-index:80;
   padding:5px 14px;font:600 12px/1.5 var(--sans);
   color:#fff;background:#1f6feb;letter-spacing:.02em;
   box-shadow:0 1px 6px rgba(31,111,235,.28);
-}
-
-body.fseries h1{margin-top:6px}
-
-body.fseries h2 .n{background:#1f6feb}
-
-/* 正文与卡片：在网格背景上给一层白，保证可读性 */
-body.fseries main>.card,
+}body.fseries h1{margin-top:6px}body.fseries h2 .n{background:#1f6feb}/* 正文与卡片：在网格背景上给一层白，保证可读性 */body.fseries main>.card,
 body.fseries main>.code-wrap,
 body.fseries main>.out-wrap,
 body.fseries main>table,
@@ -415,142 +102,63 @@ body.fseries main>.mnemonic,
 body.fseries main>.flow,
 body.fseries main>.qa{
   background-color:var(--sfc);
-}
-
-body.fseries .card.note{background-color:var(--blue-soft)}
-
-body.fseries .card.tip{background-color:var(--green-soft)}
-
-body.fseries .card.warn{background-color:var(--red-soft)}
-
-body.fseries .card.key{background-color:var(--violet-soft)}
-
-body.fseries .card.teal{background-color:var(--teal-soft)}
-
-body.fseries .mnemonic{background-color:var(--amber-soft)}
-
-body.fseries .code-wrap{background-color:var(--bg-code)}
-
-body.fseries .out-wrap{background-color:var(--bg-out)}
-
-/* ===== F 系列：代码区配色（深底亮字 + 高饱和高亮）===== */
-/* ---- 代码块：近黑底，把「这是代码」和浅蓝网格彻底分开 ----
+}body.fseries .card.note{background-color:var(--blue-soft)}body.fseries .card.tip{background-color:var(--green-soft)}body.fseries .card.warn{background-color:var(--red-soft)}body.fseries .card.key{background-color:var(--violet-soft)}body.fseries .card.teal{background-color:var(--teal-soft)}body.fseries .mnemonic{background-color:var(--amber-soft)}body.fseries .code-wrap{background-color:var(--bg-code)}body.fseries .out-wrap{background-color:var(--bg-out)}/* ===== F 系列：代码区配色（深底亮字 + 高饱和高亮）===== *//* ---- 代码块：近黑底，把「这是代码」和浅蓝网格彻底分开 ----
    注意：F 系列主题里有一条
      body.fseries main>.code-wrap{background-color:var(--sfc)}
 
 (0,2,2)
    它的优先级高于 body.fseries .code-wrap            (0,2,1)，
-   所以这里必须把选择器写成同样带 main> 的形式，否则白底会赢。 */
-body.fseries main>.code-wrap,
+   所以这里必须把选择器写成同样带 main> 的形式，否则白底会赢。 */body.fseries main>.code-wrap,
 body.fseries .card .code-wrap,
 body.fseries .code-wrap{
   background-color:#010409;
   border:1px solid #33486b;
   border-left:5px solid #4d8dfb;
   box-shadow:0 2px 10px rgba(8,15,30,.22);
-}
-
-body.fseries main>.code-wrap:hover,
+}body.fseries main>.code-wrap:hover,
 body.fseries .card .code-wrap:hover,
 body.fseries .code-wrap:hover{
   border-color:#45608f;
   border-left-color:#7db0ff;
   box-shadow:0 10px 30px rgba(8,15,30,.34);
-}
-
-body.fseries .code-wrap .bar{
+}body.fseries .code-wrap .bar{
   background-color:#0d1526;
   border-bottom:1px solid #26364f;
   color:#c6d4e8;
-}
-
-body.fseries .code-wrap .bar .cp{
+}body.fseries .code-wrap .bar .cp{
   background-color:#1a2740;border-color:#3a5378;color:#dce8f8;
-}
-
-body.fseries .code-wrap .bar .cp:hover{
+}body.fseries .code-wrap .bar .cp:hover{
   background-color:#243454;color:#ffffff;border-color:#5b7cae;
-}
-
-/* ---- 正文：近纯白，和小字号的灰拉开 ---- */
-body.fseries .code-wrap pre{color:#f8fbff;font-weight:500}
-
-/* ---- 高亮色板：全部提到高饱和、高亮 ---- */
-body.fseries .code-wrap pre .hl-k{color:#e2b8ff}
-
-/* 关键字  紫 */
-body.fseries .code-wrap pre .hl-f{color:#8fc4ff}
-
-/* 函数    蓝 */
-body.fseries .code-wrap pre .hl-n{color:#ffb066}
-
-/* 数字    橙 */
-body.fseries .code-wrap pre .hl-s{color:#95f2a8}
-
-/* 字符串  绿 */
-body.fseries .code-wrap pre .hl-p{color:#7ee7ff}
-
-/* 预处理  青 */
-body.fseries .code-wrap pre .hl-c{color:#9fb0c9}
-
-/* 注释    灰蓝 */
-body.fseries .code-wrap pre .hl-b{color:#ff9ec4}
-
-/* 加粗    粉 */
-body.fseries .code-wrap pre .arw{color:#ffd75e}
-
-body.fseries .code-wrap pre .arw2{color:#8fc4ff}
-
-body.fseries .code-wrap pre .hl-bad{color:#ff8f8f;font-weight:700}
-
-body.fseries .code-wrap pre .hl-ok{color:#8dfab0;font-weight:700}
-
-/* ---- 运行结果：比代码再深一档，绿色边条更实 ----
-   同样要带 main> ，压过主题里那条白色的 main>.out-wrap */
-body.fseries main>.out-wrap,
+}/* ---- 正文：近纯白，和小字号的灰拉开 ---- */body.fseries .code-wrap pre{color:#f8fbff;font-weight:500}/* ---- 高亮色板：全部提到高饱和、高亮 ---- */body.fseries .code-wrap pre .hl-k{color:#e2b8ff}/* 关键字  紫 */body.fseries .code-wrap pre .hl-f{color:#8fc4ff}/* 函数    蓝 */body.fseries .code-wrap pre .hl-n{color:#ffb066}/* 数字    橙 */body.fseries .code-wrap pre .hl-s{color:#95f2a8}/* 字符串  绿 */body.fseries .code-wrap pre .hl-p{color:#7ee7ff}/* 预处理  青 */body.fseries .code-wrap pre .hl-c{color:#9fb0c9}/* 注释    灰蓝 */body.fseries .code-wrap pre .hl-b{color:#ff9ec4}/* 加粗    粉 */body.fseries .code-wrap pre .arw{color:#ffd75e}body.fseries .code-wrap pre .arw2{color:#8fc4ff}body.fseries .code-wrap pre .hl-bad{color:#ff8f8f;font-weight:700}body.fseries .code-wrap pre .hl-ok{color:#8dfab0;font-weight:700}/* ---- 运行结果：比代码再深一档，绿色边条更实 ----
+   同样要带 main> ，压过主题里那条白色的 main>.out-wrap */body.fseries main>.out-wrap,
 body.fseries .card .out-wrap,
 body.fseries .out-wrap{
   background-color:#000206;
   border:1px solid #26364f;
   border-left:5px solid #34e07a;
   box-shadow:0 2px 10px rgba(8,15,30,.20);
-}
-
-body.fseries main>.out-wrap:hover,
+}body.fseries main>.out-wrap:hover,
 body.fseries .card .out-wrap:hover,
 body.fseries .out-wrap:hover{
   border-left-color:#5cf59a;
   box-shadow:0 10px 26px rgba(8,15,30,.30);
-}
-
-body.fseries main>.out-wrap .cap,
+}body.fseries main>.out-wrap .cap,
 body.fseries .out-wrap .cap{
   background-color:#071019;border-bottom-color:#26364f;color:#9db0c8;
-}
-
-body.fseries main>.out-wrap pre,
+}body.fseries main>.out-wrap pre,
 body.fseries .card .out-wrap pre,
-body.fseries .out-wrap pre{color:#c9f7dc}
-
-/* ---- 终端窗口：同样保证深底（它也可能嵌在 .card 里）---- */
-body.fseries .term,
+body.fseries .out-wrap pre{color:#c9f7dc}/* ---- 终端窗口：同样保证深底（它也可能嵌在 .card 里）---- */body.fseries .term,
 body.fseries .card .term,
 body.fseries main>.term{
   background-color:#010409;
   border:1px solid #33486b;
   border-left:5px solid #4d8dfb;
-}
-
-body.fseries .term:hover,
-body.fseries .card .term:hover{border-left-color:#7db0ff}
-
-body.fseries .term .tbar,
+}body.fseries .term:hover,
+body.fseries .card .term:hover{border-left-color:#7db0ff}body.fseries .term .tbar,
 body.fseries .card .term .tbar{
   background-color:#0d1526;border-bottom-color:#26364f;color:#c6d4e8;
   font-family:var(--mono);font-size:11.5px;
-}
-
-body.fseries .term pre,
+}body.fseries .term pre,
 body.fseries .card .term pre{
   color:#f8fbff !important;
   font-family:var(--mono) !important;
@@ -560,20 +168,7 @@ body.fseries .card .term pre{
   border:0 !important;
   padding:12px 14px !important;
   margin:0 !important;
-}
-
-body.fseries .term .pr{color:#7cf59a}
-
-body.fseries .term .cmd{color:#ffffff;font-weight:600}
-
-body.fseries .term .out{color:#cfe0f2}
-
-body.fseries .term .warn{color:#ffd75e}
-
-body.fseries .term .err{color:#ff9090}
-
-/* ---- 内嵌小代码片（卡片里的 pre）同步用深底亮字 ---- */
-body.fseries .card pre,
+}body.fseries .term .pr{color:#7cf59a}body.fseries .term .cmd{color:#ffffff;font-weight:600}body.fseries .term .out{color:#cfe0f2}body.fseries .term .warn{color:#ffd75e}body.fseries .term .err{color:#ff9090}/* ---- 内嵌小代码片（卡片里的 pre）同步用深底亮字 ---- */body.fseries .card pre,
 body.fseries .mnemonic pre,
 body.fseries p pre,
 body.fseries .qa pre,
@@ -581,53 +176,32 @@ body.fseries .cpp-note pre{
   background-color:#010409 !important;
   border:1px solid #33486b !important;
   color:#f8fbff !important;
-}
-
-body.fseries .card pre .hl-k,
+}body.fseries .card pre .hl-k,
 body.fseries .mnemonic pre .hl-k,
 body.fseries .qa pre .hl-k,
-body.fseries .cpp-note pre .hl-k{color:#e2b8ff}
-
-body.fseries .card pre .hl-f,
+body.fseries .cpp-note pre .hl-k{color:#e2b8ff}body.fseries .card pre .hl-f,
 body.fseries .mnemonic pre .hl-f,
 body.fseries .qa pre .hl-f,
-body.fseries .cpp-note pre .hl-f{color:#8fc4ff}
-
-body.fseries .card pre .hl-s,
+body.fseries .cpp-note pre .hl-f{color:#8fc4ff}body.fseries .card pre .hl-s,
 body.fseries .mnemonic pre .hl-s,
 body.fseries .qa pre .hl-s,
-body.fseries .cpp-note pre .hl-s{color:#95f2a8}
-
-body.fseries .card pre .hl-c,
+body.fseries .cpp-note pre .hl-s{color:#95f2a8}body.fseries .card pre .hl-c,
 body.fseries .mnemonic pre .hl-c,
 body.fseries .qa pre .hl-c,
-body.fseries .cpp-note pre .hl-c{color:#9fb0c9}
-
-body.fseries .card pre .hl-n,
+body.fseries .cpp-note pre .hl-c{color:#9fb0c9}body.fseries .card pre .hl-n,
 body.fseries .mnemonic pre .hl-n,
 body.fseries .qa pre .hl-n,
-body.fseries .cpp-note pre .hl-n{color:#ffb066}
-
-body.fseries .card pre .hl-p,
+body.fseries .cpp-note pre .hl-n{color:#ffb066}body.fseries .card pre .hl-p,
 body.fseries .mnemonic pre .hl-p,
 body.fseries .qa pre .hl-p,
-body.fseries .cpp-note pre .hl-p{color:#7ee7ff}
-
-/* ---- 行内 code：浅底上加深，别发灰 ---- */
-body.fseries code{
+body.fseries .cpp-note pre .hl-p{color:#7ee7ff}/* ---- 行内 code：浅底上加深，别发灰 ---- */body.fseries code{
   background:#dbe8f8;border-color:#b6cdea;color:#06357a;font-weight:600;
-}
-
-/* ---- 命令卡片里的小代码片（F01 用的 div.e，不是 pre）---- */
-body.fseries .cmds .c .e{
+}/* ---- 命令卡片里的小代码片（F01 用的 div.e，不是 pre）---- */body.fseries .cmds .c .e{
   background-color:#010409;border:1px solid #33486b;color:#f8fbff;
   font-weight:500;
-}
-
-/* ================= 重点小节：整块黄底 =================
+}/* ================= 重点小节：整块黄底 =================
    与 home.html 的重点卡片同一套配色（淡金渐变底 + 金色左边框 + 金色 ★），
-   一眼看出「这一节是本项目的重点」。 */
-h2.key-h,
+   一眼看出「这一节是本项目的重点」。 */h2.key-h,
 h3.key-h,
 h4.key-h{
   position:relative;
@@ -638,72 +212,23 @@ h4.key-h{
   padding:10px 16px 10px 14px;
   margin-left:-4px;
   box-shadow:0 2px 10px rgba(200,144,26,.14);
-}
-h2.key-h{border-top:1px solid #e8c877;padding-top:10px}
-.key-mark{display:inline-block;margin-right:8px;color:#c8901a;font-size:15px;
-  vertical-align:1px;cursor:help}
-.key-hint{display:inline-block;margin-left:8px;padding:1px 9px;border-radius:999px;
+}h2.key-h{border-top:1px solid #e8c877;padding-top:10px}.key-mark{display:inline-block;margin-right:8px;color:#c8901a;font-size:15px;
+  vertical-align:1px;cursor:help}.key-hint{display:inline-block;margin-left:8px;padding:1px 9px;border-radius:999px;
   font-size:11px;font-weight:600;background:#eef2f8;border:1px solid #ccd5e3;
-  color:#8b95a5;vertical-align:2px;font-family:var(--sans)}
-@media (max-width:980px){
-  h2.key-h,h3.key-h,h4.key-h{margin-left:0;border-radius:0 8px 8px 0}
-}
-
-@media(max-width:980px){#toc{display:none}main{padding:24px}}
-
-/* ===== 移动端增强 (mobile) ===== */
-/* 桌面端不显示抽屉按钮（只在窄屏呼出）。这条本身不设 display，避免
+  color:#8b95a5;vertical-align:2px;font-family:var(--sans)}@media (max-width:980px){h2.key-h,h3.key-h,h4.key-h{margin-left:0;border-radius:0 8px 8px 0}}@media(max-width:980px){#toc{display:none}main{padding:24px}}/* ===== 移动端增强 (mobile) ===== *//* 桌面端不显示抽屉按钮（只在窄屏呼出）。这条本身不设 display，避免
    与窄屏里的 #tocToggle 规则打架；#shell{display:flex}
 
-正好把它藏起来。 */
-@media (min-width:981px){#tocToggle{display:none}
-
-}
-
-/* ---------- 平板及以下：收紧留白 ---------- */
-@media (max-width:980px){
-  #shell{display:block;max-width:none}
-  main{padding:56px 18px 110px}
-  h1{font-size:25px}
-  h2{font-size:19px;margin:42px 0 12px;gap:9px}
-  h2 .n{width:26px;height:26px;line-height:26px;font-size:13px;border-radius:7px}
-  h3{font-size:16px;margin:26px 0 8px}
-  h4{font-size:14.5px}
-
-  /* 代码与输出：手机上要看得清 */
-  .code-wrap pre{font-size:14px;line-height:1.68;padding:12px 13px;
-    -webkit-overflow-scrolling:touch}
-  .out-wrap pre{font-size:14px;line-height:1.66;padding:12px 13px;
-    -webkit-overflow-scrolling:touch}
-  .code-wrap .bar,.out-wrap .cap{font-size:11px;padding:6px 10px}
-  .code-wrap .bar .cp{padding:3px 10px;font-size:11px}
-
-  /* 表格单独横向滚动，不再撑破版心 */
-  main>table, main .card>table{
+正好把它藏起来。 */@media (min-width:981px){#tocToggle{display:none}}/* ---------- 平板及以下：收紧留白 ---------- */@media (max-width:980px){#shell{display:block;max-width:none}main{padding:56px 18px 110px}h1{font-size:25px}h2{font-size:19px;margin:42px 0 12px;gap:9px}h2 .n{width:26px;height:26px;line-height:26px;font-size:13px;border-radius:7px}h3{font-size:16px;margin:26px 0 8px}h4{font-size:14.5px}/* 代码与输出：手机上要看得清 */.code-wrap pre{font-size:14px;line-height:1.68;padding:12px 13px;
+    -webkit-overflow-scrolling:touch}.out-wrap pre{font-size:14px;line-height:1.66;padding:12px 13px;
+    -webkit-overflow-scrolling:touch}.code-wrap .bar,.out-wrap .cap{font-size:11px;padding:6px 10px}.code-wrap .bar .cp{padding:3px 10px;font-size:11px}/* 表格单独横向滚动，不再撑破版心 */main>table, main .card>table{
     display:block;width:100%;overflow-x:auto;-webkit-overflow-scrolling:touch;
     white-space:nowrap;font-size:13.5px
-  }
-  main>table th, main>table td{white-space:nowrap}
-
-  /* 各类示意图允许横向滚动 */
-  .bits,.bitrow,.bytes,.cells,.addr,.anat,.flow,.ptr-demo{
+  }main>table th, main>table td{white-space:nowrap}/* 各类示意图允许横向滚动 */.bits,.bitrow,.bytes,.cells,.addr,.anat,.flow,.ptr-demo{
     overflow-x:auto;-webkit-overflow-scrolling:touch
-  }
-  .bits,.bytes,.cells{flex-wrap:nowrap}
-  .anat .row{min-width:max-content}
-  .ptr-demo .link{white-space:nowrap}
-
-  /* 卡片与行内代码 */
-  .card{padding:13px 15px;border-radius:11px}
-  code{word-break:break-word}
-  .mnemonic{padding:11px 14px;font-size:14.5px}
-
-  /* 目录：变成可呼出的抽屉，不再直接藏掉 */
-  /* 基础样式里这条断点写了 #toc{display:none}，这里必须显式恢复，
+  }.bits,.bytes,.cells{flex-wrap:nowrap}.anat .row{min-width:max-content}.ptr-demo .link{white-space:nowrap}/* 卡片与行内代码 */.card{padding:13px 15px;border-radius:11px}code{word-break:break-word}.mnemonic{padding:11px 14px;font-size:14.5px}/* 目录：变成可呼出的抽屉，不再直接藏掉 *//* 基础样式里这条断点写了 #toc{display:none}，这里必须显式恢复，
      否则目录会变成 0×0 的隐形元素 —— 按钮点了也没反应。
      用 !important 是因为 display:none 与我们的 display:block 选择器
-     优先级相同，靠后写不一定稳。 */
-  #toc{
+     优先级相同，靠后写不一定稳。 */#toc{
     display:block !important;
     position:fixed;top:0;left:0;bottom:0;z-index:60;
     width:min(80vw,308px);height:100vh;max-height:100vh;
@@ -713,86 +238,24 @@ h2.key-h{border-top:1px solid #e8c877;padding-top:10px}
     transform:translateX(-102%);
     transition:transform .25s ease;
     overscroll-behavior:contain
-  }
-  #toc.open{transform:translateX(0)}
-  #toc a{padding:9px 11px;font-size:15px}
-  #toc a.sub{padding-left:26px;font-size:13.5px}
-  body.toc-open{overflow:hidden}
-
-  /* 遮罩：用 body.toc-open 的伪元素生成，而不是挂在 #toc 上。
+  }#toc.open{transform:translateX(0)}#toc a{padding:9px 11px;font-size:15px}#toc a.sub{padding-left:26px;font-size:13.5px}body.toc-open{overflow:hidden}/* 遮罩：用 body.toc-open 的伪元素生成，而不是挂在 #toc 上。
      挂在 #toc 上时它会与抽屉同一个层叠上下文，层级很难既压住正文
      又不盖住抽屉自己的文字。挂在 body 上则天然在抽屉（z-index:60）之下、
-     正文之上，层级干净。点击关闭由脚本的 document 监听处理。 */
-  body.toc-open::after{
+     正文之上，层级干净。点击关闭由脚本的 document 监听处理。 */body.toc-open::after{
     content:"";position:fixed;inset:0;z-index:55;
     background:rgba(18,26,40,.42);
     opacity:1;transition:opacity .25s
-  }
-
-  #tocToggle{
+  }#tocToggle{
     position:fixed;top:11px;left:11px;z-index:70;
     padding:7px 14px;border-radius:999px;cursor:pointer;
     background:var(--sfc);color:var(--fg);border:1px solid var(--line-2);
     font:600 13px/1 var(--sans);box-shadow:0 2px 10px rgba(20,30,50,.14);
     -webkit-tap-highlight-color:transparent;
     opacity:.72;transition:opacity .18s,background .18s,color .18s,transform .12s
-  }
-  #tocToggle:hover,#tocToggle:focus-visible{opacity:1}
-  #tocToggle:active{transform:scale(.96)}
-  body.toc-open #tocToggle{background:var(--fg);color:#fff;border-color:var(--fg)}
-  html{scroll-padding-top:64px}
-}
-
-/* ---------- 手机：进一步压缩 ---------- */
-@media (max-width:560px){
-  main{padding:54px 13px 100px}
-  h1{font-size:22px}
-  h2{font-size:17.5px;margin:36px 0 10px}
-  .sub-title{font-size:14px}
-  .tag{font-size:11px;padding:1.5px 7px}
-  body{font-size:15.5px;line-height:1.75}
-
-  /* 流程条改成竖向排列，箭头朝下 */
-  .flow{display:block}
-  .flow .s+.s{margin:20px 0 0}
-  .flow .s+.s::before{content:"↓";left:50%;top:-19px;transform:translateX(-50%)}
-
-  .code-wrap,.out-wrap{border-radius:9px}
-  .code-wrap pre,.out-wrap pre{font-size:13.5px;padding:11px 11px}
-  .code-wrap .bar .name{max-width:56vw;overflow:hidden;text-overflow:ellipsis;
-    white-space:nowrap}
-  .card{padding:12px 13px;margin:15px 0}
-  .qa .q,.qa .a{padding:11px 13px}
-  .qa .q{font-size:14px}
-  blockquote{margin:12px 0;padding:10px 13px}
-
-  .bits .b{width:22px;height:28px;line-height:28px;font-size:13px}
-  .bits .b.w{width:27px}
-  .bits-lg .b{width:17px;height:22px;line-height:22px;font-size:11px}
-  .byte{min-width:64px;padding:7px 5px 5px}
-  .cell{min-width:56px}
-  .addr{font-size:12px}
-  .addr>div{padding:6px 10px}
-  .ptr-demo{padding:12px}
-  .ptr-demo .box{min-width:100px;padding:8px 11px}
-  .flow .s+.s{margin-left:20px}
-  .flow .s+.s::before{left:-16px}
-
-  #tocToggle{top:9px;left:9px;padding:6px 12px;font-size:12.5px}
-  #toc{width:min(86vw,300px);padding-top:58px}
-}
-
-/* ---------- 打印时保持干净 ---------- */
-@media print{
-  #tocToggle{display:none !important}
-  body.toc-open::after{display:none !important}
-}
-
-/* ===== 移动端：长路径字符串断行 =====
+  }#tocToggle:hover,#tocToggle:focus-visible{opacity:1}#tocToggle:active{transform:scale(.96)}body.toc-open #tocToggle{background:var(--fg);color:#fff;border-color:var(--fg)}html{scroll-padding-top:64px}}/* ---------- 手机：进一步压缩 ---------- */@media (max-width:560px){main{padding:54px 13px 100px}h1{font-size:22px}h2{font-size:17.5px;margin:36px 0 10px}.sub-title{font-size:14px}.tag{font-size:11px;padding:1.5px 7px}body{font-size:15.5px;line-height:1.75}/* 流程条改成竖向排列，箭头朝下 */.flow{display:block}.flow .s+.s{margin:20px 0 0}.flow .s+.s::before{content:"↓";left:50%;top:-19px;transform:translateX(-50%)}.code-wrap,.out-wrap{border-radius:9px}.code-wrap pre,.out-wrap pre{font-size:13.5px;padding:11px 11px}.code-wrap .bar .name{max-width:56vw;overflow:hidden;text-overflow:ellipsis;
+    white-space:nowrap}.card{padding:12px 13px;margin:15px 0}.qa .q,.qa .a{padding:11px 13px}.qa .q{font-size:14px}blockquote{margin:12px 0;padding:10px 13px}.bits .b{width:22px;height:28px;line-height:28px;font-size:13px}.bits .b.w{width:27px}.bits-lg .b{width:17px;height:22px;line-height:22px;font-size:11px}.byte{min-width:64px;padding:7px 5px 5px}.cell{min-width:56px}.addr{font-size:12px}.addr>div{padding:6px 10px}.ptr-demo{padding:12px}.ptr-demo .box{min-width:100px;padding:8px 11px}.flow .s+.s{margin-left:20px}.flow .s+.s::before{left:-16px}#tocToggle{top:9px;left:9px;padding:6px 12px;font-size:12.5px}#toc{width:min(86vw,300px);padding-top:58px}}/* ---------- 打印时保持干净 ---------- */@media print{#tocToggle{display:none !important}body.toc-open::after{display:none !important}}/* ===== 移动端：长路径字符串断行 =====
    长且无空格的串（路径、命令、变量名）在窄屏上必须允许内部断行，
-   否则会把表格和终端块撑得比视口还宽。 */
-@media (max-width:980px){
-  main table th,
+   否则会把表格和终端块撑得比视口还宽。 */@media (max-width:980px){main table th,
   main table td,
   main table td code,
   main table th code,
@@ -801,12 +264,7 @@ h2.key-h{border-top:1px solid #e8c877;padding-top:10px}
   main th{
     overflow-wrap:anywhere;
     word-break:break-word;
-  }
-  /* 表头文字允许换行 */
-  main table th{white-space:normal}
-
-  /* 终端块里的提示符与输出 */
-  .term pre,
+  }/* 表头文字允许换行 */main table th{white-space:normal}/* 终端块里的提示符与输出 */.term pre,
   .term .pr,
   .term .cmd,
   .term .out,
@@ -815,35 +273,14 @@ h2.key-h{border-top:1px solid #e8c877;padding-top:10px}
     overflow-wrap:anywhere;
     word-break:break-word;
     white-space:pre-wrap;
-  }
-  /* 行内 code 也别撑宽 */
-  main p code,
+  }/* 行内 code 也别撑宽 */main p code,
   main li code,
   main td code,
   .card code{
     overflow-wrap:anywhere;
     word-break:break-word;
-  }
-}
-
-@media print{#toc{display:none}main{padding:0}.code-wrap,.out-wrap{break-inside:avoid}body{font-size:12pt}}
-
-/* 移动端：顶部条会挡住目录按钮，把按钮下移 */
-@media (max-width:980px){
-  body.fseries::before{font-size:11px;padding:4px 10px}
-  body.fseries #tocToggle{top:34px}
-  body.fseries main{padding-top:72px}
-  body.fseries #toc{padding-top:80px}
-  body.fseries html{scroll-padding-top:96px}
-}
-
-@media print{
-  body.fseries{background:var(--sfc)}
-  body.fseries::before{position:static;display:block;background:var(--sfc);color:#000;
-    border-bottom:1px solid #999}
-}
-
-/* =====================================================================
+  }}@media print{#toc{display:none}main{padding:0}.code-wrap,.out-wrap{break-inside:avoid}body{font-size:12pt}}/* 移动端：顶部条会挡住目录按钮，把按钮下移 */@media (max-width:980px){body.fseries::before{font-size:11px;padding:4px 10px}body.fseries #tocToggle{top:34px}body.fseries main{padding-top:72px}body.fseries #toc{padding-top:80px}body.fseries html{scroll-padding-top:96px}}@media print{body.fseries{background:var(--sfc)}body.fseries::before{position:static;display:block;background:var(--sfc);color:#000;
+    border-bottom:1px solid #999}}/* =====================================================================
    F 系列 · 暗色模式
    ---------------------------------------------------------------------
    放在文件**最末尾**：整套样式的层叠靠「后加载」决胜，
@@ -852,9 +289,7 @@ h2.key-h{border-top:1px solid #e8c877;padding-top:10px}
    选择器带 body.fseries：亮色的背景正是由 body.fseries 那条规则画的
    （background-color:var(--f-bg) + 26px 网格），只改 --f-bg 变量不够 ——
    它会拿新变量值继续画出一片**浅色网格**。所以这里直接把背景写清楚。
-   ===================================================================== */
-@media (prefers-color-scheme: dark){
-  :root:root{
+   ===================================================================== */@media (prefers-color-scheme: dark){:root:root{
     --bg:#0f141b;
     --bg-soft:#161d26;
     --bg-code:#0b0f16;
@@ -872,10 +307,7 @@ h2.key-h{border-top:1px solid #e8c877;padding-top:10px}
     --teal:#4cc4c4;   --teal-soft:#122a2a;
     --f-bg:#0f141b;
     --f-grid:rgba(106,166,245,.055);
-  }
-
-  /* 背景：直接写死，不依赖变量传递 */
-  body.fseries,
+  }/* 背景：直接写死，不依赖变量传递 */body.fseries,
   body[data-series="F"]{
     background-color:#0f141b !important;
     background-image:
@@ -883,118 +315,49 @@ h2.key-h{border-top:1px solid #e8c877;padding-top:10px}
       linear-gradient(90deg,rgba(106,166,245,.055) 1px,transparent 1px) !important;
     background-size:26px 26px !important;
     color:#e6ecf4;
-  }
-  body.fseries #toc,
+  }body.fseries #toc,
   body[data-series="F"] #toc{
     background:#161d26;border-right-color:#26303c;
-  }
-  body.fseries #toc a,
-  body[data-series="F"] #toc a{color:#b9c4d2}
-  body.fseries #toc a.on,
+  }body.fseries #toc a,
+  body[data-series="F"] #toc a{color:#b9c4d2}body.fseries #toc a.on,
   body[data-series="F"] #toc a.on{
     background:linear-gradient(90deg,rgba(106,166,245,.26),rgba(106,166,245,.08));
     color:#dbe6f5;
-  }
-  /* 顶部常驻条：亮蓝在暗色下太扎眼 */
-  body.fseries::before,
-  body[data-series="F"]::before{background:#254a80 !important;color:#fff}
-
-  /* 正文与卡片的深色化。用 body.fseries 前缀保证压过前面的亮色规则 */
-  body.fseries h1,body[data-series="F"] h1{color:#e6ecf4}
-  body.fseries h2,body[data-series="F"] h2{color:#dbe6f5;border-bottom-color:#26303c}
-  body.fseries h3,body[data-series="F"] h3,
-  body.fseries h4,body[data-series="F"] h4{color:#b9c4d2}
-  body.fseries .sub-title,body[data-series="F"] .sub-title{color:#939fb0}
-  body.fseries a,body[data-series="F"] a{color:#6aa6f5}
-  body.fseries main>.card,body[data-series="F"] main>.card,
+  }/* 顶部常驻条：亮蓝在暗色下太扎眼 */body.fseries::before,
+  body[data-series="F"]::before{background:#254a80 !important;color:#fff}/* 正文与卡片的深色化。用 body.fseries 前缀保证压过前面的亮色规则 */body.fseries h1,body[data-series="F"] h1{color:#e6ecf4}body.fseries h2,body[data-series="F"] h2{color:#dbe6f5;border-bottom-color:#26303c}body.fseries h3,body[data-series="F"] h3,
+  body.fseries h4,body[data-series="F"] h4{color:#b9c4d2}body.fseries .sub-title,body[data-series="F"] .sub-title{color:#939fb0}body.fseries a,body[data-series="F"] a{color:#6aa6f5}body.fseries main>.card,body[data-series="F"] main>.card,
   body.fseries main>table,body[data-series="F"] main>table{
     background-color:#161d26;border-color:#26303c;
-  }
-  body.fseries .card.note{background-color:#16243a}
-  body.fseries .card.tip{background-color:#13291f}
-  body.fseries .card.warn{background-color:#2e1a18}
-  body.fseries .card.key{background-color:#221b36}
-  body.fseries .card.teal{background-color:#122a2a}
-  body.fseries .card-t,body[data-series="F"] .card-t{color:#7cb0ff}
-  body.fseries .card.note>.card-t{color:#7cb0ff}
-  body.fseries .card.tip>.card-t{color:#5fd0a0}
-  body.fseries .card.warn>.card-t{color:#ff9a92}
-  body.fseries .card.key>.card-t{color:#f0cc72}
-  body.fseries .card.teal>.card-t{color:#5fd0d0}
-  body.fseries .key-mark{color:#f0cc72}
-  body.fseries table th,body[data-series="F"] table th{
+  }body.fseries .card.note{background-color:#16243a}body.fseries .card.tip{background-color:#13291f}body.fseries .card.warn{background-color:#2e1a18}body.fseries .card.key{background-color:#221b36}body.fseries .card.teal{background-color:#122a2a}body.fseries .card-t,body[data-series="F"] .card-t{color:#7cb0ff}body.fseries .card.note>.card-t{color:#7cb0ff}body.fseries .card.tip>.card-t{color:#5fd0a0}body.fseries .card.warn>.card-t{color:#ff9a92}body.fseries .card.key>.card-t{color:#f0cc72}body.fseries .card.teal>.card-t{color:#5fd0d0}body.fseries .key-mark{color:#f0cc72}body.fseries table th,body[data-series="F"] table th{
     background:linear-gradient(180deg,#1e2836,#1a222d);
     color:#dbe6f5;border-color:#26303c;
-  }
-  body.fseries table td,body[data-series="F"] table td{border-color:#26303c}
-  body.fseries table tbody tr:nth-child(even){background:rgba(106,166,245,.05)}
-  body.fseries .tag{background:#1c2532;border-color:#374556;color:#c3cfdd}
-  body.fseries code{background:#1c2532;border-color:#374556;color:#9fc4ff}
-
-  /* 代码块 / 输出块：本来就深，再压一档 */
-  body.fseries main>.code-wrap,body[data-series="F"] main>.code-wrap{
+  }body.fseries table td,body[data-series="F"] table td{border-color:#26303c}body.fseries table tbody tr:nth-child(even){background:rgba(106,166,245,.05)}body.fseries .tag{background:#1c2532;border-color:#374556;color:#c3cfdd}body.fseries code{background:#1c2532;border-color:#374556;color:#9fc4ff}/* 代码块 / 输出块：本来就深，再压一档 */body.fseries main>.code-wrap,body[data-series="F"] main>.code-wrap{
     background-color:#0b0f16 !important;
-  }
-  body.fseries .code-wrap,body[data-series="F"] .code-wrap{background-color:#0b0f16}
-  body.fseries .code-wrap .bar{background-color:#0e131b;border-bottom-color:#243044}
-  body.fseries .out-wrap,body[data-series="F"] .out-wrap{background-color:#070a0f}
-
-  /* 返回 home 与页尾小目录 */
-  body.fseries .home-fab,body[data-series="F"] .home-fab{
+  }body.fseries .code-wrap,body[data-series="F"] .code-wrap{background-color:#0b0f16}body.fseries .code-wrap .bar{background-color:#0e131b;border-bottom-color:#243044}body.fseries .out-wrap,body[data-series="F"] .out-wrap{background-color:#070a0f}/* 返回 home 与页尾小目录 */body.fseries .home-fab,body[data-series="F"] .home-fab{
     background:#1c2532 !important;border-color:#374556;color:#dbe6f5;
     box-shadow:0 4px 16px rgba(0,0,0,.45);
-  }
-  body.fseries .home-fab:hover,body[data-series="F"] .home-fab:hover{color:#6aa6f5}
-
-  /* ---------- 纯文本 <pre>（.plain-pre） ----------
+  }body.fseries .home-fab:hover,body[data-series="F"] .home-fab:hover{color:#6aa6f5}/* ---------- 纯文本 <pre>（.plain-pre） ----------
      F03 第 8 节原来给 <pre> 写了内联 background:var(--sfc-2)，
-     内联优先级最高，暗色下就是一块白。改成类名后由这里控制。 */
-  .plain-pre{
+     内联优先级最高，暗色下就是一块白。改成类名后由这里控制。 */.plain-pre{
     background:#161d26 !important;border-color:#374556 !important;
     color:#e6ecf4 !important;
-  }
-
-  /* ---------- 重点小节标题（.key-h） ----------
-     原来只有亮色的浅金渐变，暗色下直接压在暗底上。 */
-  h2.key-h,h3.key-h,h4.key-h{
+  }/* ---------- 重点小节标题（.key-h） ----------
+     原来只有亮色的浅金渐变，暗色下直接压在暗底上。 */h2.key-h,h3.key-h,h4.key-h{
     background:linear-gradient(96deg,#2b2210 0%,#332813 58%,#241d0c 100%) !important;
     border-color:#6b5518 !important;border-left-color:#e0b23f !important;
     color:#f4e3b4 !important;
-  }
-  h2.key-h .n,h3.key-h .n,h4.key-h .n{color:#241a03 !important}
-  .key-hint{background:#2b313b !important;border-color:#3a414c !important;
-    color:#b9c4d2 !important}
-}
-
-/* ---------- 目录树（.tree） ----------
+  }h2.key-h .n,h3.key-h .n,h4.key-h .n{color:#241a03 !important}.key-hint{background:#2b313b !important;border-color:#3a414c !important;
+    color:#b9c4d2 !important}}/* ---------- 目录树（.tree） ----------
    原来用的是 <div>，而 div 不保留换行 —— 手工排好的目录树会挤成一行。
-   改成 <pre> 后需要配一套等宽样式。 */
-.tree{
+   改成 <pre> 后需要配一套等宽样式。 */.tree{
   margin:14px 0;padding:13px 15px;overflow:auto;
   background:var(--sfc-2);border:1px solid var(--line,#e3e8f0);border-radius:8px;
   font-family:var(--mono,Consolas,monospace);font-size:12.5px;line-height:1.75;
   color:var(--fg,#1a1f28);white-space:pre;
-}
-.tree .d{color:#0d6efd;font-weight:600}
-.tree .f{color:#0f6b3a}
-.tree .c{color:#8b95a5}
-@media (prefers-color-scheme: dark){
-  .tree{background:#161d26;border-color:#374556;color:#e6ecf4}
-  .tree .d{color:#6aa6f5}
-  .tree .f{color:#4fc98d}
-  .tree .c{color:#939fb0}
-}
-
-/* ---------- 表格行 hover 的暗色适配 ----------
+}.tree .d{color:#0d6efd;font-weight:600}.tree .f{color:#0f6b3a}.tree .c{color:#8b95a5}@media (prefers-color-scheme: dark){.tree{background:#161d26;border-color:#374556;color:#e6ecf4}.tree .d{color:#6aa6f5}.tree .f{color:#4fc98d}.tree .c{color:#939fb0}}/* ---------- 表格行 hover 的暗色适配 ----------
    本文件里有一条 tbody tr:hover{background:var(--sfc-hover)}（写死的浅色）。
    暗色模式下它会把整行刷成浅蓝，而文字是浅色 —— 直接看不见。
-   这里在暗色下换成深底亮字。 */
-@media (prefers-color-scheme: dark){
-  tbody tr:hover{background:#1e2836}
-  tbody tr:hover td{color:#e6ecf4}
-}
-
-/* =====================================================================
+   这里在暗色下换成深底亮字。 */@media (prefers-color-scheme: dark){tbody tr:hover{background:#1e2836}tbody tr:hover td{color:#e6ecf4}}/* =====================================================================
    F01 / F03 的命令卡片（div.c）
    ---------------------------------------------------------------------
    放在文件**最末尾**：前面还有同特异度的 div.c 规则（带 color:#1a1f28），
@@ -1002,97 +365,55 @@ h2.key-h{border-top:1px solid #e8c877;padding-top:10px}
    实测暗色下 div.c 底色仍是 #ffffff，字色却已经是浅色，等于看不见。
 
    选择器写两遍 div.c.c 提一级特异度，位置再放最后，双保险。
-   ===================================================================== */
-div.c.c{
+   ===================================================================== */div.c.c{
   margin:10px 0;padding:11px 13px;
   border:1px solid #ccd5e3;border-radius:10px;
   background:var(--sfc);color:#1a1f28;
-}
-div.c.c > .cn{font-weight:700;color:#1a1f28}
-div.c.c code{font-family:var(--mono,Consolas,monospace)}
-@media (prefers-color-scheme: dark){
-  div.c.c{
+}div.c.c > .cn{font-weight:700;color:#1a1f28}div.c.c code{font-family:var(--mono,Consolas,monospace)}@media (prefers-color-scheme: dark){div.c.c{
     background:#161d26 !important;
     border-color:#374556 !important;
     color:#e6ecf4 !important;
-  }
-  div.c.c > .cn{color:#e6ecf4 !important}
-}
-
-/* =====================================================================
+  }div.c.c > .cn{color:#e6ecf4 !important}}/* =====================================================================
    第 12 轮修正：几个写死浅色的块 + .mnemonic / .key-h 的区分与辨识度
-   ===================================================================== */
-
-/* ---------- ① 写死浅色的块：暗色下必须换深底 ---------- */
-@media (prefers-color-scheme: dark){
-  .stack .fr{
+   ===================================================================== *//* ---------- ① 写死浅色的块：暗色下必须换深底 ---------- */@media (prefers-color-scheme: dark){.stack .fr{
     background:#161d26 !important;border-color:#374556 !important;color:#e6ecf4;
-  }
-  .stack .fr:hover{border-color:var(--blue,#6aa6f5) !important;
-    box-shadow:0 5px 16px rgba(0,0,0,.42) !important}
-  .capfig{
+  }.stack .fr:hover{border-color:var(--blue,#6aa6f5) !important;
+    box-shadow:0 5px 16px rgba(0,0,0,.42) !important}.capfig{
     background:#161d26 !important;border-color:#374556 !important;color:#e6ecf4;
-  }
-  .capfig .t,.capfig .lg{color:#939fb0}
-  .capfig .cellb.free{background:#1e2836;color:#939fb0;border-color:#374556}
-  .capfig .lg .sq.f{background:#1e2836;border-color:#374556}
-  .capfig .cellb{color:#e6ecf4}
-  /* .mnemonic 用的是 --amber-soft，暗色块里没覆盖过 —— 顺手补上安全值 */
-  .mnemonic{background:#10262b;border-left-color:#3fc4d4}
-}
-
-/* ---------- ② .mnemonic 与 .key-h 拉开区分 ----------
+  }.capfig .t,.capfig .lg{color:#939fb0}.capfig .cellb.free{background:#1e2836;color:#939fb0;border-color:#374556}.capfig .lg .sq.f{background:#1e2836;border-color:#374556}.capfig .cellb{color:#e6ecf4}/* .mnemonic 用的是 --amber-soft，暗色块里没覆盖过 —— 顺手补上安全值 */.mnemonic{background:#10262b;border-left-color:#3fc4d4}}/* ---------- ② .mnemonic 与 .key-h 拉开区分 ----------
    原来两者都是「琥珀底 + 左侧竖条」，暗色下几乎一样。
    现在分工明确：
      .mnemonic  助记 / 口诀 / 小提示 —— **青蓝**（信息色）
      .key-h     重点小节标题        —— **金色**（强调色）
-   色相拉开之后，扫一眼就知道是「提示」还是「重点」。 */
-.mnemonic{
+   色相拉开之后，扫一眼就知道是「提示」还是「重点」。 */.mnemonic{
   border-left:5px solid #0d8f9e;
   background:linear-gradient(96deg,#eefafb,#e2f6f8);
   color:var(--fg,#1a1f28);
-}
-.mnemonic b{color:#0a6b78}
-.mnemonic::before{
+}.mnemonic b{color:#0a6b78}.mnemonic::before{
   content:"助记";
   display:inline-block;margin-right:9px;padding:1px 8px;border-radius:999px;
   font-size:11px;font-weight:700;letter-spacing:.06em;
   background:#0d8f9e;color:#fff;vertical-align:2px;
-}
-@media (prefers-color-scheme: dark){
-  .mnemonic{
+}@media (prefers-color-scheme: dark){.mnemonic{
     border-left-color:#3fc4d4 !important;
     background:linear-gradient(96deg,#10262b,#0d2024) !important;
     color:#d6f0ee !important;
-  }
-  
-  .mnemonic::before{background:#3fc4d4;color:#062024}
-}
-
-/* ---------- ④ 暗色下 .key-h 的辨识度 ----------
+  }.mnemonic::before{background:#3fc4d4;color:#062024}}/* ---------- ④ 暗色下 .key-h 的辨识度 ----------
    原来的暗色 key-h 只是把亮色反相成深棕，跟普通卡片几乎分不出来。
    这里提高对比：更亮的金色左条 + 带金调的渐变 + 金色外发光，
-   让「重点小节」在暗色下也是第一眼能看到的东西。 */
-@media (prefers-color-scheme: dark){
-  h2.key-h,h3.key-h,h4.key-h{
+   让「重点小节」在暗色下也是第一眼能看到的东西。 */@media (prefers-color-scheme: dark){h2.key-h,h3.key-h,h4.key-h{
     background:linear-gradient(96deg,#3a2d10 0%,#4a3a15 52%,#2e2409 100%) !important;
     border-color:#8a6d1e !important;
     border-left:7px solid #f0cc72 !important;
     color:#ffe9b0 !important;
     box-shadow:0 0 0 1px rgba(240,204,114,.16),
                0 3px 14px rgba(0,0,0,.42);
-  }
-  h2.key-h .n,h3.key-h .n,h4.key-h .n{
+  }h2.key-h .n,h3.key-h .n,h4.key-h .n{
     background:#f0cc72 !important;color:#2b1d02 !important;
-  }
-  .key-hint{
+  }.key-hint{
     background:#4a3a15 !important;border-color:#8a6d1e !important;
     color:#f4e3b4 !important;
-  }
-  .key-mark{color:#ffd970 !important}
-}
-
-/* =====================================================================
+  }.key-mark{color:#ffd970 !important}}/* =====================================================================
    第 13 轮：问答 / 流程图 / 编码图示 的暗色
    ---------------------------------------------------------------------
    这几个块原来都写死 background:var(--sfc)：
@@ -1104,34 +425,16 @@ div.c.c code{font-family:var(--mono,Consolas,monospace)}
 
    注意 body.fseries main>.qa 那条特异度更高（0,2,2），
    所以把它一起写进来压掉。
-   ===================================================================== */
-@media (prefers-color-scheme: dark){
-  .qa .a{background:#1b1e25;color:#e6ecf4}
-  body.fseries main>.qa,
-  body[data-series] main>.qa{background-color:#1b1e25 !important}
-  .qa .q{
+   ===================================================================== */@media (prefers-color-scheme: dark){.qa .a{background:#1b1e25;color:#e6ecf4}body.fseries main>.qa,
+  body[data-series] main>.qa{background-color:#1b1e25 !important}.qa .q{
     background:#241d38;border-bottom-color:#3d3160;color:#e6dcf7;
-  }
-  .flow .s{
+  }.flow .s{
     background:#1b1e25;border-color:#374556;color:#e6ecf4;
-  }
-  .flow .s+.s::before{color:#939fb0}
-  .codefig{
+  }.flow .s+.s::before{color:#939fb0}.codefig{
     background:#161d26;border-color:#374556;color:#e6ecf4;
-  }
-  .codefig .t,.codefig .note{color:#939fb0}
-  .encs .c{
+  }.codefig .t,.codefig .note{color:#939fb0}.encs .c{
     background:#161d26;border-color:#374556;color:#e6ecf4;
-  }
-  .encs .c .h{color:#e6ecf4}
-  .encs .c.u8  .h{color:#4fc98d}
-  .encs .c.u16 .h{color:#6aa6f5}
-  .encs .c.u32 .h{color:#b28cff}
-  .encs .c .note{color:#939fb0}
-  .encs .c .note b{color:#c3cfdd}
-}
-
-/* =====================================================================
+  }.encs .c .h{color:#e6ecf4}.encs .c.u8  .h{color:#4fc98d}.encs .c.u16 .h{color:#6aa6f5}.encs .c.u32 .h{color:#b28cff}.encs .c .note{color:#939fb0}.encs .c .note b{color:#c3cfdd}}/* =====================================================================
    第 14 轮：剩余浅底的暗色覆盖
    ---------------------------------------------------------------------
    这些是 audit_dark2 穷举出来的（不再靠人工回忆）：
@@ -1141,11 +444,7 @@ div.c.c code{font-family:var(--mono,Consolas,monospace)}
    为什么上一轮没盖住：这些颜色（#eef2f8 / #f2ecfd）在同一份文件里
    也出现在别处的渐变色标中，被我的「渐变色标不动」规则连带排除了。
    这里逐个选择器直接给暗色，不再依赖那套判断。
-   ===================================================================== */
-
-/* 补齐：上一轮加了 --sfc 变量，但个别地方仍写着旧色值 */
-
-/* =====================================================================
+   ===================================================================== *//* 补齐：上一轮加了 --sfc 变量，但个别地方仍写着旧色值 *//* =====================================================================
    暗色表面变量（根因修复）
    ---------------------------------------------------------------------
    上面这些 --xxx-soft 与 --bg-soft / --surface 是「浅色表面」，
@@ -1153,9 +452,7 @@ div.c.c code{font-family:var(--mono,Consolas,monospace)}
    55~108 次 —— 于是任何用到它们的块在暗色下都是浅底。
    这里一次性补齐：改的是变量，所有引用处一起生效，
    不再需要逐个选择器打补丁。
-   ===================================================================== */
-
-/* =====================================================================
+   ===================================================================== *//* =====================================================================
    窄屏「目录」按钮：不能被顶部常驻条盖住
    ---------------------------------------------------------------------
    实测 375×667：常驻条 z-index:80 高 23px（0→23），
@@ -1166,13 +463,7 @@ div.c.c code{font-family:var(--mono,Consolas,monospace)}
      ① z-index 70 → 90，高于常驻条的 80
      ② 窄屏把 top 让到常驻条下方（23px + 5px 余量 = 28px），
         从根上不重叠 —— 只提层级不够，交叠处仍会吃到点击
-   ===================================================================== */
-#tocToggle{z-index:90}
-@media (max-width:980px){
-  #tocToggle{top:28px}
-}
-
-/* =====================================================================
+   ===================================================================== */@media (max-width:980px){#tocToggle{top:28px}}/* =====================================================================
    窄屏：代码块自动换行（不再需要左右拖动）
    ---------------------------------------------------------------------
    宽屏保留 `white-space:pre` 的原样 —— 空间够，换行反而打乱代码结构。
@@ -1180,9 +471,7 @@ div.c.c code{font-family:var(--mono,Consolas,monospace)}
      · pre-wrap     保留缩进与换行，但超长行折行
      · anywhere     长标识符（aVeryLongFunctionName）也能断开
    折行的那一行左侧加一条细引导线，提示「这是折过来的」。
-   ===================================================================== */
-@media (max-width:720px){
-  .code-wrap pre,
+   ===================================================================== */@media (max-width:720px){.code-wrap pre,
   .out-wrap pre,
   .term pre,
   .plain-pre,
@@ -1191,9 +480,4 @@ div.c.c code{font-family:var(--mono,Consolas,monospace)}
     white-space:pre-wrap !important;
     overflow-wrap:anywhere !important;
     word-break:break-word !important;
-  }
-  /* 输入框 / 终端区同理 */
-  .code-wrap pre code,.out-wrap pre code{white-space:pre-wrap !important}
-  /* 行内 code 不要被长串撑破 */
-  code,td.c,th.c{overflow-wrap:anywhere;word-break:break-word}
-}
+  }/* 输入框 / 终端区同理 */.code-wrap pre code,.out-wrap pre code{white-space:pre-wrap !important}/* 行内 code 不要被长串撑破 */code,td.c,th.c{overflow-wrap:anywhere;word-break:break-word}}

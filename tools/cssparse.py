@@ -3,7 +3,7 @@
 
 为什么单独写一个
 ----------------
-之前的分析用了 `re.finditer(r'([^{}]+)\{([^{}]*)\\}')`。
+之前的分析用了 `re.finditer(r'([^{}]+)\\{([^{}]*)\\}')`。
 这个正则在**跨规则**时会失控：它不认注释、不认字符串、也不配平花括号，
 于是把 A 规则的尾巴和 B 规则的头部拼成一条"规则"。
 
@@ -27,7 +27,8 @@ import re
 
 
 class Node:
-    __slots__ = ("kind", "prelude", "body", "children", "start", "end", "text")
+    __slots__ = ("kind", "prelude", "body", "children", "start", "end", "text",
+                 "newbody")   # newbody：重写容器内容时用（None 表示未改）
 
     def __init__(self, kind, prelude, body, children, start, end, text):
         self.kind = kind          # 'rule' | 'at' | 'comment'
@@ -37,6 +38,10 @@ class Node:
         self.start = start
         self.end = end
         self.text = text
+        # 重写容器内容时用；None 表示未改动。
+        # 注意：不能写 `Node.newbody = None` —— __slots__ 会生成同名描述符，
+        # 类级赋值会把槽描述符覆盖掉，实例就再也写不进去了。
+        self.newbody = None
 
     def norm(self):
         """归一化文本：压空白、去注释 —— 用于跨文件比对。"""
