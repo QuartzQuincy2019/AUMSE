@@ -28,15 +28,12 @@ m.content=d?'dark light':'light dark';document.head.appendChild(m);})();
   <a href="#s6">6 · 回到本项目</a>
   <a href="#s7">7 · 常见乱码与排查</a>
   <a href="#s8">8 · 一页速查</a>
-  <a href="#s9">9 · 系列里的位置</a>
 </nav>
 
 <main>
 <h1>Unicode 和编码<span class="star" title="与本项目施行密切相关">*</span></h1>
 <p class="sub-title">UME 项目组内部教程 · T02（Theory） ·  · 承上启下：从文字到码位</p>
 <p>
-  <span class="tag">已学：字符串 / 内存</span>
-  <span class="tag">已学：编译与链接</span>
   <span class="tag b">本讲：文字怎么变成字节</span>
 </p>
 
@@ -714,38 +711,6 @@ QByteArray b = s.toUtf8();                <span class="hl-c">/* 文字 → 字�
 
 </div>
 <!-- /NAV-AUTO -->
-
-<h2 id="s9"><span class="n">9</span>这一篇在理论系列里的位置</h2>
-
-<p>理论系列三篇是<b>从外到内</b>递进的：</p>
-
-<table>
-<thead><tr><th style="width:14%">篇目</th><th style="width:30%">回答的问题</th>
-  <th>你学到的</th></tr></thead>
-<tbody>
-<tr><td class="c"><b>T01</b></td>
-    <td>这门文字<b>是什么样</b>？</td>
-    <td>拉丁转写、字形/连字/连写、竖排与四个位置形、
-      中国—蒙古国联合蒙文转写</td></tr>
-<tr><td class="c"><b>T02</b><br><span class="tag b">本篇</span></td>
-    <td>这门文字在计算机里<b>怎么存</b>？</td>
-    <td>码位、UTF-8 变长编码、<code>char</code> 为什么不够用</td></tr>
-<tr><td class="c"><b>T03</b></td>
-    <td>这些码位<b>怎么变成字形</b>？</td>
-    <td>字体文件的 18 张表、GSUB、cmap 517 vs 字形 3715、
-      字形名里的 448 种音节</td></tr>
-</tbody>
-</table>
-<div class="card note">
-  <div class="card-t">动手</div>
-  <p>本篇的蒙文示例由 <code>web/UMCompos.js</code> 实时渲染。
-  想看这个插件的其他用法，或者自己换一串蒙文试试，
-  可以打开仓库里的 <code>web/UME.html</code>（编辑器）。</p>
-  <p>想把某个词换成蒙文，用 <code>tools/cnmn.py</code>：</p>
-  <div class="code-wrap" style="margin-top:8px"><div class="bar"><span class="dot r"></span><span class="dot y"></span><span class="dot g"></span><span class="name">换算</span><span class="cp">复制</span></div><pre>$ python tools/cnmn.py
-monggul  → 'ᠮᠣᠩᠭᠤᠯ'   U+182E U+1823 U+1829 U+182D U+1824 U+182F
-                          回读: m o ng g u l</pre></div>
-</div>
 
 <footer>
 UME 项目组内部教程 · 09-F04（File）《Unicode 和编码》<br>

@@ -27,7 +27,7 @@
     Q: { label: 'Qt · Q',   banner: 'Q 系列 · C++ 开发事项和 Qt 基础' },
     E: { label: 'Extra · E', banner: 'E 系列 · 补充练习与进阶' },
     F: { label: 'File · F', banner: 'F 系列 · 文件操作基础' },
-    R: { label: '相关 · R', banner: 'R 系列 · 相关资讯与理论' },
+    R: { label: '相关 · R', banner: 'R 系列 · 相关信息与理论' },
     FE: { label: '前端 · FE', banner: 'FE 系列 · 前端基础' }
   };
 

@@ -14,7 +14,7 @@
     Q  Qt/C++      C++ 开发事项和 Qt 基础  原 10
     E  Extra       补充练习              原 08-E01 / 08-E02
     F  File        文件操作基础           原 08-F01 ~ 08-F03
-    R  Related     相关资讯与理论          原为空，现 R01~R03
+    R  Related     相关信息与理论          原为空，现 R01~R03
     FE Frontend    前端系列（独立的 HTML/CSS 外观，不套用本文件的系列主题）
 """
 
@@ -91,7 +91,7 @@ SERIES = {
     "R": {
         "name": "Related",
         "num": "R",
-        "banner": "R 系列 · 相关资讯与理论",
+        "banner": "R 系列 · 相关信息与理论",
         "label": "相关 · R",
         "desc": "Highly-Related Information and Theories",
         "cls": "rseries",
@@ -155,7 +155,7 @@ PAGES = [
     ("t03-font-file-anatomy.html",      "t03-font-file-anatomy.html",
      "T", "T03", "字体文件结构大揭秘", "基于 Noto Sans Mongolian：表结构 / GSUB / 字形名里的音节", True),
 
-    # ---- R：相关资讯与理论 ----
+    # ---- R：相关信息与理论 ----
     # R01 定位是「背景知识，了解即可」，所以不标重点；
     # R03 是 R 系列里最实用的一篇（字典序 / 自然序 / 中文排序），标重点。
     ("r01-font-design-metrics.html",    "r01-font-design-metrics.html",

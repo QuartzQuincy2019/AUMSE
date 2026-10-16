@@ -457,7 +457,7 @@ body[data-series="M"][data-series="M"] .s-nav-toc a{color:var(--s-main-deep)}
 }
 
 /* ============================ R · Related ============================
-   R 系列 · 相关资讯与理论
+   R 系列 · 相关信息与理论
    ==================================================================== */
 body[data-series="R"][data-series="R"]{
   --s-bg:#fbdfe0;
@@ -485,7 +485,7 @@ body[data-series="R"][data-series="R"]{
 
 /* 顶部常驻条：固定在视口顶端（原来就有，保留行为、换文字） */
 body[data-series="R"][data-series="R"]::before{
-  content:"R 系列 · 相关资讯与理论";
+  content:"R 系列 · 相关信息与理论";
   position:fixed;top:0;left:0;right:0;z-index:80;
   padding:5px 14px;
   font:700 12px/1.5 var(--sans,system-ui,sans-serif);
