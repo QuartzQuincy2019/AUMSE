@@ -14,7 +14,7 @@
     Q  Qt/C++      C++ 开发事项和 Qt 基础  原 10
     E  Extra       补充练习              原 08-E01 / 08-E02
     F  File        文件操作基础           原 08-F01 ~ 08-F03
-    R  Related     相关资讯与理论（暂空）
+    R  Related     相关资讯与理论          原为空，现 R01~R03
     FE Frontend    前端系列（独立的 HTML/CSS 外观，不套用本文件的系列主题）
 """
 
@@ -154,6 +154,19 @@ PAGES = [
      "T", "T02", "Unicode 和编码", "重点：Unicode 的定义、编码与变长编码规则", True),
     ("t03-font-file-anatomy.html",      "t03-font-file-anatomy.html",
      "T", "T03", "字体文件结构大揭秘", "基于 Noto Sans Mongolian：表结构 / GSUB / 字形名里的音节", True),
+
+    # ---- R：相关资讯与理论 ----
+    # R01 定位是「背景知识，了解即可」，所以不标重点；
+    # R03 是 R 系列里最实用的一篇（字典序 / 自然序 / 中文排序），标重点。
+    ("r01-font-design-metrics.html",    "r01-font-design-metrics.html",
+     "R", "R01", "字体设计里的几个基本概念",
+     "EM Square / 基线 / 上下悬线 / 大写字高与 x 字高；了解即可", False),
+    ("r02-bubble-sort.html",            "r02-bubble-sort.html",
+     "R", "R02", "冒泡排序与算法复杂度",
+     "从「把一排数字排好」引入：冒泡及其两次优化 / O(n²) 与 O(n log n)", False),
+    ("r03-collation.html",              "r03-collation.html",
+     "R", "R03", "字典序、自然序与 QCollator",
+     "重点：字符串怎么比大小 / 中文为什么排不对 / QCollator 拼音序与自然序", True),
 ]
 
 # ---------------------------------------------------------------- 前端系列

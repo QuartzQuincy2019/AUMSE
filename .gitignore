@@ -101,3 +101,6 @@ $RECYCLE.BIN/
 /w
 /dbg
 /tog
+# ---------- 7. 工具产物 ----------
+# vision 工具（截图 / OCR）在仓库里落的中间产物，不属于项目内容。
+.dsh-vision-router/

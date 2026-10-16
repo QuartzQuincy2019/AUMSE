@@ -70,10 +70,15 @@
     { f: 'fe-04.html', n: 'FE-04', t: 'CSS 选择器语法', s: 'FE' },
     { f: 'fe-05.html', n: 'FE-05', t: 'Display 与盒模型尺寸', s: 'FE' },
     { f: 'fe-06.html', n: 'FE-06', t: 'Writing Mode 与溢出滚动', s: 'FE' },
-    { f: 'fe-07.html', n: 'FE-07', t: '鼠标悬停与 transition', s: 'FE' }
+    { f: 'fe-07.html', n: 'FE-07', t: '鼠标悬停与 transition', s: 'FE' },
 
-    /* R 系列暂空 —— 将来加篇目就写在下面，格式同上
-       { f: 'r01-xxx.html', n: 'R01', t: '标题', s: 'R' }, */
+    /* 相关 R：背景知识与实用工具，配色走 series-theme 的红色主题。
+       注意：这一段必须留在数组里，否则 R 篇的页尾导航会是空的 ——
+       buildNav 用 PAGES.filter(s === sk) 取本系列篇目，
+       取不到就既没有链接、也没有「当前」标记。 */
+    { f: 'r01-font-design-metrics.html', n: 'R01', t: '字体设计里的几个基本概念', s: 'R' },
+    { f: 'r02-bubble-sort.html',         n: 'R02', t: '冒泡排序与算法复杂度',     s: 'R' },
+    { f: 'r03-collation.html',           n: 'R03', t: '字典序、自然序与 QCollator', s: 'R' }
   ];
 
   function currentFile() {

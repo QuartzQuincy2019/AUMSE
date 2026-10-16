@@ -1,0 +1,395 @@
+<h2 id="s1"><span class="n">1</span>先把「排序」当成一个正经需求</h2>
+
+<p>你大概会觉得排序是个老掉牙的话题。但在真实项目里，它是<b>最常被写错、
+也最容易写慢</b>的一类代码。先看几个具体场景：</p>
+
+<table>
+<thead><tr><th style="width:44%">场景</th><th>要排什么</th></tr></thead>
+<tbody>
+<tr><td>文件列表按名字 / 按修改时间列出来</td><td>字符串、时间戳</td></tr>
+<tr><td>通讯录按拼音首字母分组</td><td>几百到几千条</td></tr>
+<tr><td>把一批字形按码位顺序整理</td><td>整数（码位）</td></tr>
+<tr><td>日志按时间排序后找出连续异常</td><td>可能几十万条</td></tr>
+<tr><td>搜索结果按相关度从高到低</td><td>带权重的条目</td></tr>
+</tbody>
+</table>
+
+<p>这些需求的共同点是：<b>数据量差别极大</b>。
+通讯录几千条怎么排都行；日志几十万条，选错算法就要等好几秒。</p>
+
+<div class="card key">
+  <div class="card-t">本篇要回答的问题</div>
+  <ol>
+    <li>「排序」到底是怎么排的 —— 用一个最简单的算法把它拆开看；</li>
+    <li>「算法复杂度」这个词到底在说什么 —— 为什么它比「跑一遍看看多快」更有用。</li>
+  </ol>
+  <p>只用<b>冒泡排序</b>这一个例子讲透，不铺开讲十种排序。</p>
+</div>
+
+<h2 id="s2"><span class="n">2</span>冒泡排序：最直白的想法</h2>
+
+<p>把一排数字排成从小到大，最不需要动脑子的做法是：</p>
+
+<div class="card note">
+  <div class="card-t">核心想法</div>
+  <p><b>从左到右，每次只比相邻的两个；如果左边比右边大，就交换它们。</b></p>
+  <p>这样走完一趟，最大的那个数一定会被「推」到最右边 ——
+  就像气泡从水底浮上来，所以叫<b>冒泡</b>。</p>
+</div>
+
+<p>先手动走一遍，比看代码有用。数组 <code>[5, 3, 8, 1]</code>，走第一趟：</p>
+
+<div class="code-wrap">
+  <div class="bar"><span class="dot r"></span><span class="dot y"></span><span class="dot g"></span>
+    <span class="name">第一趟：目标是把最大的 8 送到最右边</span><span class="cp">复制</span></div>
+<pre>起点            [5, 3, 8, 1]
+比 5 和 3 → 换   [3, 5, 8, 1]     5 &gt; 3，交换
+比 5 和 8 → 不换 [3, 5, 8, 1]     5 &lt; 8，不动
+比 8 和 1 → 换   [3, 5, 1, 8]     8 &gt; 1，交换
+                └──────────┘
+                 8 已经到最右边 ✓</pre>
+</div>
+
+<p>第二趟对前三个数做同样的事，把 5 推到倒数第二位：</p>
+
+<div class="code-wrap">
+  <div class="bar"><span class="dot r"></span><span class="dot y"></span><span class="dot g"></span>
+    <span class="name">后续趟数</span><span class="cp">复制</span></div>
+<pre>第二趟  [3, 5, 1, 8] → [3, 1, 5, 8]     5 到倒数第二 ✓
+第三趟  [3, 1, 5, 8] → [1, 3, 5, 8]     3 到倒数第三 ✓
+第四趟  [1, 3, 5, 8] → 没有交换，已是终态</pre>
+</div>
+
+<div class="bars">
+  <div class="b" style="height:38%">5</div>
+  <div class="b" style="height:24%">3</div>
+  <div class="b" style="height:62%">8</div>
+  <div class="b" style="height:12%">1</div>
+</div>
+<p style="font-size:13px;color:var(--fg-3);text-align:center;margin-top:-6px">
+初始状态 <code>[5, 3, 8, 1]</code>（柱高代表数值大小）</p>
+
+<h2 id="s3"><span class="n">3</span>写成 C++ 代码</h2>
+
+<p>把刚才的手工过程翻译成代码，最朴素的一版：</p>
+
+<div class="code-wrap">
+  <div class="bar"><span class="dot r"></span><span class="dot y"></span><span class="dot g"></span>
+    <span class="name">bubble_v1.cpp —— 朴素版</span><span class="cp">复制</span></div>
+<pre><span class="hl-p">#include</span> <span class="hl-s">&lt;iostream&gt;</span>
+<span class="hl-p">#include</span> <span class="hl-s">&lt;vector&gt;</span>
+
+<span class="hl-k">void</span> bubble(std::vector&lt;<span class="hl-k">int</span>&gt;&amp; a) {
+    <span class="hl-k">int</span> n = (<span class="hl-k">int</span>)a.size();
+    <span class="hl-k">for</span> (<span class="hl-k">int</span> i = 0; i &lt; n - 1; ++i) {          <span class="hl-c">// 一共走 n-1 趟</span>
+        <span class="hl-k">for</span> (<span class="hl-k">int</span> j = 0; j &lt; n - 1; ++j) {      <span class="hl-c">// 每趟从头比到尾</span>
+            <span class="hl-k">if</span> (a[j] &gt; a[j + 1]) {
+                std::swap(a[j], a[j + 1]);
+            }
+        }
+    }
+}
+
+<span class="hl-k">void</span> print(<span class="hl-k">const</span> std::vector&lt;<span class="hl-k">int</span>&gt;&amp; a) {
+    <span class="hl-k">for</span> (<span class="hl-k">int</span> x : a) std::cout &lt;&lt; x &lt;&lt; <span class="hl-s">' '</span>;
+    std::cout &lt;&lt; <span class="hl-s">'\n'</span>;
+}
+
+<span class="hl-k">int</span> main() {
+    std::vector&lt;<span class="hl-k">int</span>&gt; a{5, 3, 8, 1};
+    bubble(a);
+    print(a);
+}</pre>
+</div>
+<div class="out-wrap">
+  <div class="cap">输出</div>
+<pre>1 3 5 8</pre>
+</div>
+
+<p>能跑，但这一版<b>很浪费</b>。看两个问题：</p>
+
+<div class="card warn">
+  <div class="card-t">朴素版的两个浪费</div>
+  <ol>
+    <li><b>内层每次都比到末尾。</b>
+      但第 1 趟结束后，最右边的 8 一定已经是最大的 ——
+      第 2 趟根本不需要再比它。每趟都能少比一个。</li>
+    <li><b>数据本来就排好了，还是要走完全部 n−1 趟。</b>
+      上面例子里第 4 趟一个交换都没发生，说明已经有序，
+      但代码仍然老老实实跑完剩下的循环。</li>
+  </ol>
+</div>
+
+<h2 id="s4"><span class="n">4</span>两次优化：让冒泡快一个数量级</h2>
+
+<p>针对上面两个浪费，各改一处：</p>
+
+<div class="code-wrap">
+  <div class="bar"><span class="dot r"></span><span class="dot y"></span><span class="dot g"></span>
+    <span class="name">bubble_v2.cpp —— 优化版</span><span class="cp">复制</span></div>
+<pre><span class="hl-k">void</span> bubble(std::vector&lt;<span class="hl-k">int</span>&gt;&amp; a) {
+    <span class="hl-k">int</span> n = (<span class="hl-k">int</span>)a.size();
+
+    <span class="hl-k">for</span> (<span class="hl-k">int</span> i = 0; i &lt; n - 1; ++i) {
+        <span class="hl-k">bool</span> swapped = <span class="hl-k">false</span>;            <span class="hl-c">// 优化②：记录本趟有没有交换</span>
+
+        <span class="hl-c">// 优化①：末尾 i 个已经排好，不必再比 —— 上界是 n-1-i</span>
+        <span class="hl-k">for</span> (<span class="hl-k">int</span> j = 0; j &lt; n - 1 - i; ++j) {
+            <span class="hl-k">if</span> (a[j] &gt; a[j + 1]) {
+                std::swap(a[j], a[j + 1]);
+                swapped = <span class="hl-k">true</span>;
+            }
+        }
+
+        <span class="hl-k">if</span> (!swapped) <span class="hl-k">break</span>;             <span class="hl-c">// 一趟没交换 → 已经有序，提前收工</span>
+    }
+}</pre>
+</div>
+
+<p>两处改动各解决一个问题：</p>
+
+<table>
+<thead><tr><th style="width:16%">改动</th><th style="width:40%">改了什么</th><th>省下多少</th></tr></thead>
+<tbody>
+<tr><td class="c">优化①</td><td>内层上界从 <code>n-1</code> 改成 <code>n-1-i</code></td>
+    <td>比较次数从 <b>n² 量级</b>降到约 <b>一半</b>（n(n−1)/2）</td></tr>
+<tr><td class="c">优化②</td><td>本趟没发生交换就 <code>break</code></td>
+    <td>对<b>已经有序</b>或接近有序的数据，从 n² 降到 <b>n</b></td></tr>
+</tbody>
+</table>
+
+<div class="card tip">
+  <div class="card-t">优化②的效果有多大？</div>
+  <p>如果输入本来就是 <code>[1, 2, 3, 4, 5]</code>：</p>
+  <ul>
+    <li><b>朴素版</b>：仍然老老实实跑 4 趟，比较 4×4 = 16 次；</li>
+    <li><b>优化版</b>：第 1 趟比 4 次，一次没换，<code>break</code> ——
+      总共 <b>4 次</b>。</li>
+  </ul>
+  <p>数据越大，差距越悬殊：n = 10000 时是 <b>1 亿次 vs 1 万次</b>，
+  也就是「跑几十秒」和「瞬间」的区别。</p>
+</div>
+
+<h2 id="s5"><span class="n">5</span>算法复杂度：不看秒表，看增长</h2>
+
+<p>「这段代码快不快」不能靠在你这台电脑上掐表 ——
+换台机器、换个编译器、数据规模一变，结论就全变了。
+所以人们换一个问法：</p>
+
+<div class="card key">
+  <div class="card-t">换一个问法</div>
+  <p><b>当数据量 n 变大时，运行时间按什么速度涨？</b></p>
+  <p>这就是「算法复杂度」。它描述的是<b>增长趋势</b>，不是具体秒数。</p>
+</div>
+
+<p>拿冒泡排序数一数。朴素版是两层循环，每层各走约 n 次，所以比较次数是：</p>
+
+<div class="code-wrap">
+  <div class="bar"><span class="dot r"></span><span class="dot y"></span><span class="dot g"></span>
+    <span class="name">比较次数</span><span class="cp">复制</span></div>
+<pre>朴素版:   (n-1) × (n-1) ≈ n²
+优化①后:  (n-1) + (n-2) + ... + 1 = n(n-1)/2 ≈ n²/2
+
+两者都是「n 的平方」这个量级 → 记作 O(n²)</pre>
+</div>
+
+<p>O(n²) 里的那个 <code>O</code> 读作「大 O」，
+意思是<b>「数量级是」</b>。常数系数（比如上面的 1/2）被丢掉了 ——
+因为 n 足够大时，决定快慢的是<b>指数（平方、立方）</b>，不是系数。</p>
+
+<div class="stat">
+<table>
+<thead><tr><th>n（数据量）</th><th>O(n²) 比较次数</th><th>O(n log n) 比较次数</th><th>相差</th></tr></thead>
+<tbody>
+<tr><td class="num">10</td><td class="num">100</td><td class="num">33</td><td class="num">3 倍</td></tr>
+<tr><td class="num">100</td><td class="num">10,000</td><td class="num">664</td><td class="num">15 倍</td></tr>
+<tr><td class="num">1,000</td><td class="num">1,000,000</td><td class="num">9,966</td><td class="num">100 倍</td></tr>
+<tr><td class="num">10,000</td><td class="num">100,000,000</td><td class="num">132,877</td><td class="num">753 倍</td></tr>
+<tr><td class="num">100,000</td><td class="num">10,000,000,000</td><td class="num">1,660,964</td><td class="num">6020 倍</td></tr>
+</tbody>
+</table>
+</div>
+
+<p><b>n 每涨 10 倍，O(n²) 的代价涨 100 倍，而 O(n log n) 只涨约 11～13 倍。</b>
+这就是为什么「数据小的时候什么都不用管，
+数据一大就必须换算法」。</p>
+
+<div class="card warn">
+  <div class="card-t">常见误区</div>
+  <p><b>误区一：O(n²) 就一定慢。</b>
+  不一定。n = 20 时 O(n²) 只要 400 次比较，比任何「高级算法」的启动开销都小。
+  <b>复杂度只在 n 足够大时才有意义。</b></p>
+  <p><b>误区二：O(n log n) 一定比 O(n²) 快。</b>
+  同上的道理 —— 渐进复杂度忽略的常数，在小 n 时可能占主导。</p>
+</div>
+
+<h2 id="s6"><span class="n">6</span>为什么实际项目里不写冒泡</h2>
+
+<p>既然冒泡能排对，为什么标准库不给你一个 <code>std::bubble_sort</code>？</p>
+
+<p>因为存在<b>同一量级但常数小得多</b>的算法。看一个实际对比：</p>
+
+<div class="code-wrap">
+  <div class="bar"><span class="dot r"></span><span class="dot y"></span><span class="dot g"></span>
+    <span class="name">sort_race.cpp —— 冒泡 vs std::sort</span><span class="cp">复制</span></div>
+<pre><span class="hl-p">#include</span> <span class="hl-s">&lt;iostream&gt;</span>
+<span class="hl-p">#include</span> <span class="hl-s">&lt;vector&gt;</span>
+<span class="hl-p">#include</span> <span class="hl-s">&lt;algorithm&gt;</span>
+<span class="hl-p">#include</span> <span class="hl-s">&lt;chrono&gt;</span>
+<span class="hl-p">#include</span> <span class="hl-s">&lt;random&gt;</span>
+
+<span class="hl-k">using</span> Clock = std::chrono::steady_clock;
+
+<span class="hl-k">void</span> bubble(std::vector&lt;<span class="hl-k">int</span>&gt;&amp; a) {
+    <span class="hl-k">int</span> n = (<span class="hl-k">int</span>)a.size();
+    <span class="hl-k">for</span> (<span class="hl-k">int</span> i = 0; i &lt; n - 1; ++i) {
+        <span class="hl-k">bool</span> sw = <span class="hl-k">false</span>;
+        <span class="hl-k">for</span> (<span class="hl-k">int</span> j = 0; j &lt; n - 1 - i; ++j)
+            <span class="hl-k">if</span> (a[j] &gt; a[j + 1]) { std::swap(a[j], a[j + 1]); sw = <span class="hl-k">true</span>; }
+        <span class="hl-k">if</span> (!sw) <span class="hl-k">break</span>;
+    }
+}
+
+<span class="hl-k">int</span> main() {
+    std::mt19937 rng(42);
+    std::uniform_int_distribution&lt;<span class="hl-k">int</span>&gt; d(0, 1000000);
+
+    <span class="hl-k">for</span> (<span class="hl-k">int</span> n : {1000, 5000, 20000}) {
+        std::vector&lt;<span class="hl-k">int</span>&gt; v(n);
+        <span class="hl-k">for</span> (<span class="hl-k">int</span>&amp; x : v) x = d(rng);
+
+        <span class="hl-k">auto</span> a1 = v, a2 = v;
+
+        <span class="hl-k">auto</span> t0 = Clock::now();
+        bubble(a1);
+        <span class="hl-k">auto</span> t1 = Clock::now();
+        std::sort(a2.begin(), a2.end());
+        <span class="hl-k">auto</span> t2 = Clock::now();
+
+        <span class="hl-k">auto</span> ms = [](<span class="hl-k">auto</span> x, <span class="hl-k">auto</span> y) {
+            <span class="hl-k">return</span> std::chrono::duration_cast&lt;std::chrono::milliseconds&gt;(y - x).count();
+        };
+        std::cout &lt;&lt; <span class="hl-s">"n="</span> &lt;&lt; n
+                  &lt;&lt; <span class="hl-s">"  冒泡 "</span> &lt;&lt; ms(t0, t1) &lt;&lt; <span class="hl-s">" ms"</span>
+                  &lt;&lt; <span class="hl-s">"   std::sort "</span> &lt;&lt; ms(t1, t2) &lt;&lt; <span class="hl-s">" ms\n"</span>;
+    }
+}</pre>
+</div>
+<div class="out-wrap">
+  <div class="cap">输出（g++ 13.1.0，-O2，某台普通办公机）</div>
+<pre>n=1000   冒泡 3 ms     std::sort 0 ms
+n=5000   冒泡 103 ms   std::sort 1 ms
+n=20000  冒泡 1698 ms  std::sort 3 ms</pre>
+</div>
+
+<div class="card key">
+  <div class="card-t">从这组数字能读出三件事</div>
+  <ol>
+    <li><b>n 涨 20 倍，冒泡慢了 566 倍</b>（3 → 1698 ms）——
+      这就是 O(n²) 的样子，肉眼可见。</li>
+    <li><b>std::sort 只慢了几毫秒</b> —— 它是 O(n log n) 量级。</li>
+    <li><b>n = 1000 时两者都不慢</b>（3 ms vs 0 ms）。
+      数据量小的时候，选什么算法无所谓 —— <b>这正是复杂度「只管大 n」的含义</b>。</li>
+  </ol>
+</div>
+
+<div class="mnemonic">
+  <b>结论：</b>日常写代码，排序就用 <code>std::sort</code>（或 <code>std::stable_sort</code>）。
+  自己手写排序只在两种情况下有意义 ——
+  <b>教学</b>，或者<b>你的数据量真的非常小（几十个）且 std::sort 的开销不可接受</b>。
+</div>
+
+<h2 id="s7"><span class="n">7</span>冒泡唯一还有用的地方：稳定性</h2>
+
+<p>排序算法还有一个容易被忽略的性质：<b>稳定性（stability）</b>。</p>
+
+<div class="card note">
+  <div class="card-t">什么叫稳定</div>
+  <p>如果两个元素的<b>排序键相同</b>，稳定排序会<b>保持它们原来的先后顺序</b>；
+  不稳定排序则可能把它们的次序打乱。</p>
+</div>
+
+<p>举例：按「年龄」给人排序，输入里有两个 25 岁的人（小明在前）：</p>
+
+<div class="code-wrap">
+  <div class="bar"><span class="dot r"></span><span class="dot y"></span><span class="dot g"></span>
+    <span class="name">稳定性的意义</span><span class="cp">复制</span></div>
+<pre>输入:  小明(25), 小红(23), 小刚(25)
+
+稳定排序:  小红(23), 小明(25), 小刚(25)   ← 小明仍在 小刚 前面 ✓
+不稳定排序: 小红(23), 小刚(25), 小明(25)   ← 25 岁两人的次序被打乱</pre>
+</div>
+
+<p>冒泡排序（只要写成 <code>a[j] &gt; a[j+1]</code> 而不是 <code>&gt;=</code>）
+<b>天然是稳定的</b> —— 相等的元素不会被交换，相对次序自然保留。</p>
+
+<div class="card tip">
+  <div class="card-t">实际用法：多关键字排序</div>
+  <p>要按「先年龄、年龄相同按姓名」排，稳定排序可以分两步做：
+  <b>先按姓名排，再按年龄排</b>（用稳定排序）。
+  第二次排序不会打乱第一次的结果，最终就是「年龄优先、姓名次之」。</p>
+  <p>C++ 里对应的就是 <code>std::stable_sort</code>。
+  不过更直接的做法是给 <code>std::sort</code> 传一个自定义比较函数，
+  一次比完两个键 —— 两者都可以，看场景。</p>
+</div>
+
+<h2 id="s8"><span class="n">8</span>常见错误</h2>
+
+<table>
+<thead><tr><th style="width:38%">写法</th><th>问题</th></tr></thead>
+<tbody>
+<tr><td class="c">j &lt; n</td><td>内层循环越界：<code>a[j+1]</code> 会读到 <code>a[n]</code>，崩或读到垃圾值</td></tr>
+<tr><td class="c">j &lt; n - 1 - i 写成 j &lt;= n - 1 - i</td><td>同样越界，多比一次</td></tr>
+<tr><td class="c">比较写成 a[j] &gt;= a[j+1]</td><td>相等也交换 → <b>不稳定</b>，且做无用功</td></tr>
+<tr><td class="c">忘了 swapped 标记</td><td>结果对，但接近有序的数据白跑很多趟</td></tr>
+<tr><td class="c">外层 i 从 1 开始还写 n-1-i</td><td>趟数少一次，最后一个元素可能没排到</td></tr>
+<tr><td class="c">对大数组用冒泡</td><td>10 万条要跑几分钟 —— 直接换 <code>std::sort</code></td></tr>
+</tbody>
+</table>
+
+<div class="card warn">
+  <div class="card-t">最危险的一个：越界不一定报错</div>
+  <p><code>a[j+1]</code> 越界读 <code>a[n]</code> 时，程序<b>常常不崩</b> ——
+  它读到的是 <code>vector</code> 后面的内存，值不确定。
+  于是「大部分时候结果是对的，偶尔错一个数」，极难查。</p>
+  <p>用 <code>v.at(i)</code> 代替 <code>v[i]</code> 可以让越界直接抛异常，
+  调试时很好用（代价是运行稍慢，正式版可以换回来）。</p>
+</div>
+
+<h2 id="s9"><span class="n">9</span>一页速查</h2>
+
+<table>
+<thead><tr><th style="width:26%">概念</th><th style="width:24%">一句话</th><th>例子</th></tr></thead>
+<tbody>
+<tr><td>冒泡排序</td><td>相邻两两比较，大的往后推</td><td>每趟把当前最大的送到末尾</td></tr>
+<tr><td>优化①</td><td>末尾已排好的不再比</td><td>内层上界 <code>n-1-i</code></td></tr>
+<tr><td>优化②</td><td>一趟没交换就说明有序</td><td><code>if (!swapped) break;</code></td></tr>
+<tr><td>O(n²)</td><td>代价随 n 的平方增长</td><td>冒泡、选择、插入排序</td></tr>
+<tr><td>O(n log n)</td><td>代价随 n log n 增长</td><td><code>std::sort</code>、归并、堆排序</td></tr>
+<tr><td>稳定性</td><td>键相同的元素保持原次序</td><td>冒泡稳定，<code>std::sort</code> 不稳定</td></tr>
+<tr><td>该用哪个</td><td>能用标准库就别手写</td><td><code>std::sort</code> / <code>std::stable_sort</code></td></tr>
+</tbody>
+</table>
+
+<div class="code-wrap">
+  <div class="bar"><span class="dot r"></span><span class="dot y"></span><span class="dot g"></span>
+    <span class="name">实际写代码时照抄这一段</span><span class="cp">复制</span></div>
+<pre><span class="hl-p">#include</span> <span class="hl-s">&lt;algorithm&gt;</span>
+
+std::sort(v.begin(), v.end());                       <span class="hl-c">// 从小到大</span>
+std::sort(v.begin(), v.end(), std::greater&lt;<span class="hl-k">int</span>&gt;()); <span class="hl-c">// 从大到小</span>
+std::stable_sort(v.begin(), v.end());                <span class="hl-c">// 需要稳定时</span>
+
+<span class="hl-c">// 自定义规则：按字符串长度排，长度相同按字典序</span>
+std::sort(v.begin(), v.end(), [](<span class="hl-k">const</span> <span class="hl-k">auto</span>&amp; a, <span class="hl-k">const</span> <span class="hl-k">auto</span>&amp; b) {
+    <span class="hl-k">if</span> (a.size() != b.size()) <span class="hl-k">return</span> a.size() &lt; b.size();
+    <span class="hl-k">return</span> a &lt; b;
+});</pre>
+</div>
+
+<div class="mnemonic">
+  <b>一句话记住复杂度：</b>
+  O(n²) 是「每多一个数据，就要和已有的每一个都比一遍」；
+  O(n log n) 是「每多一个数据，只要比 log n 次」。
+  n = 10000 时，前者一亿次，后者十三万次 —— <b>差 750 倍</b>。
+</div>

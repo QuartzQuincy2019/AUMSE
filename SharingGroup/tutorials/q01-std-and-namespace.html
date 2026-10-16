@@ -21,8 +21,9 @@
   <a href="#s6">6 · 同一个程序：C 写法 vs C++ 写法</a>
   <a href="#s7">7 · C → C++ 速查表</a>
   <a href="#s8">8 · 标准库地图</a>
-  <a href="#s9">9 · 常见错误</a>
-  <a href="#s10">10 · 一页速查</a>
+  <a href="#s9">9 · <code>::</code> 作用域解析运算符</a>
+  <a href="#s10">10 · 常见错误</a>
+  <a href="#s11">11 · 一页速查</a>
 </nav>
 
 <main>
@@ -590,7 +591,297 @@ ume::ui::Window</pre>
 </div>
 
 <!-- ============================================================ -->
-<h2 id="s9"><span class="n">9</span>常见错误</h2>
+
+<h2 id="s9"><span class="n">9</span><code>::</code> 作用域解析运算符</h2>
+
+<p>前面你一直在写 <code>std::cout</code>，但一直没细看中间那两个冒号。
+它是 C++ 里最不起眼、出现频率却最高的运算符之一 ——
+<b>Qt 的代码里几乎每一行都有它</b>。</p>
+
+<div class="card key">
+  <div class="card-t">一句话</div>
+  <p><b><code>::</code> = 「左边的名字里，找右边那个名字」。</b></p>
+  <p>左边的名字可以是<b>全局</b>、<b>命名空间</b>、<b>类</b>，或者<b>什么都不写</b>。
+  所以它只有两种读法，记住这两个就够：</p>
+  <ul>
+    <li><b>有左操作数</b>：<code>A::b</code> —— 读作「<b>A 里的 b</b>」</li>
+    <li><b>没左操作数</b>：<code>::b</code> —— 读作「<b>全局的 b</b>」（强制点名外层的那个）</li>
+  </ul>
+</div>
+
+<p>下面把它的四种用法一次讲完，每种都配「什么情况下非用不可」。</p>
+
+<h4>① 定位命名空间里的东西</h4>
+
+<p>这是最常见的一种，你早就在用了：</p>
+
+<div class="code-wrap">
+  <div class="bar"><span class="dot r"></span><span class="dot y"></span><span class="dot g"></span>
+    <span class="name">定位命名空间</span><span class="cp">复制</span></div>
+<pre>std::cout &lt;&lt; <span class="hl-s">"你好"</span> &lt;&lt; std::endl;
+std::string s = <span class="hl-s">"UME"</span>;
+std::vector&lt;<span class="hl-k">int</span>&gt; v{1, 2, 3};
+
+QString name = <span class="hl-s">"Uyghur"</span>;      <span class="hl-c">// 没写 ::</span>
+Qt::AlignCenter;                          <span class="hl-c">// 写了 ::，因为 AlignCenter 住在 Qt 里</span></pre>
+</div>
+<div class="out-wrap">
+  <div class="cap">编译器看到的</div>
+<pre>std::cout        →  标准库命名空间 std 里的 cout
+Qt::AlignCenter  →  命名空间 Qt 里的 AlignCenter（一个枚举值）</pre>
+</div>
+
+<h4>② 访问类的静态成员</h4>
+
+<p>类的静态成员<b>属于类本身，不属于某个对象</b>，所以不能用 <code>obj.成员</code>，
+  只能用 <code>类名::成员</code>：</p>
+
+<div class="code-wrap">
+  <div class="bar"><span class="dot r"></span><span class="dot y"></span><span class="dot g"></span>
+    <span class="name">静态成员</span><span class="cp">复制</span></div>
+<pre><span class="hl-k">class</span> Counter {
+<span class="hl-k">public</span>:
+    <span class="hl-k">static</span> <span class="hl-k">int</span> total;          <span class="hl-c">// 静态成员变量：所有对象共用一份</span>
+    <span class="hl-k">static</span> <span class="hl-k">int</span> get() { <span class="hl-k">return</span> total; }   <span class="hl-c">// 静态成员函数</span>
+};
+
+<span class="hl-k">int</span> Counter::total = 0;      <span class="hl-c">// 类外定义，必须写 Counter::</span>
+
+<span class="hl-k">int</span> main() {
+    Counter::total = 5;       <span class="hl-c">// 用类名访问，不写 Counter:: 会编译错</span>
+    <span class="hl-k">int</span> n = Counter::get();
+    std::cout &lt;&lt; n &lt;&lt; <span class="hl-s">"\n"</span>;
+}</pre>
+</div>
+<div class="out-wrap">
+  <div class="cap">输出</div>
+<pre>5</pre>
+</div>
+
+<div class="card tip">
+  <div class="card-t">Qt 里到处都是这种写法</div>
+  <p>Qt 的常量、枚举、单例几乎都靠 <code>类名::成员</code> 取：</p>
+  <table>
+  <thead><tr><th style="width:44%">写法</th><th>是什么</th></tr></thead>
+  <tbody>
+  <tr><td class="c">Qt::AlignCenter</td><td>对齐方式枚举值</td></tr>
+  <tr><td class="c">Qt::red</td><td>预定义颜色枚举</td></tr>
+  <tr><td class="c">Qt::Horizontal</td><td>水平方向</td></tr>
+  <tr><td class="c">QIODevice::ReadOnly</td><td>打开文件的模式</td></tr>
+  <tr><td class="c">QIODevice::WriteOnly</td><td>打开文件的模式</td></tr>
+  <tr><td class="c">QMessageBox::warning(...)</td><td>静态函数，直接弹一个警告框</td></tr>
+  <tr><td class="c">QMessageBox::Yes</td><td>按钮返回值</td></tr>
+  <tr><td class="c">QFont::Bold</td><td>字重</td></tr>
+  <tr><td class="c">QPainter::Antialiasing</td><td>抗锯齿渲染提示</td></tr>
+  <tr><td class="c">QDir::homePath()</td><td>取用户主目录</td></tr>
+  <tr><td class="c">QFileInfo::exists(...)</td><td>判断文件是否存在</td></tr>
+  <tr><td class="c">QDateTime::currentDateTime()</td><td>取当前时间</td></tr>
+  <tr><td class="c">QRegularExpression::CaseInsensitiveOption</td><td>正则选项</td></tr>
+  <tr><td class="c">QTextCursor::End</td><td>光标移动到末尾</td></tr>
+  <tr><td class="c">QStandardPaths::AppDataLocation</td><td>标准数据目录枚举</td></tr>
+  </tbody>
+  </table>
+  <p>看出来了吗 —— 这些<b>全都不用先创建对象</b>。
+  <code>::</code> 就是在告诉你：「这个名字挂在类上，不在某个具体对象上」。</p>
+</div>
+
+<h4>③ 定义类自己的成员函数（<code>类名::函数名</code>）</h4>
+
+<p>函数如果<b>在类里只声明、在类外写实现</b>，实现处必须加 <code>类名::</code>，
+  否则编译器认为那是个普通全局函数：</p>
+
+<div class="code-wrap">
+  <div class="bar"><span class="dot r"></span><span class="dot y"></span><span class="dot g"></span>
+    <span class="name">类外实现</span><span class="cp">复制</span></div>
+<pre><span class="hl-c">// widget.h —— 只声明</span>
+<span class="hl-k">class</span> Widget {
+<span class="hl-k">public</span>:
+    <span class="hl-k">void</span> show();
+    <span class="hl-k">int</span>  width() <span class="hl-k">const</span>;
+};
+
+<span class="hl-c">// widget.cpp —— 写实现，必须写 Widget::</span>
+<span class="hl-k">void</span> Widget::show() {          <span class="hl-c">// ← 少了 Widget:: 就成了全局函数</span>
+    std::cout &lt;&lt; <span class="hl-s">"显示"</span> &lt;&lt; <span class="hl-s">"\n"</span>;
+}
+
+<span class="hl-k">int</span> Widget::width() <span class="hl-k">const</span> {   <span class="hl-c">// const 写在参数表后面</span>
+    <span class="hl-k">return</span> 100;
+}</pre>
+</div>
+<div class="out-wrap">
+  <div class="cap">输出</div>
+<pre>显示</pre>
+</div>
+
+<div class="card note">
+  <div class="card-t">这就是 Qt 项目「头文件 / 源文件」成对出现的原因</div>
+  <p>你在 F03 学过头文件。Qt 的每个类基本都是这样一套：</p>
+  <table>
+  <thead><tr><th style="width:38%">文件</th><th>内容</th></tr></thead>
+  <tbody>
+  <tr><td class="c">mainwindow.h</td><td><code>class MainWindow { ... };</code> 只声明</td></tr>
+  <tr><td class="c">mainwindow.cpp</td><td><code>MainWindow::MainWindow(...)</code>、<code>MainWindow::onClicked()</code> 等实现</td></tr>
+  </tbody>
+  </table>
+  <p>看到 <code>MainWindow::onClicked()</code> 就知道：这是 <code>MainWindow</code> 类的成员函数。
+  <b>没有 <code>::</code> 的就是全局函数或者别的类的</b> —— 一眼就能分辨。</p>
+</div>
+
+<h4>④ 前面什么都不写：<code>::name</code> 强制用外层的那个</h4>
+
+<p>当局部变量<b>把全局变量挡住了</b>（名字冲突），写 <code>::</code> 就能点名要外层的：</p>
+
+<div class="code-wrap">
+  <div class="bar"><span class="dot r"></span><span class="dot y"></span><span class="dot g"></span>
+    <span class="name">名字被挡住时</span><span class="cp">复制</span></div>
+<pre><span class="hl-k">int</span> count = 100;              <span class="hl-c">// 全局</span>
+
+<span class="hl-k">int</span> main() {
+    <span class="hl-k">int</span> count = 7;            <span class="hl-c">// 局部，把全局的挡住了</span>
+
+    std::cout &lt;&lt; count   &lt;&lt; <span class="hl-s">"\n"</span>;   <span class="hl-c">// 就近原则 → 局部的 7</span>
+    std::cout &lt;&lt; ::count &lt;&lt; <span class="hl-s">"\n"</span>;   <span class="hl-c">// :: 强制点名 → 全局的 100</span>
+}</pre>
+</div>
+<div class="out-wrap">
+  <div class="cap">输出</div>
+<pre>7
+100</pre>
+</div>
+
+<p>类里的成员名和全局名撞了也一样，用 <code>::</code> 表示「全局的那个」：</p>
+
+<div class="code-wrap">
+  <div class="bar"><span class="dot r"></span><span class="dot y"></span><span class="dot g"></span>
+    <span class="name">成员与全局同名</span><span class="cp">复制</span></div>
+<pre><span class="hl-k">int</span> size = 10;
+
+<span class="hl-k">class</span> Box {
+<span class="hl-k">public</span>:
+    <span class="hl-k">int</span> size = 20;
+    <span class="hl-k">int</span> total() {
+        <span class="hl-k">return</span> size + ::size;   <span class="hl-c">// 20 + 10</span>
+    }
+};
+
+<span class="hl-k">int</span> main() { std::cout &lt;&lt; Box().total() &lt;&lt; <span class="hl-s">"\n"</span>; }</pre>
+</div>
+<div class="out-wrap">
+  <div class="cap">输出</div>
+<pre>30</pre>
+</div>
+
+<div class="card warn">
+  <div class="card-t">别说 <code>using namespace std;</code> —— 你会失去 <code>::</code> 的保护</div>
+  <p>第 3 节讲过 <code>using namespace std;</code> 的代价。这里再补一条更具体的：</p>
+  <p>一旦写了它，<code>count</code> 到底是你的还是 <code>std::count</code> 就说不清了；
+  而 <b><code>::count</code> 永远指全局</b>，
+  <code>std::count</code> 永远指标准库 —— <b>只有老老实实写 <code>::</code>，名字才没有歧义</b>。</p>
+</div>
+
+<h4>Qt 真实代码里的 <code>::</code> 长什么样</h4>
+
+<p>把上面四种用法放到真实的 Qt 代码里，你会发现<b>它无处不在</b>：</p>
+
+<div class="code-wrap">
+  <div class="bar"><span class="dot r"></span><span class="dot y"></span><span class="dot g"></span>
+    <span class="name">一段典型 Qt 代码</span><span class="cp">复制</span></div>
+<pre><span class="hl-p">#include</span> <span class="hl-s">&lt;QApplication&gt;</span>
+<span class="hl-p">#include</span> <span class="hl-s">&lt;QMessageBox&gt;</span>
+
+<span class="hl-c">// ① 类外实现成员函数：MainWindow::</span>
+MainWindow::MainWindow(QWidget *parent)
+    : QMainWindow(parent)                <span class="hl-c">// ② 调用基类构造：QMainWindow::</span>
+{
+    <span class="hl-c">// ③ 类的静态函数：QMessageBox::question</span>
+    <span class="hl-k">auto</span> r = QMessageBox::question(
+        <span class="hl-k">this</span>,
+        QStringLiteral(<span class="hl-s">"确认"</span>),
+        QStringLiteral(<span class="hl-s">"要保存吗？"</span>),
+        QMessageBox::Yes | QMessageBox::No);   <span class="hl-c">// ④ 类里的枚举值</span>
+
+    <span class="hl-k">if</span> (r == QMessageBox::Yes)
+        save();
+}</pre>
+</div>
+<div class="out-wrap">
+  <div class="cap">这四个 <code>::</code> 分别是</div>
+<pre>MainWindow::MainWindow    →  ③ 定义类自己的成员函数
+QMainWindow(parent)       →  ① 定位基类的构造函数
+QMessageBox::question     →  ② 类的静态成员函数（不用 new 就能调）
+QMessageBox::Yes          →  ② 类的静态枚举值</pre>
+</div>
+
+<p>再看几个 Qt 里高频的：</p>
+
+<table>
+<thead><tr><th style="width:12%">用法</th><th style="width:46%">例子</th><th>含义</th></tr></thead>
+<tbody>
+<tr><td>信号槽</td><td class="c">connect(btn, &amp;QPushButton::clicked, this, &amp;MainWindow::onClicked)</td><td>取成员函数指针，必须带类名</td></tr>
+<tr><td>继承</td><td class="c">class MainWindow : public QMainWindow</td><td>冒号不是 <code>::</code>，别混（见下方提醒）</td></tr>
+<tr><td>基类调用</td><td class="c">QWidget::paintEvent(e)</td><td>显式调用基类的实现</td></tr>
+<tr><td>嵌套类</td><td class="c">QList&lt;QString&gt;::const_iterator</td><td>类里再定义的类，一层层往里点</td></tr>
+<tr><td>模板里的类型</td><td class="c">QVector&lt;int&gt;::size_type</td><td>模板类内部的类型名</td></tr>
+<tr><td>全局函数</td><td class="c">qApp、qDebug()</td><td>这些是全局的，<b>不</b>带 <code>::</code></td></tr>
+</tbody>
+</table>
+
+<div class="card warn">
+  <div class="card-t">别把 <code>::</code> 和继承的 <code>:</code> 弄混</div>
+  <p>两个冒号是<b>作用域</b>，一个冒号是<b>继承 / 初始化列表</b>：</p>
+  <table>
+  <thead><tr><th style="width:52%">写法</th><th>含义</th></tr></thead>
+  <tbody>
+  <tr><td class="c">class Dog : public Animal</td><td>Dog <b>继承</b> Animal（一个冒号）</td></tr>
+  <tr><td class="c">Animal::eat()</td><td>Animal <b>里的</b> eat（两个冒号）</td></tr>
+  <tr><td class="c">Dog::Dog() : Animal()</td><td>前后各一个：定义 Dog 的构造函数，并<b>初始化</b>基类</td></tr>
+  </tbody>
+  </table>
+  <p>最后一行最典型 —— <b>一行里两个冒号的意思完全不同</b>。
+  记住：<b><code>::</code> 是「谁的」，<code>:</code> 是「是什么的」。</b></p>
+</div>
+
+<h4>一个坑：<code>::</code> 不总是作用域运算符</h4>
+
+<div class="card note">
+  <div class="card-t">它还能当「拼接符号」用</div>
+  <p>C 语言里 <code>::</code> 根本没有意义，所以有些老代码拿它当<b>标记</b>使，
+  预处理器会把整个 <code>X::Y</code> 换掉。比如 Windows 头文件里：</p>
+  <div class="code-wrap">
+    <div class="bar"><span class="dot r"></span><span class="dot y"></span><span class="dot g"></span>
+      <span class="name">当记号用</span><span class="cp">复制</span></div>
+  <pre><span class="hl-c">// 某些库的自定义标记，展开后 :: 会消失</span>
+GUI_EXPORT::QWidget        <span class="hl-c">// 展开后是 __declspec(dllexport) QWidget</span></pre>
+  </div>
+  <p>所以看到 <code>A::B</code> 一时想不通时，先确认一下
+  <b><code>A</code> 到底是不是个命名空间或类</b> —— 不是的话，多半是宏。</p>
+</div>
+
+<h4>一页速查</h4>
+
+<table>
+<thead><tr><th style="width:26%">写法</th><th style="width:26%">读作</th><th>什么时候用</th></tr></thead>
+<tbody>
+<tr><td class="c">std::cout</td><td>std 里的 cout</td><td>用标准库</td></tr>
+<tr><td class="c">Qt::AlignCenter</td><td>Qt 里的 AlignCenter</td><td>用 Qt 的枚举 / 常量</td></tr>
+<tr><td class="c">Counter::total</td><td>Counter 里的 total</td><td>访问静态成员</td></tr>
+<tr><td class="c">Widget::show()</td><td>Widget 里的 show</td><td>类外定义成员函数</td></tr>
+<tr><td class="c">::count</td><td>全局的 count</td><td>局部变量挡住了全局变量</td></tr>
+<tr><td class="c">QMessageBox::question()</td><td>QMessageBox 里的 question</td><td>调类的静态函数，不用建对象</td></tr>
+<tr><td class="c">Outer::Inner</td><td>Outer 里的 Inner</td><td>嵌套类 / 模板里的类型</td></tr>
+</tbody>
+</table>
+
+<div class="mnemonic">
+  <b>口诀：<code>::</code> 读作「的」。</b>
+  <code>std::cout</code> 是「std 的 cout」，
+  <code>Widget::show</code> 是「Widget 的 show」，
+  <code>::count</code> 是「全局的 count」。
+  句子读得通，写法就对了。
+</div>
+
+<h2 id="s10"><span class="n">10</span>常见错误</h2>
 
 <h4>错误 1 · 忘了写命名空间前缀</h4>
 <div class="code-wrap"><div class="bar"><span class="dot r"></span><span class="dot y"></span><span class="dot g"></span><span class="name">对比</span><span class="cp">复制</span></div><pre><span class="hl-k">namespace</span> ume { <span class="hl-k">int</span> version = <span class="hl-n">10</span>; }
@@ -668,7 +959,7 @@ note:  candidate: 'void B::hello()'</pre></div>
 因为你定义的其实是另一个函数。这正是 F03 讲过的链接错误。</p>
 
 <!-- ============================================================ -->
-<h2 id="s10"><span class="n">10</span>一页速查</h2>
+<h2 id="s11"><span class="n">11</span>一页速查</h2>
 
 <table>
 <thead><tr><th style="width:40%">想做的事</th><th>写法</th></tr></thead>
