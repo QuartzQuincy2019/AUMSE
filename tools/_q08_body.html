@@ -1,0 +1,190 @@
+<div class="card warn">
+  <div class="card-t">阅读提示</div>
+  <p>建议在学习完 C++ 课本的「<b>类继承</b>」之后学习本章 ——
+  本篇要用到 <code>public</code> 继承、纯虚函数和 <code>virtual</code> 析构。</p>
+</div>
+
+<p>Q04 讲过：接口是「<b>对外承诺能做的事</b>」。这一篇讲一个更要紧的问题 ——
+<b>这个承诺该有多大。</b></p>
+
+<h2 id="s1"><span class="n">1</span>先看一个「胖接口」</h2>
+
+<p>还是那个 <code>Actor</code>。把它的能力抽成接口，很自然会写成一大块：</p>
+
+<div class="code-wrap"><div class="bar"><span class="dot r"></span><span class="dot y"></span><span class="dot g"></span><span class="name">IActor.h —— 什么都能干</span><span class="cp">复制</span></div><pre><span class="hl-k">class</span> IActor {
+<span class="hl-k">public</span>:
+    <span class="hl-k">virtual</span> ~<span class="hl-f">IActor</span>() {}
+
+    <span class="hl-k">virtual</span> <span class="hl-k">int</span>  <span class="hl-f">getHp</span>() <span class="hl-k">const</span> = <span class="hl-n">0</span>;      <span class="hl-c">// 读血量</span>
+    <span class="hl-k">virtual</span> <span class="hl-k">void</span> <span class="hl-f">attack</span>() = <span class="hl-n">0</span>;           <span class="hl-c">// 攻击</span>
+    <span class="hl-k">virtual</span> <span class="hl-k">void</span> <span class="hl-f">defend</span>() = <span class="hl-n">0</span>;           <span class="hl-c">// 防御</span>
+    <span class="hl-k">virtual</span> <span class="hl-k">void</span> <span class="hl-f">buyItem</span>() = <span class="hl-n">0</span>;          <span class="hl-c">// 买东西</span>
+    <span class="hl-k">virtual</span> <span class="hl-k">void</span> <span class="hl-f">changeMap</span>() = <span class="hl-n">0</span>;        <span class="hl-c">// 换地图</span>
+    <span class="hl-k">virtual</span> <span class="hl-k">void</span> <span class="hl-f">save</span>() = <span class="hl-n">0</span>;             <span class="hl-c">// 存档</span>
+};</pre></div>
+
+<p>看起来挺整齐。<b>但把它交给不同的人用，问题就出来了：</b></p>
+
+<table>
+<thead><tr><th style="width:26%">谁在用</th><th style="width:24%">它其实只需要</th>
+<th>可是它不得不</th></tr></thead>
+<tbody>
+<tr><td class="c">血条 UI</td><td class="c"><code>getHp</code></td>
+    <td class="c">也看得见 <code>attack</code> / <code>buyItem</code> / <code>save</code>
+    —— 还得跟着这份头文件一起编译</td></tr>
+<tr><td class="c">商店系统</td><td class="c"><code>buyItem</code></td>
+    <td class="c">也看得见战斗和存档</td></tr>
+<tr><td class="c">写测试的人</td><td class="c">只想测 <code>getHp</code></td>
+    <td class="c">得先造一个把 6 个方法全实现的假对象</td></tr>
+</tbody>
+</table>
+
+<div class="card key">
+  <div class="card-t">问题出在哪</div>
+  <p>不是「接口写错了」，而是 <b>接口太胖</b> ——
+  它把好几个不相干的能力捆成了一份承诺。</p>
+  <p>结果：<b>只想用其中一条的人，被迫接受全部。</b></p>
+</div>
+
+<h2 id="s2"><span class="n">2</span>接口隔离原则</h2>
+
+<div class="card key">
+  <div class="card-t">一句话</div>
+  <p><b>调用方不应该被迫依赖它用不到的方法。</b></p>
+  <p>换句话说：<b>接口要按「谁来用」切，不要按「谁来实现」堆。</b></p>
+  <p>宁可多几个小接口，也不要一个大而全的。</p>
+</div>
+
+<p>注意它约束的是<b>接口</b>，不是类。实现者可以同时实现好几个接口，
+但<b>每个调用方只看到它要的那一个</b>。</p>
+
+<h2 id="s3"><span class="n">3</span>按调用方拆开</h2>
+
+<p>把上面那个胖接口按「谁来用」切：</p>
+
+<div class="code-wrap"><div class="bar"><span class="dot r"></span><span class="dot y"></span><span class="dot g"></span><span class="name">拆成三个小接口</span><span class="cp">复制</span></div><pre><span class="hl-c">// 只管「血量」—— 血条 UI 要的就是这个</span>
+<span class="hl-k">class</span> IHealth {
+<span class="hl-k">public</span>:
+    <span class="hl-k">virtual</span> ~<span class="hl-f">IHealth</span>() {}
+    <span class="hl-k">virtual</span> <span class="hl-k">int</span> <span class="hl-f">getHp</span>() <span class="hl-k">const</span> = <span class="hl-n">0</span>;
+};
+
+<span class="hl-c">// 只管「打」—— 战斗系统要的</span>
+<span class="hl-k">class</span> ICombat {
+<span class="hl-k">public</span>:
+    <span class="hl-k">virtual</span> ~<span class="hl-f">ICombat</span>() {}
+    <span class="hl-k">virtual</span> <span class="hl-k">void</span> <span class="hl-f">attack</span>() = <span class="hl-n">0</span>;
+    <span class="hl-k">virtual</span> <span class="hl-k">void</span> <span class="hl-f">defend</span>() = <span class="hl-n">0</span>;
+};
+
+<span class="hl-c">// 只管「买卖」—— 商店系统要的</span>
+<span class="hl-k">class</span> IShop {
+<span class="hl-k">public</span>:
+    <span class="hl-k">virtual</span> ~<span class="hl-f">IShop</span>() {}
+    <span class="hl-k">virtual</span> <span class="hl-k">void</span> <span class="hl-f">buyItem</span>() = <span class="hl-n">0</span>;
+};</pre></div>
+
+<p>实现者该实现的都实现 —— <b>多继承接口</b>，这正是它最正当的用法：</p>
+
+<div class="code-wrap"><div class="bar"><span class="dot r"></span><span class="dot y"></span><span class="dot g"></span><span class="name">Actor 同时实现三个</span><span class="cp">复制</span></div><pre><span class="hl-p">#include</span> <span class="hl-s">&lt;cstdio&gt;</span>
+
+<span class="hl-k">class</span> Actor : <span class="hl-k">public</span> IHealth, <span class="hl-k">public</span> ICombat, <span class="hl-k">public</span> IShop {
+<span class="hl-k">public</span>:
+    <span class="hl-k">int</span> <span class="hl-f">getHp</span>() <span class="hl-k">const</span> <span class="hl-k">override</span> { <span class="hl-k">return</span> hp_; }
+    <span class="hl-k">void</span> <span class="hl-f">attack</span>() <span class="hl-k">override</span> { <span class="hl-f">printf</span>(<span class="hl-s">"Actor 攻击\n"</span>); }
+    <span class="hl-k">void</span> <span class="hl-f">defend</span>() <span class="hl-k">override</span> { <span class="hl-f">printf</span>(<span class="hl-s">"Actor 防御\n"</span>); }
+    <span class="hl-k">void</span> <span class="hl-f">buyItem</span>() <span class="hl-k">override</span> { <span class="hl-f">printf</span>(<span class="hl-s">"Actor 购买\n"</span>); }
+
+<span class="hl-k">private</span>:
+    <span class="hl-k">int</span> hp_ = <span class="hl-n">100</span>;
+};</pre></div>
+
+<p>而每个调用方<b>只拿它需要的那一个接口</b>：</p>
+
+<div class="code-wrap"><div class="bar"><span class="dot r"></span><span class="dot y"></span><span class="dot g"></span><span class="name">调用方的参数类型收窄到小接口</span><span class="cp">复制</span></div><pre><span class="hl-c">// 血条 UI：只要 IHealth，根本不知道 Actor 还会打架</span>
+<span class="hl-k">void</span> <span class="hl-f">drawHpBar</span>(<span class="hl-k">const</span> IHealth&amp; h) {
+    <span class="hl-f">printf</span>(<span class="hl-s">"[HP %d]\n"</span>, h.<span class="hl-f">getHp</span>());
+}
+
+<span class="hl-c">// 战斗流程：只要 ICombat</span>
+<span class="hl-k">void</span> <span class="hl-f">runTurn</span>(ICombat&amp; c) {
+    c.<span class="hl-f">attack</span>();
+    c.<span class="hl-f">defend</span>();
+}
+
+<span class="hl-k">int</span> <span class="hl-f">main</span>() {
+    Actor a;
+    <span class="hl-f">drawHpBar</span>(a);   <span class="hl-c">// Actor 同时也是 IHealth</span>
+    <span class="hl-f">runTurn</span>(a);     <span class="hl-c">// 同时也是 ICombat</span>
+    <span class="hl-k">return</span> <span class="hl-n">0</span>;
+}</pre></div>
+
+<div class="out-wrap"><div class="cap">运行结果</div><pre>[HP 100]
+Actor 攻击
+Actor 防御</pre></div>
+
+<div class="card key">
+  <div class="card-t">这一拆换来了什么</div>
+  <p><code>drawHpBar</code> 的签名是 <code>const IHealth&amp;</code> ——
+  它<b>在类型上就保证了</b>自己碰不到 <code>attack</code>／<code>buyItem</code>。</p>
+  <p>这比「约定别乱调」强得多：<b>写错了编译不过，而不是等到运行时出问题。</b></p>
+</div>
+
+<h2 id="s4"><span class="n">4</span>拆到什么程度为止</h2>
+
+<p>接口隔离不等于「一个方法一个接口」。切分的标准是<b>调用方</b>：</p>
+
+<div class="vs">
+<table>
+<thead><tr><th style="width:44%">该拆</th><th>不该拆</th></tr></thead>
+<tbody>
+<tr><td>两个方法<b>被不同的系统用</b></td>
+    <td>两个方法<b>总是一起被同一处调用</b></td></tr>
+<tr><td>一个调用方只用到一半</td>
+    <td>所有调用方都用到全部</td></tr>
+<tr><td>出现「为了编译过而写空实现」</td>
+    <td>实现得都挺实在</td></tr>
+</tbody>
+</table>
+</div>
+
+<div class="card note">
+  <div class="card-t">一个很灵的判断信号</div>
+  <p>如果你为了实现某个接口，写出了
+  <code>void attack() override {}</code>（空函数）或
+  <code>{ return 0; }</code>（随便糊一个），
+  <b>那就是这个接口太胖了</b> —— 它逼你实现了用不到的东西。</p>
+</div>
+
+<div class="card warn">
+  <div class="card-t">别拆过头</div>
+  <p><code>getHp</code> 和 <code>getMaxHp</code> 总是成对出现、总被同一处用 ——
+  把它们拆成两个接口只会让人多点两次、多传一个参数。</p>
+  <p>标准始终是那一条：<b>有没有一个调用方被迫依赖它用不到的方法？</b>
+  没有就别拆。</p>
+</div>
+
+<h2 id="s5"><span class="n">5</span>一页速查</h2>
+
+<div class="mnemonic">
+  <b>接口隔离原则：</b>调用方不应该被迫依赖它用不到的方法。<br>
+  <b>切分标准：</b>按「谁来用」切，不按「谁来实现」堆。<br>
+  <b>手法：</b>胖接口 → 几个小接口；实现者多继承它们，调用方只拿需要的那一个。<br>
+  <b>信号：</b>写出空的 <code>override</code>，就说明接口太胖了。<br>
+  <b>边界：</b>没有调用方被迫多依赖，就别拆。
+</div>
+
+<div class="see-also">
+  <div class="hd">延伸阅读</div>
+  <ul>
+    <li><a href="q04.html">Q04 · 接口</a>
+      <span class="why">—— 接口是什么、<code>public</code> 区怎么定；
+      本篇接着讲「这个接口该多大」。</span></li>
+    <li><a href="q05.html">Q05 · 单一职责原则和开闭原则</a>
+      <span class="why">—— 那两篇管「类该多大」；
+      本篇管「接口该多大」，思路是同一个：别让一个东西被几个方向拉。</span></li>
+    <li><a href="m06.html">M06 · 类、结构体</a>
+      <span class="why">—— 类的基本写法；本篇用到的继承与
+      <code>virtual</code> 请先在那之后补上。</span></li>
+  </ul>
+</div>

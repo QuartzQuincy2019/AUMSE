@@ -104,6 +104,30 @@
   纸条上写的不是「42」，而是「<b>去哪里找 42</b>」。
 </div>
 
+<div class="card tip">
+  <div class="card-t">回扣 M03：数组的类型是 <code>int[n]</code></div>
+  <p>M03 最后一节说过：<code>int arr[4]</code> 里 <code>arr</code> 的类型是
+  <b><code>int[4]</code></b>，不是 <code>int</code>。现在有了指针，可以接着往下说：</p>
+  <div class="code-wrap"><div class="bar"><span class="dot r"></span><span class="dot y"></span><span class="dot g"></span><span class="name">数组名会「退化」成指针</span><span class="cp">复制</span></div><pre><span class="hl-k">int</span>  arr[<span class="hl-n">4</span>] = {<span class="hl-n">10</span>, <span class="hl-n">20</span>, <span class="hl-n">30</span>, <span class="hl-n">40</span>};
+<span class="hl-k">int</span> *p = arr;        <span class="hl-c">/* arr 原类型 int[4] → 这里退化成 int* */</span></pre></div>
+  <p><code>arr</code> 原本是 <code>int[4]</code>；一旦要赋给指针，
+  它就<b>退化</b>成「指向第一个元素的指针」，类型变成 <code>int*</code>。</p>
+  <p>所以 <code>p</code> 指向的是 <code>arr[0]</code>，
+  <code>*p</code> 取到的是 <b>10</b>。</p>
+</div>
+
+<div class="card key">
+  <div class="card-t">由此得到指针的一条硬规矩</div>
+  <p><b>指针的类型，必须与它指向的东西对得上。</b></p>
+  <p><code>int *p</code> 只能指向 <code>int</code>；
+  要指向 <code>char</code> 就用 <code>char *</code>，
+  要指向 <code>double</code> 就用 <code>double *</code>。</p>
+  <p>原因 M03 已经讲过：<b>类型决定步长</b>。
+  <code>int *</code> 加 1 前进 4 字节，<code>char *</code> 加 1 只前进 1 字节。
+  类型写错了，指针就会在内存里走错格。</p>
+</div>
+
+
 <!-- ============================================================ -->
 <h2 id="s2"><span class="n">2</span>两个符号：&amp; 和 *</h2>
 

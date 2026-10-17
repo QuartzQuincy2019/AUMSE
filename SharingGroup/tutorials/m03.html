@@ -33,8 +33,9 @@
   <div class="sep"></div>
   <a href="#s9">9 · 初识「地址」</a>
   <a href="#s10">10 · 地址与数组</a>
-  <a href="#s11">11 · 常见错误</a>
-  <a href="#s12">12 · 一页速查</a>
+  <a href="#s11">11 · 数组的类型是 int[n]</a>
+  <a href="#s12">12 · 常见错误</a>
+  <a href="#s13">13 · 一页速查</a>
 </nav>
 
 <main>
@@ -785,7 +786,90 @@ double 相邻元素差 8 字节</pre></div>
 </div>
 
 <!-- ============================================================ -->
-<h2 id="s11"><span class="n">11</span>常见错误</h2>
+<h2 id="s11"><span class="n">11</span>数组的类型是 <code>int[n]</code></h2>
+
+<p>前面一直写 <code>int arr[4]</code>。很容易以为 <code>arr</code> 的类型就是
+<code>int</code> —— <b>不是。</b></p>
+
+<div class="card key">
+  <div class="card-t">完整类型</div>
+  <p><code>int arr[4];</code> 里，<code>arr</code> 的完整类型是
+  <b><code>int[4]</code></b>，读作「<b>4 个 int 组成的数组</b>」。</p>
+  <p>它不是一个 <code>int</code>，而是<b>4 个 int 挨在一起</b>构成的
+  <b>一个新东西</b>。方括号里的数字是类型的一部分，不能省。</p>
+</div>
+
+<p>用 <code>sizeof</code> 一验就清楚：</p>
+
+<div class="code-wrap"><div class="bar"><span class="dot r"></span><span class="dot y"></span><span class="dot g"></span><span class="name">sizeof 看的是「类型」，不是「里面的值」</span><span class="cp">复制</span></div><pre><span class="hl-p">#include</span> <span class="hl-s">&lt;stdio.h&gt;</span>
+
+<span class="hl-k">int</span> <span class="hl-f">main</span>(<span class="hl-k">void</span>) {
+    <span class="hl-k">int</span>  arr[<span class="hl-n">4</span>];      <span class="hl-c">/* arr 的类型是 int[4] */</span>
+    <span class="hl-k">int</span>  x;            <span class="hl-c">/* x   的类型是 int    */</span>
+
+    <span class="hl-f">printf</span>(<span class="hl-s">"sizeof(arr)    = %zu\n"</span>, <span class="hl-k">sizeof</span> arr);      <span class="hl-c">/* 16 */</span>
+    <span class="hl-f">printf</span>(<span class="hl-s">"sizeof(arr[0]) = %zu\n"</span>, <span class="hl-k">sizeof</span> arr[<span class="hl-n">0</span>]);   <span class="hl-c">/* 4  */</span>
+    <span class="hl-f">printf</span>(<span class="hl-s">"sizeof(x)      = %zu\n"</span>, <span class="hl-k">sizeof</span> x);        <span class="hl-c">/* 4  */</span>
+    <span class="hl-k">return</span> <span class="hl-n">0</span>;
+}</pre></div>
+
+<div class="out-wrap"><div class="cap">运行结果</div><pre>sizeof(arr)    = 16
+sizeof(arr[0]) = 4
+sizeof(x)      = 4</pre></div>
+
+<p><code>sizeof(arr)</code> 是 <b>16</b> 而不是 4 —— 因为
+<code>arr</code> 是「4 个 int」，4 × 4 = 16。<code>sizeof</code> 量的始终是
+<b>类型占多大</b>。</p>
+
+<div class="card note">
+  <div class="card-t">一句话</div>
+  <p><b><code>arr</code> 是数组，<code>arr[0]</code> 才是 int。</b>
+  加一个下标，类型就从 <code>int[4]</code> 变成了 <code>int</code>。</p>
+</div>
+
+<h3>为什么这件事重要</h3>
+
+<h4>① 它解释了「步长」</h4>
+
+<p>上一节说「地址加 1 前进多少，由类型决定」。现在可以精确说了：</p>
+
+<div class="vs">
+<table>
+<thead><tr><th style="width:26%">表达式</th><th style="width:22%">类型</th>
+<th>加 1 前进</th></tr></thead>
+<tbody>
+<tr><td class="c"><code>arr</code></td><td class="c"><code>int[4]</code></td>
+    <td class="c"><b>16 字节</b>（跨过整个数组）</td></tr>
+<tr><td class="c"><code>&amp;arr[0]</code></td><td class="c"><code>int*</code></td>
+    <td class="c"><b>4 字节</b>（跨过一个 int）</td></tr>
+</tbody>
+</table>
+</div>
+
+<p>同样是「加 1」，一个前进 16 字节、一个前进 4 字节 —— 因为
+<b>两个东西的类型不一样</b>。</p>
+
+<h4>② 它解释了为什么不能把数组塞给 int</h4>
+
+<div class="code-wrap"><div class="bar"><span class="dot r"></span><span class="dot y"></span><span class="dot g"></span><span class="name">类型不匹配，编译不过</span><span class="cp">复制</span></div><pre><span class="hl-k">int</span> arr[<span class="hl-n">4</span>];
+<span class="hl-k">int</span> x = arr;      <span class="hl-c">/* 错：int[4] 不能塞进 int */</span></pre></div>
+
+<p>编译器会直接报错。这不是「规矩多」，而是<b>真的放不下</b>：
+<code>arr</code> 是 16 字节，<code>x</code> 只有 4 字节。</p>
+
+<h4>③ 它是 M04 讲指针的入口</h4>
+
+<p>还有一个细节：<b>数组名在多数场合会「退化」成指向首元素的指针</b>，
+也就是从 <code>int[4]</code> 变成 <code>int*</code>。这件事
+M04 讲指针时会正面用到 —— 那里会回扣本节。</p>
+
+<div class="take">
+  <b>记住这一条：</b>看到 <code>int arr[4]</code>，把它的类型读成
+  <b><code>int[4]</code></b>，不要读成 <code>int</code>。<br>
+  类型不同，<code>sizeof</code> 不同，步长不同，能不能赋值也不同。
+</div>
+
+<h2 id="s12"><span class="n">12</span>常见错误</h2>
 
 <h4>错误 1 · 以为数据能装进小类型</h4>
 <div class="code-wrap"><div class="bar"><span class="dot r"></span><span class="dot y"></span><span class="dot g"></span><span class="name">对比</span><span class="cp">复制</span></div><pre><span class="hl-c">/* ❌ char 最大 127，装不下 200 */</span>
@@ -828,7 +912,7 @@ double 相邻元素差 8 字节</pre></div>
 <span class="hl-f">printf</span>(<span class="hl-s">"%p\n"</span>, (<span class="hl-k">void</span> *)&amp;a);  <span class="hl-c">/* ✅ 地址要用 %p */</span></pre></div>
 
 <!-- ============================================================ -->
-<h2 id="s12"><span class="n">12</span>一页速查</h2>
+<h2 id="s13"><span class="n">13</span>一页速查</h2>
 
 <table>
 <thead><tr><th style="width:34%">想做的事</th><th>写法</th></tr></thead>
