@@ -76,8 +76,11 @@ body.use-baiti{--mn-scale:1.35}
 
 table{border-collapse:collapse;width:100%;font-size:13px}
 th,td{border:1px solid var(--line);padding:0;text-align:center;vertical-align:middle}
+/* 不吸顶：表格外面包了 .tscroll（overflow-x:auto），
+   sticky 会按容器而不是视口算，表头被永久下压、露出空带。
+   长表格滚走表头可以接受，横向滚动时的行标题 sticky 才是关键。 */
 thead th{background:var(--bg-soft);font-weight:600;font-size:12.5px;color:var(--fg-2);
-  padding:7px 6px;position:sticky;top:52px;z-index:5}
+  padding:7px 6px}
 tbody th{background:var(--bg-soft);font-weight:600;font-size:12px;color:var(--fg-2);
   white-space:nowrap;padding:4px 9px;text-align:right;position:sticky;left:0;z-index:4}
 tbody th .cp{display:block;font-family:var(--mono);font-size:10px;
@@ -92,6 +95,8 @@ tbody th .cp{display:block;font-family:var(--mono);font-size:10px;
   font-size:12px;line-height:1;color:var(--amber)}
 .cell.marked:hover::after{color:#fff}
 .pos-t td{width:25%}
+/* 表头括号里的说明：宽屏跟在后面，窄屏整块换行，避免折成「上形（词」+「首）」 */
+.thsub{font-weight:400;color:var(--fg-3);font-size:11.5px}
 
 /* 矩阵与 FVS 表的首列（行标题）定宽，其余列均分，否则
    table 自动布局会把多出来的宽度全塞给第一列 */
@@ -128,6 +133,89 @@ thead th .hglyph{margin:2px auto 5px}
 .notes li{margin:5px 0}
 .warn{margin-top:10px;color:var(--red);font-size:12.5px}
 .hint{font-size:12.5px;color:var(--fg-3);margin:6px 0 0}
+
+
+/* =====================================================================
+   暗色模式
+   变量换掉即可覆盖九成；下列几处写死了 #fff，需要单独点掉。
+   ================================================================== */
+@media (prefers-color-scheme: dark){
+  :root{
+    --bg:#12151b; --bg-soft:#171b23; --bg-code:#1b202a;
+    --line:#252b36; --line-2:#333b48;
+    --fg:#e6ebf2; --fg-2:#b3bcc9; --fg-3:#79849a;
+    --blue:#4d8ff0; --blue-soft:#16263d;
+    --green:#4fc98d; --green-soft:#13291f;
+    --red:#f07a6c; --red-soft:#2e1a18;
+    --amber:#e0a63a; --amber-soft:#302615;
+    --violet:#b28cff; --violet-soft:#221b36;
+    --teal:#4fc9c9; --teal-soft:#12292b;
+  }
+  header{background:rgba(18,21,27,.94)}
+  .ctl select,.ctl button{background:#1b202a}
+  .ctl button:hover,.ctl select:hover{background:#222835}
+  .ctl button.on{background:var(--blue-soft)}
+  .ipt:focus{background:#1b202a}
+  .cplist span{background:#1b202a}
+  .cplist span.zw{background:var(--violet-soft);border-color:#3a2f57}
+  .cplist span.fvs{background:var(--teal-soft);border-color:#1e3d3d}
+  .cell.marked{background:var(--amber-soft)}
+  .cell.marked::after{color:var(--amber)}
+  .notes{background:var(--bg-soft)}
+  /* 字形在深底上偏细，稍微提一点对比 */
+  .gl{color:#f2f5f9}
+}
+
+/* =====================================================================
+   手机端
+   三个表都可能比屏幕宽：包一层横向滚动，行标题 sticky 在左侧，
+   横滑时仍能对照是哪个字母。
+   ================================================================== */
+.tscroll{overflow-x:auto;-webkit-overflow-scrolling:touch;border-radius:8px}
+.tscroll table{min-width:100%}
+
+@media (max-width:820px){
+  .wrap{padding:0 12px 70px}
+  .head-in{padding:9px 12px;gap:8px}
+  .brand{font-size:15px}
+  .brand small{display:none}
+  .ctl{font-size:12px;gap:5px}
+  .ctl select,.ctl button{padding:3px 7px}
+  h2{font-size:15.5px;margin:24px 0 4px}
+  .lead{font-size:13px}
+
+  /* 行标题留在左侧，横滑时仍能对照 */
+  tbody th{position:sticky;left:0;z-index:3}
+
+  .thsub{display:block;font-size:10.5px;line-height:1.3}
+  .cell{width:60px;height:64px;padding:4px 2px}
+  .gl{font-size:calc(26px * var(--mn-scale,1))}
+  .hglyph{font-size:calc(18px * var(--mn-scale,1))}
+  .out .gl{font-size:calc(40px * var(--mn-scale,1))}
+  .cell .cp{font-size:8.5px;letter-spacing:-.3px}
+
+  #vowelTable th:first-child,#fvsTable th:first-child{width:76px}
+  /* 保底宽度：不设的话 fixed 布局会把 9 列压进 366px，格子只剩 38px，
+     横滑条也就不会出现。按「首列 + 每列目标宽」算出来。 */
+  #posTable{min-width:420px}
+  #vowelTable{min-width:560px}
+  #fvsTable{min-width:420px}
+  th,td{padding:0 2px}
+  .out{padding:12px;min-height:110px}
+  .notes{padding:12px 14px;font-size:13px}
+}
+
+@media (max-width:520px){
+  .cell{width:52px;height:58px}
+  .gl{font-size:calc(22px * var(--mn-scale,1))}
+  .hglyph{font-size:calc(16px * var(--mn-scale,1))}
+  #vowelTable th:first-child,#fvsTable th:first-child{width:62px}
+  #posTable{min-width:360px}
+  #vowelTable{min-width:500px}
+  #fvsTable{min-width:370px}
+  .head-in #fstat{display:none}   /* 窄屏上字体状态先让位 */
+}
+
 </style>
 </head>
 <body>
@@ -161,7 +249,7 @@ thead th .hglyph{margin:2px auto 5px}
     字母后面接 <code>ZWJ</code> → 它「右边有人」→ 取<b>上形</b>；
     前面接 <code>ZWJ</code> → 取<b>下形</b>；前后都接 → <b>中形</b>；两侧不接 → <b>独立形</b>。
   </p>
-  <table class="pos-t" id="posTable"></table>
+  <div class="tscroll"><table class="pos-t" id="posTable"></table></div>
 
   <h2><span class="n">2</span>元音组合矩阵<span class="tag-l">8 × 8，行 × 列</span></h2>
   <p class="lead">
@@ -175,7 +263,7 @@ thead th .hglyph{margin:2px auto 5px}
     <button class="ctx" data-ctx="medi">中形</button>
     <button class="ctx" data-ctx="fina">下形</button>
   </div>
-  <table id="vowelTable"></table>
+  <div class="tscroll"><table id="vowelTable"></table></div>
   <p class="hint">点任意单元格可以打标记（✱），用来记下你怀疑「这里生成了新字形」的组合；顶部可复制标记清单。</p>
 
   <h2><span class="n">3</span>元音 + 自由变体选择符<span class="tag-l">FVS1–4</span></h2>
@@ -186,7 +274,7 @@ thead th .hglyph{margin:2px auto 5px}
     变体选择符「吃掉」，而是照常画了字形 —— 那也是需要记录的信息，
     换字体时对比一下就知道是不是字体行为。
   </p>
-  <table id="fvsTable"></table>
+  <div class="tscroll"><table id="fvsTable"></table></div>
 
   <h2><span class="n">4</span>自由输入</h2>
   <p class="lead">把任意串贴进来，看它怎么连；下方列出码位，零宽与变体选择符单独标色。</p>
@@ -321,11 +409,12 @@ function buildPos(){
   T.innerHTML = "";
   const thead = document.createElement("thead");
   const hr = document.createElement("tr");
-  ["字母","独立","上形（词首）","中形（词中）","下形（词尾）"].forEach(t => {
-    const th = document.createElement("th");
-    th.textContent = t;
-    hr.appendChild(th);
-  });
+  [["字母",""],["独立",""],["上形","（词首）"],["中形","（词中）"],["下形","（词尾）"]]
+    .forEach(([t, sub]) => {
+      const th = document.createElement("th");
+      th.innerHTML = t + (sub ? '<span class="thsub">' + sub + "</span>" : "");
+      hr.appendChild(th);
+    });
   thead.appendChild(hr);
   T.appendChild(thead);
 
