@@ -90,6 +90,15 @@ main{flex:1;display:flex;min-height:0}
    推进量还不到一半（Noto 0.92em vs Baiti 0.62em），同字号下看着「缩水」。
    所以切到 Baiti 时把字号放大到 1.35 倍，让两种字体的观感大致齐平；
    用户拖字号滑块时仍是按内置字体的大小在调。 */
+/* ---------------------------------------------------------------------
+   ⚠ Mongolian Baiti 是**微软的系统字体**（© Microsoft；部分字形 © 北京方正），
+     许可证写明「Microsoft supplied font … Any other use is prohibited」。
+     微软字体 FAQ 允许的只有一件事：在 CSS font stack 里点它的名字 ——
+     因为「use」发生在装了该字体的设备上，不在服务器上。
+     禁止：把字体拷到服务器（web font self-hosting）、转成 WOFF/WOFF2、再分发。
+     所以这里**只**写字体名 + 回退到内置的 Noto，仓库里不放它的任何副本。
+   --------------------------------------------------------------------- */
+
 #vtext.use-baiti{font-family:"Mongolian Baiti","UME Mongolian",serif;
   font-size:calc(var(--vfont-size) * 1.35)}
 .pane-head .vsel{color:var(--fg-dim);font-size:12px;display:flex;align-items:center;gap:5px}

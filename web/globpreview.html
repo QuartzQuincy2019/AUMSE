@@ -69,6 +69,15 @@ code{font-family:var(--mono);font-size:12px;background:var(--bg-code);
   display:inline-block;
 }
 body.h-mode .gl{writing-mode:horizontal-tb}
+/* ---------------------------------------------------------------------
+   ⚠ Mongolian Baiti 是**微软的系统字体**（© Microsoft；部分字形 © 北京方正），
+     许可证写明「Microsoft supplied font … Any other use is prohibited」。
+     微软字体 FAQ 允许的只有一件事：在 CSS font stack 里点它的名字 ——
+     因为「use」发生在装了该字体的设备上，不在服务器上。
+     禁止：把字体拷到服务器（web font self-hosting）、转成 WOFF/WOFF2、再分发。
+     所以这里**只**写字体名 + 回退到内置的 Noto，仓库里不放它的任何副本。
+   --------------------------------------------------------------------- */
+
 body.use-baiti .gl{font-family:"Mongolian Baiti","UME Mongolian",serif}
 /* 100px 下墨迹高度实测：元音 A 79 vs 70、辅音 M 73 vs 58 ——
    取 1.22 让两套字体的字面高度大致齐平（宽度差是 Baiti 本身的窄字形，不管） */
