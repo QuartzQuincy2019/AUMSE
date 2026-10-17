@@ -247,8 +247,8 @@ Windows 上的极简 GNU 工具集）就是这份移植。</p>
 <h3>同一件事，gcc 与 Visual Studio 2026 两种做法</h3>
 
 <p>原理是<b>通用的</b>，不分编译器。本讲第 3~7 节用 <code>gcc</code> 这一行命令
-把三步「摊开」，第 9 节起改用 <b>Visual Studio 2026</b> 一步步做。
-两者的对应关系是：</p>
+把三步「摊开」；<b>Visual Studio</b> 里同样的三步由 IDE 替你按下去，
+你只要点「生成」。两者的对应关系是：</p>
 
 <div class="card tip">
   <div class="card-t">对照表</div>
@@ -395,7 +395,8 @@ collect2.exe: error: ld returned 1 exit status</pre></div>
 <tr><td>声明在 <code>namespace</code> <span class="cpp-badge">C++</span> 里，定义不在（或反过来）</td>
     <td>名字必须完全一致，包括命名空间</td></tr>
 <tr><td>忘了链接某个库</td>
-    <td>加 <code>-l</code> 参数，见第 9 节</td></tr>
+    <td>加 <code>-L</code> 目录 + <code>-l</code> 名字
+    （第 2 节那张 gcc↔VS 对照表里有对应项）</td></tr>
 <tr><td>C++ 与 C 混编时没写 <code>extern "C"</code></td>
     <td>C++ 会对函数名做「名字修饰」，C 不会 —— 链接时名字对不上</td></tr>
 </tbody>
@@ -1172,63 +1173,60 @@ x.exe : fatal error LNK1169: 找到一个或多个多重定义的符号</pre></d
 <span class="hl-c">// ✅ 解法一：文件另存为「UTF-8 带 BOM」</span>
 <span class="hl-c">// ✅ 解法二：项目属性 → C/C++ → 命令行 → 其他选项 加 /utf-8</span>
 <span class="hl-c">// ✅ 解法三：源文件里不写中文注释</span></pre></div>
-
-<h4>错误 3 · 只配了「附加依赖项」，没配「附加库目录」</h4>
-<div class="code-wrap"><div class="bar"><span class="dot r"></span><span class="dot y"></span><span class="dot g"></span><span class="name">对比</span><span class="cpp-badge">C++</span><span class="cp">复制</span></div><pre><span class="hl-c">// ❌ 只写名字，不写在哪</span>
-<span class="hl-c">// 链接器 → 输入 → 附加依赖项:  UmeMath.lib</span>
-<span class="hl-c">// → LNK1104: 无法打开文件"UmeMath.lib"</span>
-
-<span class="hl-c">// ✅ 两个都要</span>
-<span class="hl-c">// 链接器 → 输入   → 附加依赖项:  UmeMath.lib</span>
-<span class="hl-c">// 链接器 → 常规   → 附加库目录:  $(SolutionDir)$(Platform)\$(Configuration)</span></pre></div>
-
-<h4>错误 4 · 改完配置只点「生成」</h4>
+<h4>错误 3 · 改完配置只点「生成」</h4>
 <div class="code-wrap"><div class="bar"><span class="dot r"></span><span class="dot y"></span><span class="dot g"></span><span class="name">对比</span><span class="cp">复制</span></div><pre><span class="hl-c">// ❌ 改了「附加包含目录」，源文件没动 → 「生成」认为无事可做</span>
 <span class="hl-c">//    结果：还是报找不到头文件，让人以为改错了</span>
 
 <span class="hl-c">// ✅ 改配置之后用「重新生成」</span>
 <span class="hl-c">//    右键项目 → 重新生成</span></pre></div>
-
-<h4>错误 5 · 在两个不同的解决方案里建库和使用者</h4>
-<div class="code-wrap"><div class="bar"><span class="dot r"></span><span class="dot y"></span><span class="dot g"></span><span class="name">对比</span><span class="cp">复制</span></div><pre><span class="hl-c">// ❌ 库一个 .sln，App 另一个 .sln → 「添加引用」里根本看不到对方</span>
-
-<span class="hl-c">// ✅ 右键【解决方案】→ 添加 → 新建项目 / 现有项目，放进同一个 .sln</span></pre></div>
-
-<h4>错误 6 · 改「附加依赖项」时把 <code>%(...)</code> 删了</h4>
-<div class="code-wrap"><div class="bar"><span class="dot r"></span><span class="dot y"></span><span class="dot g"></span><span class="name">对比</span><span class="cp">复制</span></div><pre><span class="hl-c">// ❌ 直接覆盖成只有自己那一个库</span>
-UmeMath.lib
-<span class="hl-c">// → 系统库全丢了，报一堆 kernel32.lib 找不到</span>
-
-<span class="hl-c">// ✅ 往前面加，保留原有的</span>
-UmeMath.lib;%(AdditionalDependencies)</pre></div>
-
-<h4>错误 7 · 老项目报 <code>MSB8020 无法找到 v143</code></h4>
+<h4>错误 4 · 老项目报 <code>MSB8020 无法找到 v143</code></h4>
 <div class="code-wrap"><div class="bar"><span class="dot r"></span><span class="dot y"></span><span class="dot g"></span><span class="name">对比</span><span class="cp">复制</span></div><pre><span class="hl-c">// ❌ 老项目写着 VS 2022 的工具集 v143，本机只装了 VS 2026</span>
 <span class="hl-c">//    error MSB8020: 无法找到 v143 的生成工具</span>
 
 <span class="hl-c">// ✅ 右键解决方案 → 重定解决方案目标 → 选当前版本</span>
 <span class="hl-c">//    或 项目属性 → 常规 → 平台工具集 → 改成 v145</span></pre></div>
 
+
+<!-- ============================================================ -->
 <div class="card key">
-  <div class="card-t">这一篇要记住的六句话</div>
-  <ol>
-    <li><b>编译器做三步：预处理 → 编译 → 链接</b>；
-      <code>#include</code> 是「把文件内容粘进来」。</li>
-    <li><b>头文件（.h）给编译期用，库（.lib）给链接期用</b> ——
-      缺头文件报 <code>C1083</code>，缺库报 <code>LNK2019</code> / <code>LNK1104</code>。</li>
-    <li><b>静态库 = 配置类型选「静态库 (.lib)」</b>，
-      产物落在 <code>$(SolutionDir)$(Platform)\$(Configuration)\</code>。</li>
-    <li><b>用库要配三处</b>：添加引用（顺序 + 登记）、
-      附加包含目录（找 .h）、附加依赖项 + 附加库目录（找 .lib）。</li>
-    <li><b>改完配置用「重新生成」</b>，
-      因为「生成」只看时间戳，配置变化它察觉不到。</li>
-    <li><b>头文件里的函数定义必须加 <code>inline</code></b>，
-      否则多份定义 → <code>LNK2005</code>；
-      <code>inline</code> 的本职是「允许多份」，不是「提速」。</li>
-  </ol>
+  <div class="card-t">这一篇到这里 —— 但真实项目不会这样敲</div>
+  <p>回头看一遍：本篇每一条命令都是<b>你亲手敲</b>的 ——
+  <code>cl /c</code> 负责编、<code>link</code> 负责链、
+  <code>-I</code> 找头文件、<code>-L -l</code> 找库。
+  三五个文件时，这样最快，也最能看清每一步到底在干什么。</p>
+  <p>但文件一多，手敲就撑不住了，卡在三个地方：</p>
+  <ul>
+    <li><b>记不住依赖</b>：改一个头文件，到底哪些 <code>.cpp</code> 要重编？</li>
+    <li><b>跨平台要重写</b>：Windows 上敲 <code>cl</code>、Linux 上敲 <code>g++</code>，
+    参数、后缀、库名全不一样</li>
+    <li><b>IDE 读不懂</b>：Visual Studio 要的是解决方案与工程文件，
+    不是一串命令行</li>
+  </ul>
+  <p>下一篇 <b>F04</b> 就把这些交给一条四层流水线：
+  <b>项目描述 → 生成器 → 构建文件 → 构建引擎 → 编译器驱动</b>。
+  <b>最底下那层还是本篇这个 <code>cl</code> / <code>g++</code></b>，
+  只是上面多了几层，替你去记依赖、挑工具、按顺序调度。</p>
+  <p>而且 F04 会拿<b>本篇第 7 节那个三文件工程</b>
+  （<code>main.cpp</code> / <code>widget.cpp</code> / <code>widget.h</code>）
+  原样再走一遍 —— 这次先用 <code>CMakeLists.txt</code> 把它描述出来，
+  再交给 Ninja、GNU Make、MSBuild 分别建一遍，最后对比三个产物的输出。</p>
 </div>
 
-
+<div class="see-also">
+  <div class="card-t">接着读</div>
+  <ul>
+    <li><a href="f04.html">F04 · 构建系统生成器与构建工具</a>
+      <span class="why">—— 本篇手敲的那些命令，交给四层流水线自动调度。
+      里面还有一节专门回答「为什么要有这些东西、只有编译器行不行」，
+      正好接上本篇。</span></li>
+    <li><a href="f01.html">F01 · 命令提示符（cmd）初步</a>
+      <span class="why">—— 本篇的命令都在命令行里敲；
+      路径、环境变量、<code>cd</code> 的基础在那篇。</span></li>
+    <li><a href="f02.html">F02 · 相对文件路径与宏</a>
+      <span class="why">—— <code>-I</code> 指的头文件目录、
+      <code>$(SolutionDir)</code> 这类路径宏，都是「东西在哪」的表达方式。</span></li>
+  </ul>
+</div>
 
 <!-- NAV-AUTO -->
 <a class="home-fab" href="../../index.html" title="返回教程总目录">返回 home</a>
