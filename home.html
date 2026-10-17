@@ -57,7 +57,12 @@ a.card.star:hover{background:linear-gradient(96deg,#fffdf5,#fbe9c4)}
    遮罩**留在 CSS 里**，不要写进行内：行内自定义属性会盖住 :hover 规则
    （行内优先级高于样式表），那样 hover 永远不生效 —— 之前就是这样。
    两个主题都给出基础值；mono 变体用白（浅）/ 黑（暗）。 */
-a.card.has-bg{background-image:var(--card-veil),var(--bg-img);
+/* 这里把 .has-bg 写两遍，是为了把优先级抬到 (0,3,1)。
+   原因：暗色里 a.card.star{background:...}（简写）排在后面，
+   与 a.card.has-bg 优先级相同 —— 后写的会把 background-image
+   重置成只剩那层渐变，图就没了（实测：暗色下 Q07 的
+   background-image 只有 1 层）。写两遍即可稳压，不必用 !important。 */
+a.card.has-bg.has-bg{background-image:var(--card-veil),var(--bg-img);
   background-repeat:no-repeat,no-repeat;
   background-position:center,center;
   background-size:cover,cover}
@@ -196,18 +201,20 @@ a.card .sb{display:inline-block;margin-top:8px;font:700 10.5px/1.8 var(--sans);
     rgba(36,29,12,1) 0%, rgba(36,29,12,1) 16%,
     rgba(36,29,12,.62) 46%, rgba(43,34,16,.62) 54%,
     rgba(43,34,16,1) 84%, rgba(43,34,16,1) 100%)}
+  /* mono（Q11）在暗色下用 **body 背景色 #15171c**，不是纯黑 ——
+     纯黑会在页面里切出一块明显更暗的矩形。 */
   a.card.has-bg.mono{--card-veil:linear-gradient(100deg,
-    rgba(0,0,0,1) 0%, rgba(0,0,0,1) 16%,
-    rgba(0,0,0,.62) 46%, rgba(0,0,0,.62) 54%,
-    rgba(0,0,0,1) 84%, rgba(0,0,0,1) 100%)}
+    rgba(21,23,28,1) 0%, rgba(21,23,28,1) 16%,
+    rgba(21,23,28,.62) 46%, rgba(21,23,28,.62) 54%,
+    rgba(21,23,28,1) 84%, rgba(21,23,28,1) 100%)}
   a.card.has-bg:hover{--card-veil:linear-gradient(100deg,
     rgba(43,34,16,1) 0%, rgba(43,34,16,.99) 16%,
     rgba(43,34,16,.54) 46%, rgba(58,45,16,.54) 54%,
     rgba(58,45,16,.98) 84%, rgba(58,45,16,1) 100%)}
   a.card.has-bg.mono:hover{--card-veil:linear-gradient(100deg,
-    rgba(0,0,0,1) 0%, rgba(0,0,0,.99) 16%,
-    rgba(0,0,0,.54) 46%, rgba(0,0,0,.54) 54%,
-    rgba(0,0,0,.98) 84%, rgba(0,0,0,1) 100%)}
+    rgba(21,23,28,1) 0%, rgba(21,23,28,.99) 16%,
+    rgba(21,23,28,.54) 46%, rgba(21,23,28,.54) 54%,
+    rgba(21,23,28,.98) 84%, rgba(21,23,28,1) 100%)}
   .k-c,.k-M{background:#1b2740;color:#a9c8f5;border-color:#2e4265}
   .k-cpp{background:#241d38;color:#c9b0ff;border-color:#3d3160}
   .k-extra{background:#2c2415;color:#e6c078;border-color:#4a3c1c}
