@@ -47,7 +47,7 @@
 
 <div class="card note">
   <div class="card-t">这一篇解决什么</div>
-  <p>08-F01 讲的是「一条一条敲命令」。可是要<b>重复做同一串操作</b>时，
+  <p>F01 讲的是「一条一条敲命令」。可是要<b>重复做同一串操作</b>时，
   一条条敲就太笨了 —— 而且容易漏、容易敲错。</p>
   <p>这一篇讲怎么把命令<b>写进一个文件，一键重跑</b>，
   也就是<b>批处理（batch）</b>。顺带讲怎么在批处理里调用
@@ -192,7 +192,7 @@ chcp 65001 &gt;nul</pre></div>
 </tbody>
 </table>
 
-<p>第一行那个差异，正是 08-F02 讲过的「相对路径相对于 CWD」问题。
+<p>第一行那个差异，正是 F02 讲过的「相对路径相对于 CWD」问题。
 <b>无论怎么运行都得到同一个结果</b>的标准做法，是在脚本开头把目录钉死：</p>
 
 <div class="code-wrap"><div class="bar"><span class="dot r"></span><span class="dot y"></span><span class="dot g"></span><span class="name">钉死工作目录</span><span class="cp">复制</span></div><pre>@echo off
@@ -292,7 +292,7 @@ COUNT=13</pre></div>
 <thead><tr><th style="width:22%">写法</th><th style="width:30%">含义</th><th>例子</th></tr></thead>
 <tbody>
 <tr><td class="c">%NAME%</td><td>你 <code>set</code> 的变量</td><td class="c">%BUILD_DIR%</td></tr>
-<tr><td class="c">%PATH%</td><td><b>系统环境变量</b>（08-F02 讲过）</td><td class="c">%TEMP%</td></tr>
+<tr><td class="c">%PATH%</td><td><b>系统环境变量</b>（F02 讲过）</td><td class="c">%TEMP%</td></tr>
 <tr><td class="c">%1 %2 %*</td><td><b>命令行参数</b>（见 3.3）</td><td class="c">build.bat release</td></tr>
 <tr><td class="c">%%f</td><td><b>for 循环变量</b>（见 3.4）</td><td class="c">for %%f in (*.c) do …</td></tr>
 </tbody>
@@ -1142,10 +1142,10 @@ setlocal enabledelayedexpansion
   <table style="margin:8px 0 0">
   <thead><tr><th style="width:26%">文档</th><th>讲了什么</th></tr></thead>
   <tbody>
-  <tr><td>08-F01</td><td>命令提示符初步：怎么打开、基本命令</td></tr>
-  <tr><td>08-F02</td><td>相对路径与环境变量宏</td></tr>
-  <tr><td>08-F03</td><td>编译与链接、头文件与库</td></tr>
-  <tr><td><b>08-E02</b></td><td><b>批处理进阶：把命令写成脚本，接上 node / npm / python</b></td></tr>
+  <tr><td>F01</td><td>命令提示符初步：怎么打开、基本命令</td></tr>
+  <tr><td>F02</td><td>相对路径与环境变量宏</td></tr>
+  <tr><td>F03</td><td>编译与链接、头文件与库</td></tr>
+  <tr><td><b>E02</b></td><td><b>批处理进阶：把命令写成脚本，接上 node / npm / python</b></td></tr>
   </tbody></table>
   <p style="margin-top:10px">建议做一件事：<b>把项目里你重复敲过三次以上的那串命令，
   写成一个 <code>.bat</code>。</b>这是学会批处理最快的方式。</p>
@@ -1161,7 +1161,7 @@ setlocal enabledelayedexpansion
 </div>
 <!-- /NAV-AUTO -->
 <footer>
-UME 项目组内部教程 · 08-E02（Extra）《批处理与命令提示符进阶》<br>
+UME 项目组内部教程 · E02（Extra）《批处理与命令提示符进阶》<br>
 文中所有命令、批处理行为与版本号，均在本机（Windows 11 · cmd · node v24.16.0 · npm 11.13.0 · Python 3.14.6）实际运行核对；<br>
 其中 <code>gcc</code> 编译步骤使用 gcc 13.1.0 实际编译核对。
 代码示例均以 <b>Consolas</b> 等宽字体呈现。

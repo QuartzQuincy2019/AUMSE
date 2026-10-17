@@ -415,7 +415,7 @@ strcmp(abc,ab)  = 1</pre></div>
   <div class="card-t">只对英文字母成立</div>
   <p>上面这些「减 32 变大写」「减 'a' 得序号」<b>只适用于 ASCII 里的英文</b>。</p>
   <p>中文、蒙文、日文这些字符<b>不是 1 个字节</b>，也完全不符合这些规律 ——
-  它们要用「编码」来处理，那是第 09-F04 讲的内容。</p>
+  它们要用「编码」来处理，那是 T02 那篇的内容。</p>
   <p><b>不要把处理英文字符的办法套到非英文字符上。</b></p>
 </div>
 
@@ -508,11 +508,14 @@ small[<span class="hl-k">sizeof</span>(small) - <span class="hl-n">1</span>] = <
   <div class="card-t">下一讲预告</div>
   <p>这一讲处理的是「一串英文字符」。但我们的项目要处理
   <b>回鹘蒙文</b> —— 那可不是 1 个字节能装下的。</p>
-  <p>下一讲先讲一个纯编程技巧：<b>递归</b>（函数自己调用自己）。
-  然后进入几篇与项目直接相关的实用文档：命令行、文件路径、
-  编译链接，以及 <b>Unicode 与编码</b> ——
-  那一篇会解释为什么 <code>char</code> 处理不了蒙文，
-  以及为什么 QPainter 里到处都是 <code>QString</code> 而不是 <code>char*</code>。</p>
+  <p>下一讲是 <b>M09《vector 和 array》</b>，把「数组」这条线收尾：
+  这一讲开头那几条 C 数组的短板（长度写死、不知道自己多长、
+  不检查越界），标准库的 <code>vector</code> / <code>array</code> 是怎么补上的，
+  以及给函数传数组参数时该怎么写。</p>
+  <p>「蒙文为什么装不进 <code>char</code>」这个问题，会在
+  <a href="t02.html">T02《Unicode 和编码》</a> 里正面回答 ——
+  一个字符为什么要占多个字节，以及 Qt 里为什么到处都是
+  <code>QString</code> 而不是 <code>char*</code>。</p>
 </div>
 
 
