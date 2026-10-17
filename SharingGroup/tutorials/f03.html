@@ -523,6 +523,21 @@ collect2.exe: error: ld returned 1 exit status</pre></div>
 </table>
 
 <div class="card key">
+  <div class="card-t">这套三文件布局，就是 Qt 项目的基本结构</div>
+  <p>后面 Q 系列真正动手写界面时，每一个窗口、每一个控件，
+  基本都是这三件套：</p>
+  <ul>
+    <li><code>widget.h</code> —— 类的定义（<code>class Widget : public QWidget</code>、
+    槽函数的声明）</li>
+    <li><code>widget.cpp</code> —— 构造函数、槽函数的实现</li>
+    <li><code>main.cpp</code> —— <code>QApplication</code> + 创建窗口 + <code>exec()</code></li>
+  </ul>
+  <p>在 Qt Creator 里新建一个 Widget 项目，生成的<b>就是这三个文件</b> ——
+  名字一样、分工一样。<b>所以这一节不是造的玩具例子，
+  而是本项目后面所有界面代码的骨架。</b></p>
+</div>
+
+<div class="card key">
   <div class="card-t">一句话</div>
   <p><b>头文件放「声明」，源文件放「定义」。</b></p>
   <p>头文件会被<b>多处包含</b>，所以里面不能有「只能有一份」的东西
@@ -669,6 +684,95 @@ x.exe : fatal error LNK1169: 找到一个或多个多重定义的符号</pre></d
   <p>但<b>这只是运气好</b>：标准要求这类定义在全程序里只有一份，
   多了就是 ODR 违规。换个编译器、或写法稍有不同，就可能变成 LNK2005。
   <b>别依赖链接器替你收拾。</b></p>
+</div>
+
+<h3>头文件里的函数，哪些要加 <code>inline</code></h3>
+
+<p>「头文件里不能写函数体」有一个合法例外，就是 <code>inline</code>。
+但<b>并不是所有写在头文件里的函数都要加它</b> —— 该加的没加会 LNK2005，
+不该加的加了纯属噪音。下面这张表是判断依据：</p>
+
+<table>
+<thead><tr><th style="width:38%">函数的写法</th><th style="width:20%">要加 <code>inline</code> 吗</th>
+<th>为什么</th></tr></thead>
+<tbody>
+<tr><td><b>类体内部</b>直接写出函数体</td>
+    <td class="c"><b>不用</b></td>
+    <td>类内定义隐式就是 <code>inline</code></td></tr>
+<tr><td>类外定义，但<b>仍然写在 <code>.h</code> 里</b></td>
+    <td class="c"><b>要</b></td>
+    <td>否则每个包含它的 .cpp 各来一份定义</td></tr>
+<tr><td><b>自由函数</b>的定义写在 <code>.h</code> 里</td>
+    <td class="c"><b>要</b></td>
+    <td>同上</td></tr>
+<tr><td><b>模板函数</b>的定义写在 <code>.h</code> 里</td>
+    <td class="c">不用</td>
+    <td>模板本来就会在每个用到的地方各实例化一份，语言允许</td></tr>
+<tr><td><b>只声明</b>（末尾分号，没有函数体）</td>
+    <td class="c">不用</td>
+    <td>没有定义就不会有多余副本</td></tr>
+<tr><td>头文件里的<b>全局常量</b></td>
+    <td class="c"><code>inline constexpr</code></td>
+    <td>C++17 起用它，才允许在头文件里定义</td></tr>
+</tbody>
+</table>
+
+<div class="code-wrap"><div class="bar"><span class="dot r"></span><span class="dot y"></span><span class="dot g"></span><span class="name">ume_tools.h —— 五种写法混在一个头文件里</span><span class="cp">复制</span></div><pre><span class="hl-p">#pragma once</span>
+<span class="hl-p">#include</span> <span class="hl-s">&lt;string&gt;</span>
+
+<span class="hl-c">/* ① 自由函数，定义写在头文件里 → 必须 inline */</span>
+<span class="hl-k">inline</span> <span class="hl-k">int</span> <span class="hl-f">clamp</span>(<span class="hl-k">int</span> v, <span class="hl-k">int</span> lo, <span class="hl-k">int</span> hi) {
+    <span class="hl-k">return</span> v &lt; lo ? lo : (v &gt; hi ? hi : v);
+}
+
+<span class="hl-c">/* ② 模板函数，定义写在头文件里 → 不用 inline */</span>
+<span class="hl-k">template</span> &lt;<span class="hl-k">class</span> T&gt;
+T <span class="hl-f">maxOf</span>(T a, T b) { <span class="hl-k">return</span> a &gt; b ? a : b; }
+
+<span class="hl-c">/* ③ 只声明，定义在 widget.cpp 里 → 不用 inline */</span>
+<span class="hl-k">int</span> <span class="hl-f">parseCount</span>(<span class="hl-k">const</span> <span class="hl-k">char</span>* s);
+
+<span class="hl-c">/* ④ 头文件里的全局常量（C++17）→ 用 inline constexpr */</span>
+<span class="hl-k">inline</span> <span class="hl-k">constexpr</span> <span class="hl-k">int</span> kUmeVersion = <span class="hl-n">2026</span>;
+
+<span class="hl-k">class</span> Widget {
+<span class="hl-k">public</span>:
+    <span class="hl-c">/* ⑤ 写在类体内 → 隐式 inline，不用写 */</span>
+    <span class="hl-k">int</span> <span class="hl-f">id</span>() <span class="hl-k">const</span> { <span class="hl-k">return</span> id_; }
+
+    <span class="hl-c">/* ⑥ 只声明，定义在 widget.cpp 里 → 不用 inline */</span>
+    <span class="hl-k">void</span> <span class="hl-f">setTitle</span>(<span class="hl-k">const</span> std::string&amp; t);
+
+<span class="hl-k">private</span>:
+    <span class="hl-k">int</span> id_ = <span class="hl-n">0</span>;
+    std::string title_;
+};</pre></div>
+
+<p>这个头文件被 <code>main.cpp</code> 和 <code>widget.cpp</code>
+<b>同时包含</b>，照样能链接通过、正常运行：</p>
+
+<div class="out-wrap"><div class="cap">实机运行（已核对）</div><pre>clamp(-5,0,10) = 0
+maxOf(3,9)     = 9
+parseCount     = 125
+kUmeVersion    = 2026
+w.id()         = 0</pre></div>
+
+<div class="card tip">
+  <div class="card-t">怎么记</div>
+  <p><b>看「这份定义会不会被复制很多份」。</b>
+  会被复制（自由函数、类外的成员函数、全局常量）→ 加
+  <code>inline</code>；本来就允许多份（模板）或压根没有定义（只有声明）→ 不用加；
+  类体内写的已经自动算 <code>inline</code>，再加是多余。</p>
+</div>
+
+<div class="card warn">
+  <div class="card-t">反证：把 ① 的 <code>inline</code> 删掉</div>
+  <p>只删 `clamp` 前面那个 <code>inline</code>，同样两个 .cpp，立刻变成：</p>
+  <div class="out-wrap"><div class="cap">实机报错（已核对）</div><pre>widget.obj : error LNK2005: "int __cdecl clamp(int,int,int)" (?clamp@@YAHHHH@Z) 已经在 main.obj 中定义
+y.exe : fatal error LNK1169: 找到一个或多个多重定义的符号</pre></div>
+  <p>而 <code>maxOf</code>（模板）、<code>parseCount</code>（只有声明）、
+  <code>id()</code>（类体内）<b>都没有动，也都不会报错</b> ——
+  正对上表里「不用加」的那几行。</p>
 </div>
 
 <h3>违反规矩 ②：漏了 <code>Widget::</code></h3>
