@@ -1,0 +1,541 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>UME · 位置形态与元音组合测试</title>
+<style>
+/* 字体：相对 web/ 定位到 ../font/ */
+@font-face{
+  font-family:"UME Mongolian";
+  src:url("../font/NotoSansMongolian-Regular.ttf") format("truetype");
+  font-weight:400; font-style:normal; font-display:block;
+}
+
+:root{
+  --bg:#ffffff; --bg-soft:#f6f8fb; --bg-code:#f2f4f8;
+  --line:#e2e7ef; --line-2:#cdd6e3;
+  --fg:#161a21; --fg-2:#4a5464; --fg-3:#7b8698;
+  --blue:#1f6feb; --blue-soft:#e7f0fe;
+  --green:#1a7f45; --green-soft:#e6f5ec;
+  --red:#c0392b; --red-soft:#fdecea;
+  --amber:#a86a12; --amber-soft:#fdf3e2;
+  --violet:#6b46c1; --violet-soft:#f1ecfd;
+  --teal:#0d7d7d; --teal-soft:#e4f5f5;
+  --mono:"Cascadia Mono",Consolas,"SF Mono",ui-monospace,monospace;
+}
+*{box-sizing:border-box}
+body{
+  margin:0;background:var(--bg);color:var(--fg);
+  font:15px/1.7 -apple-system,BlinkMacSystemFont,"Segoe UI","Microsoft YaHei",sans-serif;
+  -webkit-font-smoothing:antialiased;
+}
+.wrap{max-width:1280px;margin:0 auto;padding:0 22px 90px}
+
+header{position:sticky;top:0;z-index:20;background:rgba(255,255,255,.94);
+  backdrop-filter:blur(8px);border-bottom:1px solid var(--line)}
+.head-in{max-width:1280px;margin:0 auto;padding:11px 22px;
+  display:flex;align-items:center;gap:12px;flex-wrap:wrap}
+.brand{font-weight:700;font-size:16px;letter-spacing:.2px}
+.brand small{font-weight:500;color:var(--fg-3);font-size:12px;margin-left:6px}
+.ctl{display:flex;align-items:center;gap:6px;font-size:12.5px;color:var(--fg-2)}
+.ctl select,.ctl button{font:inherit;color:var(--fg);background:#fff;
+  border:1px solid var(--line-2);border-radius:6px;padding:4px 9px;cursor:pointer}
+.ctl button:hover,.ctl select:hover{border-color:var(--blue);color:var(--blue)}
+.ctl button.on{background:var(--blue-soft);border-color:var(--blue);color:var(--blue)}
+.sp{margin-left:auto}
+.mark-n{font-variant-numeric:tabular-nums;color:var(--amber);font-weight:600}
+
+h2{font-size:17px;margin:30px 0 4px;display:flex;align-items:baseline;gap:9px;flex-wrap:wrap}
+h2 .n{display:inline-flex;width:22px;height:22px;border-radius:6px;
+  background:var(--blue);color:#fff;font-size:12.5px;font-weight:700;
+  align-items:center;justify-content:center;flex:0 0 auto}
+h2 .tag-l{font-size:12px;font-weight:500;color:var(--fg-3)}
+.lead{color:var(--fg-2);font-size:14px;margin:4px 0 14px}
+code{font-family:var(--mono);font-size:12px;background:var(--bg-code);
+  border:1px solid var(--line);border-radius:4px;padding:0 4px}
+
+/* 竖排是蒙文的本来排法；横排仅供快速扫读 */
+.gl{
+  writing-mode:vertical-lr;   /* 列自左向右 */
+  direction:ltr;              /* 必须显式，否则继承 rtl 会让列序反转 */
+  text-orientation:mixed;     /* 蒙文整块 vo=R，设 upright 会失去连写形态 */
+  font-family:"UME Mongolian",serif;
+  font-size:34px;line-height:1;
+  font-kerning:normal;font-variant-ligatures:normal;
+  text-rendering:optimizeLegibility;
+  display:inline-block;
+}
+body.h-mode .gl{writing-mode:horizontal-tb}
+body.use-baiti .gl{font-family:"Mongolian Baiti","UME Mongolian",serif}
+
+table{border-collapse:collapse;width:100%;font-size:13px}
+th,td{border:1px solid var(--line);padding:0;text-align:center;vertical-align:middle}
+thead th{background:var(--bg-soft);font-weight:600;font-size:12.5px;color:var(--fg-2);
+  padding:7px 6px;position:sticky;top:52px;z-index:5}
+tbody th{background:var(--bg-soft);font-weight:600;font-size:12px;color:var(--fg-2);
+  white-space:nowrap;padding:4px 9px;text-align:right;position:sticky;left:0;z-index:4}
+tbody th .cp{display:block;font-family:var(--mono);font-size:10px;
+  color:var(--fg-3);font-weight:400}
+.cell{height:86px;width:86px;padding:6px 4px;position:relative;
+  cursor:pointer;transition:background .12s;user-select:none}
+.cell:hover{background:var(--blue-soft)}
+.cell .cp{display:block;font-family:var(--mono);font-size:9.5px;
+  color:var(--fg-3);margin-top:3px;letter-spacing:-.2px}
+.cell.marked{background:var(--amber-soft)}
+.cell.marked::after{content:"✱";position:absolute;top:2px;right:5px;
+  font-size:12px;line-height:1;color:var(--amber)}
+.cell.marked:hover::after{color:#fff}
+.pos-t td{width:25%}
+
+/* 矩阵与 FVS 表的首列（行标题）定宽，其余列均分，否则
+   table 自动布局会把多出来的宽度全塞给第一列 */
+#vowelTable,#fvsTable{table-layout:fixed}
+#vowelTable th:first-child,#fvsTable th:first-child{width:104px}
+#vowelTable td,#fvsTable td{width:auto}
+
+.ipt{width:100%;min-height:88px;font-family:var(--mono);font-size:14px;
+  border:1px solid var(--line-2);border-radius:8px;padding:10px 12px;
+  background:var(--bg-soft);color:var(--fg);resize:vertical;line-height:1.7}
+.ipt:focus{outline:none;border-color:var(--blue);background:#fff}
+.out{margin-top:12px;border:1px solid var(--line);border-radius:10px;
+  background:var(--bg-soft);padding:16px;min-height:130px;overflow:auto;text-align:center}
+.out .gl{font-size:54px}
+.cplist{margin-top:10px;font-family:var(--mono);font-size:12px;color:var(--fg-2);
+  display:flex;flex-wrap:wrap;gap:4px}
+.cplist span{background:#fff;border:1px solid var(--line);border-radius:4px;padding:1px 5px}
+.cplist span.zw{background:var(--violet-soft);border-color:#d8c9f7;color:var(--violet)}
+.cplist span.fvs{background:var(--teal-soft);border-color:#bfe4e4;color:var(--teal)}
+
+.notes{margin-top:26px;border:1px solid var(--line);border-radius:10px;
+  background:var(--bg-soft);padding:14px 18px;font-size:13.5px;color:var(--fg-2)}
+.notes b{color:var(--fg)}
+.notes ul{margin:6px 0 0;padding-left:20px}
+.notes li{margin:5px 0}
+.warn{margin-top:10px;color:var(--red);font-size:12.5px}
+.hint{font-size:12.5px;color:var(--fg-3);margin:6px 0 0}
+</style>
+</head>
+<body>
+<header>
+  <div class="head-in">
+    <div class="brand">globpreview<small>位置形态 · 元音组合</small></div>
+    <div class="ctl">字体
+      <select id="fontsel">
+        <option value="ume">UME Mongolian（内置）</option>
+        <option value="baiti">Mongolian Baiti（本机）</option>
+      </select>
+    </div>
+    <div class="ctl">
+      <button id="btn-orient">竖排</button>
+      <button id="btn-cp" class="on">码位</button>
+      <button id="btn-clear">清标记</button>
+      <button id="btn-copy">复制标记</button>
+    </div>
+    <div class="sp"></div>
+    <div class="ctl">已标记 <span class="mark-n" id="markN">0</span></div>
+    <div class="ctl" id="fstat" style="color:var(--fg-3)">…</div>
+  </div>
+</header>
+
+<div class="wrap">
+
+  <h2><span class="n">1</span>位置形态<span class="tag-l">独立 / 上形 / 中形 / 下形</span></h2>
+  <p class="lead">
+    同一码位在词的不同位置取不同字形，对应竖排的<b>上、中、下</b>与<b>独立成字</b>。
+    下面用零宽连接符把字形<b>强行逼到</b>指定形态：
+    字母后面接 <code>ZWJ</code> → 它「右边有人」→ 取<b>上形</b>；
+    前面接 <code>ZWJ</code> → 取<b>下形</b>；前后都接 → <b>中形</b>；两侧不接 → <b>独立形</b>。
+  </p>
+  <table class="pos-t" id="posTable"></table>
+
+  <h2><span class="n">2</span>元音组合矩阵<span class="tag-l">8 × 8，行 × 列</span></h2>
+  <p class="lead">
+    行是前一个元音、列是后一个元音，单元格里渲染这一对。
+    用下面的「上下文」切换，看同一对处在不同位置时是否长出不同字形。
+    <b>悬停能看到这一对的实际行宽</b>（与两字各自中形的行宽之和比较）—— 那只是线索，不是判据。
+  </p>
+  <div class="ctl" style="margin:0 0 10px">上下文
+    <button class="ctx" data-ctx="iso">独立</button>
+    <button class="ctx" data-ctx="init">上形</button>
+    <button class="ctx" data-ctx="medi">中形</button>
+    <button class="ctx" data-ctx="fina">下形</button>
+  </div>
+  <table id="vowelTable"></table>
+  <p class="hint">点任意单元格可以打标记（✱），用来记下你怀疑「这里生成了新字形」的组合；顶部可复制标记清单。</p>
+
+  <h2><span class="n">3</span>元音 + 自由变体选择符<span class="tag-l">FVS1–4</span></h2>
+  <p class="lead">
+    同一个元音码位，后接 <code>FVS</code> 可以指定用哪一种字形变体。
+    词中的 a / e 常常同形，靠的就是这一列区分。
+  </p>
+  <table id="fvsTable"></table>
+
+  <h2><span class="n">4</span>自由输入</h2>
+  <p class="lead">把任意串贴进来，看它怎么连；下方列出码位，零宽与变体选择符单独标色。</p>
+  <textarea class="ipt" id="inp" spellcheck="false"
+    placeholder="在这里输入或粘贴蒙文…">ᠮᠣᠩᠭᠣᠯ ᠪᠢᠴᠢᠭ ᠤᠨ ᠲᠣᠯᠢ</textarea>
+  <div class="ctl" style="margin:10px 0">上下文
+    <button class="ctx2" data-ctx="raw">原样</button>
+    <button class="ctx2" data-ctx="init">上形</button>
+    <button class="ctx2" data-ctx="medi">中形</button>
+    <button class="ctx2" data-ctx="fina">下形</button>
+  </div>
+  <div class="out"><span class="gl" id="inpOut" lang="mn-Mong"></span></div>
+  <div class="cplist" id="inpCp"></div>
+
+  <div class="notes">
+    <b>怎么用这张表</b>
+    <ul>
+      <li><b>形态由字体决定</b>：同一串在不同字体里可能给出不同结果，
+        所以顶部留了字体切换（内置 Noto / 本机 Baiti），方便对照。</li>
+      <li><b>ZWJ / ZWNJ 不占位</b>：<code>U+200D</code> 让两侧连上，
+        <code>U+200C</code> 让两侧断开。它们不出字形，只影响形态选择。</li>
+      <li><b>行宽只是线索</b>：连字通常会让推进量变小，但形态变化本身也会改变宽度。
+        所以这一页<b>不替你判定</b>「有没有合形」，只把宽度差放在悬停提示里。</li>
+      <li><b>竖排才是本来的排法</b>：横排按钮只是方便扫读，横排下字形仍是竖式设计的，看着会「躺倒」。</li>
+    </ul>
+    <div class="warn" id="fontWarn" style="display:none"></div>
+  </div>
+
+</div>
+
+<script>
+/* =====================================================================
+   globpreview —— 回鹘蒙文位置形态与元音组合测试页
+   ---------------------------------------------------------------------
+   要验两件事：
+     1) 同一码位的四形（独立 / 上 / 中 / 下）到底长什么样
+     2) 两个元音拼在一起会不会长出第三个字形
+   手法：用 ZWJ / ZWNJ 强行指定上下文，让字体自己选形态。
+   关于「合形」：不自动判定。行宽差只放进悬停提示，标记交给人点。
+   ===================================================================== */
+
+const ZWJ  = "\u200D";
+const ZWNJ = "\u200C";
+const FVS  = [0x180B, 0x180C, 0x180D, 0x180F];
+
+const ch  = cp => String.fromCodePoint(cp);
+const hex = cp => cp.toString(16).toUpperCase().padStart(4, "0");
+
+const VOWELS = [
+  [0x1820,"A","阳性"], [0x1821,"E","阴性"], [0x1822,"I","中性"],
+  [0x1823,"O","阳性"], [0x1824,"U","阳性"], [0x1825,"Ö","阴性"],
+  [0x1826,"Ü","阴性"], [0x1827,"Ē","阴性"]
+];
+
+const CONS = [
+  [0x1828,"N"],[0x1829,"Ŋ"],[0x182A,"B"],[0x182B,"P"],[0x182C,"Q"],
+  [0x182D,"Γ"],[0x182E,"M"],[0x182F,"L"],[0x1830,"S"],[0x1831,"Š"],
+  [0x1832,"T"],[0x1833,"D"],[0x1834,"Č"],[0x1835,"J"],[0x1836,"Y"],
+  [0x1837,"R"],[0x1838,"W"],[0x1839,"F"],[0x183A,"K"],[0x183B,"H"],
+  [0x183C,"C"],[0x183D,"Z"],[0x183E,"Ĥ"],[0x183F,"Ʒ"],[0x1840,"LH"],
+  [0x1841,"Ƶ"],[0x1842,"Ç"]
+];
+
+/* 四种上下文：把一串字放进指定的连接环境 */
+const CTX = {
+  iso:  s => s,
+  init: s => s + ZWJ,
+  medi: s => ZWJ + s + ZWJ,
+  fina: s => ZWJ + s
+};
+
+const state = { ctx:"medi", showCp:true };
+
+/* ---------------- 量宽（只用于悬停提示） ---------------- */
+const ruler = document.createElement("span");
+ruler.lang = "mn-Mong";
+ruler.style.cssText = "position:absolute;left:-99999px;top:0;white-space:pre;"
+  + "font-size:100px;line-height:1;writing-mode:horizontal-tb;direction:ltr;"
+  + "font-family:var(--mn-font,'UME Mongolian'),serif";
+document.body.appendChild(ruler);
+const advance = str => { ruler.textContent = str; return ruler.getBoundingClientRect().width; };
+
+function widthNote(a, b){
+  const wa  = advance(ZWJ + ch(a) + ZWJ);
+  const wb  = advance(ZWJ + ch(b) + ZWJ);
+  const wab = advance(ZWJ + ch(a) + ch(b) + ZWJ);
+  const d = (wa + wb) - wab;
+  return "两字中形之和 " + (wa + wb).toFixed(1) + " · 连写 " + wab.toFixed(1)
+       + " · 差 " + d.toFixed(1) + (d > 0.5 ? "（连写更窄）" : "");
+}
+
+/* ---------------- 标记 ---------------- */
+const marks = new Map();   /* key → 说明 */
+
+function toggleMark(td, key, label){
+  if (marks.has(key)){ marks.delete(key); td.classList.remove("marked"); }
+  else { marks.set(key, label); td.classList.add("marked"); }
+  document.getElementById("markN").textContent = marks.size;
+}
+
+/* ---------------- 单元格 ---------------- */
+function cell(str, cpText, markKey, markLabel){
+  const d = document.createElement("td");
+  d.className = "cell";
+  const g = document.createElement("span");
+  g.className = "gl";
+  g.lang = "mn-Mong";
+  g.textContent = str;
+  d.appendChild(g);
+
+  if (state.showCp && cpText){
+    const c = document.createElement("span");
+    c.className = "cp";
+    c.textContent = cpText;
+    d.appendChild(c);
+  }
+  if (markKey){
+    d.addEventListener("click", () => toggleMark(d, markKey, markLabel));
+    if (marks.has(markKey)) d.classList.add("marked");
+  }
+  return d;
+}
+
+/* ---------------- ① 位置形态 ---------------- */
+function buildPos(){
+  const T = document.getElementById("posTable");
+  T.innerHTML = "";
+  const thead = document.createElement("thead");
+  const hr = document.createElement("tr");
+  ["字母","独立","上形（词首）","中形（词中）","下形（词尾）"].forEach(t => {
+    const th = document.createElement("th");
+    th.textContent = t;
+    hr.appendChild(th);
+  });
+  thead.appendChild(hr);
+  T.appendChild(thead);
+
+  const tb = document.createElement("tbody");
+  const groups = [
+    ["元音", VOWELS.map(v => [v[0], v[1] + " · " + v[2]])],
+    ["辅音", CONS.map(c => [c[0], c[1]])]
+  ];
+  groups.forEach(([g, list]) => {
+    list.forEach(([cp, name]) => {
+      const tr = document.createElement("tr");
+      const th = document.createElement("th");
+      th.innerHTML = name + '<span class="cp">U+' + hex(cp) + "</span>";
+      tr.appendChild(th);
+      ["iso","init","medi","fina"].forEach(k => {
+        const cps = k === "iso"  ? [cp]
+                  : k === "init" ? [cp, 0x200D]
+                  : k === "medi" ? [0x200D, cp, 0x200D]
+                  : [0x200D, cp];
+        const key = k + ":" + cp;
+        tr.appendChild(cell(CTX[k](ch(cp)), cps.map(hex).join(" "),
+          key, name + " · " + {iso:"独立",init:"上形",medi:"中形",fina:"下形"}[k]));
+      });
+      tb.appendChild(tr);
+    });
+  });
+  T.appendChild(tb);
+}
+
+/* ---------------- ② 元音组合矩阵 ---------------- */
+function buildVowel(){
+  const T = document.getElementById("vowelTable");
+  T.innerHTML = "";
+  const thead = document.createElement("thead");
+  const hr = document.createElement("tr");
+  const c0 = document.createElement("th");
+  c0.textContent = "行 × 列";
+  hr.appendChild(c0);
+  VOWELS.forEach(v => {
+    const th = document.createElement("th");
+    th.innerHTML = v[1] + '<span style="display:block;font-family:var(--mono);'
+      + 'font-size:9.5px;color:var(--fg-3);font-weight:400">U+' + hex(v[0]) + "</span>";
+    hr.appendChild(th);
+  });
+  thead.appendChild(hr);
+  T.appendChild(thead);
+
+  const tb = document.createElement("tbody");
+  VOWELS.forEach(a => {
+    const tr = document.createElement("tr");
+    const th = document.createElement("th");
+    th.innerHTML = a[1] + '<span class="cp">U+' + hex(a[0]) + "</span>";
+    tr.appendChild(th);
+    VOWELS.forEach(b => {
+      const td = cell(CTX[state.ctx](ch(a[0]) + ch(b[0])),
+        hex(a[0]) + " " + hex(b[0]),
+        "pair:" + a[0] + "-" + b[0], a[1] + " + " + b[1]);
+      td.title = a[1] + " + " + b[1] + "　" + widthNote(a[0], b[0]);
+      tr.appendChild(td);
+    });
+    tb.appendChild(tr);
+  });
+  T.appendChild(tb);
+}
+
+/* ---------------- ③ FVS 变体 ---------------- */
+function buildFvs(){
+  const T = document.getElementById("fvsTable");
+  T.innerHTML = "";
+  const thead = document.createElement("thead");
+  const hr = document.createElement("tr");
+  const c0 = document.createElement("th");
+  c0.textContent = "元音";
+  hr.appendChild(c0);
+  ["无","FVS1","FVS2","FVS3","FVS4"].forEach(t => {
+    const th = document.createElement("th");
+    th.textContent = t;
+    hr.appendChild(th);
+  });
+  thead.appendChild(hr);
+  T.appendChild(thead);
+
+  const tb = document.createElement("tbody");
+  VOWELS.forEach(v => {
+    const tr = document.createElement("tr");
+    const th = document.createElement("th");
+    th.innerHTML = v[1] + '<span class="cp">U+' + hex(v[0]) + "</span>";
+    tr.appendChild(th);
+    tr.appendChild(cell(CTX[state.ctx](ch(v[0])), hex(v[0]),
+      "fvs:" + v[0] + ":0", v[1] + " 无 FVS"));
+    FVS.forEach((f, i) => {
+      tr.appendChild(cell(CTX[state.ctx](ch(v[0]) + ch(f)),
+        hex(v[0]) + " " + hex(f),
+        "fvs:" + v[0] + ":" + (i + 1), v[1] + " + FVS" + (i + 1)));
+    });
+    tb.appendChild(tr);
+  });
+  T.appendChild(tb);
+}
+
+/* ---------------- ④ 自由输入 ---------------- */
+function updateInput(){
+  const raw = document.getElementById("inp").value;
+  const mode = document.querySelector(".ctx2.on");
+  const k = mode ? mode.dataset.ctx : "raw";
+  document.getElementById("inpOut").textContent =
+    (k === "raw") ? raw : CTX[k](raw);
+
+  const box = document.getElementById("inpCp");
+  box.innerHTML = "";
+  Array.from(raw).forEach(c => {
+    const cp = c.codePointAt(0);
+    const s = document.createElement("span");
+    s.textContent = hex(cp);
+    if (cp === 0x200D || cp === 0x200C) s.className = "zw";
+    if (cp >= 0x180B && cp <= 0x180F) s.className = "fvs";
+    box.appendChild(s);
+  });
+}
+
+/* ---------------- 交互 ---------------- */
+function setCtx(k){
+  state.ctx = k;
+  document.querySelectorAll(".ctx").forEach(b =>
+    b.classList.toggle("on", b.dataset.ctx === k));
+  buildVowel();
+  buildFvs();
+}
+
+function rebuildAll(){ buildPos(); buildVowel(); buildFvs(); updateInput(); }
+
+function localFontAvailable(family){
+  /* 用拉丁样本：蒙文样本会被回退字体干扰（本机只有 Baiti 一支能排蒙文） */
+  const p = document.createElement("span");
+  p.style.cssText = "position:absolute;left:-9999px;top:0;white-space:nowrap;font-size:48px";
+  p.textContent = "MongolianBaiti";
+  document.body.appendChild(p);
+  p.style.fontFamily = "monospace";
+  const a = p.getBoundingClientRect().width;
+  p.style.fontFamily = '"' + family + '", monospace';
+  const b = p.getBoundingClientRect().width;
+  p.remove();
+  return Math.abs(b - a) > 0.5;
+}
+
+function applyFont(v){
+  document.body.classList.toggle("use-baiti", v === "baiti");
+  const ok = v !== "baiti" || localFontAvailable("Mongolian Baiti");
+  document.documentElement.style.setProperty("--mn-font",
+    v === "baiti" ? '"Mongolian Baiti","UME Mongolian"' : '"UME Mongolian"');
+  rebuildAll();
+  return ok;
+}
+
+document.getElementById("btn-orient").addEventListener("click", e => {
+  const h = document.body.classList.toggle("h-mode");
+  e.currentTarget.textContent = h ? "横排" : "竖排";
+  e.currentTarget.classList.toggle("on", h);
+});
+
+document.getElementById("btn-cp").addEventListener("click", e => {
+  state.showCp = !state.showCp;
+  e.currentTarget.classList.toggle("on", state.showCp);
+  rebuildAll();
+});
+
+document.getElementById("btn-clear").addEventListener("click", () => {
+  marks.clear();
+  document.getElementById("markN").textContent = "0";
+  document.querySelectorAll(".cell.marked").forEach(td => td.classList.remove("marked"));
+});
+
+document.getElementById("btn-copy").addEventListener("click", async e => {
+  if (!marks.size){ e.currentTarget.textContent = "还没标记"; 
+    setTimeout(() => e.currentTarget.textContent = "复制标记", 1200); return; }
+  const txt = [...marks.values()].join("\n");
+  try{
+    await navigator.clipboard.writeText(txt);
+    e.currentTarget.textContent = "已复制 " + marks.size + " 条";
+  }catch(err){
+    e.currentTarget.textContent = "复制失败，见控制台";
+    console.log(txt);
+  }
+  setTimeout(() => e.currentTarget.textContent = "复制标记", 1400);
+});
+
+document.getElementById("fontsel").addEventListener("change", e => {
+  const ok = applyFont(e.target.value);
+  const w = document.getElementById("fontWarn");
+  if (!ok){
+    w.style.display = "block";
+    w.textContent = "本机没有 Mongolian Baiti，已回退到内置 UME Mongolian。";
+  }else{
+    w.style.display = "none";
+  }
+});
+
+document.querySelectorAll(".ctx").forEach(b =>
+  b.addEventListener("click", () => setCtx(b.dataset.ctx)));
+document.querySelectorAll(".ctx2").forEach(b =>
+  b.addEventListener("click", () => {
+    document.querySelectorAll(".ctx2").forEach(x => x.classList.remove("on"));
+    b.classList.add("on");
+    updateInput();
+  }));
+document.getElementById("inp").addEventListener("input", updateInput);
+
+/* ---------------- 启动 ---------------- */
+(async function boot(){
+  const st = document.getElementById("fstat");
+  try{
+    await document.fonts.load('40px "UME Mongolian"');
+    await document.fonts.ready;
+    const ok = document.fonts.check('40px "UME Mongolian"');
+    st.textContent = ok ? "内置字体已加载" : "内置字体未加载";
+    if (!ok) st.style.color = "var(--red)";
+  }catch(err){
+    st.textContent = "字体加载失败：" + err.message;
+    st.style.color = "var(--red)";
+  }
+
+  if (!localFontAvailable("Mongolian Baiti")){
+    document.getElementById("fontsel").options[1].textContent =
+      "Mongolian Baiti（本机未安装）";
+  }
+  document.getElementById("fontsel").value = "ume";
+
+  document.querySelector('.ctx[data-ctx="medi"]').classList.add("on");
+  document.querySelector('.ctx2[data-ctx="raw"]').classList.add("on");
+
+  rebuildAll();
+})();
+</script>
+</body>
+</html>
