@@ -290,3 +290,21 @@
   .vw{padding:10px 8px 6px;border-radius:10px}
   .vw svg{min-width:380px}
 }
+
+/* =====================================================================
+   R04 专属：左右对照（英语靠清浊 / 普通话靠送气）
+   ---------------------------------------------------------------------
+   .two 这一组在 Q 系列各页里各自定义过，公共层没有，
+   所以这里补一份最小可用的：等宽两栏，窄屏塌成一栏。
+   ================================================================== */
+.two{margin:18px 0;display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.two .side{border:1px solid var(--line-2);border-radius:11px;overflow:hidden;
+  background:var(--sfc);min-width:0}
+.two .side .hd{padding:8px 13px;font-size:12.5px;font-weight:700;
+  letter-spacing:.02em;border-bottom:1px solid var(--line-2);
+  background:var(--bg-soft);color:var(--fg-2)}
+.two .side pre{margin:0;padding:11px 13px;overflow:auto;
+  font-family:var(--mono);font-size:13px;line-height:1.72}
+.two .side pre code{background:none;color:inherit}
+
+@media (max-width:720px){.two{grid-template-columns:1fr}}
