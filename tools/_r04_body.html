@@ -1,0 +1,356 @@
+<p>这一篇讲<b>国际音标</b>（IPA）。</p>
+
+<p>但重点不在「背符号」—— 符号表查一下就有，而且完整的一张就在
+<a href="assets/IPA_Deja_2015.pdf">assets/IPA_Deja_2015.pdf</a>（2015 修订版官方全图）。</p>
+
+<p>重点是三件容易搞混的事：<b>它不是「英语音标」</b>；
+<b>同一个符号在不同体系里可能指不同的音</b>；
+<b>带斜杠和带方括号是两种不同的标音</b>。</p>
+
+<!-- ============================================================ -->
+<h2 id="s1"><span class="n">1</span>IPA 是什么</h2>
+
+<div class="card key">
+  <div class="card-t">一句话</div>
+  <p><b>IPA 是一套给「所有语言」用的记音符号系统：一个符号只表示一个音，
+  一个音只用一个符号。</b></p>
+</div>
+
+<p>全称 <b>International Phonetic Alphabet</b>，中文译作<b>国际音标</b>。
+由国际语音协会（International Phonetic Association，缩写同样是 IPA）
+在 1888 年制定，此后多次修订 —— 本篇参考的是 <b>2015 修订版</b>的官方全图，
+就在 <code>assets/IPA_Deja_2015.pdf</code>。</p>
+
+<p>它要解决的问题很朴素：<b>文字记不下发音</b>。
+同一个字母在不同语言里读音天差地别，同一个音在不同语言里又常写成不同字母。
+只用字母表来描述发音，永远说不清。</p>
+
+<table>
+<thead><tr><th style="width:26%">原则</th><th>含义</th></tr></thead>
+<tbody>
+<tr><td><b>一音一符</b></td><td>任何一个音，都能找到<b>唯一</b>一个符号来写</td></tr>
+<tr><td><b>一符一音</b></td><td>任何一个符号，在任何语言里都读<b>同一个</b>音</td></tr>
+</tbody>
+</table>
+
+<p>所以它是<b>跨语言</b>的：既可以记英语，也可以记普通话、法语、斯瓦希里语 ——
+当然也可以记回鹘蒙文的读音。</p>
+
+<!-- ============================================================ -->
+<h2 id="s2"><span class="n">2</span>图上一共分几块</h2>
+
+<p>打开那张 PDF，会看到它按<b>六七个区块</b>排布。先认清区块，
+查表时才不会找错地方：</p>
+
+<table>
+<thead><tr><th style="width:24%">区块</th><th style="width:40%">记什么</th><th>怎么排</th></tr></thead>
+<tbody>
+<tr><td><b>肺部气流辅音</b></td>
+    <td>绝大多数语言的辅音，如 <code>p</code> <code>b</code> <code>t</code>
+    <code>d</code> <code>k</code> <code>g</code> <code>s</code> <code>m</code></td>
+    <td><b>发音部位 × 发音方法</b>的网格：横排是部位
+    （双唇、唇齿、齿、齿龈…声门），竖排是方法（塞音、鼻音、颤音、擦音…）</td></tr>
+<tr><td><b>非肺部气流辅音</b></td>
+    <td>吸气音（click）、内爆音、挤喉音</td>
+    <td>三小块，各自按部位列</td></tr>
+<tr><td><b>元音</b></td>
+    <td><code>i</code> <code>e</code> <code>ɛ</code> <code>a</code>
+    <code>u</code> <code>o</code> <code>ɔ</code> 等</td>
+    <td><b>舌位图</b>：左前右后、上闭下开（第 4 节细讲）</td></tr>
+<tr><td><b>其他符号</b></td>
+    <td>塞擦音、双部位辅音等</td>
+    <td>单独列表</td></tr>
+<tr><td><b>附加符号</b></td>
+    <td>送气 <code>ʰ</code>、清化 <code>̥</code>、更圆唇 <code>̹</code>、
+    略低 <code>̞</code> …</td>
+    <td>加在基本符号<b>上下左右</b>，用来记细节（第 5 节）</td></tr>
+<tr><td><b>超音段</b></td>
+    <td>重音 <code>ˈ</code> <code>ˌ</code>、长 <code>ː</code>、
+    半长 <code>ˑ</code>、音节断开 <code>.</code></td>
+    <td>排在符号串上</td></tr>
+<tr><td><b>声调与词重音</b></td>
+    <td>高平、低升、降升等各种调形</td>
+    <td>声调语言的调号</td></tr>
+</tbody>
+</table>
+
+<div class="card note">
+  <div class="card-t">图里两句话，读懂就少走很多弯路</div>
+  <p><b>「同一格里，右边的符号是浊音，左边是清音。」</b>
+  所以在肺部气流辅音表里，<code>p</code> 与 <code>b</code> 同格 ——
+  <code>b</code> 在右，是浊音；<code>p</code> 在左，是清音。成对的格子都遵守这条。</p>
+  <p><b>「灰色格子表示这些发音被判定为不可能。」</b>
+  比如双唇部位的边擦音 —— 不是没人用，是生理上做不出来。</p>
+</div>
+
+<!-- ============================================================ -->
+<h2 id="s3"><span class="n">3</span>「英语音标」不是 IPA</h2>
+
+<p>国内教材里说的「英语音标」，通常指的是 <b>DJ 音标</b>或
+<b>KK 音标</b>：</p>
+
+<table>
+<thead><tr><th style="width:20%"></th><th style="width:26%">DJ 音标</th>
+<th style="width:26%">KK 音标</th><th>IPA</th></tr></thead>
+<tbody>
+<tr><td><b>全称</b></td>
+    <td>Daniel Jones 一系</td>
+    <td>Kenyon &amp; Knott 一系</td>
+    <td>International Phonetic Alphabet</td></tr>
+<tr><td><b>面向</b></td>
+    <td>英式发音（RP）</td>
+    <td>美式发音（General American）</td>
+    <td><b>所有语言</b></td></tr>
+<tr><td><b>覆盖范围</b></td>
+    <td>只覆盖英语，教材常说 48 个</td>
+    <td>只覆盖英语，教材常说 48 个</td>
+    <td>整个人类语言的可能发音</td></tr>
+<tr><td><b>符号来源</b></td>
+    <td>借用 IPA 的一部分符号</td>
+    <td>借用 IPA 的一部分符号</td>
+    <td>就是符号表本身</td></tr>
+<tr><td><b>有没有删减</b></td>
+    <td><b>有</b>：只挑英语用得到的，还会按英语习惯改写</td>
+    <td><b>有</b>：同上</td>
+    <td>不删不减</td></tr>
+</tbody>
+</table>
+
+<div class="card warn">
+  <div class="card-t">关键区别：一个是「全集」，一个是「子集 + 约定」</div>
+  <p><b>DJ / KK 是对 IPA 的「选择性使用」</b> —— 挑出英语需要的符号，
+  再加上一些为英语方便的写法。所以它们之间符号不能互通，
+  它们与 IPA 之间也不能直接画等号。</p>
+  <p>看到教材写「国际音标 48 个」时要知道：那是<b>英语的音标数</b>，
+  不是 IPA 的符号数（IPA 的符号有上百个）。</p>
+</div>
+
+<!-- ============================================================ -->
+<h2 id="s4"><span class="n">4</span>一个符号，三种音：<code>/e/</code></h2>
+
+<p>这是本篇最值得记住的一件事。<b>同一个字母 <code>e</code>，
+在三套体系里指的是三个不同的音。</b></p>
+
+<h3>先看 IPA 的元音图</h3>
+
+<p>元音不是按「谁跟谁像」排的，而是按<b>舌头的位置</b>排的：
+竖轴是<b>开口度</b>（上闭下开），横轴是<b>舌位前后</b>（左前右后）。</p>
+
+<div class="vw">
+  <svg viewBox="0 0 470 268" role="img"
+       aria-label="元音舌位图：/e/ 在半闭偏前，/ɛ/ 在半开偏前，两者相差一档">
+    <!-- 梯形外框：左上—右上—右下—左下 -->
+    <polygon points="78,34 336,34 414,224 146,224"
+             fill="none" stroke="currentColor" stroke-width="1.4" opacity=".55"/>
+    <!-- 半闭、半开两条横线 -->
+    <line x1="100" y1="97" x2="352" y2="97"
+          stroke="currentColor" stroke-width="1" opacity=".18"/>
+    <line x1="118" y1="160" x2="377" y2="160"
+          stroke="currentColor" stroke-width="1" opacity=".18"/>
+
+    <!-- 左侧开口度标签 -->
+    <text x="66" y="39" text-anchor="end" font-size="12.5" fill="currentColor" opacity=".75" paint-order="stroke" stroke="var(--bg-soft)" stroke-width="3.5">闭</text>
+    <text x="85" y="102" text-anchor="end" font-size="12.5" fill="currentColor" opacity=".75" paint-order="stroke" stroke="var(--bg-soft)" stroke-width="3.5">半闭</text>
+    <text x="104" y="165" text-anchor="end" font-size="12.5" fill="currentColor" opacity=".75" paint-order="stroke" stroke="var(--bg-soft)" stroke-width="3.5">半开</text>
+    <text x="138" y="229" text-anchor="end" font-size="12.5" fill="currentColor" opacity=".75" paint-order="stroke" stroke="var(--bg-soft)" stroke-width="3.5">开</text>
+
+    <!-- 顶部前后标签 -->
+    <text x="110" y="26" text-anchor="middle" font-size="12.5" fill="currentColor" opacity=".6" paint-order="stroke" stroke="var(--bg-soft)" stroke-width="3.5">前</text>
+    <text x="240" y="26" text-anchor="middle" font-size="12.5" fill="currentColor" opacity=".6" paint-order="stroke" stroke="var(--bg-soft)" stroke-width="3.5">央</text>
+    <text x="360" y="26" text-anchor="middle" font-size="12.5" fill="currentColor" opacity=".6" paint-order="stroke" stroke="var(--bg-soft)" stroke-width="3.5">后</text>
+
+    <!-- 参照点：四个角上的常见元音 -->
+    <circle cx="92" cy="50" r="3" fill="currentColor" opacity=".45"/>
+    <text x="101" y="54" font-size="13" fill="currentColor" opacity=".6" paint-order="stroke" stroke="var(--bg-soft)" stroke-width="3.5">i</text>
+    <circle cx="322" cy="50" r="3" fill="currentColor" opacity=".45"/>
+    <text x="331" y="54" font-size="13" fill="currentColor" opacity=".6" paint-order="stroke" stroke="var(--bg-soft)" stroke-width="3.5">u</text>
+    <circle cx="168" cy="216" r="3" fill="currentColor" opacity=".45"/>
+    <text x="177" y="220" font-size="13" fill="currentColor" opacity=".6" paint-order="stroke" stroke="var(--bg-soft)" stroke-width="3.5">a</text>
+
+    <!-- 重点：/e/ 与 /ɛ/ -->
+    <circle cx="104" cy="97" r="5.5" fill="var(--s-main)"/>
+    <text x="116" y="101" font-size="15" font-weight="700"
+          fill="var(--s-main)" paint-order="stroke" stroke="var(--bg-soft)" stroke-width="3.5">e</text>
+    <text x="131" y="101" font-size="12" fill="currentColor" opacity=".7" paint-order="stroke" stroke="var(--bg-soft)" stroke-width="3.5">半闭 · 前 · 不圆唇</text>
+
+    <circle cx="123" cy="160" r="5.5" fill="var(--s-main)" opacity=".55"/>
+    <text x="135" y="164" font-size="15" font-weight="700"
+          fill="var(--s-main)" opacity=".85" paint-order="stroke" stroke="var(--bg-soft)" stroke-width="3.5">ɛ</text>
+    <text x="150" y="164" font-size="12" fill="currentColor" opacity=".7" paint-order="stroke" stroke="var(--bg-soft)" stroke-width="3.5">半开 · 前 · 不圆唇</text>
+
+    <!-- 两者的差距 -->
+    <line x1="104" y1="104" x2="123" y2="152"
+          stroke="var(--s-main)" stroke-width="1.3"
+          stroke-dasharray="4 4" opacity=".7"/>
+    <text x="196" y="132" font-size="12" fill="currentColor" opacity=".75" paint-order="stroke" stroke="var(--bg-soft)" stroke-width="3.5">差一档</text>
+  </svg>
+  <p class="vwcap">元音舌位图（示意，只画了与本篇有关的几处）。
+  竖轴越往下嘴张得越大，横轴越往右舌根越靠后。<b>/e/ 与 /ɛ/ 差在「半闭」「半开」这一档。</b></p>
+</div>
+
+<h3>三个 <code>e</code>，三处读音</h3>
+
+<table>
+<thead><tr><th style="width:16%">写法</th><th style="width:26%">指的是</th>
+<th style="width:30%">实际舌位</th><th>例</th></tr></thead>
+<tbody>
+<tr><td class="c"><b>IPA</b> <code>/e/</code></td>
+    <td>国际音标表上的那一个点</td>
+    <td><b>半闭 · 前 · 不圆唇</b>（close-mid front unrounded）</td>
+    <td>法语 <i>été</i> 的结尾、西班牙语 <i>mesa</i> 的 e</td></tr>
+<tr><td class="c"><b>英语 bed 的元音</b></td>
+    <td>英语的 DRESS 元音</td>
+    <td><b>半开 · 前 · 不圆唇</b>，在 IPA 里是 <code>/ɛ/</code></td>
+    <td>bed、pen、said</td></tr>
+<tr><td class="c"><b>汉语拼音</b> <code>e</code></td>
+    <td>「饿」「哥」的那个韵母</td>
+    <td><b>后半高 · 不圆唇</b>，在 IPA 里是 <code>[ɤ]</code></td>
+    <td>饿、哥、喝</td></tr>
+</tbody>
+</table>
+
+<div class="card warn">
+  <div class="card-t">英语教材里那个 <code>/e/</code>，其实是 <code>/ɛ/</code></div>
+  <p>英语 <i>bed</i> 的元音，舌位在 IPA 的<b>半开</b>那一档，按 IPA 该写
+  <code>/ɛ/</code>。但<b>英式词典的 DJ 传统习惯把它写作 <code>/e/</code></b>，
+  而 KK 音标写 <code>/ɛ/</code>。</p>
+  <p>所以「英语音标里的 /e/」并不是 IPA 图上那个 <code>/e/</code> 的位置 ——
+  <b>它是借了这个符号，去记一个更低的音。</b>这是约定，不是笔误。</p>
+  <p>反过来也成立：看到英语词典里的 <code>/e/</code>，不要拿 IPA 的
+  「半闭前」去套，那会读得偏高。</p>
+</div>
+
+<div class="mnemonic">
+  <b>以后看到 <code>/e/</code>，先问三句：</b><br>
+  ① 这是<b>哪套体系</b>的写法（IPA / DJ / KK）？<br>
+  ② 记的是<b>哪种语言</b>的音？<br>
+  ③ 用的是<b>宽式</b>还是<b>严式</b>（下一节）？
+</div>
+
+<!-- ============================================================ -->
+<h2 id="s5"><span class="n">5</span>宽式与严式：两种标音，两种括号</h2>
+
+<p>同一句话，可以记得粗，也可以记得细。<b>IPA 用括号区分这两种记法。</b></p>
+
+<table>
+<thead><tr><th style="width:20%"></th><th style="width:34%">宽式标音（broad）</th>
+<th>严式标音（narrow）</th></tr></thead>
+<tbody>
+<tr><td><b>括号</b></td>
+    <td class="c"><b>斜杠</b> <code>/ /</code></td>
+    <td class="c"><b>方括号</b> <code>[ ]</code></td></tr>
+<tr><td><b>记什么</b></td>
+    <td>只记<b>能区别意义</b>的音（音位）</td>
+    <td>记<b>实际发出来的音</b>，包括各种细节（音素）</td></tr>
+<tr><td><b>例（英语 pen）</b></td>
+    <td class="c"><code>/pen/</code></td>
+    <td class="c"><code>[pʰen]</code> —— 那个小 <code>ʰ</code> 就是送气</td></tr>
+<tr><td><b>例（英语 little）</b></td>
+    <td class="c"><code>/ˈlɪtl/</code></td>
+    <td class="c">实际中间那个 <code>t</code> 常是闪音或喉塞，严式会另写</td></tr>
+<tr><td><b>谁在用</b></td>
+    <td>词典注音、教学</td>
+    <td>语音学研究、方言调查、发音教学纠音</td></tr>
+</tbody>
+</table>
+
+<div class="card key">
+  <div class="card-t">严式靠的就是附加符号</div>
+  <p>第 2 节表里的「附加符号」这一块，唯一的用途就是<b>把宽式细化成严式</b>。</p>
+  <p>常见的几个：<code>ʰ</code> 送气 · <code>̥</code> 清化 ·
+  <code>̹</code> 更圆唇 · <code>̜</code> 更不圆唇 ·
+  <code>̞</code> 略低 · <code>̝</code> 略高 · <code>̈</code> 央化。</p>
+</div>
+
+<div class="card note">
+  <div class="card-t">回到 <code>/e/</code>：那「差一档」的争论其实在这里</div>
+  <p>英语 DRESS 元音到底算 <code>/e/</code> 还是 <code>/ɛ/</code>，
+  一部分原因就是<b>宽式与严式的要求不同</b>：</p>
+  <ul>
+    <li><b>宽式</b>只要一个能对立的符号，写 <code>/e/</code> 还是
+    <code>/ɛ/</code> 都是<b>体系内的约定</b>，只要全篇统一、不与别的音冲突即可。</li>
+    <li><b>严式</b>必须落到具体音值上，于是会出现
+    <code>[e̞]</code>（比 <code>/e/</code> 略低）或
+    <code>[ɛ̝]</code>（比 <code>/ɛ/</code> 略高）这种写法 ——
+    因为它其实就在两者之间。</li>
+  </ul>
+  <p><b>所以「英语的 /e/ 到底是什么音」这个问题，答案取决于你要多严。</b></p>
+</div>
+
+<div class="card warn">
+  <div class="card-t">两种括号不能混用</div>
+  <p><code>/ /</code> 里不要塞细节符号，<code>[ ]</code> 里不要省略你听到的东西。
+  混着写，等于既没说是音位、也没说是音素。</p>
+</div>
+
+<!-- ============================================================ -->
+<h2 id="s6"><span class="n">6</span>对本项目有什么用</h2>
+
+<p>回鹘蒙文的读音描述，用 IPA 最不容易出歧义。</p>
+
+<ul>
+  <li><b>拉丁转写 ≠ 记音</b>。转写是<b>文字层面</b>的对应（一个字母换一个字母），
+  记音是<b>语音层面</b>的记录（那个字母实际怎么读）。T01 讲的联合蒙文转写
+  属于前者；要描述「这个字母听起来像什么」，就得用 IPA。</li>
+  <li><b>别用「像英语的 x」来描述发音</b>。英语本身就有多种口音，
+  而「像」这种说法没法验证。写成 IPA，谁读都是同一个音。</li>
+  <li><b>写文档时至少标清宽严</b>。给出音位层面的对照用 <code>/ /</code>，
+  记某位发音人的实际读音用 <code>[ ]</code> —— 两者混在一张表里，
+  后面的人无法判断哪些是硬结论。</li>
+</ul>
+
+<div class="card tip">
+  <div class="card-t">查符号去哪</div>
+  <p>完整图表看 <a href="assets/IPA_Deja_2015.pdf">2015 修订版官方全图（PDF）</a>；
+  想在网页上点符号看名称与发音示例，可以看
+  <a href="https://toipa.org/zh/ipa-chart">toIPA 的中文音标表</a>。</p>
+</div>
+
+<!-- ============================================================ -->
+<h2 id="s7"><span class="n">7</span>一页速查</h2>
+
+<table>
+<thead><tr><th style="width:26%">概念</th><th>一句话</th></tr></thead>
+<tbody>
+<tr><td><b>IPA</b></td>
+    <td>跨语言的记音符号系统，一音一符、一符一音；与具体语言无关</td></tr>
+<tr><td><b>DJ / KK</b></td>
+    <td>为英语做的两套「音标」，借 IPA 符号 + 自己的约定，只覆盖英语</td></tr>
+<tr><td><b><code>/e/</code></b></td>
+    <td>IPA 里是<b>半闭·前·不圆唇</b>；英语 bed 的那个音在 IPA 里是 <code>/ɛ/</code></td></tr>
+<tr><td><b><code>/ /</code></b></td>
+    <td>宽式标音：只记能区别意义的音（音位），词典与教学常用</td></tr>
+<tr><td><b><code>[ ]</code></b></td>
+    <td>严式标音：记实际发音细节，靠附加符号细化</td></tr>
+<tr><td><b>附加符号</b></td>
+    <td>把宽式变严式的工具：送气 <code>ʰ</code>、清化 <code>̥</code>、
+    略低 <code>̞</code> …</td></tr>
+</tbody>
+</table>
+
+<div class="card key">
+  <div class="card-t">本篇要记住的三句话</div>
+  <ol>
+    <li><b>IPA 不是「英语音标」</b>：DJ / KK 是它的子集加约定，
+    只覆盖英语。</li>
+    <li><b>同一个符号，不同体系可能指不同的音</b> ——
+    最典型的就是 <code>/e/</code>：IPA 说半闭，英语教材用它记半开的音。</li>
+    <li><b>斜杠与方括号是两种要求</b>：<code>/ /</code> 记音位，
+    <code>[ ]</code> 记细节；混用就说不清了。</li>
+  </ol>
+</div>
+
+<div class="see-also">
+  <div class="card-t">想接着看</div>
+  <ul>
+    <li><a href="t01.html">T01 · 初识回鹘蒙文</a>
+      <span class="why">—— 拉丁转写、字形与连写规则。
+      那篇讲「怎么把字写下来」，本篇讲「怎么把音记下来」，两件事要分开。</span></li>
+    <li><a href="r01.html">R01 · 字体设计里的几个基本概念</a>
+      <span class="why">—— EM Square、基线、x 字高；
+      都在讲字形的度量，和语音是两条线，但都属于「文字背后的规则」。</span></li>
+    <li><a href="t03.html">T03 · 字体文件结构大揭秘</a>
+      <span class="why">—— 字体怎么把字形组织成表；
+      回鹘蒙文的连写规则最终要落进 GSUB 里。</span></li>
+  </ul>
+</div>
