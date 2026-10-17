@@ -389,12 +389,21 @@ STYLE = STYLE.replace(
 CARD_BG = {
     "q07.html": "SharingGroup/tutorials/assets/第04次作业第1题.png",
     "q11.html": "SharingGroup/tutorials/assets/原神logo.png",
+    # 用户新增的四张配图，按内容各归一篇
+    "f01.html": "SharingGroup/tutorials/assets/cmd.jpeg",
+    "e02.html": "SharingGroup/tutorials/assets/cmd_advanced.png",
+    "r01.html": "SharingGroup/tutorials/assets/EM_Square.webp",
+    "r03.html": "SharingGroup/tutorials/assets/HSV_Model.webp",
 }
 
 # 遮罩配色。没写的用「重点卡」的暖黄；写 "mono" 的用白（浅色）/ 黑（暗色）。
 # Q11 已经不是重点卡，底色是 --bg-soft，所以它要 mono。
 CARD_VEIL = {
+    # 非重点卡（底色是 --bg-soft）一律用 mono，遮罩才不会和底色打架。
+    # 重点卡（F01 / R03）底色是暖黄，留空走默认的暖黄遮罩。
     "q11.html": "mono",
+    "e02.html": "mono",
+    "r01.html": "mono",
 }
 
 
