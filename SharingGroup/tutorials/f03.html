@@ -23,17 +23,11 @@
   <a href="#s4">4 · 编译：各自翻译</a>
   <a href="#s5">5 · 链接：拼起来</a>
   <a href="#s6">6 · 头文件为什么存在</a>
-  <a href="#s7">7 · 三种错误怎么分</a>
-  <a href="#s7a" class="sub">7.1 看两条真实输出：错误与警告</a>
-  <div class="toc-g">二、库与实操</div>
-  <a href="#s8">8 · 库：静态库与动态库</a>
-  <a href="#s9">9 · 手把手：用 VS 2026 做静态库</a>
-  <a href="#s9a" class="sub">9.1 建解决方案与静态库工程</a>
-  <a href="#s9b" class="sub">9.2 写头文件与实现</a>
-  <a href="#s9c" class="sub">9.3 右键「生成」到底做了什么</a>
-  <a href="#s9d" class="sub">9.4 建控制台工程并使用它</a>
-  <a href="#s9e" class="sub">9.5 让它能找到库：三步配置</a>
-  <a href="#s9f" class="sub">9.6 运行与验证</a>
+  <a href="#s7">7 · 实际项目中的文件依赖</a>
+  <div class="toc-g">二、报错与库</div>
+  <a href="#s8">8 · 三种错误怎么分</a>
+  <a href="#s8a" class="sub">8.1 看两条真实输出：错误与警告</a>
+  <a href="#s9">9 · 库：静态库与动态库</a>
   <div class="toc-g">三、进阶与排错</div>
   <a href="#s10">10 · <code>inline</code> 到底解决什么</a>
   <a href="#s10a" class="sub">10.1 冲突从哪来</a>
@@ -45,7 +39,7 @@
 <main>
 <h1>编译与链接、头文件与库<span class="star" title="与本项目施行密切相关">*</span></h1>
 <p class="sub-title">UME 项目组内部教程 · F03（File） · 与本项目施行密切相关</p>
-<p><span class="lang sh">Shell</span> <span class="tag b">本讲：三步原理 + VS 2026 静态库实操</span>
+<p><span class="lang sh">Shell</span> <span class="tag b">本讲：三步原理 + 头文件与文件依赖</span>
 </p>
 
 <div class="card note">
@@ -53,10 +47,9 @@
   <p>点一次「生成」，背后其实有三步。
   <b>分成哪三步、每步会报什么错</b> —— 搞清楚这个，
   编译报错就不再是天书，而是「一眼能定位」的信息。
-  后半篇更会手把手带你做一遍<b>静态库</b>。</p>
-  <p>第 3~7 节用 gcc 讲清原理，第 9 节起改用 <b>Visual Studio 2026</b>
-  实操（含一份完整的手把手静态库教程）。文中的报错、产物路径与命令输出，
-  都是实际跑出来的。</p>
+  第 7 节还会用一个三文件的真实小工程，讲清<b>声明与定义分别写在哪里</b>。</p>
+  <p>第 3~6 节用 gcc 讲清原理，第 7 节起改用 <b>MSVC</b> 做对照。
+  文中的报错、产物路径与命令输出，都是实际跑出来的。</p>
 </div>
 
 
@@ -171,12 +164,12 @@ Windows 上的极简 GNU 工具集）就是这份移植。</p>
     <td>装 Visual Studio</td></tr>
 <tr><td><b>报错长相</b></td><td class="c"><code>error: expected ';' before ...</code></td>
     <td class="c"><code>error C2143: 语法错误</code></td></tr>
-<tr><td><b>本篇哪里用</b></td><td>第 3~7 节，讲原理</td><td>第 9 节起，实操静态库</td></tr>
+<tr><td><b>本篇哪里用</b></td><td>第 3~6 节，讲原理</td><td>第 7 节起，MSVC 对照</td></tr>
 </tbody>
 </table>
 
 <p>报错长相不同，但<b>说的是同一件事</b>。看报错时先分清是哪一家的措辞，
-再对号入座 —— 第 7 节会专门讲这件事。</p>
+再对号入座 —— 第 8 节会专门讲这件事。</p>
 
 <div class="card tip">
   <div class="card-t">那 小熊猫CPP 用的是哪一个？</div>
@@ -227,7 +220,7 @@ Windows 上的极简 GNU 工具集）就是这份移植。</p>
     <td>把常用的<b>警告</b>全打开。不加它，很多问题它一声不吭。</td></tr>
 <tr><td class="c"><code>-Werror=return-type</code></td>
     <td>「该返回却没返回」这件事，从<b>警告</b>升级成<b>错误</b>，
-    不让你带着它继续往下走。第 7 节讲错误与警告的分界。</td></tr>
+    不让你带着它继续往下走。第 8 节讲错误与警告的分界。</td></tr>
 <tr><td class="c"><code>-Werror=vla</code></td>
     <td>变长数组（vla）同样升级成错误。这一条正好呼应 M01 的结论：
     <b>方括号里的长度必须是确定的数，不可以是变量</b>。</td></tr>
@@ -402,7 +395,7 @@ collect2.exe: error: ld returned 1 exit status</pre></div>
 <tr><td>声明在 <code>namespace</code> <span class="cpp-badge">C++</span> 里，定义不在（或反过来）</td>
     <td>名字必须完全一致，包括命名空间</td></tr>
 <tr><td>忘了链接某个库</td>
-    <td>加 <code>-l</code> 参数，见第 8 节</td></tr>
+    <td>加 <code>-l</code> 参数，见第 9 节</td></tr>
 <tr><td>C++ 与 C 混编时没写 <code>extern "C"</code></td>
     <td>C++ 会对函数名做「名字修饰」，C 不会 —— 链接时名字对不上</td></tr>
 </tbody>
@@ -505,7 +498,210 @@ collect2.exe: error: ld returned 1 exit status</pre></div>
 <b>两种任选一种，但每个头文件都必须有。</b></p>
 
 <!-- ============================================================ -->
-<h2 id="s7"><span class="n">7</span>三种错误怎么分</h2>
+<!-- ============================================================ -->
+<h2 id="s7"><span class="n">7</span>实际项目中的文件依赖</h2>
+
+<p>前面的例子都是「一个 <code>.cpp</code> 打天下」。真实项目里一个类通常拆成
+<b>三个文件</b>：头文件一份、实现一份、用它的那个源文件一份。</p>
+
+<p>下面这个三文件的小工程是<b>实际编译链接跑过的</b>，后文的报错也都是它的真实输出。</p>
+
+<table>
+<thead><tr><th style="width:20%">文件</th><th style="width:36%">写什么</th><th>不写什么</th></tr></thead>
+<tbody>
+<tr><td class="c">widget.h</td>
+    <td>类的<b>定义</b>（成员函数与成员变量的<b>声明</b>）、
+    函数的<b>声明</b></td>
+    <td>函数体；变量的定义</td></tr>
+<tr><td class="c">widget.cpp</td>
+    <td>成员函数的<b>定义</b>（函数体）</td>
+    <td>再抄一遍类定义（已经 include 了）</td></tr>
+<tr><td class="c">main.cpp</td>
+    <td>只 <code>#include "widget.h"</code>，然后使用</td>
+    <td>任何实现细节</td></tr>
+</tbody>
+</table>
+
+<div class="card key">
+  <div class="card-t">一句话</div>
+  <p><b>头文件放「声明」，源文件放「定义」。</b></p>
+  <p>头文件会被<b>多处包含</b>，所以里面不能有「只能有一份」的东西
+  （函数体、变量的定义）；源文件只被<b>编译一次</b>，所以定义放这里。</p>
+</div>
+
+<h3>widget.h：类写在这里，函数只写声明</h3>
+
+<div class="code-wrap"><div class="bar"><span class="dot r"></span><span class="dot y"></span><span class="dot g"></span><span class="name">widget.h</span><span class="cp">复制</span></div><pre><span class="hl-p">#pragma once</span>
+<span class="hl-p">#include</span> <span class="hl-s">&lt;string&gt;</span>
+
+<span class="hl-k">class</span> Widget {
+<span class="hl-k">public</span>:
+    Widget();                                   <span class="hl-c">/* 声明：构造函数 */</span>
+    <span class="hl-k">void</span> <span class="hl-f">setTitle</span>(<span class="hl-k">const</span> std::string&amp; t);   <span class="hl-c">/* 声明：只有分号 */</span>
+    std::string <span class="hl-f">title</span>() <span class="hl-k">const</span>;
+
+<span class="hl-k">private</span>:
+    std::string title_;                         <span class="hl-c">/* 成员变量 */</span>
+};</pre></div>
+
+<p>注意三件事：</p>
+
+<ul>
+  <li><b>类本体（<code>class Widget { … };</code>）写在头文件里</b> ——
+  因为 main.cpp 也要用它，而 main.cpp 不该去抄一遍定义。</li>
+  <li>成员函数<b>只写声明</b>，末尾是分号，没有花括号。</li>
+  <li><code>#pragma once</code> 防止同一个 .cpp 里把这份内容包含两遍
+  （第 6 节讲过）。</li>
+</ul>
+
+<h3>widget.cpp：定义写在这里</h3>
+
+<div class="code-wrap"><div class="bar"><span class="dot r"></span><span class="dot y"></span><span class="dot g"></span><span class="name">widget.cpp</span><span class="cp">复制</span></div><pre><span class="hl-p">#include</span> <span class="hl-s">"widget.h"</span>
+
+Widget::Widget() : title_(<span class="hl-s">"untitled"</span>) {}
+
+<span class="hl-k">void</span> Widget::<span class="hl-f">setTitle</span>(<span class="hl-k">const</span> std::string&amp; t) {
+    title_ = t;                                 <span class="hl-c">/* 函数体在这里 */</span>
+}
+
+std::string Widget::<span class="hl-f">title</span>() <span class="hl-k">const</span> {
+    <span class="hl-k">return</span> title_;
+}</pre></div>
+
+<div class="card warn">
+  <div class="card-t">那个 <code>Widget::</code> 不能省</div>
+  <p>成员函数的定义必须带 <code>类名::</code>。漏了它，编译器会把它当成
+  <b>一个普通自由函数</b> —— 和类里那个成员函数毫无关系。
+  编译能过，<b>链接时才炸</b>（见后面的 LNK2019 实测）。</p>
+</div>
+
+<h3>main.cpp：只用，不实现</h3>
+
+<div class="code-wrap"><div class="bar"><span class="dot r"></span><span class="dot y"></span><span class="dot g"></span><span class="name">main.cpp</span><span class="cp">复制</span></div><pre><span class="hl-p">#include</span> <span class="hl-s">"widget.h"</span>
+<span class="hl-p">#include</span> <span class="hl-s">&lt;cstdio&gt;</span>
+
+<span class="hl-k">int</span> <span class="hl-f">main</span>() {
+    Widget w;
+    w.<span class="hl-f">setTitle</span>(<span class="hl-s">"UME"</span>);
+    std::printf(<span class="hl-s">"title = %s\n"</span>, w.<span class="hl-f">title</span>().c_str());
+    <span class="hl-k">return</span> <span class="hl-n">0</span>;
+}</pre></div>
+
+<p><b>main.cpp 里没有 <code>Widget</code> 的任何实现</b> ——
+它只从 widget.h 知道了「有个类叫 Widget，它有这些函数」，
+具体怎么做它根本不需要知道。这就是第 6 节说的「声明是承诺」。</p>
+
+<h3>编译与链接：两个 .cpp 各自编译，最后拼起来</h3>
+
+<div class="out-wrap"><div class="cap">实机执行（已核对）</div><pre>&gt; cl /nologo /EHsc /std:c++17 /c main.cpp widget.cpp
+main.cpp
+widget.cpp
+&gt; link /nologo main.obj widget.obj /out:app.exe
+&gt; app.exe
+title = UME</pre></div>
+
+<table>
+<thead><tr><th style="width:26%">产物</th><th style="width:20%">大小</th><th>是什么</th></tr></thead>
+<tbody>
+<tr><td class="c">main.obj</td><td class="c">48,516 B</td>
+    <td>main.cpp 单独编译的结果；里面只有对 <code>Widget::setTitle</code> 的<b>调用</b></td></tr>
+<tr><td class="c">widget.obj</td><td class="c">55,519 B</td>
+    <td>widget.cpp 单独编译的结果；<b>定义</b>在这里</td></tr>
+<tr><td class="c">app.exe</td><td class="c">161,280 B</td>
+    <td>链接器把两个 .obj 拼起来、并接上库之后的结果</td></tr>
+</tbody>
+</table>
+
+<div class="card key">
+  <div class="card-t">为什么两个文件「能对上」</div>
+  <p>两个 <code>.cpp</code> 都 <code>#include "widget.h"</code>，
+  于是<b>各自的 .obj 里都存着一份一模一样的「声明」</b>。</p>
+  <p>main.obj 说「我要调用 <code>Widget::setTitle(const string&amp;)</code>」，
+  widget.obj 说「我这里有 <code>Widget::setTitle(const string&amp;)</code> 的定义」。
+  链接器看到两边的<b>名字和签名完全一致</b>，就把调用接到定义上。</p>
+  <p><b>签名对不上就接不上</b> —— 这就是下一节 LNK2019 的来源。</p>
+</div>
+
+<div class="mnemonic">
+  <b><code>#include</code> 就是文本复制。</b>
+  每个 <code>.cpp</code> 被单独预处理、单独编译，头文件里的内容会被
+  <b>原样复制进每一个包含它的 .cpp</b>。所以：
+  头文件里写「只能有一份」的东西，包含它的文件有几个，就重复几份。
+</div>
+
+<h3>三条硬规矩</h3>
+
+<table>
+<thead><tr><th style="width:34%">规矩</th><th>违反了会怎样（实测）</th></tr></thead>
+<tbody>
+<tr><td><b>① 函数体、变量的定义，不写进头文件</b></td>
+    <td><code>LNK2005</code> 重复定义 + <code>LNK1169</code></td></tr>
+<tr><td><b>② 成员函数的定义要带 <code>Widget::</code></b></td>
+    <td><code>LNK2019</code> 找不到 <code>Widget::setTitle</code></td></tr>
+<tr><td><b>③ 头文件要防重复包含</b></td>
+    <td>同一个 .cpp 里包含两次 → 类被定义两次</td></tr>
+</tbody>
+</table>
+
+<h3>违反规矩 ①：在头文件里写定义</h3>
+
+<div class="code-wrap"><div class="bar"><span class="dot r"></span><span class="dot y"></span><span class="dot g"></span><span class="name">widget.h（错误示范）</span><span class="cp">复制</span></div><pre><span class="hl-p">#pragma once</span>
+
+<span class="hl-k">int</span> <span class="hl-f">twice</span>(<span class="hl-k">int</span> x);              <span class="hl-c">/* ✓ 声明：没问题 */</span>
+
+<span class="hl-k">int</span> <span class="hl-f">twice</span>(<span class="hl-k">int</span> x) { <span class="hl-k">return</span> x * <span class="hl-n">2</span>; }  <span class="hl-c">/* ✗ 定义：每个 .cpp 各来一份 */</span>
+
+<span class="hl-k">int</span> g_counter = <span class="hl-n">0</span>;                 <span class="hl-c">/* ✗ 变量的定义，同样各来一份 */</span></pre></div>
+
+<div class="out-wrap"><div class="cap">实机报错（已核对，main.cpp 与 widget.cpp 都包含它）</div><pre>widget.obj : error LNK2005: "int g_counter" (?g_counter@@3HA) 已经在 main.obj 中定义
+widget.obj : error LNK2005: "int __cdecl twice(int)" (?twice@@YAHH@Z) 已经在 main.obj 中定义
+x.exe : fatal error LNK1169: 找到一个或多个多重定义的符号</pre></div>
+
+<p>两个 .obj 各带一份定义，链接器不知道听谁的，直接报重复。
+<b>正确写法</b>：头文件里只留 <code>int twice(int);</code> 和
+<code>extern int g_counter;</code>，定义放进某个 <code>.cpp</code>。</p>
+
+<div class="card tip">
+  <div class="card-t">一个反直觉的例外：成员函数</div>
+  <p>如果把<b>成员函数</b>的定义写进头文件（<code>void Widget::setTitle(…)
+  { … }</code> 写在类外面、但仍在 .h 里），MSVC 实测<b>并不报错</b> ——
+  成员函数在目标文件里是 COMDAT，链接器会把重复的那些合并掉。</p>
+  <p>但<b>这只是运气好</b>：标准要求这类定义在全程序里只有一份，
+  多了就是 ODR 违规。换个编译器、或写法稍有不同，就可能变成 LNK2005。
+  <b>别依赖链接器替你收拾。</b></p>
+</div>
+
+<h3>违反规矩 ②：漏了 <code>Widget::</code></h3>
+
+<div class="out-wrap"><div class="cap">实机报错（已核对）</div><pre>main.obj : error LNK2019: 无法解析的外部符号
+    "public: void __cdecl Widget::setTitle(class std::basic_string&lt;…&gt; const &amp;)"
+    (?setTitle@Widget@@QEAAXAEBV?$basic_string@…@@@Z)，函数 main 中引用了该符号
+x.exe : fatal error LNK1120: 1 个无法解析的外部命令</pre></div>
+
+<p>读法：<b>main 里调用了 <code>Widget::setTitle</code>，但全程序找不到它的定义</b>。
+原因就是你把它写成了自由函数 <code>setTitle</code> —— 名字里少了
+<code>Widget::</code>，和 main 要的那个根本不是同一个符号。</p>
+
+<div class="card note">
+  <div class="card-t">看报错的第一步：分清是编译错还是链接错</div>
+  <p><code>LNK</code> 开头的都在<b>链接阶段</b>，说明每个 <code>.cpp</code>
+  自己都编译过了，问题出在「拼起来」这一步。第 8 节有那张对照表。</p>
+</div>
+
+<div class="card key">
+  <div class="card-t">这一节要记住的</div>
+  <ol>
+    <li><b>类写头文件，成员函数体写 .cpp，调用者只 include 头文件。</b></li>
+    <li><b>头文件是「承诺」的集合，源文件是「兑现」。</b>
+    声明可以有很多份，定义只能有一份。</li>
+    <li><b>每个 .cpp 单独编译</b>；#include 只是把文本复制进去。
+    两个 .obj 靠「签名一致」在链接时对上。</li>
+    <li><b>链接错的典型长相</b>：<code>LNK2005</code>（定义多了）、
+    <code>LNK2019</code>（定义找不到）。</li>
+  </ol>
+</div>
+
+<h2 id="s8"><span class="n">8</span>三种错误怎么分</h2>
 
 <p>这一节是全篇最实用的部分。看报错信息里的关键字，就能判断问题在哪一步：</p>
 
@@ -538,7 +734,7 @@ collect2.exe: error: ld returned 1 exit status</pre></div>
 </div>
 
 
-<h3 id="s7a">7.1 看两条真实输出：错误与警告</h3>
+<h3 id="s8a">8.1 看两条真实输出：错误与警告</h3>
 
 <p>上面那张表是「怎么从关键字判断阶段」。再来看一个真实的例子 ——
 它把好几件事一次讲清了：</p>
@@ -630,7 +826,7 @@ collect2.exe: error: ld returned 1 exit status</pre></div>
 </div>
 
 <!-- ============================================================ -->
-<h2 id="s8" class="key-h key-h key-h key-h"><span class="key-mark" title="重点内容">★</span><span class="n">8</span>库：静态库与动态库</h2>
+<h2 id="s9" class="key-h key-h key-h key-h"><span class="key-mark" title="重点内容">★</span><span class="n">9</span>库：静态库与动态库</h2>
 
 <p>第 5 节说过：链接就是把多个 <code>.o</code> / <code>.obj</code> 拼起来。
 但如果有一堆功能<b>很多项目都要用</b>，总不能每次都把源码拷一遍。
@@ -678,428 +874,7 @@ collect2.exe: error: ld returned 1 exit status</pre></div>
   </tbody></table>
   <p style="margin-top:10px"><b>两个都要给对，缺一个都编不出来。</b>
   而且报错发生在<b>不同阶段</b>：少了头文件是编译错，少了 lib 是链接错 ——
-  正好用上第 7 节那张「三种错误怎么分」的表。</p>
-</div>
-
-<!-- ============================================================ -->
-<h2 id="s9"><span class="key-hint">纯选修，可跳过</span><span class="n">9</span>手把手：用 VS 2026 做静态库</h2>
-
-<div class="card note">
-  <div class="card-t">这一节做什么</div>
-  <p>从零做一遍：<b>建一个静态库工程 → 写代码 → 生成 .lib →
-  建一个控制台程序 → 链接这个库 → 跑起来</b>。</p>
-  <p>每一步都写清<b>点哪里、填什么、会看到什么</b>。</p>
-  <p>本节所有产物与报错，均在本机
-  <b>Visual Studio Community 2026</b>（18.10.3 · MSVC 14.51.36231）实际生成核对。</p>
-</div>
-
-<h3 id="s9a">9.1 建解决方案与静态库工程</h3>
-
-<h4>① 新建项目</h4>
-<p>打开 VS → <b>创建新项目</b>。在搜索框里输入 <code>静态库</code>，
-选这一项（注意平台要选 <b>C++</b>、<b>Windows</b>）：</p>
-
-<pre class="plain-pre">静态库 (C++ · Windows · 库)
-   项目名称: UmeMath
-   位置:     D:\Path\To\UME
-   ☑ 将解决方案和项目放在同一目录中   ← 不要勾，见下方说明</pre>
-
-<p>点「创建」。VS 会生成这样一个结构：</p>
-
-<pre class="tree">
-<span class="d">D:\Path\To\UME\</span>
-├─ <span class="f">UME.sln</span>                  <span class="c">← 解决方案</span>
-└─ <span class="d">UmeMath\</span>                  <span class="c">← 项目</span>
-    ├─ <span class="f">UmeMath.vcxproj</span>       <span class="c">← 项目文件（配置都在这）</span>
-    ├─ <span class="f">UmeMath.vcxproj.filters</span>  <span class="c">← 只影响 VS 里怎么分组显示</span>
-    ├─ <span class="f">pch.h</span> / <span class="f">pch.cpp</span>       <span class="c">← 预编译头（后面处理）</span>
-    └─ <span class="f">UmeMath.cpp</span>           <span class="c">← 待会儿删掉</span>
-</pre>
-
-<div class="card tip">
-  <div class="card-t">「将解决方案和项目放在同一目录中」为什么建议不勾</div>
-  <p>勾上之后 <code>.sln</code> 和 <code>.vcxproj</code> 混在同一层，
-  文件一多就乱。<b>不勾</b>的话 .sln 在外、每个项目一个子文件夹 ——
-  这正是第 9.5 节里 <code>$(SolutionDir)</code> 和 <code>$(ProjectDir)</code>
-  不一样的原因。</p>
-</div>
-
-<div class="card warn">
-  <div class="card-t">VS 2026 的工具集是 <code>v145</code></div>
-  <p>项目属性 → 常规 → <b>平台工具集</b>，VS 2026 默认是
-  <code>v145</code>（对应 MSVC 14.51）。</p>
-  <p>如果你打开的是老项目，可能写着 <code>v143</code>（VS 2022）——
-  这时会报 <code>MSB8020: 无法找到 v143 的生成工具</code>。
-  <b>解法</b>：右键解决方案 → <b>重定解决方案目标</b> → 选当前版本；
-  或把平台工具集改成 <code>v145</code>。</p>
-</div>
-
-<h4>② 删掉模板给的多余文件</h4>
-<p>在<b>解决方案资源管理器</b>里右键 <code>UmeMath.cpp</code> → <b>删除</b>。
-（删的是工程里的引用，磁盘上的文件也会一并删掉。）</p>
-
-<h3 id="s9b">9.2 写头文件与实现</h3>
-
-<p>右键项目 → <b>添加 → 新建项</b>，建两个文件：</p>
-
-<table>
-<thead><tr><th style="width:30%">文件名</th><th>类型</th><th>作用</th></tr></thead>
-<tbody>
-<tr><td class="c">ume_math.h</td><td>头文件 (.h)</td><td><b>声明</b>，给使用者看</td></tr>
-<tr><td class="c">ume_math.cpp</td><td>C++ 文件 (.cpp)</td><td><b>实现</b></td></tr>
-</tbody>
-</table>
-
-<div class="code-wrap"><div class="bar"><span class="dot r"></span><span class="dot y"></span><span class="dot g"></span><span class="name">ume_math.h —— 对外公开的头文件</span><span class="cpp-badge">C++</span><span class="cp">复制</span></div><pre><span class="hl-p">#pragma once</span>          <span class="hl-c">// 防止被重复包含（第 6 节讲过）</span>
-
-<span class="hl-c">// ① 只写声明：实现在 ume_math.cpp 里</span>
-<span class="hl-k">int</span>  <span class="hl-f">ume_add</span>(<span class="hl-k">int</span> a, <span class="hl-k">int</span> b);
-<span class="hl-k">int</span>  <span class="hl-f">ume_mul</span>(<span class="hl-k">int</span> a, <span class="hl-k">int</span> b);
-<span class="hl-k">int</span>  <span class="hl-f">ume_clamp</span>(<span class="hl-k">int</span> v, <span class="hl-k">int</span> lo, <span class="hl-k">int</span> hi);
-
-<span class="hl-c">// ② 写在头文件里的函数，必须加 inline（第 10 节详解）</span>
-<span class="hl-k">inline</span> <span class="hl-k">int</span> <span class="hl-f">ume_max</span>(<span class="hl-k">int</span> a, <span class="hl-k">int</span> b) {
-    <span class="hl-k">return</span> (a &gt; b) ? a : b;
-}
-
-<span class="hl-c">// ③ 头文件里的常量：C++17 起用 inline 变量，可以直接给值</span>
-<span class="hl-k">inline</span> <span class="hl-k">const</span> <span class="hl-k">int</span> kUmeVersion = <span class="hl-n">2026</span>;</pre></div>
-
-<div class="code-wrap"><div class="bar"><span class="dot r"></span><span class="dot y"></span><span class="dot g"></span><span class="name">ume_math.cpp —— 实现</span><span class="cp">复制</span></div><pre><span class="hl-p">#include</span> <span class="hl-s">"ume_math.h"</span>
-
-<span class="hl-k">int</span> <span class="hl-f">ume_add</span>(<span class="hl-k">int</span> a, <span class="hl-k">int</span> b) {
-    <span class="hl-k">return</span> a + b;
-}
-
-<span class="hl-k">int</span> <span class="hl-f">ume_mul</span>(<span class="hl-k">int</span> a, <span class="hl-k">int</span> b) {
-    <span class="hl-k">return</span> a * b;
-}
-
-<span class="hl-k">int</span> <span class="hl-f">ume_clamp</span>(<span class="hl-k">int</span> v, <span class="hl-k">int</span> lo, <span class="hl-k">int</span> hi) {
-    <span class="hl-k">if</span> (v &lt; lo) <span class="hl-k">return</span> lo;
-    <span class="hl-k">if</span> (v &gt; hi) <span class="hl-k">return</span> hi;
-    <span class="hl-k">return</span> v;
-}</pre></div>
-
-<div class="card warn">
-  <div class="card-t">遇到「预编译头」报错怎么办</div>
-  <p>VS 的 C++ 模板默认<b>使用预编译头</b>（<code>pch.h</code>）。
-  如果新加的 <code>.cpp</code> 第一行不是 <code>#include "pch.h"</code>，
-  会报 <code>C1010: 无法打开包括文件: "pch.h"</code>。</p>
-  <p><b>两种解法，选一种：</b></p>
-  <ul>
-    <li>在该 <code>.cpp</code> 第一行加 <code>#include "pch.h"</code>（最省事）</li>
-    <li>或者：右键该文件 → 属性 → C/C++ → 预编译头 →
-      <b>预编译头</b>改为「<b>不使用预编译头</b>」</li>
-  </ul>
-  <p>本例因为文件少，用第二种更干净；文件多、编译慢时才值得用预编译头。</p>
-</div>
-
-<div class="card warn">
-  <div class="card-t">中文注释导致莫名其妙的语法错误 —— 实测过的真坑</div>
-  <p>本机（中文 Windows）实测：源文件若存成
-  <b>UTF-8 无 BOM</b>，MSVC 会按 GBK（代码页 936）去读，
-  中文注释的字节被误解释后<b>可能「吃掉」后面的代码</b>，报出完全不相干的错：</p>
-  <div class="out-wrap"><div class="cap">实测报错（注释里有中文时）</div><pre>warning C4819: 该文件包含不能在当前代码页(936)中表示的字符
-ume_math.h(10,5): error C2059: 语法错误:"return"</pre></div>
-  <p style="margin-top:10px">第 10 行明明是个正常的 <code>return</code>，
-  却报语法错误 —— 因为上一行注释的字节把它「连」进去了。</p>
-  <p><b>解法（任选一种，推荐第一种）</b>：</p>
-  <ol>
-    <li><b>把源文件另存为「UTF-8 带 BOM」</b> ——
-      VS 的「文件 → 高级保存选项」里可以选编码，选
-      <code>UTF-8 带签名</code>。MSVC 看到 BOM 就知道是 UTF-8。</li>
-    <li>或在项目属性 → C/C++ → 命令行 → 其他选项中加
-      <code>/utf-8</code>，告诉编译器「源文件就是 UTF-8」。</li>
-    <li>或干脆<b>源文件里不写中文注释</b>。</li>
-  </ol>
-</div>
-
-<h3 id="s9c">9.3 右键「生成」到底做了什么</h3>
-
-<p>这是你问的那个操作。在<b>解决方案资源管理器</b>里，
-<b>右键点项目名 <code>UmeMath</code></b>，菜单里能看到这一组：</p>
-
-<pre class="plain-pre">右键 UmeMath 项目
- ├─ 生成            (Build)          ← 只编「改过的」，快
- ├─ 重新生成        (Rebuild)        ← 先清理再全编，慢但干净
- ├─ 清理            (Clean)          ← 只删中间产物与输出
- ├─ 仅项目 ▸
- │   ├─ 仅生成 UmeMath
- │   └─ 仅重新生成 UmeMath
- ├─ 属性            (Properties)     ← 所有配置都在这里
- └─ 设为启动项目
-</pre>
-
-<div class="card key">
-  <div class="card-t">三个命令的区别（最容易搞混）</div>
-  <table style="margin:8px 0 0">
-  <thead><tr><th style="width:22%">命令</th><th>它做什么</th><th>什么时候用</th></tr></thead>
-  <tbody>
-  <tr><td class="c">生成 Build</td>
-      <td>对比时间戳，<b>只重新编译改动过的文件</b>，然后链接</td>
-      <td>日常最常用</td></tr>
-  <tr><td class="c">重新生成 Rebuild</td>
-      <td><b>先 Clean 再 Build</b> —— 全部重编一遍</td>
-      <td>改了<b>头文件搜索路径</b>、库配置，
-        或遇到「明明改对了却还报旧错」时</td></tr>
-  <tr><td class="c">清理 Clean</td>
-      <td>删掉 <code>.obj</code> / <code>.lib</code> / <code>.exe</code> 等产物</td>
-      <td>想把目录清干净、或要打包源码时</td></tr>
-  </tbody></table>
-</div>
-
-<div class="card tip">
-  <div class="card-t">为什么改配置之后要用「重新生成」</div>
-  <p>「生成」判断「要不要重编」靠的是<b>时间戳</b>：
-  源文件比 <code>.obj</code> 新才重编。</p>
-  <p>但你改了<b>附加包含目录、附加依赖项</b>这类设置时，
-  源文件一个字节都没动 —— 于是「生成」认为<b>无事可做</b>，
-  旧产物照旧，问题看起来「没解决」。</p>
-  <p><b>所以在第 9.5 节改完库配置后，请用「重新生成」。</b></p>
-</div>
-
-<h4>点「生成」之后，看哪里</h4>
-<table>
-<thead><tr><th style="width:26%">位置</th><th>看什么</th></tr></thead>
-<tbody>
-<tr><td><b>输出窗口</b></td>
-    <td>完整过程。最后一行会写
-      <code>UmeMath.vcxproj -&gt; D:\...\x64\Debug\UmeMath.lib</code> ——
-      <b>这一行就是成功标志，箭头后面是产物路径</b></td></tr>
-<tr><td><b>错误列表窗口</b></td>
-    <td>有错时在这里，双击一行能跳到出错代码</td></tr>
-<tr><td><b>底部状态栏</b></td>
-    <td>「生成: 1 成功，0 失败」</td></tr>
-</tbody>
-</table>
-
-<div class="out-wrap"><div class="cap">本机实测：生成静态库时的输出窗口（关键行）</div><pre>1&gt;------ 已启动生成: 项目: UmeMath, 配置: Debug x64 ------
-1&gt;ume_math.cpp
-1&gt;UmeMath.vcxproj -&gt; D:\Path\To\UME\x64\Debug\UmeMath.lib
-========== 生成: 成功 1 个，失败 0 个，最新 0 个，跳过 0 个 ==========</pre></div>
-
-<p>注意 <code>-&gt;</code> 后面那个路径：它在
-<code>&lt;解决方案目录&gt;\x64\Debug\</code> 下 ——
-这正是第 9.5 节要用到的位置，也是 F02 第 8 节讲的
-<code>$(SolutionDir)$(Platform)\$(Configuration)\</code> 展开结果。</p>
-
-<div class="card key">
-  <div class="card-t">静态库的产物是什么</div>
-  <p>本机实测，同一个工程把类型设成静态库时：</p>
-  <div class="out-wrap" style="margin-top:10px"><div class="cap">实测</div><pre>ConfigurationType = [StaticLibrary]
-TargetExt         = [.lib]
-TargetPath        = [D:\Path\To\UME\x64\Debug\UmeMath.lib]</pre></div>
-  <p style="margin-top:10px">对应到 VS 属性页就是
-  <b>配置属性 → 常规 → 配置类型</b>：
-  选「静态库 (.lib)」就是它；选「应用程序 (.exe)」就是控制台程序。
-  <b>只差这一个下拉框。</b></p>
-</div>
-
-<h3 id="s9d">9.4 建控制台工程并使用它</h3>
-
-<h4>① 加一个新项目到同一个解决方案</h4>
-<p><b>右键解决方案</b>（最上面那个 <code>UME</code>）→
-<b>添加 → 新建项目</b> → 选「<b>控制台应用 (C++)</b>」→
-项目名填 <code>App</code> → 创建。</p>
-
-<div class="card warn">
-  <div class="card-t">一定要从「右键解决方案」加，不要在文件夹里另建</div>
-  <p>从<b>解决方案</b>右键加，新项目才会进同一个 <code>.sln</code>，
-  才能和库工程建立引用关系。分开建两个解决方案的话，
-  后面「添加引用」根本找不到对方。</p>
-</div>
-
-<p>现在的结构：</p>
-<pre class="tree">
-<span class="d">D:\Path\To\UME\</span>
-├─ <span class="f">UME.sln</span>
-├─ <span class="d">UmeMath\</span>              <span class="c">← 静态库</span>
-│   ├─ <span class="f">ume_math.h</span>
-│   └─ <span class="f">ume_math.cpp</span>
-└─ <span class="d">App\</span>                   <span class="c">← 控制台程序</span>
-    └─ <span class="f">App.cpp</span>
-</pre>
-
-<h4>② 写 App 的代码</h4>
-<p>把 <code>App.cpp</code> 换成：</p>
-
-<div class="code-wrap"><div class="bar"><span class="dot r"></span><span class="dot y"></span><span class="dot g"></span><span class="name">App.cpp</span><span class="cpp-badge">C++</span><span class="cp">复制</span></div><pre><span class="hl-p">#include</span> <span class="hl-s">&lt;stdio.h&gt;</span>          <span class="hl-c">// 用 C 的输入输出，和前面几讲一致</span>
-<span class="hl-p">#include</span> <span class="hl-s">"ume_math.h"</span>       <span class="hl-c">// 只用引号：这是「自己写的头文件」</span>
-
-<span class="hl-k">int</span> <span class="hl-f">main</span>(<span class="hl-k">void</span>) {
-    <span class="hl-f">printf</span>(<span class="hl-s">"ume_add(2, 3)      = %d\n"</span>, <span class="hl-f">ume_add</span>(<span class="hl-n">2</span>, <span class="hl-n">3</span>));
-    <span class="hl-f">printf</span>(<span class="hl-s">"ume_mul(4, 5)      = %d\n"</span>, <span class="hl-f">ume_mul</span>(<span class="hl-n">4</span>, <span class="hl-n">5</span>));
-    <span class="hl-f">printf</span>(<span class="hl-s">"ume_clamp(99,0,10) = %d\n"</span>, <span class="hl-f">ume_clamp</span>(<span class="hl-n">99</span>, <span class="hl-n">0</span>, <span class="hl-n">10</span>));
-    <span class="hl-f">printf</span>(<span class="hl-s">"ume_max(7, 9)      = %d\n"</span>, <span class="hl-f">ume_max</span>(<span class="hl-n">7</span>, <span class="hl-n">9</span>));  <span class="hl-c">// 这个是 inline 的</span>
-    <span class="hl-f">printf</span>(<span class="hl-s">"kUmeVersion        = %d\n"</span>, kUmeVersion);
-    <span class="hl-k">return</span> <span class="hl-n">0</span>;
-}</pre></div>
-
-<p>现在<b>先直接点「生成」试试</b> —— 它会失败，而且会失败两次。
-<b>这两次报错正好说明「头文件」和「库」是两件事。</b></p>
-
-<div class="out-wrap"><div class="cap">第一次失败：找不到头文件（编译期）</div><pre>App.cpp(2,10): fatal error C1083: 无法打开包括文件: "ume_math.h":
-No such file or directory</pre></div>
-
-<p>因为 <code>ume_math.h</code> 在 <b>UmeMath 项目</b>的目录里，
-而编译器只在 <code>App</code> 自己的目录和系统目录里找 —— <b>看 8.5 第 ① 步</b>。</p>
-
-<div class="out-wrap"><div class="cap">第二次失败：找不到库（链接期）</div><pre>main.obj : error LNK2019: 无法解析的外部符号 "int __cdecl ume_add(int,int)"
-           (?ume_add@@YAHHH@Z)，函数 main 中引用了该符号
-fatal error LNK1120: 2 个无法解析的外部命令</pre></div>
-
-<p>头文件能找到了（编译通过），但<b>函数的实现在 .lib 里，
-链接器还不知道去哪拿</b> —— <b>看 8.5 第 ②③ 步</b>。</p>
-
-<div class="card key">
-  <div class="card-t">记住这两句报错，一眼能分辨</div>
-  <table style="margin:8px 0 0">
-  <thead><tr><th style="width:34%">报错</th><th>阶段</th><th>缺什么</th></tr></thead>
-  <tbody>
-  <tr><td class="c">C1083 无法打开包括文件</td>
-      <td><b>编译</b></td><td><b>头文件路径</b>（附加包含目录）</td></tr>
-  <tr><td class="c">LNK2019 无法解析的外部符号</td>
-      <td><b>链接</b></td><td><b>库</b>（附加依赖项 + 附加库目录）</td></tr>
-  </tbody></table>
-</div>
-
-<h3 id="s9e">9.5 让它能找到库：三步配置</h3>
-
-<p>三步都在 <b>App 项目</b>的属性里（<b>右键 App → 属性</b>）。
-注意属性页顶部有 <b>配置</b> 和 <b>平台</b> 两个下拉框，
-建议都选<b>「所有配置」+「所有平台」</b>，这样改一次四个组合都生效。</p>
-
-<h4>① 附加包含目录 —— 解决 C1083</h4>
-<pre class="plain-pre">配置属性 → C/C++ → 常规 → 附加包含目录
-
-  填入:  $(SolutionDir)UmeMath</pre>
-
-<p>点右侧 <code>...</code> 会弹出一个小窗口，<b>一行一个目录</b>，
-不用自己打分号。填完点确定，VS 会立刻在下方显示展开后的路径。</p>
-
-<p>为什么是 <code>$(SolutionDir)UmeMath</code>：
-<code>$(SolutionDir)</code> 是 <code>.sln</code> 所在目录（F02 第 8 节讲过），
-<code>ume_math.h</code> 就在它下面的 <code>UmeMath\</code> 里。</p>
-
-<h4>② 附加依赖项 —— 告诉链接器「要用哪个库」</h4>
-<pre class="plain-pre">配置属性 → 链接器 → 输入 → 附加依赖项
-
-  填入:  UmeMath.lib</pre>
-
-<div class="card warn">
-  <div class="card-t">别删掉原来那些 <code>%(...)</code></div>
-  <p>这个字段本来就有内容（<code>kernel32.lib</code> 等一批系统库）。
-  手动编辑时<b>只往前面加</b>，用分号隔开，保留原有的
-  <code>%(AdditionalDependencies)</code>。删掉了会报一堆系统库找不到。</p>
-  <p>所以正确内容是：<code>UmeMath.lib;%(AdditionalDependencies)</code></p>
-</div>
-
-<h4>③ 附加库目录 —— 告诉链接器「库在哪」</h4>
-<pre class="plain-pre">配置属性 → 链接器 → 常规 → 附加库目录
-
-  填入:  $(SolutionDir)$(Platform)\$(Configuration)</pre>
-
-<p>它就是 8.3 里那个 <code>-&gt;</code> 后面的目录 ——
-<code>.lib</code> 实际待的地方。</p>
-
-<div class="card key">
-  <div class="card-t">② 和 ③ 分不清？</div>
-  <p><b>② 是「叫什么名字」，③ 是「在哪个文件夹」。</b></p>
-  <p>少了 ③ 会报 <code>LNK1104: 无法打开文件"UmeMath.lib"</code> ——
-  意思是「名字我知道了，但找不到这个文件」。
-  本机实测确实如此：只配 ② 不配 ③，链接直接失败。</p>
-  <div class="out-wrap" style="margin-top:10px"><div class="cap">实测（只配了附加依赖项）</div><pre>LINK : fatal error LNK1104: 无法打开文件"UmeMath.lib"</pre></div>
-</div>
-
-<h4>④ 还有一件更省事的事：添加引用</h4>
-<p>上面 ②③ 是「手动告诉链接器」。
-VS 还提供了一条<b>自动化</b>的路：</p>
-
-<pre class="plain-pre">右键 App 项目 → 添加 → 引用...  →  勾选 UmeMath  →  确定</pre>
-
-<p>它的作用是两件：</p>
-<table>
-<thead><tr><th style="width:34%">作用</th><th>说明</th></tr></thead>
-<tbody>
-<tr><td><b>保证生成顺序</b></td>
-    <td>生成 App 之前<b>先自动生成 UmeMath</b> ——
-      不然第一次生成时 .lib 还不存在</td></tr>
-<tr><td><b>把库登记为依赖</b></td>
-    <td>把 <code>UmeMath.lib</code> 加进链接输入</td></tr>
-</tbody>
-</table>
-
-<div class="card tip">
-  <div class="card-t">两条路都留着，不冲突</div>
-  <p><b>推荐做法：加引用 + 配 ①（附加包含目录）+ 配 ③（附加库目录）。</b></p>
-  <p>理由：<b>「添加引用」管不住「lib 在哪」</b>。
-  本项目里库的输出目录是 <code>$(SolutionDir)$(Platform)\$(Configuration)</code>，
-  和 App 自己的输出目录虽然相同，但这是<b>配置的结果、不是保证</b>；
-  一旦有人改了库的输出目录，App 就又找不到 .lib 了。
-  <b>把 ③ 显式写上，才不依赖巧合。</b></p>
-  <p>而 ① 是必须的 —— 引用关系<b>不会</b>自动把对方的目录加进头文件搜索路径。</p>
-  <p>（本机实测：加了引用、配了 ①②、<b>没</b>配 ③ 时，
-  仍然报 <code>LNK1104</code>。补上 ③ 之后一次通过。）</p>
-</div>
-
-<h3 id="s9f">9.6 运行与验证</h3>
-
-<p>改完配置后<b>务必「重新生成」</b>（8.3 讲过原因）。
-成功时输出窗口末尾是这样：</p>
-
-<div class="out-wrap"><div class="cap">本机实测：整个解决方案生成成功</div><pre>UmeMath.vcxproj -&gt; D:\Path\To\UME\x64\Debug\UmeMath.lib
-App.vcxproj     -&gt; D:\Path\To\UME\x64\Debug\App.exe
-========== 生成: 成功 2 个，失败 0 个 ==========</pre></div>
-
-<p>产物目录里同时有这两样：</p>
-<table>
-<thead><tr><th style="width:34%">文件</th><th>是什么</th></tr></thead>
-<tbody>
-<tr><td class="c">UmeMath.lib</td><td><b>静态库</b>（库的机器码）</td></tr>
-<tr><td class="c">UmeMath.pdb</td><td>库的调试信息</td></tr>
-<tr><td class="c">UmeMath.idb</td><td>供 VS 智能提示用的信息</td></tr>
-<tr><td class="c">App.exe</td><td><b>可执行程序</b></td></tr>
-<tr><td class="c">App.pdb</td><td>程序的调试信息</td></tr>
-</tbody>
-</table>
-
-<p>把 <code>App</code> 设为启动项目（右键 App → <b>设为启动项目</b>），
-按 <b>Ctrl + F5</b>（开始执行不调试）运行：</p>
-
-<div class="out-wrap"><div class="cap">本机实测：运行结果</div><pre>ume_add(2, 3)      = 5
-ume_mul(4, 5)      = 20
-ume_clamp(99,0,10) = 10
-ume_max(7, 9)      = 9
-kUmeVersion        = 2026</pre></div>
-
-<p>五类东西都验证到了：<b>库里的普通函数</b>（add/mul/clamp）、
-<b>头文件里的 inline 函数</b>（max）、<b>头文件里的 inline 变量</b>（kUmeVersion）。</p>
-
-<div class="card tip">
-  <div class="card-t">Ctrl+F5 与 F5 的区别</div>
-  <p><b>F5</b> 是「调试运行」——会挂调试器，崩溃能断下来看。
-  <b>Ctrl+F5</b> 是「开始执行不调试」——跑完停住显示「按任意键继续」。</p>
-  <p>像这种只是打印结果的小程序，用 <b>Ctrl+F5</b> 更方便，
-  因为窗口不会一闪而过。</p>
-</div>
-
-<div class="card key">
-  <div class="card-t">整节回顾：一共动了几个地方</div>
-  <table style="margin:8px 0 0">
-  <thead><tr><th style="width:8%">#</th><th style="width:34%">在哪</th><th>配什么</th></tr></thead>
-  <tbody>
-  <tr><td>1</td><td>UmeMath 项目 · 常规 · 配置类型</td>
-      <td class="c">静态库 (.lib)</td></tr>
-  <tr><td>2</td><td>App 项目 · 添加 → 引用</td><td class="c">勾选 UmeMath</td></tr>
-  <tr><td>3</td><td>App · C/C++ · 附加包含目录</td>
-      <td class="c">$(SolutionDir)UmeMath</td></tr>
-  <tr><td>4</td><td>App · 链接器 · 附加依赖项</td>
-      <td class="c">UmeMath.lib</td></tr>
-  <tr><td>5</td><td>App · 链接器 · 附加库目录</td>
-      <td class="c">$(SolutionDir)$(Platform)\$(Configuration)</td></tr>
-  </tbody></table>
-  <p style="margin-top:10px"><b>就这五处。</b>其余全是「右键 → 生成 / 重新生成」。</p>
+  正好用上第 8 节那张「三种错误怎么分」的表。</p>
 </div>
 
 <!-- ============================================================ -->
@@ -1142,21 +917,18 @@ kUmeVersion        = 2026</pre></div>
 <p>我把 <code>inline</code> 去掉、并且让<b>两个 <code>.cpp</code> 都包含这个头文件</b>，
 重新生成，得到的是这个（本机实测原文）：</p>
 
-<div class="out-wrap"><div class="cap">实测报错（去掉 inline 之后）</div><pre>UmeMath.lib(ume_math.obj) : error LNK2005:
-    "int __cdecl ume_max(int,int)" (?ume_max@@YAHHH@Z) 已经在 main.obj 中定义
-
-D:\...\x64\Debug\App.exe : fatal error LNK1169:
-    找到一个或多个多重定义的符号</pre></div>
+<div class="out-wrap"><div class="cap">实测报错（去掉 inline 之后）</div><pre>extras.obj : error LNK2005: "int __cdecl ume_max(int,int)" (?ume_max@@YAHHH@Z) 已经在 main.obj 中定义
+x.exe : fatal error LNK1169: 找到一个或多个多重定义的符号</pre></div>
 
 <p>把这句话拆开读，每个部分都有信息：</p>
 
 <table>
 <thead><tr><th style="width:32%">片段</th><th>意思</th></tr></thead>
 <tbody>
-<tr><td class="c">UmeMath.lib(ume_math.obj)</td>
-    <td>冲突的<b>一方</b>来自库里的 <code>ume_math.obj</code></td></tr>
+<tr><td class="c">extras.obj</td>
+    <td>冲突的<b>一方</b>：<code>extras.cpp</code> 编出来的目标文件</td></tr>
 <tr><td class="c">已经在 main.obj 中定义</td>
-    <td>冲突的<b>另一方</b>来自 App 的 <code>main.obj</code></td></tr>
+    <td>冲突的<b>另一方</b>：<code>main.cpp</code> 编出来的目标文件</td></tr>
 <tr><td class="c">"int __cdecl ume_max(int,int)"</td>
     <td>人类能读的函数签名</td></tr>
 <tr><td class="c">?ume_max@@YAHHH@Z</td>
@@ -1363,11 +1135,10 @@ UmeMath.lib;%(AdditionalDependencies)</pre></div>
 <!-- /NAV-AUTO -->
 <footer>
 UME 项目组内部教程 · F03（File）《编译与链接、头文件与库》<br>
-第 1~4 节的报错信息使用 gcc 13.1.0 实际编译产生；
-第 7~10 节的静态库流程、产物路径、<code>LNK2005</code> /
-<code>LNK1104</code> / <code>LNK2019</code> / <code>C1083</code>
-与编码报错，均在 <b>Visual Studio Community 2026</b>（18.10.3 ·
-MSVC 14.51.36231 · MSBuild v145）实际生成核对。
+第 1~6 节的报错信息使用 gcc 13.1.0 实际编译产生；
+第 7 节的三文件工程与其 <code>LNK2005</code> / <code>LNK2019</code> 报错、
+第 8 节的编译报错、第 10 节的 <code>inline</code> 冲突，
+均在 <b>MSVC 14.51</b>（Visual Studio Community 2026 · 18.10.3）实际编译链接核对。
 代码示例以 <b>Consolas</b> 等宽字体呈现。
 </footer>
 
