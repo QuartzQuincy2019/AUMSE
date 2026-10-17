@@ -48,7 +48,7 @@
   </ul>
   <p>答案都在同一件事上：<b>C 的字符串没有「字符串类型」，
   它就是「一串字符 + 一个结束标记」。</b>
-  文中所有「运行结果」均使用 gcc 13.1.0（<code>-std=c99</code>）实际编译运行核对。（该版本与 MinGW-w64 x86_64-posix-seh 一并核对；验证程序见 <code>tools/_c_check/</code>）</p>
+  文中所有「运行结果」均使用 gcc 13.1.0（<code>-std=c99</code>）构建，实际运行核对。（该版本与 MinGW-w64 x86_64-posix-seh 一并核对；验证程序见 <code>tools/_c_check/</code>）</p>
 </div>
 
 <!-- ============================================================ -->
@@ -121,7 +121,7 @@ a[6] = 0</pre></div>
 <div class="card tip">
   <div class="card-t">为什么要有结束标记</div>
   <p>因为光看一块内存，<b>没法知道字符串到哪里结束</b>。</p>
-  <p>数组本身并不知道「我装了 6 个字符」—— 那个 7 是编译时写在程序里的。
+  <p>数组本身并不知道「我装了 6 个字符」—— 那个 7 是写代码时就定在程序里的。
   而一个函数收到 <code>char *s</code> 时，它只知道起点，
   必须<b>一个字符一个字符往后走，直到遇到 0 才知道停了</b>。</p>
   <p>这也是 <code>printf("%s", s)</code> 的工作原理：
@@ -140,7 +140,7 @@ a[6] = 0</pre></div>
     <div class="h">sizeof(a)</div>
     <div class="note">
       <b>问：这块东西占多少字节？</b><br>
-      编译时就算好了，运行时不做任何事。<br>
+      不用等到运行，写代码时就定好了。<br>
       <b>只在「数组名」上有效</b> —— 用在指针上只会得到指针自己的大小。<br>
       包含 <code>'\0'</code>。
     </div>
@@ -216,7 +216,7 @@ s2 = Mongol （不要改 s2[0]，那是只读区）</pre></div>
       明确表示「不会改」。</li>
   </ul>
   <p>不确定时，<b><code>const char *</code> 最安全</b> ——
-  写成这样，编译器会替你拦住所有修改尝试。</p>
+  写成这样，所有修改尝试都会被拦住。</p>
 </div>
 
 <!-- ============================================================ -->
@@ -429,7 +429,7 @@ strcmp(abc,ab)  = 1</pre></div>
 <span class="hl-c">/* ✅ 多给一格 */</span>
 <span class="hl-k">char</span> s[<span class="hl-n">7</span>] = <span class="hl-s">"Mongol"</span>;      <span class="hl-c">/* 6 个字符 + 1 个 '\0' */</span>
 
-<span class="hl-c">/* ✅ 或者干脆不写长度，让编译器数 */</span>
+<span class="hl-c">/* ✅ 或者干脆不写长度，由初值决定 */</span>
 <span class="hl-k">char</span> s[] = <span class="hl-s">"Mongol"</span>;       <span class="hl-c">/* 自动是 7 */</span></pre></div>
 <p>动态分配时同理：<code>malloc(sizeof(char) * (len + 1))</code>，
 那个 <code>+ 1</code> 就是给 <code>'\0'</code> 的。</p>
@@ -530,7 +530,7 @@ small[<span class="hl-k">sizeof</span>(small) - <span class="hl-n">1</span>] = <
 <footer>
 UME 项目组内部教程 · M08《C 风格字符串》<br>
 代码示例均以 <b>Consolas</b> 等宽字体呈现；文中所有「运行结果」
-均使用 gcc 13.1.0（<code>-std=c99</code>）实际编译运行核对。
+均使用 gcc 13.1.0（<code>-std=c99</code>）构建，实际运行核对。
 </footer>
 </main>
 </div>

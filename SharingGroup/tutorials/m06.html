@@ -24,7 +24,7 @@
   <a href="#s5">5 · 私有与共有成员</a>
   <a href="#s5a" class="sub">5.1 为什么要藏起来</a>
   <a href="#s5b" class="sub">5.2 private / public 怎么写</a>
-  <a href="#s5c" class="sub">5.3 亲眼看看编译错误</a>
+  <a href="#s5c" class="sub">5.3 亲眼看看报错</a>
   <a href="#s6">6 · struct 与 class 的唯一区别</a>
   <a href="#s7">7 · 对象的生与死</a>
   <a href="#s8">8 · 常见错误</a>
@@ -45,7 +45,7 @@
   还有「挨打」「加血」「攻击」这些行为。</p>
   <p>这一讲就是把这类东西<b>打包成一个整体</b>。
   语法在 C 和 C++ 里都叫 <code>struct</code>，C++ 还多了一个 <code>class</code>。</p>
-  <p>文中所有「运行结果」与「编译错误」均均使用 g++ 13.1.0（<code>-std=c++17</code>）实际编译运行核对。</p>
+  <p>文中所有「运行结果」与「报错信息」均使用 g++ 13.1.0（<code>-std=c++17</code>）构建，实际运行与实机报错核对。</p>
 </div>
 
 <!-- ============================================================ -->
@@ -70,7 +70,7 @@
   <div class="s"><div class="t">加属性很烦</div>
     <div class="d">想加「攻击力」，就得再加一个数组，并且所有相关代码都要改</div></div>
   <div class="s"><div class="t">容易错位</div>
-    <div class="d"><code>names[2]</code> 配 <code>hps[1]</code> 编译器不会拦你，但逻辑已经错了</div></div>
+    <div class="d"><code>names[2]</code> 配 <code>hps[1]</code> 没有任何东西会拦你，但逻辑已经错了</div></div>
   <div class="s"><div class="t">传参更烦</div>
     <div class="d">想把「一个玩家」传给函数，得传三个参数，再加属性就再加参数</div></div>
 </div>
@@ -80,7 +80,7 @@
   <p><b>「名字、血量、魔法」本来是同一个东西的三个部分，
   却被拆成了三个互不相干的数组。</b></p>
   <p>它们之间只有「下标相同」这一条<b>口头约定</b>，
-  编译器完全不知道它们有关系，自然也没法替你检查。</p>
+  程序完全不知道它们有关系，自然也没法替你检查。</p>
 </div>
 
 <!-- ============================================================ -->
@@ -220,7 +220,7 @@ Knight hp=150 mp=10</pre></div>
   <tr><td>第 7 节「对象的生与死」</td><td><b>C</b> —— 用 <code>xxx_init</code> / <code>xxx_destroy</code> 约定代替构造函数</td></tr>
   <tr><td>第 8 节常见错误</td><td>两种都有，<b>看徽标</b></td></tr>
   </tbody></table>
-  <p><b>编译方式也不同</b>：带徽标的用 <code>g++</code>（或 Visual Studio 的
+  <p><b>所用的语言也不同</b>：带徽标的用 <code>g++</code>（或 Visual Studio 的
   <code>.cpp</code>），没徽标的用 <code>gcc</code>（或 <code>.c</code>）。</p>
 </div>
 
@@ -270,7 +270,7 @@ Archer hp=70 mp=30
 
 <ul>
   <li><b>成员函数里可以直接写 <code>hp</code></b>，不用写 <code>p.hp</code>。
-    因为它「知道」自己是哪个对象在调用 —— 编译器替你传递了这个信息。</li>
+    因为它「知道」自己是哪个对象在调用 —— 这件事由程序自动完成。</li>
   <li><b>好处是「数据和操作放在一起」。</b>
     「挨打」这件事该改哪些数据，就在定义 <code>Player</code> 的地方一眼看全，
     不用在几千行代码里到处找。</li>
@@ -405,10 +405,10 @@ Archer HP 100/100</pre></div>
   你可能会忘了初始化就用。构造函数保证<b>对象一造出来就是合法状态</b>。</p>
 </div>
 
-<h3 id="s5c">5.3 亲眼看看编译错误</h3>
+<h3 id="s5c">5.3 亲眼看看报错</h3>
 
-<p>如果你从外面直接改私有成员，<b>编译器根本不会让它编过</b>。
-均使用 g++ 13.1.0（<code>-std=c++17</code>）实际编译运行核对（编译器指纹：<code>GCC 13.1.0</code> · MinGW-w64 x86_64-posix-seh；验证程序与产物见 <code>tools/_c_check/</code>）：</p>
+<p>如果你从外面直接改私有成员，<b>程序根本不会让它通过</b>。
+均使用 g++ 13.1.0（<code>-std=c++17</code>）构建，实际运行核对（工具链指纹：<code>GCC 13.1.0</code> · MinGW-w64 x86_64-posix-seh；验证程序与产物见 <code>tools/_c_check/</code>）：</p>
 
 <div class="code-wrap"><div class="bar"><span class="dot r"></span><span class="dot y"></span><span class="dot g"></span><span class="name">故意写错：从外面改私有成员</span><span class="cpp-badge">C++</span><span class="cp">复制</span></div><pre><span class="hl-k">class</span> Player {
 <span class="hl-k">private</span>:
@@ -420,11 +420,11 @@ Archer HP 100/100</pre></div>
 
 <span class="hl-k">int</span> <span class="hl-f">main</span>() {
     Player p;
-    p.hp = <span class="hl-n">999</span>;          <span class="hl-c">/* ← 这一行会编译失败 */</span>
+    p.hp = <span class="hl-n">999</span>;          <span class="hl-c">/* ← 这一行会报错 */</span>
     <span class="hl-k">return</span> <span class="hl-n">0</span>;
 }</pre></div>
 
-<div class="out-wrap"><div class="cap">编译器的真实报错（已核对）</div><pre>error: 'int Player::hp' is private within this context
+<div class="out-wrap"><div class="cap">实机报错原文（已核对）</div><pre>error: 'int Player::hp' is private within this context
    12 |     p.hp = 999;
       |       ^~
 note: declared private here
@@ -435,16 +435,16 @@ note: field 'int Player::hp' can be accessed via 'int Player::getHp()'
       |       ^~
       |       getHp()</pre></div>
 
-<p>编译器说得很清楚：<b><code>hp</code> 在这个上下文里是私有的</b>，
+<p>报错说得很清楚：<b><code>hp</code> 在这个上下文里是私有的</b>，
 而且还贴心地提示你「可以通过 <code>getHp()</code> 访问」。</p>
 
 <div class="card key">
   <div class="card-t">这就是「私有」最大的价值</div>
-  <p>它把一类错误<b>从「运行时的诡异 bug」变成了「编译时的明确报错」</b>。</p>
+  <p>它把一类错误<b>从「运行时的诡异 bug」变成了「写代码时就摆出来的明确报错」</b>。</p>
   <p>对比一下：如果 <code>hp</code> 是公开的，你写了 <code>p.hp = -500</code>，
-  程序<b>照样编过、照样跑</b>，直到某天血量算出乱七八糟的伤害才被发现问题所在 ——
+  程序<b>照样跑得起来</b>，直到某天血量算出乱七八糟的伤害才被发现问题所在 ——
   那时你可能已经排查很久了。</p>
-  <p><b>能不写 bug，就别写 bug。</b>让编译器帮你拦，是最省事的做法。</p>
+  <p><b>能不写 bug，就别写 bug。</b>在写的时候就拦住，是最省事的做法。</p>
 </div>
 
 <h4>三种权限</h4>
@@ -489,7 +489,7 @@ note: field 'int Player::hp' can be accessed via 'int Player::getHp()'
     <span class="hl-f">cout</span> &lt;&lt; <span class="hl-s">"struct SA 可以直接 a.x = "</span> &lt;&lt; a.x &lt;&lt; <span class="hl-f">endl</span>;
 
     <span class="hl-c">/* SB b; b.x = 10; */</span>
-    <span class="hl-c">/* ↑ 取消注释就编译失败：class 默认私有 */</span>
+    <span class="hl-c">/* ↑ 取消注释就报错：class 默认私有 */</span>
 
     <span class="hl-f">cout</span> &lt;&lt; <span class="hl-s">"sizeof(SA)="</span> &lt;&lt; <span class="hl-k">sizeof</span>(SA)
          &lt;&lt; <span class="hl-s">"  sizeof(SB)="</span> &lt;&lt; <span class="hl-k">sizeof</span>(SB) &lt;&lt; <span class="hl-f">endl</span>;
@@ -710,8 +710,8 @@ ptr-&gt;<span class="hl-f">hp</span> = <span class="hl-n">10</span>;      <span 
 <!-- /NAV-AUTO -->
 <footer>
 UME 项目组内部教程 · M06《类、结构体》<br>
-代码示例均以 <b>Consolas</b> 等宽字体呈现；文中所有「运行结果」与「编译错误」
-均使用 g++ 13.1.0（<code>-std=c++17</code>）实际编译运行核对。
+代码示例均以 <b>Consolas</b> 等宽字体呈现；文中所有「运行结果」与「报错信息」
+均使用 g++ 13.1.0（<code>-std=c++17</code>）构建，实际运行与实机报错核对。
 </footer>
 
 </main>

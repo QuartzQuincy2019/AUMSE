@@ -47,8 +47,8 @@
     <li>全局变量到处能用，为什么老程序员都劝你少用？</li>
   </ul>
   <p>答案都在同一个概念里：<b>作用域</b> ——
-  一个名字在哪些地方能被看见。文中所有「运行结果」与「编译错误」
-  均使用 g++ 13.1.0（<code>-std=c++17</code>）实际编译运行核对。</p>
+  一个名字在哪些地方能被看见。文中所有「运行结果」与「报错信息」
+  均使用 g++ 13.1.0（<code>-std=c++17</code>）构建，实际运行与实机报错核对。</p>
 </div>
 
 <!-- ============================================================ -->
@@ -84,7 +84,7 @@ f 里的 n = 100
   <div class="card-t">作用域的定义</div>
   <p><b>作用域 = 一个名字能被使用的范围。</b></p>
   <p>出了这个范围，那个名字就「不存在了」——
-  不是值变成 0，而是<b>编译器根本不认识这个名字</b>，写了就编译报错。</p>
+  不是值变成 0，而是<b>程序根本不认识这个名字</b>，写了就报错。</p>
   <p>所以问题不是「变量在哪」，而是<b>「这个名字在哪些行有效」</b>。</p>
 </div>
 
@@ -146,15 +146,15 @@ f 里的 n = 100
 <p>注意两件事：</p>
 <ul>
   <li><b>里面能改外面的变量</b>（<code>a</code> 变成 99，出了内层还是 99）。</li>
-  <li><b>外面的那个 <code>b</code> 用不了</b>。如果硬写，编译器会说：</li>
+  <li><b>外面的那个 <code>b</code> 用不了</b>。如果硬写，报错会说：</li>
 </ul>
 
-<div class="out-wrap"><div class="cap">编译器的真实报错（已核对）</div><pre>error: 'b' undeclared (first use in this function)
+<div class="out-wrap"><div class="cap">实机报错原文（已核对）</div><pre>error: 'b' undeclared (first use in this function)
     7 |     printf("%d", b);
       |                  ^</pre></div>
 
 <p>这句直译就是<b>「这个名字没声明过（在本函数里第一次用到）」</b>。</p>
-<p>顺带记一下另一种写法：如果你用 <b>g++</b> 编译，同样这个错误会显示成
+<p>顺带记一下另一种写法：如果你改用 <b>g++</b>，同样这个错误会显示成
 <code>was not declared in this scope</code>
 （直译：<b>这个名字在本作用域里没有声明</b>）。<b>两种说法是同一个错</b>。</p>
 <p>以后看到其中任何一句，第一反应都应该是：
@@ -198,8 +198,8 @@ if 块结束后 only 也不存在了
 第二个循环 i = 100
 第二个循环 i = 101</pre></div>
 
-<p>硬要在循环外用 <code>i</code>，编译器会说：</p>
-<div class="out-wrap"><div class="cap">编译器的真实报错（已核对）</div><pre>error: 'i' undeclared (first use in this function)
+<p>硬要在循环外用 <code>i</code>，报错会说：</p>
+<div class="out-wrap"><div class="cap">实机报错原文（已核对）</div><pre>error: 'i' undeclared (first use in this function)
     5 |     printf("%d", i);
       |                  ^</pre></div>
 
@@ -515,14 +515,14 @@ void f() { n++; }</div>
   <p><b>坏处：</b>如果你本来想改外层变量，却手滑写了一句
   <code>int value = 20;</code>（多了 <code>int</code>），
   那就变成了<b>新建一个局部变量</b>，外层的完全没动 ——
-  而且编译器不会警告你。</p>
+  而且不会有任何提示。</p>
   <pre class="plain-pre"><span class="hl-k">int</span> total = <span class="hl-n">0</span>;
 <span class="hl-k">for</span> (<span class="hl-k">int</span> i = <span class="hl-n">0</span>; i &lt; n; i++) {
     <span class="hl-k">int</span> total = total + a[i];   <span class="hl-c">/* ❌ 多了 int：新建了一个局部 total，</span>
 <span class="hl-c">                                    外面的 total 一直是 0 */</span>
 }</pre>
   <p><b>习惯：不要故意给内层变量起和外层一样的名字。</b>
-  报错还好，最怕的是它悄悄编过、结果错了。</p>
+  报错还好，最怕的是它悄悄通过了、结果错了。</p>
 </div>
 
 <!-- ============================================================ -->
@@ -615,7 +615,7 @@ void f() { n++; }</div>
 <span class="hl-k">for</span> (<span class="hl-k">int</span> i = <span class="hl-n">0</span>; i &lt; n; i++) {
     total = total + a[i];       <span class="hl-c">/* ✅ 没有 int，改的是外面那个 */</span>
 }</pre></div>
-<p><b>这个错误最阴险</b>：编译器不报错，程序也照跑，只是结果不对。</p>
+<p><b>这个错误最阴险</b>：不报错，程序也照跑，只是结果不对。</p>
 
 <h4>错误 4 · 用全局变量在函数间「偷偷」传数据</h4>
 <div class="code-wrap"><div class="bar"><span class="dot r"></span><span class="dot y"></span><span class="dot g"></span><span class="name">对比</span><span class="cp">复制</span></div><pre><span class="hl-c">/* ❌ 靠全局传结果：看不出 f 和 g 有依赖 */</span>
@@ -667,7 +667,7 @@ void f() { n++; }</div>
     <li><b>能用局部变量解决，就不要用全局变量。</b>作用域越窄，越不容易出错。</li>
     <li><b>就近优先</b>：同名时用最近的那一层；<code>::</code> 可以指名全局。</li>
     <li><b>不要故意给内层起和外层一样的名字</b>，
-      尤其别手滑多写一个 <code>int</code> —— 那种错编译器不拦。</li>
+      尤其别手滑多写一个 <code>int</code> —— 那种错没有任何东西会拦。</li>
   </ol>
 </div>
 
@@ -695,8 +695,8 @@ void f() { n++; }</div>
 <!-- /NAV-AUTO -->
 <footer>
 UME 项目组内部教程 · M07《作用域、全局与局部变量》<br>
-代码示例均以 <b>Consolas</b> 等宽字体呈现；文中所有「运行结果」与「编译错误」
-均使用 g++ 13.1.0（<code>-std=c++17</code>）实际编译运行核对。
+代码示例均以 <b>Consolas</b> 等宽字体呈现；文中所有「运行结果」与「报错信息」
+均使用 g++ 13.1.0（<code>-std=c++17</code>）构建，实际运行与实机报错核对。
 </footer>
 
 </main>
