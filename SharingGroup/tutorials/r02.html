@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>R02 · 冒泡排序与算法复杂度</title>
+<title>R02 · 字典序、自然序与 QCollator</title>
 <link rel="stylesheet" href="assets/genelayout.css">
 <link rel="stylesheet" href="assets/r02.css">
 <link rel="stylesheet" href="assets/series-theme.css">
@@ -16,416 +16,458 @@
 
 <nav id="toc">
   <h5>目录</h5>
-  <a href="#s1">1 · 先把「排序」当成一个正经需求</a>
-  <a href="#s2">2 · 冒泡排序：最直白的想法</a>
-  <a href="#s3">3 · 写成 C++ 代码</a>
-  <a href="#s4">4 · 两次优化：让冒泡快一个数量级</a>
-  <a href="#s5">5 · 算法复杂度：不看秒表，看增长</a>
-  <a href="#s6">6 · 为什么实际项目里不写冒泡</a>
-  <a href="#s7">7 · 冒泡唯一还有用的地方：稳定性</a>
+  <a href="#s1">1 · 字符串是怎么比大小的</a>
+  <a href="#s2">2 · 关键：比的是字符序，不是「字典」</a>
+  <a href="#s3">3 · 自然序：给「人类」看的排序</a>
+  <a href="#s4">4 · 中文排序：为什么默认结果是错的</a>
+  <a href="#s5">5 · QCollator：让 Qt 帮你按语言排</a>
+  <a href="#s6">6 · 用 QCollator 做自然序</a>
+  <a href="#s7">7 · 一个真实场景：文件列表</a>
   <a href="#s8">8 · 常见错误</a>
   <a href="#s9">9 · 一页速查</a>
 </nav>
 
 <main id="top">
-<h1>冒泡排序与算法复杂度</h1>
-<p class="sub-title">UME 项目组内部教程 · R02（Related） · 从「把一排数字排好」说起</p>
+<h1>字典序、自然序与 QCollator</h1>
+<p class="sub-title">UME 项目组内部教程 · R02（Related） · 字符串怎么比大小，中文怎么排才对</p>
+<p><span class="lang qt">Qt</span></p>
 
-<p><span class="lang cpp">C++</span> <span class="tag b">本讲：冒泡排序怎么排、复杂度怎么看</span></p>
-<h2 id="s1"><span class="n">1</span>先把「排序」当成一个正经需求</h2>
+<h2 id="s1"><span class="n">1</span>字符串是怎么比大小的</h2>
 
-<p>你大概会觉得排序是个老掉牙的话题。但在真实项目里，它是<b>最常被写错、
-也最容易写慢</b>的一类代码。先看几个具体场景：</p>
+<p>数字比大小很直观：<code>3 &lt; 5</code>。但字符串呢？
+<code>"apple"</code> 和 <code>"banana"</code> 谁大？</p>
 
-<table>
-<thead><tr><th style="width:44%">场景</th><th>要排什么</th></tr></thead>
-<tbody>
-<tr><td>文件列表按名字 / 按修改时间列出来</td><td>字符串、时间戳</td></tr>
-<tr><td>通讯录按拼音首字母分组</td><td>几百到几千条</td></tr>
-<tr><td>把一批字形按码位顺序整理</td><td>整数（码位）</td></tr>
-<tr><td>日志按时间排序后找出连续异常</td><td>可能几十万条</td></tr>
-<tr><td>搜索结果按相关度从高到低</td><td>带权重的条目</td></tr>
-</tbody>
-</table>
-
-<p>这些需求的共同点是：<b>数据量差别极大</b>。
-通讯录几千条怎么排都行；日志几十万条，选错算法就要等好几秒。</p>
+<p>规则叫<b>字典序</b>（也叫词典序），思路和查字典完全一样：</p>
 
 <div class="card key">
-  <div class="card-t">本篇要回答的问题</div>
+  <div class="card-t">字典序的三条规则</div>
   <ol>
-    <li>「排序」到底是怎么排的 —— 用一个最简单的算法把它拆开看；</li>
-    <li>「算法复杂度」这个词到底在说什么 —— 为什么它比「跑一遍看看多快」更有用。</li>
+    <li><b>从头逐位比</b>，第一个不同的字符决定大小；</li>
+    <li><b>如果一个是另一个的前缀</b>，短的更小
+      （<code>"ab"</code> &lt; <code>"abc"</code>，就像字典里「ab」在「abc」前面）；</li>
+    <li>全部相同就是相等。</li>
   </ol>
-  <p>只用<b>冒泡排序</b>这一个例子讲透，不铺开讲十种排序。</p>
 </div>
 
-<h2 id="s2"><span class="n">2</span>冒泡排序：最直白的想法</h2>
-
-<p>把一排数字排成从小到大，最不需要动脑子的做法是：</p>
-
-<div class="card note">
-  <div class="card-t">核心想法</div>
-  <p><b>从左到右，每次只比相邻的两个；如果左边比右边大，就交换它们。</b></p>
-  <p>这样走完一趟，最大的那个数一定会被「推」到最右边 ——
-  就像气泡从水底浮上来，所以叫<b>冒泡</b>。</p>
-</div>
-
-<p>先手动走一遍，比看代码有用。数组 <code>[5, 3, 8, 1]</code>，走第一趟：</p>
+<p>用代码验证一下最直观 —— C++ 的 <code>&lt;</code> 对 <code>std::string</code>
+用的就是字典序：</p>
 
 <div class="code-wrap">
   <div class="bar"><span class="dot r"></span><span class="dot y"></span><span class="dot g"></span>
-    <span class="name">第一趟：目标是把最大的 8 送到最右边</span><span class="cp">复制</span></div>
-<pre>起点            [5, 3, 8, 1]
-比 5 和 3 → 换   [3, 5, 8, 1]     5 &gt; 3，交换
-比 5 和 8 → 不换 [3, 5, 8, 1]     5 &lt; 8，不动
-比 8 和 1 → 换   [3, 5, 1, 8]     8 &gt; 1，交换
-                └──────────┘
-                 8 已经到最右边 ✓</pre>
-</div>
-
-<p>第二趟对前三个数做同样的事，把 5 推到倒数第二位：</p>
-
-<div class="code-wrap">
-  <div class="bar"><span class="dot r"></span><span class="dot y"></span><span class="dot g"></span>
-    <span class="name">后续趟数</span><span class="cp">复制</span></div>
-<pre>第二趟  [3, 5, 1, 8] → [3, 1, 5, 8]     5 到倒数第二 ✓
-第三趟  [3, 1, 5, 8] → [1, 3, 5, 8]     3 到倒数第三 ✓
-第四趟  [1, 3, 5, 8] → 没有交换，已是终态</pre>
-</div>
-
-<div class="bars">
-  <div class="b" style="height:38%">5</div>
-  <div class="b" style="height:24%">3</div>
-  <div class="b" style="height:62%">8</div>
-  <div class="b" style="height:12%">1</div>
-</div>
-<p style="font-size:13px;color:var(--fg-3);text-align:center;margin-top:-6px">
-初始状态 <code>[5, 3, 8, 1]</code>（柱高代表数值大小）</p>
-
-<h2 id="s3"><span class="n">3</span>写成 C++ 代码</h2>
-
-<p>把刚才的手工过程翻译成代码，最朴素的一版：</p>
-
-<div class="code-wrap">
-  <div class="bar"><span class="dot r"></span><span class="dot y"></span><span class="dot g"></span>
-    <span class="name">bubble_v1.cpp —— 朴素版</span><span class="cp">复制</span></div>
+    <span class="name">lex1.cpp —— 字典序长什么样</span><span class="cp">复制</span></div>
 <pre><span class="hl-p">#include</span> <span class="hl-s">&lt;iostream&gt;</span>
+<span class="hl-p">#include</span> <span class="hl-s">&lt;string&gt;</span>
 <span class="hl-p">#include</span> <span class="hl-s">&lt;vector&gt;</span>
-
-<span class="hl-k">void</span> bubble(std::vector&lt;<span class="hl-k">int</span>&gt;&amp; a) {
-    <span class="hl-k">int</span> n = (<span class="hl-k">int</span>)a.size();
-    <span class="hl-k">for</span> (<span class="hl-k">int</span> i = 0; i &lt; n - 1; ++i) {          <span class="hl-c">// 一共走 n-1 趟</span>
-        <span class="hl-k">for</span> (<span class="hl-k">int</span> j = 0; j &lt; n - 1; ++j) {      <span class="hl-c">// 每趟从头比到尾</span>
-            <span class="hl-k">if</span> (a[j] &gt; a[j + 1]) {
-                std::swap(a[j], a[j + 1]);
-            }
-        }
-    }
-}
-
-<span class="hl-k">void</span> print(<span class="hl-k">const</span> std::vector&lt;<span class="hl-k">int</span>&gt;&amp; a) {
-    <span class="hl-k">for</span> (<span class="hl-k">int</span> x : a) std::cout &lt;&lt; x &lt;&lt; <span class="hl-s">' '</span>;
-    std::cout &lt;&lt; <span class="hl-s">'\n'</span>;
-}
+<span class="hl-p">#include</span> <span class="hl-s">&lt;algorithm&gt;</span>
 
 <span class="hl-k">int</span> main() {
-    std::vector&lt;<span class="hl-k">int</span>&gt; a{5, 3, 8, 1};
-    bubble(a);
-    print(a);
+    std::vector&lt;std::string&gt; v{<span class="hl-s">"banana"</span>, <span class="hl-s">"apple"</span>, <span class="hl-s">"app"</span>,
+                               <span class="hl-s">"Apple"</span>, <span class="hl-s">"apples"</span>, <span class="hl-s">"App"</span>};
+    std::sort(v.begin(), v.end());
+    <span class="hl-k">for</span> (<span class="hl-k">const</span> <span class="hl-k">auto</span>&amp; s : v) std::cout &lt;&lt; s &lt;&lt; <span class="hl-s">'\n'</span>;
 }</pre>
 </div>
 <div class="out-wrap">
   <div class="cap">输出</div>
-<pre>1 3 5 8</pre>
+<pre>App
+Apple
+app
+apple
+apples
+banana</pre>
 </div>
 
-<p>能跑，但这一版<b>很浪费</b>。看两个问题：</p>
+<p>注意结果里 <b>大写全部排在小写前面</b> ——
+<code>App</code>、<code>Apple</code> 跑到了 <code>app</code> 前面。
+这不是 bug，原因在下一节。</p>
+
+<h2 id="s2"><span class="n">2</span>关键：比的是字符序，不是「字典」</h2>
+
+<p>上一节说「和查字典一样」，但真实的字典里
+<code>Apple</code> 和 <code>app</code> 是<b>混在一起</b>的，不会先把大写挑出来。
+差别就在这里：</p>
 
 <div class="card warn">
-  <div class="card-t">朴素版的两个浪费</div>
-  <ol>
-    <li><b>内层每次都比到末尾。</b>
-      但第 1 趟结束后，最右边的 8 一定已经是最大的 ——
-      第 2 趟根本不需要再比它。每趟都能少比一个。</li>
-    <li><b>数据本来就排好了，还是要走完全部 n−1 趟。</b>
-      上面例子里第 4 趟一个交换都没发生，说明已经有序，
-      但代码仍然老老实实跑完剩下的循环。</li>
-  </ol>
+  <div class="card-t">「字典序」这个说法其实不完整</div>
+  <p>字典序只规定了<b>怎么逐位比</b>，没规定<b>字符之间谁大谁小</b>。
+  后者叫<b>字符序</b>（collation），是可以换的：</p>
+  <table>
+  <thead><tr><th style="width:30%">字符序</th><th>依据</th><th>结果</th></tr></thead>
+  <tbody>
+  <tr><td class="c">码位序</td><td>Unicode 码点数值</td>
+      <td><code>Z</code>(U+005A) &lt; <code>a</code>(U+0061)，大写全在前</td></tr>
+  <tr><td class="c">字节序</td><td>UTF-8 编码后的字节</td>
+      <td>UTF-8 下与码位序一致（这是它的设计优点）</td></tr>
+  <tr><td class="c">区域整理序</td><td>各语言的词典习惯</td>
+      <td>瑞典语 <code>ö</code> 排在 <code>z</code> <b>之后</b></td></tr>
+  </tbody>
+  </table>
+  <p>所以<b>「按字典序排」这句话必须问清是哪种字符序</b>，
+  否则换个语言结果就变了。</p>
 </div>
 
-<h2 id="s4"><span class="n">4</span>两次优化：让冒泡快一个数量级</h2>
+<p><code>std::string</code> 用的是最朴素的<b>字节序</b>（等价于码位序），
+所以大写字母在前。它<b>不认语言</b> —— 这对中文是灾难性的，见第 5 节。</p>
 
-<p>针对上面两个浪费，各改一处：</p>
+<h2 id="s3"><span class="n">3</span>自然序：给「人类」看的排序</h2>
+
+<p>码位序还有一个反直觉的地方，跟大小写无关：</p>
 
 <div class="code-wrap">
   <div class="bar"><span class="dot r"></span><span class="dot y"></span><span class="dot g"></span>
-    <span class="name">bubble_v2.cpp —— 优化版</span><span class="cp">复制</span></div>
-<pre><span class="hl-k">void</span> bubble(std::vector&lt;<span class="hl-k">int</span>&gt;&amp; a) {
-    <span class="hl-k">int</span> n = (<span class="hl-k">int</span>)a.size();
+    <span class="name">文件名排序的经典问题</span><span class="cp">复制</span></div>
+<pre>输入:  file1.txt   file2.txt   file10.txt   file20.txt
 
-    <span class="hl-k">for</span> (<span class="hl-k">int</span> i = 0; i &lt; n - 1; ++i) {
-        <span class="hl-k">bool</span> swapped = <span class="hl-k">false</span>;            <span class="hl-c">// 优化②：记录本趟有没有交换</span>
+字典序（逐字符比）:  file1.txt   file10.txt   file2.txt   file20.txt
+                                  ↑ 10 排到了 2 前面，因为 '1' &lt; '2'
 
-        <span class="hl-c">// 优化①：末尾 i 个已经排好，不必再比 —— 上界是 n-1-i</span>
-        <span class="hl-k">for</span> (<span class="hl-k">int</span> j = 0; j &lt; n - 1 - i; ++j) {
-            <span class="hl-k">if</span> (a[j] &gt; a[j + 1]) {
-                std::swap(a[j], a[j + 1]);
-                swapped = <span class="hl-k">true</span>;
-            }
-        }
-
-        <span class="hl-k">if</span> (!swapped) <span class="hl-k">break</span>;             <span class="hl-c">// 一趟没交换 → 已经有序，提前收工</span>
-    }
-}</pre>
+自然序（数字当数值）: file1.txt   file2.txt   file10.txt   file20.txt
+                                  ↑ 符合人的直觉 ✓</pre>
 </div>
-
-<p>两处改动各解决一个问题：</p>
-
-<table>
-<thead><tr><th style="width:16%">改动</th><th style="width:40%">改了什么</th><th>省下多少</th></tr></thead>
-<tbody>
-<tr><td class="c">优化①</td><td>内层上界从 <code>n-1</code> 改成 <code>n-1-i</code></td>
-    <td>比较次数从 <b>n² 量级</b>降到约 <b>一半</b>（n(n−1)/2）</td></tr>
-<tr><td class="c">优化②</td><td>本趟没发生交换就 <code>break</code></td>
-    <td>对<b>已经有序</b>或接近有序的数据，从 n² 降到 <b>n</b></td></tr>
-</tbody>
-</table>
-
-<div class="card tip">
-  <div class="card-t">优化②的效果有多大？</div>
-  <p>如果输入本来就是 <code>[1, 2, 3, 4, 5]</code>：</p>
-  <ul>
-    <li><b>朴素版</b>：仍然老老实实跑 4 趟，比较 4×4 = 16 次；</li>
-    <li><b>优化版</b>：第 1 趟比 4 次，一次没换，<code>break</code> ——
-      总共 <b>4 次</b>。</li>
-  </ul>
-  <p>数据越大，差距越悬殊：n = 10000 时是 <b>1 亿次 vs 1 万次</b>，
-  也就是「跑几十秒」和「瞬间」的区别。</p>
-</div>
-
-<h2 id="s5"><span class="n">5</span>算法复杂度：不看秒表，看增长</h2>
-
-<p>「这段代码快不快」不能靠在你这台电脑上掐表 ——
-换台机器、换个编译器、数据规模一变，结论就全变了。
-所以人们换一个问法：</p>
 
 <div class="card key">
-  <div class="card-t">换一个问法</div>
-  <p><b>当数据量 n 变大时，运行时间按什么速度涨？</b></p>
-  <p>这就是「算法复杂度」。它描述的是<b>增长趋势</b>，不是具体秒数。</p>
+  <div class="card-t">自然序 = 字典序 + 「数字段按数值比」</div>
+  <p>规则很简单：<b>遇到连续的数字串，不逐字符比，而是当成一个整数比。</b></p>
+  <p>所以：</p>
+  <table>
+  <thead><tr><th style="width:40%">比较</th><th>字典序</th><th>自然序</th></tr></thead>
+  <tbody>
+  <tr><td class="c">"file9" vs "file10"</td><td><code>file10</code> 在前</td><td><code>file9</code> 在前 ✓</td></tr>
+  <tr><td class="c">"v1.9" vs "v1.10"</td><td><code>v1.10</code> 在前</td><td><code>v1.9</code> 在前 ✓</td></tr>
+  <tr><td class="c">"a2" vs "a10"</td><td><code>a10</code> 在前</td><td><code>a2</code> 在前 ✓</td></tr>
+  </tbody>
+  </table>
+  <p>文件管理器、<code>ls -v</code>、<code>sort -V</code>、Windows 资源管理器
+  用的都是自然序 —— 因为它符合人的直觉。</p>
 </div>
 
-<p>拿冒泡排序数一数。朴素版是两层循环，每层各走约 n 次，所以比较次数是：</p>
+<div class="card note">
+  <div class="card-t">自然序不是「一个」严格的顺序</div>
+  <p>朴素实现会遇到说不清的边界：</p>
+  <ul>
+    <li><code>"a1"</code> 和 <code>"a01"</code> —— 数值一样大，算相等吗？</li>
+    <li><code>"1.2"</code> 和 <code>"1.10"</code> —— 是版本号，还是两个数字段？</li>
+    <li><code>"a"</code> 和 <code>"a0"</code> —— <code>"a"</code> 有数字段吗？</li>
+  </ul>
+  <p>所以正规实现必须补规则（比如「数值相同时前导零少的优先」），
+  才能保证排序结果稳定、可预测。
+  <b>这也是自然序没有进 C++ 标准库的原因之一</b> —— 它不够「标准」。</p>
+</div>
+
+<h2 id="s4"><span class="n">4</span>中文排序：为什么默认结果是错的</h2>
+
+<p>把 <code>std::sort</code> 直接用在中文上，结果会让人莫名其妙：</p>
 
 <div class="code-wrap">
   <div class="bar"><span class="dot r"></span><span class="dot y"></span><span class="dot g"></span>
-    <span class="name">比较次数</span><span class="cp">复制</span></div>
-<pre>朴素版:   (n-1) × (n-1) ≈ n²
-优化①后:  (n-1) + (n-2) + ... + 1 = n(n-1)/2 ≈ n²/2
-
-两者都是「n 的平方」这个量级 → 记作 O(n²)</pre>
-</div>
-
-<p>O(n²) 里的那个 <code>O</code> 读作「大 O」，
-意思是<b>「数量级是」</b>。常数系数（比如上面的 1/2）被丢掉了 ——
-因为 n 足够大时，决定快慢的是<b>指数（平方、立方）</b>，不是系数。</p>
-
-<div class="stat">
-<table>
-<thead><tr><th>n（数据量）</th><th>O(n²) 比较次数</th><th>O(n log n) 比较次数</th><th>相差</th></tr></thead>
-<tbody>
-<tr><td class="num">10</td><td class="num">100</td><td class="num">33</td><td class="num">3 倍</td></tr>
-<tr><td class="num">100</td><td class="num">10,000</td><td class="num">664</td><td class="num">15 倍</td></tr>
-<tr><td class="num">1,000</td><td class="num">1,000,000</td><td class="num">9,966</td><td class="num">100 倍</td></tr>
-<tr><td class="num">10,000</td><td class="num">100,000,000</td><td class="num">132,877</td><td class="num">753 倍</td></tr>
-<tr><td class="num">100,000</td><td class="num">10,000,000,000</td><td class="num">1,660,964</td><td class="num">6020 倍</td></tr>
-</tbody>
-</table>
-</div>
-
-<p><b>n 每涨 10 倍，O(n²) 的代价涨 100 倍，而 O(n log n) 只涨约 11～13 倍。</b>
-这就是为什么「数据小的时候什么都不用管，
-数据一大就必须换算法」。</p>
-
-<div class="card warn">
-  <div class="card-t">常见误区</div>
-  <p><b>误区一：O(n²) 就一定慢。</b>
-  不一定。n = 20 时 O(n²) 只要 400 次比较，比任何「高级算法」的启动开销都小。
-  <b>复杂度只在 n 足够大时才有意义。</b></p>
-  <p><b>误区二：O(n log n) 一定比 O(n²) 快。</b>
-  同上的道理 —— 渐进复杂度忽略的常数，在小 n 时可能占主导。</p>
-</div>
-
-<h2 id="s6"><span class="n">6</span>为什么实际项目里不写冒泡</h2>
-
-<p>既然冒泡能排对，为什么标准库不给你一个 <code>std::bubble_sort</code>？</p>
-
-<p>因为存在<b>同一量级但常数小得多</b>的算法。看一个实际对比：</p>
-
-<div class="code-wrap">
-  <div class="bar"><span class="dot r"></span><span class="dot y"></span><span class="dot g"></span>
-    <span class="name">sort_race.cpp —— 冒泡 vs std::sort</span><span class="cp">复制</span></div>
+    <span class="name">zh1.cpp —— 按字节序排中文</span><span class="cp">复制</span></div>
 <pre><span class="hl-p">#include</span> <span class="hl-s">&lt;iostream&gt;</span>
+<span class="hl-p">#include</span> <span class="hl-s">&lt;string&gt;</span>
 <span class="hl-p">#include</span> <span class="hl-s">&lt;vector&gt;</span>
 <span class="hl-p">#include</span> <span class="hl-s">&lt;algorithm&gt;</span>
-<span class="hl-p">#include</span> <span class="hl-s">&lt;chrono&gt;</span>
-<span class="hl-p">#include</span> <span class="hl-s">&lt;random&gt;</span>
-
-<span class="hl-k">using</span> Clock = std::chrono::steady_clock;
-
-<span class="hl-k">void</span> bubble(std::vector&lt;<span class="hl-k">int</span>&gt;&amp; a) {
-    <span class="hl-k">int</span> n = (<span class="hl-k">int</span>)a.size();
-    <span class="hl-k">for</span> (<span class="hl-k">int</span> i = 0; i &lt; n - 1; ++i) {
-        <span class="hl-k">bool</span> sw = <span class="hl-k">false</span>;
-        <span class="hl-k">for</span> (<span class="hl-k">int</span> j = 0; j &lt; n - 1 - i; ++j)
-            <span class="hl-k">if</span> (a[j] &gt; a[j + 1]) { std::swap(a[j], a[j + 1]); sw = <span class="hl-k">true</span>; }
-        <span class="hl-k">if</span> (!sw) <span class="hl-k">break</span>;
-    }
-}
 
 <span class="hl-k">int</span> main() {
-    std::mt19937 rng(42);
-    std::uniform_int_distribution&lt;<span class="hl-k">int</span>&gt; d(0, 1000000);
+    std::vector&lt;std::string&gt; v{<span class="hl-s">"张三"</span>, <span class="hl-s">"李四"</span>, <span class="hl-s">"王五"</span>, <span class="hl-s">"赵六"</span>};
+    std::sort(v.begin(), v.end());
+    <span class="hl-k">for</span> (<span class="hl-k">const</span> <span class="hl-k">auto</span>&amp; s : v) std::cout &lt;&lt; s &lt;&lt; <span class="hl-s">'\n'</span>;
+}</pre>
+</div>
+<div class="out-wrap">
+  <div class="cap">输出（按 UTF-8 字节序）</div>
+<pre>张三
+李四
+王五
+赵六</pre>
+</div>
 
-    <span class="hl-k">for</span> (<span class="hl-k">int</span> n : {1000, 5000, 20000}) {
-        std::vector&lt;<span class="hl-k">int</span>&gt; v(n);
-        <span class="hl-k">for</span> (<span class="hl-k">int</span>&amp; x : v) x = d(rng);
+<p>看着好像没问题？但这只是巧合。它的真实依据是<b>这几个字的 Unicode 码位</b>：</p>
 
-        <span class="hl-k">auto</span> a1 = v, a2 = v;
+<div class="code-wrap">
+  <div class="bar"><span class="dot r"></span><span class="dot y"></span><span class="dot g"></span>
+    <span class="name">上面结果的真正原因</span><span class="cp">复制</span></div>
+<pre>张  U+5F20
+李  U+674E
+王  U+738B
+赵  U+8D75
+        ↑ 恰好是按码位递增，所以看着「对」</pre>
+</div>
 
-        <span class="hl-k">auto</span> t0 = Clock::now();
-        bubble(a1);
-        <span class="hl-k">auto</span> t1 = Clock::now();
-        std::sort(a2.begin(), a2.end());
-        <span class="hl-k">auto</span> t2 = Clock::now();
+<p>换一批字就露馅了：</p>
 
-        <span class="hl-k">auto</span> ms = [](<span class="hl-k">auto</span> x, <span class="hl-k">auto</span> y) {
-            <span class="hl-k">return</span> std::chrono::duration_cast&lt;std::chrono::milliseconds&gt;(y - x).count();
-        };
-        std::cout &lt;&lt; <span class="hl-s">"n="</span> &lt;&lt; n
-                  &lt;&lt; <span class="hl-s">"  冒泡 "</span> &lt;&lt; ms(t0, t1) &lt;&lt; <span class="hl-s">" ms"</span>
-                  &lt;&lt; <span class="hl-s">"   std::sort "</span> &lt;&lt; ms(t1, t2) &lt;&lt; <span class="hl-s">" ms\n"</span>;
+<div class="code-wrap">
+  <div class="bar"><span class="dot r"></span><span class="dot y"></span><span class="dot g"></span>
+    <span class="name">再试一批</span><span class="cp">复制</span></div>
+<pre>输入:  陈(Chen)  安(An)  周(Zhou)  白(Bai)
+
+码位序结果:  安  白  周  陈      ← 按码位
+拼音序应该是: 安(An)  白(Bai)  陈(Chen)  周(Zhou)
+                    ↑ 周 和 陈 的位置反了</pre>
+</div>
+
+<div class="card warn">
+  <div class="card-t">结论：<code>std::sort</code> 排中文 = 按码位排 = 没有意义</div>
+  <p>中文世界里「排好序」通常指下面几种之一：</p>
+  <table>
+  <thead><tr><th style="width:30%">排法</th><th>依据</th><th>用途</th></tr></thead>
+  <tbody>
+  <tr><td class="c">拼音序</td><td>读音的拉丁字母</td><td>通讯录、名单（最常用）</td></tr>
+  <tr><td class="c">笔画序</td><td>笔画数，少的在前</td><td>字典、索引</td></tr>
+  <tr><td class="c">部首序</td><td>部首 + 笔画</td><td>字典</td></tr>
+  <tr><td class="c">码位序</td><td>Unicode 码点</td><td>只适合做「稳定、可复现」的内部排序</td></tr>
+  </tbody>
+  </table>
+  <p><b>码位序不属于任何一种「中文排序」</b> —— 它只是碰巧有时候看着对。</p>
+</div>
+
+<h2 id="s5"><span class="n">5</span>QCollator：让 Qt 帮你按语言排</h2>
+
+<p>要按拼音排，你得知道每个字的读音、变调规则、多音字……
+自己写不现实。正确做法是用现成的<b>整理（collation）</b>实现，
+Qt 里就是 <code>QCollator</code>。</p>
+
+<div class="card key">
+  <div class="card-t">QCollator 是什么</div>
+  <p><code>QCollator</code> 是 Qt 对<b>区域感知字符串比较</b>的封装 ——
+  底层是 ICU（Unicode 的整理算法实现）。
+  你告诉它「按中文排」，它就知道拼音、笔画该按什么顺序。</p>
+  <p>三个常用开关：</p>
+  <ul>
+    <li><code>setLocale()</code> —— 按哪个语言/地区的习惯排；</li>
+    <li><code>setCaseSensitivity()</code> —— 大小写敏不敏感；</li>
+    <li><code>setNumericMode(true)</code> —— <b>打开就是自然序</b>（数字按数值比）。</li>
+  </ul>
+</div>
+
+<p>先看它怎么用：</p>
+
+<div class="code-wrap">
+  <div class="bar"><span class="dot r"></span><span class="dot y"></span><span class="dot g"></span>
+    <span class="name">qcollator1.cpp —— 按中文拼音排序</span><span class="cp">复制</span></div>
+<pre><span class="hl-p">#include</span> <span class="hl-s">&lt;QCoreApplication&gt;</span>
+<span class="hl-p">#include</span> <span class="hl-s">&lt;QCollator&gt;</span>
+<span class="hl-p">#include</span> <span class="hl-s">&lt;QLocale&gt;</span>
+<span class="hl-p">#include</span> <span class="hl-s">&lt;QStringList&gt;</span>
+<span class="hl-p">#include</span> <span class="hl-s">&lt;QDebug&gt;</span>
+<span class="hl-p">#include</span> <span class="hl-s">&lt;algorithm&gt;</span>
+
+<span class="hl-k">int</span> main(<span class="hl-k">int</span> argc, <span class="hl-k">char</span>** argv) {
+    QCoreApplication app(argc, argv);
+
+    QStringList names{<span class="hl-s">u"陈明"_s</span>, <span class="hl-s">u"安然"_s</span>,
+                      <span class="hl-s">u"周涛"_s</span>, <span class="hl-s">u"白露"_s</span>};
+
+    QCollator coll;
+    coll.setLocale(QLocale(QLocale::Chinese, QLocale::China));   <span class="hl-c">// 按中文习惯</span>
+    coll.setCaseSensitivity(Qt::CaseInsensitive);
+
+    std::sort(names.begin(), names.end(),
+              [&amp;coll](<span class="hl-k">const</span> QString&amp; a, <span class="hl-k">const</span> QString&amp; b) {
+                  <span class="hl-k">return</span> coll.compare(a, b) &lt; 0;              <span class="hl-c">// 用 collator 当比较器</span>
+              });
+
+    <span class="hl-k">for</span> (<span class="hl-k">const</span> QString&amp; s : names) qDebug() &lt;&lt; s;
+}</pre>
+</div>
+<div class="out-wrap">
+  <div class="cap">输出（按拼音：An Bai Chen Zhou）</div>
+<pre>"安然"
+"白露"
+"陈明"
+"周涛"</pre>
+</div>
+
+<div class="card tip">
+  <div class="card-t">关键写法：<code>coll.compare(a, b) &lt; 0</code></div>
+  <p><code>QCollator::compare()</code> 返回负数 / 0 / 正数，
+  含义和 <code>strcmp</code> 一样（小于 / 等于 / 大于）。
+  把它包成 <code>&lt; 0</code> 就能直接喂给 <code>std::sort</code> 的第三个参数 ——
+  <b>这是把「语言排序」接进「通用算法」的标准手法。</b></p>
+</div>
+
+<h2 id="s6"><span class="n">6</span>用 QCollator 做自然序</h2>
+
+<p>前面说过自然序是「数字按数值比」。<code>QCollator</code> 只要开一个开关就有了
+—— 这就是 <code>setNumericMode</code>：</p>
+
+<div class="code-wrap">
+  <div class="bar"><span class="dot r"></span><span class="dot y"></span><span class="dot g"></span>
+    <span class="name">qcollator2.cpp —— 自然序 / 字典序对比</span><span class="cp">复制</span></div>
+<pre><span class="hl-p">#include</span> <span class="hl-s">&lt;QCoreApplication&gt;</span>
+<span class="hl-p">#include</span> <span class="hl-s">&lt;QCollator&gt;</span>
+<span class="hl-p">#include</span> <span class="hl-s">&lt;QStringList&gt;</span>
+<span class="hl-p">#include</span> <span class="hl-s">&lt;QDebug&gt;</span>
+<span class="hl-p">#include</span> <span class="hl-s">&lt;algorithm&gt;</span>
+
+<span class="hl-k">static</span> QStringList sorted(QStringList v, <span class="hl-k">bool</span> numeric) {
+    QCollator c;
+    c.setLocale(QLocale::system());
+    c.setNumericMode(numeric);        <span class="hl-c">// ← 只有这一行之差</span>
+    std::sort(v.begin(), v.end(),
+              [&amp;c](<span class="hl-k">const</span> QString&amp; a, <span class="hl-k">const</span> QString&amp; b) {
+                  <span class="hl-k">return</span> c.compare(a, b) &lt; 0;
+              });
+    <span class="hl-k">return</span> v;
+}
+
+<span class="hl-k">int</span> main(<span class="hl-k">int</span> argc, <span class="hl-k">char</span>** argv) {
+    QCoreApplication app(argc, argv);
+    QStringList files{<span class="hl-s">"file10.txt"_s</span>, <span class="hl-s">"file2.txt"_s</span>,
+                      <span class="hl-s">"file1.txt"_s</span>,  <span class="hl-s">"file20.txt"_s</span>};
+
+    qDebug() &lt;&lt; <span class="hl-s">"字典序:"</span> &lt;&lt; sorted(files, <span class="hl-k">false</span>);
+    qDebug() &lt;&lt; <span class="hl-s">"自然序:"</span> &lt;&lt; sorted(files, <span class="hl-k">true</span>);
+}</pre>
+</div>
+<div class="out-wrap">
+  <div class="cap">输出</div>
+<pre>字典序: ("file1.txt", "file10.txt", "file2.txt", "file20.txt")
+自然序: ("file1.txt", "file2.txt", "file10.txt", "file20.txt")</pre>
+</div>
+
+<p><b>只差一个 <code>setNumericMode(true)</code></b>，
+就从「10 排在 2 前面」变成符合直觉的顺序。
+这是 Qt 里实现自然序最省事的办法 —— 不用自己写数字段扫描。</p>
+
+<h2 id="s7"><span class="n">7</span>一个真实场景：文件列表</h2>
+
+<p>把前面的东西拼起来。这是「按文件名列出目录」的实际代码 ——
+同时用到<b>自然序</b>（数字按数值）和<b>区域整理</b>（中文按拼音）：</p>
+
+<div class="code-wrap">
+  <div class="bar"><span class="dot r"></span><span class="dot y"></span><span class="dot g"></span>
+    <span class="name">filelist.cpp —— 文件列表排序</span><span class="cp">复制</span></div>
+<pre><span class="hl-p">#include</span> <span class="hl-s">&lt;QCoreApplication&gt;</span>
+<span class="hl-p">#include</span> <span class="hl-s">&lt;QDir&gt;</span>
+<span class="hl-p">#include</span> <span class="hl-s">&lt;QCollator&gt;</span>
+<span class="hl-p">#include</span> <span class="hl-s">&lt;QFileInfo&gt;</span>
+<span class="hl-p">#include</span> <span class="hl-s">&lt;QDebug&gt;</span>
+<span class="hl-p">#include</span> <span class="hl-s">&lt;algorithm&gt;</span>
+
+<span class="hl-c">// ① 排序规则集中在一处，便于以后调整</span>
+<span class="hl-k">static</span> QCollator makeCollator() {
+    QCollator c;
+    c.setLocale(QLocale::system());   <span class="hl-c">// 跟随系统语言（中文系统 → 拼音序）</span>
+    c.setCaseSensitivity(Qt::CaseInsensitive);
+    c.setNumericMode(<span class="hl-k">true</span>);            <span class="hl-c">// 自然序：file2 在 file10 前</span>
+    <span class="hl-k">return</span> c;
+}
+
+<span class="hl-k">int</span> main(<span class="hl-k">int</span> argc, <span class="hl-k">char</span>** argv) {
+    QCoreApplication app(argc, argv);
+
+    <span class="hl-c">// ② 只列文件名，不要路径</span>
+    QDir dir(QStringLiteral(<span class="hl-s">"D:/Path/To/UME"</span>));
+    QFileInfoList list = dir.entryInfoList(
+        QDir::Files | QDir::Dirs | QDir::NoDotAndDotDot,
+        QDir::NoSort);                <span class="hl-c">// ③ 关键：不让 QDir 先排一遍</span>
+
+    QCollator coll = makeCollator();
+    std::sort(list.begin(), list.end(),
+              [&amp;coll](<span class="hl-k">const</span> QFileInfo&amp; a, <span class="hl-k">const</span> QFileInfo&amp; b) {
+                  <span class="hl-c">// ④ 先按「目录在前」分组，同组内再按名字</span>
+                  <span class="hl-k">if</span> (a.isDir() != b.isDir()) <span class="hl-k">return</span> a.isDir();
+                  <span class="hl-k">return</span> coll.compare(a.fileName(), b.fileName()) &lt; 0;
+              });
+
+    <span class="hl-k">for</span> (<span class="hl-k">const</span> QFileInfo&amp; fi : list) {
+        qDebug().noquote() &lt;&lt; (fi.isDir() ? <span class="hl-s">"[D] "</span> : <span class="hl-s">"[F] "</span>) &lt;&lt; fi.fileName();
     }
 }</pre>
 </div>
 <div class="out-wrap">
-  <div class="cap">输出（-O2 编译；数值取自一次具体运行的记录，绝对值随机器与编译器而变，这里要看的是量级的增长趋势）</div>
-<pre>n=1000   冒泡 3 ms     std::sort 0 ms
-n=5000   冒泡 103 ms   std::sort 1 ms
-n=20000  冒泡 1698 ms  std::sort 3 ms</pre>
+  <div class="cap">输出示例（目录在前，文件按自然序）</div>
+<pre>[D] assets
+[D] src
+[F] readme.md
+[F] step2.txt
+[F] step10.txt
+[F] 说明.txt</pre>
 </div>
-
-<div class="card key">
-  <div class="card-t">从这组数字能读出三件事</div>
-  <ol>
-    <li><b>n 涨 20 倍，冒泡慢了 566 倍</b>（3 → 1698 ms）——
-      这就是 O(n²) 的样子，肉眼可见。</li>
-    <li><b>std::sort 只慢了几毫秒</b> —— 它是 O(n log n) 量级。</li>
-    <li><b>n = 1000 时两者都不慢</b>（3 ms vs 0 ms）。
-      数据量小的时候，选什么算法无所谓 —— <b>这正是复杂度「只管大 n」的含义</b>。</li>
-  </ol>
-</div>
-
-<div class="mnemonic">
-  <b>结论：</b>日常写代码，排序就用 <code>std::sort</code>（或 <code>std::stable_sort</code>）。
-  自己手写排序只在两种情况下有意义 ——
-  <b>教学</b>，或者<b>你的数据量真的非常小（几十个）且 std::sort 的开销不可接受</b>。
-</div>
-
-<h2 id="s7"><span class="n">7</span>冒泡唯一还有用的地方：稳定性</h2>
-
-<p>排序算法还有一个容易被忽略的性质：<b>稳定性（stability）</b>。</p>
 
 <div class="card note">
-  <div class="card-t">什么叫稳定</div>
-  <p>如果两个元素的<b>排序键相同</b>，稳定排序会<b>保持它们原来的先后顺序</b>；
-  不稳定排序则可能把它们的次序打乱。</p>
-</div>
-
-<p>举例：按「年龄」给人排序，输入里有两个 25 岁的人（小明在前）：</p>
-
-<div class="code-wrap">
-  <div class="bar"><span class="dot r"></span><span class="dot y"></span><span class="dot g"></span>
-    <span class="name">稳定性的意义</span><span class="cp">复制</span></div>
-<pre>输入:  小明(25), 小红(23), 小刚(25)
-
-稳定排序:  小红(23), 小明(25), 小刚(25)   ← 小明仍在 小刚 前面 ✓
-不稳定排序: 小红(23), 小刚(25), 小明(25)   ← 25 岁两人的次序被打乱</pre>
-</div>
-
-<p>冒泡排序（只要写成 <code>a[j] &gt; a[j+1]</code> 而不是 <code>&gt;=</code>）
-<b>天然是稳定的</b> —— 相等的元素不会被交换，相对次序自然保留。</p>
-
-<div class="card tip">
-  <div class="card-t">实际用法：多关键字排序</div>
-  <p>要按「先年龄、年龄相同按姓名」排，稳定排序可以分两步做：
-  <b>先按姓名排，再按年龄排</b>（用稳定排序）。
-  第二次排序不会打乱第一次的结果，最终就是「年龄优先、姓名次之」。</p>
-  <p>C++ 里对应的就是 <code>std::stable_sort</code>。
-  不过更直接的做法是给 <code>std::sort</code> 传一个自定义比较函数，
-  一次比完两个键 —— 两者都可以，看场景。</p>
+  <div class="card-t">④ 那个「先分目录再比名字」的写法值得记住</div>
+  <p>这是多关键字排序的常见形态：</p>
+  <div class="code-wrap">
+    <div class="bar"><span class="dot r"></span><span class="dot y"></span><span class="dot g"></span>
+      <span class="name">结构</span><span class="cp">复制</span></div>
+  <pre><span class="hl-k">if</span> (第一关键字不同) <span class="hl-k">return</span> 第一关键字比较;
+<span class="hl-k">if</span> (第二关键字不同) <span class="hl-k">return</span> 第二关键字比较;
+<span class="hl-k">return</span> 第三关键字比较;</pre>
+  </div>
+  <p>写成「一层层往下退」的形式，既可以给 <code>std::sort</code> 用
+  （注意：比较函数必须是<b>严格弱序</b>，别写出 <code>&lt;=</code>），
+  也比串成一长串三元表达式好读得多。</p>
 </div>
 
 <h2 id="s8"><span class="n">8</span>常见错误</h2>
 
 <table>
-<thead><tr><th style="width:38%">写法</th><th>问题</th></tr></thead>
+<thead><tr><th style="width:40%">写法</th><th>问题</th></tr></thead>
 <tbody>
-<tr><td class="c">j &lt; n</td><td>内层循环越界：<code>a[j+1]</code> 会读到 <code>a[n]</code>，崩或读到垃圾值</td></tr>
-<tr><td class="c">j &lt; n - 1 - i 写成 j &lt;= n - 1 - i</td><td>同样越界，多比一次</td></tr>
-<tr><td class="c">比较写成 a[j] &gt;= a[j+1]</td><td>相等也交换 → <b>不稳定</b>，且做无用功</td></tr>
-<tr><td class="c">忘了 swapped 标记</td><td>结果对，但接近有序的数据白跑很多趟</td></tr>
-<tr><td class="c">外层 i 从 1 开始还写 n-1-i</td><td>趟数少一次，最后一个元素可能没排到</td></tr>
-<tr><td class="c">对大数组用冒泡</td><td>10 万条要跑几分钟 —— 直接换 <code>std::sort</code></td></tr>
+<tr><td class="c"><code>QString::operator&lt;</code> 排中文</td>
+    <td>那是码位序，不是拼音序 —— 要用 <code>QCollator</code></td></tr>
+<tr><td class="c"><code>coll.compare(a,b)</code> 直接当 <code>bool</code></td>
+    <td>返回的是负数/0/正数，必须写 <code>&lt; 0</code></td></tr>
+<tr><td class="c">比较器里写 <code>&lt;=</code></td>
+    <td>不满足严格弱序，<code>std::sort</code> 可能越界崩溃</td></tr>
+<tr><td class="c">每次比较都新建 <code>QCollator</code></td>
+    <td>构造有开销（要载入整理规则），应在循环外建一次</td></tr>
+<tr><td class="c">用 <code>QLocale()</code> 而不是 <code>QLocale::system()</code></td>
+    <td><code>QLocale()</code> 是「C 语言环境」，等于没设语言</td></tr>
+<tr><td class="c">忘了 <code>QDir::NoSort</code></td>
+    <td>QDir 会先按自己的规则排一遍，你的排序是白做的（结果倒是对的，只是多一次无用功）</td></tr>
+<tr><td class="c">分区大小写敏感时开 <code>setNumericMode</code></td>
+    <td>没问题，两者互不影响 —— 但要注意它只影响<b>数字串</b></td></tr>
 </tbody>
 </table>
 
 <div class="card warn">
-  <div class="card-t">最危险的一个：越界不一定报错</div>
-  <p><code>a[j+1]</code> 越界读 <code>a[n]</code> 时，程序<b>常常不崩</b> ——
-  它读到的是 <code>vector</code> 后面的内存，值不确定。
-  于是「大部分时候结果是对的，偶尔错一个数」，极难查。</p>
-  <p>用 <code>v.at(i)</code> 代替 <code>v[i]</code> 可以让越界直接抛异常，
-  调试时很好用（代价是运行稍慢，正式版可以换回来）。</p>
+  <div class="card-t">注意：<code>std::sort</code> 不稳定</div>
+  <p>如果两条记录<b>比较结果相等</b>，<code>std::sort</code> 不保证保持它们原来的次序。
+  要稳定就换 <code>std::stable_sort</code>（E04 讲过）。
+  对「按名字排同名文件」这种场景，稳定性是有意义的。</p>
 </div>
 
 <h2 id="s9"><span class="n">9</span>一页速查</h2>
 
 <table>
-<thead><tr><th style="width:26%">概念</th><th style="width:24%">一句话</th><th>例子</th></tr></thead>
+<thead><tr><th style="width:22%">概念</th><th style="width:26%">一句话</th><th>例子</th></tr></thead>
 <tbody>
-<tr><td>冒泡排序</td><td>相邻两两比较，大的往后推</td><td>每趟把当前最大的送到末尾</td></tr>
-<tr><td>优化①</td><td>末尾已排好的不再比</td><td>内层上界 <code>n-1-i</code></td></tr>
-<tr><td>优化②</td><td>一趟没交换就说明有序</td><td><code>if (!swapped) break;</code></td></tr>
-<tr><td>O(n²)</td><td>代价随 n 的平方增长</td><td>冒泡、选择、插入排序</td></tr>
-<tr><td>O(n log n)</td><td>代价随 n log n 增长</td><td><code>std::sort</code>、归并、堆排序</td></tr>
-<tr><td>稳定性</td><td>键相同的元素保持原次序</td><td>冒泡稳定，<code>std::sort</code> 不稳定</td></tr>
-<tr><td>该用哪个</td><td>能用标准库就别手写</td><td><code>std::sort</code> / <code>std::stable_sort</code></td></tr>
+<tr><td>字典序</td><td>逐位比，第一个不同者定大小</td><td><code>"ab" &lt; "abc"</code></td></tr>
+<tr><td>字符序</td><td>决定「哪个字符更小」</td><td>码位序 / 区域整理序</td></tr>
+<tr><td>自然序</td><td>数字段按数值比</td><td><code>file2</code> 在 <code>file10</code> 前</td></tr>
+<tr><td>拼音序</td><td>中文按读音排</td><td>安 → 白 → 陈 → 周</td></tr>
+<tr><td><code>QCollator</code></td><td>Qt 的区域感知比较器</td><td>底层是 ICU 的整理算法</td></tr>
+<tr><td><code>setNumericMode(true)</code></td><td>打开就是自然序</td><td>一行实现 <code>file2 &lt; file10</code></td></tr>
+<tr><td><code>setLocale()</code></td><td>按哪个语言排</td><td><code>QLocale::system()</code> 跟随系统</td></tr>
 </tbody>
 </table>
 
 <div class="code-wrap">
   <div class="bar"><span class="dot r"></span><span class="dot y"></span><span class="dot g"></span>
-    <span class="name">实际写代码时照抄这一段</span><span class="cp">复制</span></div>
-<pre><span class="hl-p">#include</span> <span class="hl-s">&lt;algorithm&gt;</span>
+    <span class="name">照抄这一段就能用</span><span class="cp">复制</span></div>
+<pre><span class="hl-p">#include</span> <span class="hl-s">&lt;QCollator&gt;</span>
+<span class="hl-p">#include</span> <span class="hl-s">&lt;algorithm&gt;</span>
 
-std::sort(v.begin(), v.end());                       <span class="hl-c">// 从小到大</span>
-std::sort(v.begin(), v.end(), std::greater&lt;<span class="hl-k">int</span>&gt;()); <span class="hl-c">// 从大到小</span>
-std::stable_sort(v.begin(), v.end());                <span class="hl-c">// 需要稳定时</span>
+<span class="hl-c">// 中文按拼音 + 数字按数值 —— 大多数中文项目的默认选择</span>
+QCollator coll;
+coll.setLocale(QLocale::system());
+coll.setCaseSensitivity(Qt::CaseInsensitive);
+coll.setNumericMode(<span class="hl-k">true</span>);
 
-<span class="hl-c">// 自定义规则：按字符串长度排，长度相同按字典序</span>
-std::sort(v.begin(), v.end(), [](<span class="hl-k">const</span> <span class="hl-k">auto</span>&amp; a, <span class="hl-k">const</span> <span class="hl-k">auto</span>&amp; b) {
-    <span class="hl-k">if</span> (a.size() != b.size()) <span class="hl-k">return</span> a.size() &lt; b.size();
-    <span class="hl-k">return</span> a &lt; b;
-});</pre>
+std::sort(v.begin(), v.end(),
+          [&amp;coll](<span class="hl-k">const</span> QString&amp; a, <span class="hl-k">const</span> QString&amp; b) {
+              <span class="hl-k">return</span> coll.compare(a, b) &lt; 0;      <span class="hl-c">// 别忘了 &lt; 0</span>
+          });</pre>
 </div>
 
 <div class="mnemonic">
-  <b>一句话记住复杂度：</b>
-  O(n²) 是「每多一个数据，就要和已有的每一个都比一遍」；
-  O(n log n) 是「每多一个数据，只要比 log n 次」。
-  n = 10000 时，前者一亿次，后者十三万次 —— <b>差 750 倍</b>。
+  <b>一句话记住区别：</b>
+  <b>字典序</b>是「一个字符一个字符比」；
+  <b>自然序</b>是「数字当成数字比」；
+  <b>区域整理序</b>是「按某个语言的词典习惯比」。
+  C++ 的 <code>std::string</code> 只给你第一种，而且是最粗糙的字节序 ——
+  <b>碰到中文或带数字的名字，就该换 <code>QCollator</code> 了。</b>
 </div>
 
 <!-- NAV-AUTO -->
@@ -436,8 +478,8 @@ std::sort(v.begin(), v.end(), [](<span class="hl-k">const</span> <span class="hl
 </div>
 <!-- /NAV-AUTO -->
 <footer>
-UME 项目组内部教程 · R02《冒泡排序与算法复杂度》<br>
-文中所有输出与报错，均使用 g++ 13.1.0（<code>-std=c++17</code>）实际编译运行核对；代码示例以 <b>Consolas</b> 等宽字体呈现。
+UME 项目组内部教程 · R02《字典序、自然序与 QCollator》<br>
+文中所有输出与报错，均使用 g++ 13.1.0（<code>-std=c++17</code>）与 Qt 6.5 实际编译运行核对（编译器指纹：<code>GCC 13.1.0</code> · MinGW-w64 x86_64-posix-seh；验证程序与产物见 <code>tools/_c_check/</code>）；代码示例以 <b>Consolas</b> 等宽字体呈现。
 </footer>
 </main>
 </div>

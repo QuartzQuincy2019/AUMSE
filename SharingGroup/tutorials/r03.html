@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>R03 · 字典序、自然序与 QCollator</title>
+<title>R03 · 十六进制颜色模型、HSV 与 Alpha</title>
 <link rel="stylesheet" href="assets/genelayout.css">
 <link rel="stylesheet" href="assets/r03.css">
 <link rel="stylesheet" href="assets/series-theme.css">
@@ -16,458 +16,392 @@
 
 <nav id="toc">
   <h5>目录</h5>
-  <a href="#s1">1 · 字符串是怎么比大小的</a>
-  <a href="#s2">2 · 关键：比的是字符序，不是「字典」</a>
-  <a href="#s3">3 · 自然序：给「人类」看的排序</a>
-  <a href="#s4">4 · 中文排序：为什么默认结果是错的</a>
-  <a href="#s5">5 · QCollator：让 Qt 帮你按语言排</a>
-  <a href="#s6">6 · 用 QCollator 做自然序</a>
-  <a href="#s7">7 · 一个真实场景：文件列表</a>
-  <a href="#s8">8 · 常见错误</a>
-  <a href="#s9">9 · 一页速查</a>
+  <a href="#s1">1 · 颜色在计算机里是什么</a>
+  <a href="#s2">2 · 十六进制 RGB</a>
+  <a href="#s3">3 · 十进制 RGB 表示法</a>
+  <a href="#s4">4 · HSV / HSL 颜色模型</a>
+  <a href="#s5">5 · Alpha 通道（透明度）</a>
+  <a href="#s6">6 · 安全色与取色</a>
+  <a href="#s7">7 · 颜色拾取器</a>
+  <a href="#s8">8 · 一页速查</a>
 </nav>
 
-<main id="top">
-<h1>字典序、自然序与 QCollator</h1>
-<p class="sub-title">UME 项目组内部教程 · R03（Related） · 字符串怎么比大小，中文怎么排才对</p>
-<p><span class="lang qt">Qt</span></p>
+<main>
+<h1>十六进制颜色模型、HSV 与 Alpha<span class="star" title="与本项目施行密切相关">*</span></h1>
+<p class="sub-title">UME 项目组内部教程 · R03（R） · 颜色在代码里怎么表示：十六进制 RGB、HSV、Alpha 与安全色</p>
+<p><span class="lang css">CSS</span> <span class="tag">颜色模型</span> <span class="tag b">取色</span></p>
 
-<h2 id="s1"><span class="n">1</span>字符串是怎么比大小的</h2>
+<div class="card note">
+  <div class="card-t">为什么这一篇标了 *</div>
+  <p>做界面、做字体、做导出图，<b>颜色是天天要碰的东西</b>。
+  而颜色在代码里是用<b>数字</b>表示的 ——
+  不懂这套表示法，就只能靠试，改一次看一次。</p>
+  <p>这一篇把它讲透。<b>不用记，但要懂。</b></p>
+</div>
 
-<p>数字比大小很直观：<code>3 &lt; 5</code>。但字符串呢？
-<code>"apple"</code> 和 <code>"banana"</code> 谁大？</p>
+<h2 id="s1"><span class="n">1</span>颜色在计算机里是什么</h2>
 
-<p>规则叫<b>字典序</b>（也叫词典序），思路和查字典完全一样：</p>
+<p>显示器由无数个<b>发光的小点</b>组成。每个点里有<b>三个小灯</b>：
+<b>红（R</b>ed<b>）、绿（G</b>reen<b>）、蓝（B</b>lue<b>）</b>。</p>
 
 <div class="card key">
-  <div class="card-t">字典序的三条规则</div>
+  <div class="card-t">核心原理</div>
+  <p><b>调这三个灯的亮度，就能混出几乎所有颜色。</b></p>
+  <p>所以「一个颜色」在代码里其实是一组三个数：<b>(红, 绿, 蓝)</b>。</p>
+  <p>这叫 <b>RGB 颜色模型</b>。</p>
+</div>
+
+<table>
+<thead><tr><th style="width:22%">灯的亮度</th><th>混出来</th></tr></thead>
+<tbody>
+<tr><td class="c">全灭 (0,0,0)</td><td><b>黑色</b></td></tr>
+<tr><td class="c">全亮 (255,255,255)</td><td><b>白色</b></td></tr>
+<tr><td class="c">只亮红 (255,0,0)</td><td>纯红</td></tr>
+<tr><td class="c">红+绿 (255,255,0)</td><td><b>黄色</b></td></tr>
+<tr><td class="c">红+蓝 (255,0,255)</td><td>品红（洋红）</td></tr>
+<tr><td class="c">绿+蓝 (0,255,255)</td><td>青色</td></tr>
+<tr><td class="c">三个都是中间值 (128,128,128)</td><td><b>灰色</b></td></tr>
+</tbody>
+</table>
+
+<div class="card tip">
+  <div class="card-t">为什么是「加法」</div>
+  <p>因为屏幕是<b>自己发光</b>的。灯越多越亮 → 全亮是白。</p>
+  <p>而打印机是<b>反射光</b>的，颜料越多越暗 → 全混是黑。
+  所以印刷用 CMY（青品黄）<b>减法</b>模型，和屏幕相反。</p>
+</div>
+
+<h4>为什么最大是 255</h4>
+<p>因为每个灯用一个字节（8 位）存亮度：<b>2⁸ = 256 档</b>，从 0 到 255。</p>
+<pre style="background:#0b1220;border:1px solid #33486b;border-radius:8px;padding:10px 12px;font-family:var(--mono);font-size:12.5px;color:#f8fbff;overflow:auto">0   → 0000 0000  → 灯全灭
+255 → 1111 1111  → 灯最亮
+128 → 1000 0000  → 一半亮度</pre>
+<p>所以一个 RGB 颜色正好占 <b>3 字节</b> —— 这也解释了后面看到的
+「6 位十六进制」为什么刚好够。</p>
+
+<h2 id="s2" class="key-h"><span class="key-mark" title="重点内容">★</span><span class="n">2</span>十六进制 RGB</h2>
+
+<p>CSS 里最常写的颜色格式是 <code>#RRGGBB</code>：</p>
+
+<div class="code-wrap"><div class="bar"><span class="dot r"></span><span class="dot y"></span><span class="dot g"></span><span class="name">十六进制颜色</span><span class="cp">复制</span></div><pre><span class="hl-c">/*  # 红 绿 蓝   每两位一组 */</span>
+   #<span class="hl-n">FF</span><span class="hl-n">00</span><span class="hl-n">00</span>    <span class="hl-c">/* 纯红 */</span>
+   #<span class="hl-n">00</span><span class="hl-n">FF</span><span class="hl-n">00</span>    <span class="hl-c">/* 纯绿 */</span>
+   #<span class="hl-n">00</span><span class="hl-n">00</span><span class="hl-n">FF</span>    <span class="hl-c">/* 纯蓝 */</span>
+   #<span class="hl-n">FF</span><span class="hl-n">FF</span><span class="hl-n">FF</span>    <span class="hl-c">/* 白 */</span>
+   #<span class="hl-n">00</span><span class="hl-n">00</span><span class="hl-n">00</span>    <span class="hl-c">/* 黑 */</span>
+   #<span class="hl-n">1F</span><span class="hl-n">6F</span><span class="hl-n">EB</span>    <span class="hl-c">/* 本文档用的那个蓝 */</span></pre></div>
+
+<div class="card key">
+  <div class="card-t">怎么读 <code>#1F6FEB</code></div>
+  <table style="margin:8px 0 0">
+  <thead><tr><th style="width:16%">分组</th><th style="width:20%">十六进制</th><th>换算成十进制</th></tr></thead>
+  <tbody>
+  <tr><td class="c">1F</td><td>1×16 + 15</td><td><b>31</b> → 红</td></tr>
+  <tr><td class="c">6F</td><td>6×16 + 15</td><td><b>111</b> → 绿</td></tr>
+  <tr><td class="c">EB</td><td>14×16 + 11</td><td><b>235</b> → 蓝</td></tr>
+  </tbody></table>
+  <p style="margin-top:10px">所以 <code>#1F6FEB</code> 就是
+  <code>rgb(31, 111, 235)</code> —— <b>两种写法是同一个颜色</b>。</p>
+</div>
+
+<h4>十六进制速记</h4>
+<table>
+<thead><tr><th style="width:26%">十六进制位</th><th>十进制</th><th style="width:30%">含义</th></tr></thead>
+<tbody>
+<tr><td class="c">0</td><td class="c">0</td><td>全灭</td></tr>
+<tr><td class="c">F</td><td class="c">15</td><td>这一位满</td></tr>
+<tr><td class="c">FF</td><td class="c">255</td><td><b>整个通道满</b></td></tr>
+<tr><td class="c">80</td><td class="c">128</td><td>约一半</td></tr>
+<tr><td class="c">40</td><td class="c">64</td><td>约四分之一</td></tr>
+</tbody>
+</table>
+
+<p><b>十六进制只有 16 个符号</b>：<code>0-9</code> 然后 <code>A=10, B=11, C=12, D=13, E=14, F=15</code>。
+凑不出 16 个数才用字母 —— 这就是「为什么有字母」的全部原因。</p>
+
+<h4>六位可以缩成三位</h4>
+<div class="code-wrap"><div class="bar"><span class="dot r"></span><span class="dot y"></span><span class="dot g"></span><span class="name">缩写规则</span><span class="cp">复制</span></div><pre><span class="hl-c">/* 每一组两位相同 → 可以各留一位 */</span>
+#<span class="hl-n">FF</span><span class="hl-n">00</span><span class="hl-n">00</span>   →   #<span class="hl-n">F</span><span class="hl-n">0</span><span class="hl-n">0</span>       <span class="hl-c">/* 同一个红色 */</span>
+#<span class="hl-n">FFFFFF</span>   →   #<span class="hl-n">FFF</span>       <span class="hl-c">/* 同一个白色 */</span>
+#<span class="hl-n">1F6FEB</span>   →   <span class="hl-c">/* 缩不了：1F 两位不同 */</span></pre></div>
+
+<h2 id="s3"><span class="n">3</span>十进制 RGB 表示法</h2>
+
+<p>不想换算就用十进制写法，更直观：</p>
+
+<div class="code-wrap"><div class="bar"><span class="dot r"></span><span class="dot y"></span><span class="dot g"></span><span class="name">三种常用的等价写法</span><span class="cp">复制</span></div><pre>.a { color: <span class="hl-n">#1F6FEB</span>; }               <span class="hl-c">/* 十六进制（最常用） */</span>
+.b { color: <span class="hl-f">rgb</span>(<span class="hl-n">31</span>, <span class="hl-n">111</span>, <span class="hl-n">235</span>); }    <span class="hl-c">/* 十进制 0~255 */</span>
+.c { color: <span class="hl-f">rgb</span>(<span class="hl-n">12%</span>, <span class="hl-n">44%</span>, <span class="hl-n">92%</span>); }    <span class="hl-c">/* 百分比 */</span></pre></div>
+
+<table>
+<thead><tr><th style="width:30%">写法</th><th>什么时候用</th></tr></thead>
+<tbody>
+<tr><td class="c">#1F6FEB</td><td><b>设计稿上抄来的值</b>，一般都用这个</td></tr>
+<tr><td class="c">rgb(31,111,235)</td><td>想微调某个通道时更好读</td></tr>
+<tr><td class="c">rgb(12%,44%,92%)</td><td>需要按比例算时</td></tr>
+</tbody>
+</table>
+
+<h4>灰色系的写法</h4>
+<p>三个通道相等就是灰。CSS 里有个更短的词 <code>gray</code> 系列，但<b>不够用</b>，
+实际都自己写：</p>
+<div class="code-wrap"><div class="bar"><span class="dot r"></span><span class="dot y"></span><span class="dot g"></span><span class="name">做界面最常用的几个灰</span><span class="cp">复制</span></div><pre><span class="hl-n">#000000</span>   <span class="hl-c">/* 纯黑 —— 正文别用，太刺眼 */</span>
+<span class="hl-n">#1a1f28</span>   <span class="hl-c">/* 近黑，正文色（本文档就用它） */</span>
+<span class="hl-n">#4b5563</span>   <span class="hl-c">/* 次级文字 */</span>
+<span class="hl-n">#8b95a5</span>   <span class="hl-c">/* 辅助文字 / 注释 */</span>
+<span class="hl-n">#ccd5e3</span>   <span class="hl-c">/* 边框 */</span>
+<span class="hl-n">#e3e8f0</span>   <span class="hl-c">/* 浅分隔线 */</span>
+<span class="hl-n">#f7f9fc</span>   <span class="hl-c">/* 浅灰背景 */</span>
+<span class="hl-n">#ffffff</span>   <span class="hl-c">/* 纯白 */</span></pre></div>
+
+<div class="card tip">
+  <div class="card-t">为什么正文不用纯黑</div>
+  <p><code>#000</code> 在白底上对比度过高，长时间看<b>容易累</b>。
+  所以正经的界面正文都用 <code>#1a1f28</code> 这类「近黑」。</p>
+  <p>同理，纯白背景也常调成 <code>#fafbfc</code> 这种「近白」。</p>
+</div>
+
+<h2 id="s4"><span class="n">4</span>HSV / HSL 颜色模型</h2>
+
+<p>RGB 的问题是<b>不直观</b>：「这个蓝再亮一点」在 RGB 里要同时改三个数，还容易改偏色。</p>
+<p>于是有了另一套模型 —— <b>HSV</b>（也叫 HSB）和它的近亲 <b>HSL</b>：</p>
+
+<table>
+<thead><tr><th style="width:14%">字母</th><th style="width:26%">含义</th><th>取值</th></tr></thead>
+<tbody>
+<tr><td class="c">H</td><td><b>Hue 色相</b>：什么颜色</td>
+    <td>0~360 度（色环上的角度）</td></tr>
+<tr><td class="c">S</td><td><b>Saturation 饱和度</b>：多鲜艳</td>
+    <td>0% = 灰，100% = 最鲜艳</td></tr>
+<tr><td class="c">V</td><td><b>Value 明度</b>（HSL 里是 <b>L</b>ightness 亮度）</td>
+    <td>0% = 黑，100% = 最亮</td></tr>
+</tbody>
+</table>
+
+<div class="card key">
+  <div class="card-t">色相环：0~360 度</div>
+  <pre style="background:#0b1220;border:1px solid #33486b;border-radius:8px;padding:10px 12px;font-family:var(--mono);font-size:12.5px;color:#f8fbff;overflow:auto">   0°  红
+  60°  黄
+ 120°  绿
+ 180°  青
+ 240°  蓝
+ 300°  品红
+ 360°  回到红</pre>
+  <p style="margin-top:10px">所以「把红调成绿」就是 <b>H 从 0 改成 120</b> ——
+  一个数的事，不用担心改出偏色。</p>
+</div>
+
+<h4>HSL 在 CSS 里能直接用</h4>
+<div class="code-wrap"><div class="bar"><span class="dot r"></span><span class="dot y"></span><span class="dot g"></span><span class="name">同一个蓝的四种写法</span><span class="cp">复制</span></div><pre><span class="hl-f">hsl</span>(<span class="hl-n">217</span>, <span class="hl-n">83%</span>, <span class="hl-n">52%</span>)      <span class="hl-c">/* ← 本文档那个蓝 */</span>
+<span class="hl-f">rgb</span>(<span class="hl-n">31</span>, <span class="hl-n">111</span>, <span class="hl-n">235</span>)
+<span class="hl-n">#1F6FEB</span>
+
+<span class="hl-c">/* 想调亮一点点：只动 L */</span>
+<span class="hl-f">hsl</span>(<span class="hl-n">217</span>, <span class="hl-n">83%</span>, <span class="hl-n">62%</span>)      <span class="hl-c">/* 同样的蓝，亮一档，色相没变 */</span></pre></div>
+
+<div class="card tip">
+  <div class="card-t">什么时候 HSL 比 RGB 好用</div>
+  <ul>
+    <li><b>做「同色系深浅」</b>：保持 H 和 S，只调 L ——
+      自动得到一组和谐的颜色</li>
+    <li><b>做 hover 效果</b>：<code>hsl(217,83%,52%)</code> →
+      <code>hsl(217,83%,62%)</code>，只改一个数</li>
+    <li><b>做灰阶</b>：S 设 0%，只调 L</li>
+  </ul>
+  <p>反过来，如果颜色是从设计稿抄来的，<b>直接用十六进制</b>，不用换算。</p>
+</div>
+
+<h2 id="s5" class="key-h"><span class="key-mark" title="重点内容">★</span><span class="n">5</span>Alpha 通道（透明度）</h2>
+
+<p>前面三个数定「什么颜色」。再加<b>第四个数</b>就能定「多透明」——
+这叫 <b>Alpha 通道</b>。</p>
+
+<table>
+<thead><tr><th style="width:24%">Alpha 值</th><th>效果</th></tr></thead>
+<tbody>
+<tr><td class="c">1.0 或 100%</td><td><b>完全不透明</b>（默认）</td></tr>
+<tr><td class="c">0.5 或 50%</td><td>半透明，能看到背后</td></tr>
+<tr><td class="c">0.15 或 15%</td><td>很淡，常用于浅色背景</td></tr>
+<tr><td class="c">0 或 0%</td><td><b>完全透明</b>（看不见，但仍占位置）</td></tr>
+</tbody>
+</table>
+
+<div class="code-wrap"><div class="bar"><span class="dot r"></span><span class="dot y"></span><span class="dot g"></span><span class="name">四种写法</span><span class="cp">复制</span></div><pre><span class="hl-c">/* ① 八位十六进制：最后两位是 alpha */</span>
+<span class="hl-n">#1F6FEB80</span>              <span class="hl-c">/* 80 = 128/255 ≈ 50% 透明 */</span>
+
+<span class="hl-c">/* ② rgba，第四个参数 0~1 */</span>
+<span class="hl-f">rgba</span>(<span class="hl-n">31</span>, <span class="hl-n">111</span>, <span class="hl-n">235</span>, <span class="hl-n">0.5</span>)
+
+<span class="hl-c">/* ③ hsla */</span>
+<span class="hl-f">hsla</span>(<span class="hl-n">217</span>, <span class="hl-n">83%</span>, <span class="hl-n">52%</span>, <span class="hl-n">0.5</span>)
+
+<span class="hl-c">/* ④ 现代写法：rgb 里直接给第四个值 */</span>
+<span class="hl-f">rgb</span>(<span class="hl-n">31</span> <span class="hl-n">111</span> <span class="hl-n">235</span> / <span class="hl-n">50%</span>)</pre></div>
+
+<div class="card warn">
+  <div class="card-t">Alpha 在十六进制里也是 0~255</div>
+  <p>最后两位虽是十六进制，但含义同 RGB 通道：
+  <code>00</code> = 全透明，<code>FF</code> = 不透明，<code>80</code> ≈ 一半。</p>
+  <p>所以 <code>#1F6FEB80</code> 里的 <code>80</code> 不是「80%」——
+  它约等于 <b>50%</b>。<b>别想当然。</b></p>
+</div>
+
+<h4>半透明最有用的场景</h4>
+<div class="code-wrap"><div class="bar"><span class="dot r"></span><span class="dot y"></span><span class="dot g"></span><span class="name">常见的三种用法</span><span class="cp">复制</span></div><pre><span class="hl-c">/* ① 浅色背景：一个颜色兼顾白底和深色底 */</span>
+.card { background: <span class="hl-f">rgba</span>(<span class="hl-n">31</span>, <span class="hl-n">111</span>, <span class="hl-n">235</span>, <span class="hl-n">0.08</span>); }
+
+<span class="hl-c">/* ② 遮罩：盖住页面又不完全挡住 */</span>
+.mask { background: <span class="hl-f">rgba</span>(<span class="hl-n">18</span>, <span class="hl-n">26</span>, <span class="hl-n">40</span>, <span class="hl-n">0.42</span>); }
+
+<span class="hl-c">/* ③ 阴影：黑色加透明度，而不是用灰色 */</span>
+box-shadow: 0 2px 8px <span class="hl-f">rgba</span>(<span class="hl-n">20</span>, <span class="hl-n">30</span>, <span class="hl-n">50</span>, <span class="hl-n">0.14</span>);</pre></div>
+
+<p>本文档的提示框、目录抽屉的遮罩、卡片的阴影，
+<b>全都用 rgba 而不是实色</b> —— 这样叠在任何背景上都自然。</p>
+
+<h2 id="s6"><span class="n">6</span>安全色与取色</h2>
+
+<h4>什么是「安全色」</h4>
+<p>「Web 安全色」是<b>早期</b>（256 色显示器时代）的一套约定：
+每个通道只取 <code>00 / 33 / 66 / 99 / CC / FF</code> 六个值，
+共 <b>6×6×6 = 216 种</b>，保证在任何设备上都不抖动。</p>
+
+<div class="code-wrap"><div class="bar"><span class="dot r"></span><span class="dot y"></span><span class="dot g"></span><span class="name">安全色的样子</span><span class="cp">复制</span></div><pre><span class="hl-n">#FF0000</span>   <span class="hl-c">/* ✅ 安全（每通道是 00 或 FF） */</span>
+<span class="hl-n">#336699</span>   <span class="hl-c">/* ✅ 安全（33/66/99 都在那六个数里） */</span>
+<span class="hl-n">#1F6FEB</span>   <span class="hl-c">/* ❌ 不安全（1F/6F/EB 是中间值） */</span></pre></div>
+
+<div class="card tip">
+  <div class="card-t">现在还需要守安全色吗</div>
+  <p><b>不需要了。</b>今天的显示器都是 1600 万色以上，
+  安全色的限制早就没了意义。</p>
+  <p><b>但知道有这回事有好处</b>：看到老代码里的
+  <code>#336699</code>、<code>#CCCCCC</code> 这种「很整齐」的颜色，
+  就知道它来自那个年代。</p>
+</div>
+
+<h4>怎么取到一个颜色</h4>
+<table>
+<thead><tr><th style="width:30%">办法</th><th>说明</th></tr></thead>
+<tbody>
+<tr><td><b>浏览器 F12</b></td>
+    <td>最实用。Elements 面板里点颜色方块 → <b>吸管图标</b> →
+      页面任意位置取色 → 直接给出十六进制</td></tr>
+<tr><td><b>截图工具 / 取色器</b></td>
+    <td>Windows 的「截图工具」、各类取色软件都能读数</td></tr>
+<tr><td><b>设计稿</b></td>
+    <td>Figma / PS 里点一下就能复制颜色值</td></tr>
+</tbody>
+</table>
+
+<div class="card key">
+  <div class="card-t">对比度：比「好看」更重要的事</div>
+  <p>文字和背景的<b>明暗差</b>不够，读者会看不清 ——
+  这是无障碍（accessibility）的硬指标。</p>
+  <table style="margin:8px 0 0">
+  <thead><tr><th style="width:34%">对比度</th><th>评价</th></tr></thead>
+  <tbody>
+  <tr><td class="c">≥ 4.5 : 1</td><td><span class="tag g">合格</span> 正文的最低要求</td></tr>
+  <tr><td class="c">≥ 7 : 1</td><td><span class="tag g">优秀</span> AAA 级</td></tr>
+  <tr><td class="c">&lt; 3 : 1</td><td><span class="tag r">不合格</span> 大标题也勉强</td></tr>
+  </tbody></table>
+  <p style="margin-top:10px"><b>本系列文档的代码区对比度做到了 18:1 以上</b> ——
+  这不是「好看」，是「看得清」。</p>
+</div>
+
+<h2 id="s7"><span class="n">7</span>颜色拾取器</h2>
+
+<p>下面这个拾取器可以亲手拖一拖。<b>拖动任意一个滑块，看四个数值怎么一起变。</b></p>
+
+<p>几个建议试的动作：</p>
+<ul>
+  <li>把 <b>R</b> 拉到 255、G 和 B 都拉到 0 →
+    看十六进制变成 <code>#FF0000</code></li>
+  <li>把 <b>透明度 A</b> 慢慢拉小 →
+    看 <code>#RRGGBB</code> 后面多出两位、色块变透明</li>
+  <li>把 R、G、B 调成同一个数 →
+    得到灰色，同时 <b>HSL 里的 S 变成 0%</b></li>
+  <li>随便选一个颜色，然后<b>只改 L（亮度）</b> →
+    色相不变，只变深浅 —— 这就是 HSL 比 RGB 好用的地方</li>
+  <li>点下面的色板快速跳到常用色</li>
+</ul>
+
+<p><b>拾取器在本页最下方</b>（速查表之后）。</p>
+
+<div class="card key">
+  <div class="card-t">从拾取器里能看出来的三件事</div>
   <ol>
-    <li><b>从头逐位比</b>，第一个不同的字符决定大小；</li>
-    <li><b>如果一个是另一个的前缀</b>，短的更小
-      （<code>"ab"</code> &lt; <code>"abc"</code>，就像字典里「ab」在「abc」前面）；</li>
-    <li>全部相同就是相等。</li>
+    <li><b>十六进制和 rgb() 是同一个东西的两种写法</b> ——
+      拖滑块时两组数字同步变化。</li>
+    <li><b>Alpha 加进去就是第四个数</b>；
+      写成十六进制时占最后两位，<code>80</code> ≈ 50%。</li>
+    <li><b>HSL 的三个数各管一件事</b>（色相 / 饱和 / 亮度），
+      而 RGB 的三个数各管一盏灯 —— 前者更适合「调」，后者更适合「抄」。</li>
   </ol>
 </div>
 
-<p>用代码验证一下最直观 —— C++ 的 <code>&lt;</code> 对 <code>std::string</code>
-用的就是字典序：</p>
+<h2 id="s8"><span class="n">8</span>一页速查</h2>
 
-<div class="code-wrap">
-  <div class="bar"><span class="dot r"></span><span class="dot y"></span><span class="dot g"></span>
-    <span class="name">lex1.cpp —— 字典序长什么样</span><span class="cp">复制</span></div>
-<pre><span class="hl-p">#include</span> <span class="hl-s">&lt;iostream&gt;</span>
-<span class="hl-p">#include</span> <span class="hl-s">&lt;string&gt;</span>
-<span class="hl-p">#include</span> <span class="hl-s">&lt;vector&gt;</span>
-<span class="hl-p">#include</span> <span class="hl-s">&lt;algorithm&gt;</span>
-
-<span class="hl-k">int</span> main() {
-    std::vector&lt;std::string&gt; v{<span class="hl-s">"banana"</span>, <span class="hl-s">"apple"</span>, <span class="hl-s">"app"</span>,
-                               <span class="hl-s">"Apple"</span>, <span class="hl-s">"apples"</span>, <span class="hl-s">"App"</span>};
-    std::sort(v.begin(), v.end());
-    <span class="hl-k">for</span> (<span class="hl-k">const</span> <span class="hl-k">auto</span>&amp; s : v) std::cout &lt;&lt; s &lt;&lt; <span class="hl-s">'\n'</span>;
-}</pre>
-</div>
-<div class="out-wrap">
-  <div class="cap">输出</div>
-<pre>App
-Apple
-app
-apple
-apples
-banana</pre>
-</div>
-
-<p>注意结果里 <b>大写全部排在小写前面</b> ——
-<code>App</code>、<code>Apple</code> 跑到了 <code>app</code> 前面。
-这不是 bug，原因在下一节。</p>
-
-<h2 id="s2"><span class="n">2</span>关键：比的是字符序，不是「字典」</h2>
-
-<p>上一节说「和查字典一样」，但真实的字典里
-<code>Apple</code> 和 <code>app</code> 是<b>混在一起</b>的，不会先把大写挑出来。
-差别就在这里：</p>
-
-<div class="card warn">
-  <div class="card-t">「字典序」这个说法其实不完整</div>
-  <p>字典序只规定了<b>怎么逐位比</b>，没规定<b>字符之间谁大谁小</b>。
-  后者叫<b>字符序</b>（collation），是可以换的：</p>
-  <table>
-  <thead><tr><th style="width:30%">字符序</th><th>依据</th><th>结果</th></tr></thead>
-  <tbody>
-  <tr><td class="c">码位序</td><td>Unicode 码点数值</td>
-      <td><code>Z</code>(U+005A) &lt; <code>a</code>(U+0061)，大写全在前</td></tr>
-  <tr><td class="c">字节序</td><td>UTF-8 编码后的字节</td>
-      <td>UTF-8 下与码位序一致（这是它的设计优点）</td></tr>
-  <tr><td class="c">区域整理序</td><td>各语言的词典习惯</td>
-      <td>瑞典语 <code>ö</code> 排在 <code>z</code> <b>之后</b></td></tr>
-  </tbody>
-  </table>
-  <p>所以<b>「按字典序排」这句话必须问清是哪种字符序</b>，
-  否则换个语言结果就变了。</p>
-</div>
-
-<p><code>std::string</code> 用的是最朴素的<b>字节序</b>（等价于码位序），
-所以大写字母在前。它<b>不认语言</b> —— 这对中文是灾难性的，见第 5 节。</p>
-
-<h2 id="s3"><span class="n">3</span>自然序：给「人类」看的排序</h2>
-
-<p>码位序还有一个反直觉的地方，跟大小写无关：</p>
-
-<div class="code-wrap">
-  <div class="bar"><span class="dot r"></span><span class="dot y"></span><span class="dot g"></span>
-    <span class="name">文件名排序的经典问题</span><span class="cp">复制</span></div>
-<pre>输入:  file1.txt   file2.txt   file10.txt   file20.txt
-
-字典序（逐字符比）:  file1.txt   file10.txt   file2.txt   file20.txt
-                                  ↑ 10 排到了 2 前面，因为 '1' &lt; '2'
-
-自然序（数字当数值）: file1.txt   file2.txt   file10.txt   file20.txt
-                                  ↑ 符合人的直觉 ✓</pre>
-</div>
+<table>
+<thead><tr><th style="width:32%">想做的事</th><th>写法</th></tr></thead>
+<tbody>
+<tr><td>十六进制</td><td class="c">#1F6FEB</td></tr>
+<tr><td>三位缩写（每通道两位相同时）</td><td class="c">#F00　#FFF</td></tr>
+<tr><td>十进制 RGB</td><td class="c">rgb(31, 111, 235)</td></tr>
+<tr><td>百分比</td><td class="c">rgb(12%, 44%, 92%)</td></tr>
+<tr><td>色相 / 饱和 / 亮度</td><td class="c">hsl(217, 83%, 52%)</td></tr>
+<tr><td>带透明度</td><td class="c">rgba(31,111,235,0.5)　hsla(…)　#1F6FEB80</td></tr>
+<tr><td>黑色 / 白色</td><td class="c">#000　#FFF</td></tr>
+<tr><td>近黑正文色</td><td class="c">#1a1f28</td></tr>
+<tr><td>浅灰背景</td><td class="c">#f7f9fc</td></tr>
+<tr><td>边框灰</td><td class="c">#ccd5e3</td></tr>
+<tr><td>调亮同一色系</td><td class="c">hsl 里只加 L</td></tr>
+<tr><td>取色</td><td>F12 → 颜色方块 → 吸管</td></tr>
+<tr><td>检查对比度</td><td>尽量 ≥ 4.5 : 1</td></tr>
+</tbody>
+</table>
 
 <div class="card key">
-  <div class="card-t">自然序 = 字典序 + 「数字段按数值比」</div>
-  <p>规则很简单：<b>遇到连续的数字串，不逐字符比，而是当成一个整数比。</b></p>
-  <p>所以：</p>
-  <table>
-  <thead><tr><th style="width:40%">比较</th><th>字典序</th><th>自然序</th></tr></thead>
-  <tbody>
-  <tr><td class="c">"file9" vs "file10"</td><td><code>file10</code> 在前</td><td><code>file9</code> 在前 ✓</td></tr>
-  <tr><td class="c">"v1.9" vs "v1.10"</td><td><code>v1.10</code> 在前</td><td><code>v1.9</code> 在前 ✓</td></tr>
-  <tr><td class="c">"a2" vs "a10"</td><td><code>a10</code> 在前</td><td><code>a2</code> 在前 ✓</td></tr>
-  </tbody>
-  </table>
-  <p>文件管理器、<code>ls -v</code>、<code>sort -V</code>、Windows 资源管理器
-  用的都是自然序 —— 因为它符合人的直觉。</p>
+  <div class="card-t">这一篇要记住的六句话</div>
+  <ol>
+    <li><b>颜色 = 三个灯的亮度</b>：红、绿、蓝，各 0~255。</li>
+    <li><b>十六进制两位一组</b>：<code>#RRGGBB</code>，
+      <code>FF</code>=255、<code>00</code>=0；只有 16 个符号，所以有 A~F。</li>
+    <li><b>每通道两位相同可缩写</b>：<code>#FF0000</code> → <code>#F00</code>。</li>
+    <li><b>HSV / HSL 更直观</b>：H 是颜色（0~360 度），S 是鲜艳度，L/V 是明暗
+      —— <b>做同色系深浅时用它</b>。</li>
+    <li><b>Alpha 是第四个值</b>：<code>rgba(…, 0.5)</code>；
+      写在十六进制里是最后两位，<code>80</code> ≈ 50% 不是 80%。</li>
+    <li><b>安全色已经过时</b>，但<b>对比度永远要管</b> —— 正文至少 4.5 : 1。</li>
+  </ol>
 </div>
 
-<div class="card note">
-  <div class="card-t">自然序不是「一个」严格的顺序</div>
-  <p>朴素实现会遇到说不清的边界：</p>
-  <ul>
-    <li><code>"a1"</code> 和 <code>"a01"</code> —— 数值一样大，算相等吗？</li>
-    <li><code>"1.2"</code> 和 <code>"1.10"</code> —— 是版本号，还是两个数字段？</li>
-    <li><code>"a"</code> 和 <code>"a0"</code> —— <code>"a"</code> 有数字段吗？</li>
-  </ul>
-  <p>所以正规实现必须补规则（比如「数值相同时前导零少的优先」），
-  才能保证排序结果稳定、可预测。
-  <b>这也是自然序没有进 C++ 标准库的原因之一</b> —— 它不够「标准」。</p>
-</div>
-
-<h2 id="s4"><span class="n">4</span>中文排序：为什么默认结果是错的</h2>
-
-<p>把 <code>std::sort</code> 直接用在中文上，结果会让人莫名其妙：</p>
-
-<div class="code-wrap">
-  <div class="bar"><span class="dot r"></span><span class="dot y"></span><span class="dot g"></span>
-    <span class="name">zh1.cpp —— 按字节序排中文</span><span class="cp">复制</span></div>
-<pre><span class="hl-p">#include</span> <span class="hl-s">&lt;iostream&gt;</span>
-<span class="hl-p">#include</span> <span class="hl-s">&lt;string&gt;</span>
-<span class="hl-p">#include</span> <span class="hl-s">&lt;vector&gt;</span>
-<span class="hl-p">#include</span> <span class="hl-s">&lt;algorithm&gt;</span>
-
-<span class="hl-k">int</span> main() {
-    std::vector&lt;std::string&gt; v{<span class="hl-s">"张三"</span>, <span class="hl-s">"李四"</span>, <span class="hl-s">"王五"</span>, <span class="hl-s">"赵六"</span>};
-    std::sort(v.begin(), v.end());
-    <span class="hl-k">for</span> (<span class="hl-k">const</span> <span class="hl-k">auto</span>&amp; s : v) std::cout &lt;&lt; s &lt;&lt; <span class="hl-s">'\n'</span>;
-}</pre>
-</div>
-<div class="out-wrap">
-  <div class="cap">输出（按 UTF-8 字节序）</div>
-<pre>张三
-李四
-王五
-赵六</pre>
-</div>
-
-<p>看着好像没问题？但这只是巧合。它的真实依据是<b>这几个字的 Unicode 码位</b>：</p>
-
-<div class="code-wrap">
-  <div class="bar"><span class="dot r"></span><span class="dot y"></span><span class="dot g"></span>
-    <span class="name">上面结果的真正原因</span><span class="cp">复制</span></div>
-<pre>张  U+5F20
-李  U+674E
-王  U+738B
-赵  U+8D75
-        ↑ 恰好是按码位递增，所以看着「对」</pre>
-</div>
-
-<p>换一批字就露馅了：</p>
-
-<div class="code-wrap">
-  <div class="bar"><span class="dot r"></span><span class="dot y"></span><span class="dot g"></span>
-    <span class="name">再试一批</span><span class="cp">复制</span></div>
-<pre>输入:  陈(Chen)  安(An)  周(Zhou)  白(Bai)
-
-码位序结果:  安  白  周  陈      ← 按码位
-拼音序应该是: 安(An)  白(Bai)  陈(Chen)  周(Zhou)
-                    ↑ 周 和 陈 的位置反了</pre>
-</div>
-
-<div class="card warn">
-  <div class="card-t">结论：<code>std::sort</code> 排中文 = 按码位排 = 没有意义</div>
-  <p>中文世界里「排好序」通常指下面几种之一：</p>
-  <table>
-  <thead><tr><th style="width:30%">排法</th><th>依据</th><th>用途</th></tr></thead>
-  <tbody>
-  <tr><td class="c">拼音序</td><td>读音的拉丁字母</td><td>通讯录、名单（最常用）</td></tr>
-  <tr><td class="c">笔画序</td><td>笔画数，少的在前</td><td>字典、索引</td></tr>
-  <tr><td class="c">部首序</td><td>部首 + 笔画</td><td>字典</td></tr>
-  <tr><td class="c">码位序</td><td>Unicode 码点</td><td>只适合做「稳定、可复现」的内部排序</td></tr>
-  </tbody>
-  </table>
-  <p><b>码位序不属于任何一种「中文排序」</b> —— 它只是碰巧有时候看着对。</p>
-</div>
-
-<h2 id="s5"><span class="n">5</span>QCollator：让 Qt 帮你按语言排</h2>
-
-<p>要按拼音排，你得知道每个字的读音、变调规则、多音字……
-自己写不现实。正确做法是用现成的<b>整理（collation）</b>实现，
-Qt 里就是 <code>QCollator</code>。</p>
-
-<div class="card key">
-  <div class="card-t">QCollator 是什么</div>
-  <p><code>QCollator</code> 是 Qt 对<b>区域感知字符串比较</b>的封装 ——
-  底层是 ICU（Unicode 的整理算法实现）。
-  你告诉它「按中文排」，它就知道拼音、笔画该按什么顺序。</p>
-  <p>三个常用开关：</p>
-  <ul>
-    <li><code>setLocale()</code> —— 按哪个语言/地区的习惯排；</li>
-    <li><code>setCaseSensitivity()</code> —— 大小写敏不敏感；</li>
-    <li><code>setNumericMode(true)</code> —— <b>打开就是自然序</b>（数字按数值比）。</li>
-  </ul>
-</div>
-
-<p>先看它怎么用：</p>
-
-<div class="code-wrap">
-  <div class="bar"><span class="dot r"></span><span class="dot y"></span><span class="dot g"></span>
-    <span class="name">qcollator1.cpp —— 按中文拼音排序</span><span class="cp">复制</span></div>
-<pre><span class="hl-p">#include</span> <span class="hl-s">&lt;QCoreApplication&gt;</span>
-<span class="hl-p">#include</span> <span class="hl-s">&lt;QCollator&gt;</span>
-<span class="hl-p">#include</span> <span class="hl-s">&lt;QLocale&gt;</span>
-<span class="hl-p">#include</span> <span class="hl-s">&lt;QStringList&gt;</span>
-<span class="hl-p">#include</span> <span class="hl-s">&lt;QDebug&gt;</span>
-<span class="hl-p">#include</span> <span class="hl-s">&lt;algorithm&gt;</span>
-
-<span class="hl-k">int</span> main(<span class="hl-k">int</span> argc, <span class="hl-k">char</span>** argv) {
-    QCoreApplication app(argc, argv);
-
-    QStringList names{<span class="hl-s">u"陈明"_s</span>, <span class="hl-s">u"安然"_s</span>,
-                      <span class="hl-s">u"周涛"_s</span>, <span class="hl-s">u"白露"_s</span>};
-
-    QCollator coll;
-    coll.setLocale(QLocale(QLocale::Chinese, QLocale::China));   <span class="hl-c">// 按中文习惯</span>
-    coll.setCaseSensitivity(Qt::CaseInsensitive);
-
-    std::sort(names.begin(), names.end(),
-              [&amp;coll](<span class="hl-k">const</span> QString&amp; a, <span class="hl-k">const</span> QString&amp; b) {
-                  <span class="hl-k">return</span> coll.compare(a, b) &lt; 0;              <span class="hl-c">// 用 collator 当比较器</span>
-              });
-
-    <span class="hl-k">for</span> (<span class="hl-k">const</span> QString&amp; s : names) qDebug() &lt;&lt; s;
-}</pre>
-</div>
-<div class="out-wrap">
-  <div class="cap">输出（按拼音：An Bai Chen Zhou）</div>
-<pre>"安然"
-"白露"
-"陈明"
-"周涛"</pre>
-</div>
-
-<div class="card tip">
-  <div class="card-t">关键写法：<code>coll.compare(a, b) &lt; 0</code></div>
-  <p><code>QCollator::compare()</code> 返回负数 / 0 / 正数，
-  含义和 <code>strcmp</code> 一样（小于 / 等于 / 大于）。
-  把它包成 <code>&lt; 0</code> 就能直接喂给 <code>std::sort</code> 的第三个参数 ——
-  <b>这是把「语言排序」接进「通用算法」的标准手法。</b></p>
-</div>
-
-<h2 id="s6"><span class="n">6</span>用 QCollator 做自然序</h2>
-
-<p>前面说过自然序是「数字按数值比」。<code>QCollator</code> 只要开一个开关就有了
-—— 这就是 <code>setNumericMode</code>：</p>
-
-<div class="code-wrap">
-  <div class="bar"><span class="dot r"></span><span class="dot y"></span><span class="dot g"></span>
-    <span class="name">qcollator2.cpp —— 自然序 / 字典序对比</span><span class="cp">复制</span></div>
-<pre><span class="hl-p">#include</span> <span class="hl-s">&lt;QCoreApplication&gt;</span>
-<span class="hl-p">#include</span> <span class="hl-s">&lt;QCollator&gt;</span>
-<span class="hl-p">#include</span> <span class="hl-s">&lt;QStringList&gt;</span>
-<span class="hl-p">#include</span> <span class="hl-s">&lt;QDebug&gt;</span>
-<span class="hl-p">#include</span> <span class="hl-s">&lt;algorithm&gt;</span>
-
-<span class="hl-k">static</span> QStringList sorted(QStringList v, <span class="hl-k">bool</span> numeric) {
-    QCollator c;
-    c.setLocale(QLocale::system());
-    c.setNumericMode(numeric);        <span class="hl-c">// ← 只有这一行之差</span>
-    std::sort(v.begin(), v.end(),
-              [&amp;c](<span class="hl-k">const</span> QString&amp; a, <span class="hl-k">const</span> QString&amp; b) {
-                  <span class="hl-k">return</span> c.compare(a, b) &lt; 0;
-              });
-    <span class="hl-k">return</span> v;
-}
-
-<span class="hl-k">int</span> main(<span class="hl-k">int</span> argc, <span class="hl-k">char</span>** argv) {
-    QCoreApplication app(argc, argv);
-    QStringList files{<span class="hl-s">"file10.txt"_s</span>, <span class="hl-s">"file2.txt"_s</span>,
-                      <span class="hl-s">"file1.txt"_s</span>,  <span class="hl-s">"file20.txt"_s</span>};
-
-    qDebug() &lt;&lt; <span class="hl-s">"字典序:"</span> &lt;&lt; sorted(files, <span class="hl-k">false</span>);
-    qDebug() &lt;&lt; <span class="hl-s">"自然序:"</span> &lt;&lt; sorted(files, <span class="hl-k">true</span>);
-}</pre>
-</div>
-<div class="out-wrap">
-  <div class="cap">输出</div>
-<pre>字典序: ("file1.txt", "file10.txt", "file2.txt", "file20.txt")
-自然序: ("file1.txt", "file2.txt", "file10.txt", "file20.txt")</pre>
-</div>
-
-<p><b>只差一个 <code>setNumericMode(true)</code></b>，
-就从「10 排在 2 前面」变成符合直觉的顺序。
-这是 Qt 里实现自然序最省事的办法 —— 不用自己写数字段扫描。</p>
-
-<h2 id="s7"><span class="n">7</span>一个真实场景：文件列表</h2>
-
-<p>把前面的东西拼起来。这是「按文件名列出目录」的实际代码 ——
-同时用到<b>自然序</b>（数字按数值）和<b>区域整理</b>（中文按拼音）：</p>
-
-<div class="code-wrap">
-  <div class="bar"><span class="dot r"></span><span class="dot y"></span><span class="dot g"></span>
-    <span class="name">filelist.cpp —— 文件列表排序</span><span class="cp">复制</span></div>
-<pre><span class="hl-p">#include</span> <span class="hl-s">&lt;QCoreApplication&gt;</span>
-<span class="hl-p">#include</span> <span class="hl-s">&lt;QDir&gt;</span>
-<span class="hl-p">#include</span> <span class="hl-s">&lt;QCollator&gt;</span>
-<span class="hl-p">#include</span> <span class="hl-s">&lt;QFileInfo&gt;</span>
-<span class="hl-p">#include</span> <span class="hl-s">&lt;QDebug&gt;</span>
-<span class="hl-p">#include</span> <span class="hl-s">&lt;algorithm&gt;</span>
-
-<span class="hl-c">// ① 排序规则集中在一处，便于以后调整</span>
-<span class="hl-k">static</span> QCollator makeCollator() {
-    QCollator c;
-    c.setLocale(QLocale::system());   <span class="hl-c">// 跟随系统语言（中文系统 → 拼音序）</span>
-    c.setCaseSensitivity(Qt::CaseInsensitive);
-    c.setNumericMode(<span class="hl-k">true</span>);            <span class="hl-c">// 自然序：file2 在 file10 前</span>
-    <span class="hl-k">return</span> c;
-}
-
-<span class="hl-k">int</span> main(<span class="hl-k">int</span> argc, <span class="hl-k">char</span>** argv) {
-    QCoreApplication app(argc, argv);
-
-    <span class="hl-c">// ② 只列文件名，不要路径</span>
-    QDir dir(QStringLiteral(<span class="hl-s">"D:/Path/To/UME"</span>));
-    QFileInfoList list = dir.entryInfoList(
-        QDir::Files | QDir::Dirs | QDir::NoDotAndDotDot,
-        QDir::NoSort);                <span class="hl-c">// ③ 关键：不让 QDir 先排一遍</span>
-
-    QCollator coll = makeCollator();
-    std::sort(list.begin(), list.end(),
-              [&amp;coll](<span class="hl-k">const</span> QFileInfo&amp; a, <span class="hl-k">const</span> QFileInfo&amp; b) {
-                  <span class="hl-c">// ④ 先按「目录在前」分组，同组内再按名字</span>
-                  <span class="hl-k">if</span> (a.isDir() != b.isDir()) <span class="hl-k">return</span> a.isDir();
-                  <span class="hl-k">return</span> coll.compare(a.fileName(), b.fileName()) &lt; 0;
-              });
-
-    <span class="hl-k">for</span> (<span class="hl-k">const</span> QFileInfo&amp; fi : list) {
-        qDebug().noquote() &lt;&lt; (fi.isDir() ? <span class="hl-s">"[D] "</span> : <span class="hl-s">"[F] "</span>) &lt;&lt; fi.fileName();
-    }
-}</pre>
-</div>
-<div class="out-wrap">
-  <div class="cap">输出示例（目录在前，文件按自然序）</div>
-<pre>[D] assets
-[D] src
-[F] readme.md
-[F] step2.txt
-[F] step10.txt
-[F] 说明.txt</pre>
-</div>
-
-<div class="card note">
-  <div class="card-t">④ 那个「先分目录再比名字」的写法值得记住</div>
-  <p>这是多关键字排序的常见形态：</p>
-  <div class="code-wrap">
-    <div class="bar"><span class="dot r"></span><span class="dot y"></span><span class="dot g"></span>
-      <span class="name">结构</span><span class="cp">复制</span></div>
-  <pre><span class="hl-k">if</span> (第一关键字不同) <span class="hl-k">return</span> 第一关键字比较;
-<span class="hl-k">if</span> (第二关键字不同) <span class="hl-k">return</span> 第二关键字比较;
-<span class="hl-k">return</span> 第三关键字比较;</pre>
+<div class="picker" id="picker">
+  <div class="pk-top">
+    <div class="pk-swatch" id="pkSwatch"><span id="pkSample">示例文字 Sample</span></div>
+    <div class="pk-out">
+      <div class="pk-row pk-hex"><b>十六进制</b><code id="pkHex">#1F6FEB</code>
+        <span class="cp2" data-cp="pkHex">复制</span></div>
+      <div class="pk-row"><b>十进制 RGB</b><code id="pkRgb">rgb(31, 111, 235)</code>
+        <span class="cp2" data-cp="pkRgb">复制</span></div>
+      <div class="pk-row"><b>HSL / HSV</b><code id="pkHsl">hsl(217, 83%, 52%)</code>
+        <span class="cp2" data-cp="pkHsl">复制</span></div>
+      <div class="pk-row"><b>含 Alpha</b><code id="pkRgba">#1f6febff</code>
+        <span class="cp2" data-cp="pkRgba">复制</span></div>
+    </div>
   </div>
-  <p>写成「一层层往下退」的形式，既可以给 <code>std::sort</code> 用
-  （注意：比较函数必须是<b>严格弱序</b>，别写出 <code>&lt;=</code>），
-  也比串成一长串三元表达式好读得多。</p>
-</div>
-
-<h2 id="s8"><span class="n">8</span>常见错误</h2>
-
-<table>
-<thead><tr><th style="width:40%">写法</th><th>问题</th></tr></thead>
-<tbody>
-<tr><td class="c"><code>QString::operator&lt;</code> 排中文</td>
-    <td>那是码位序，不是拼音序 —— 要用 <code>QCollator</code></td></tr>
-<tr><td class="c"><code>coll.compare(a,b)</code> 直接当 <code>bool</code></td>
-    <td>返回的是负数/0/正数，必须写 <code>&lt; 0</code></td></tr>
-<tr><td class="c">比较器里写 <code>&lt;=</code></td>
-    <td>不满足严格弱序，<code>std::sort</code> 可能越界崩溃</td></tr>
-<tr><td class="c">每次比较都新建 <code>QCollator</code></td>
-    <td>构造有开销（要载入整理规则），应在循环外建一次</td></tr>
-<tr><td class="c">用 <code>QLocale()</code> 而不是 <code>QLocale::system()</code></td>
-    <td><code>QLocale()</code> 是「C 语言环境」，等于没设语言</td></tr>
-<tr><td class="c">忘了 <code>QDir::NoSort</code></td>
-    <td>QDir 会先按自己的规则排一遍，你的排序是白做的（结果倒是对的，只是多一次无用功）</td></tr>
-<tr><td class="c">分区大小写敏感时开 <code>setNumericMode</code></td>
-    <td>没问题，两者互不影响 —— 但要注意它只影响<b>数字串</b></td></tr>
-</tbody>
-</table>
-
-<div class="card warn">
-  <div class="card-t">注意：<code>std::sort</code> 不稳定</div>
-  <p>如果两条记录<b>比较结果相等</b>，<code>std::sort</code> 不保证保持它们原来的次序。
-  要稳定就换 <code>std::stable_sort</code>（R02 讲过）。
-  对「按名字排同名文件」这种场景，稳定性是有意义的。</p>
-</div>
-
-<h2 id="s9"><span class="n">9</span>一页速查</h2>
-
-<table>
-<thead><tr><th style="width:22%">概念</th><th style="width:26%">一句话</th><th>例子</th></tr></thead>
-<tbody>
-<tr><td>字典序</td><td>逐位比，第一个不同者定大小</td><td><code>"ab" &lt; "abc"</code></td></tr>
-<tr><td>字符序</td><td>决定「哪个字符更小」</td><td>码位序 / 区域整理序</td></tr>
-<tr><td>自然序</td><td>数字段按数值比</td><td><code>file2</code> 在 <code>file10</code> 前</td></tr>
-<tr><td>拼音序</td><td>中文按读音排</td><td>安 → 白 → 陈 → 周</td></tr>
-<tr><td><code>QCollator</code></td><td>Qt 的区域感知比较器</td><td>底层是 ICU 的整理算法</td></tr>
-<tr><td><code>setNumericMode(true)</code></td><td>打开就是自然序</td><td>一行实现 <code>file2 &lt; file10</code></td></tr>
-<tr><td><code>setLocale()</code></td><td>按哪个语言排</td><td><code>QLocale::system()</code> 跟随系统</td></tr>
-</tbody>
-</table>
-
-<div class="code-wrap">
-  <div class="bar"><span class="dot r"></span><span class="dot y"></span><span class="dot g"></span>
-    <span class="name">照抄这一段就能用</span><span class="cp">复制</span></div>
-<pre><span class="hl-p">#include</span> <span class="hl-s">&lt;QCollator&gt;</span>
-<span class="hl-p">#include</span> <span class="hl-s">&lt;algorithm&gt;</span>
-
-<span class="hl-c">// 中文按拼音 + 数字按数值 —— 大多数中文项目的默认选择</span>
-QCollator coll;
-coll.setLocale(QLocale::system());
-coll.setCaseSensitivity(Qt::CaseInsensitive);
-coll.setNumericMode(<span class="hl-k">true</span>);
-
-std::sort(v.begin(), v.end(),
-          [&amp;coll](<span class="hl-k">const</span> QString&amp; a, <span class="hl-k">const</span> QString&amp; b) {
-              <span class="hl-k">return</span> coll.compare(a, b) &lt; 0;      <span class="hl-c">// 别忘了 &lt; 0</span>
-          });</pre>
-</div>
-
-<div class="mnemonic">
-  <b>一句话记住区别：</b>
-  <b>字典序</b>是「一个字符一个字符比」；
-  <b>自然序</b>是「数字当成数字比」；
-  <b>区域整理序</b>是「按某个语言的词典习惯比」。
-  C++ 的 <code>std::string</code> 只给你第一种，而且是最粗糙的字节序 ——
-  <b>碰到中文或带数字的名字，就该换 <code>QCollator</code> 了。</b>
+  <div class="pk-ctl">
+    <div class="pk-sl"><label>红 R</label>
+      <input type="range" id="pkR" min="0" max="255" value="31"><span class="val" id="pkRv">31</span></div>
+    <div class="pk-sl"><label>绿 G</label>
+      <input type="range" id="pkG" min="0" max="255" value="111"><span class="val" id="pkGv">111</span></div>
+    <div class="pk-sl"><label>蓝 B</label>
+      <input type="range" id="pkB" min="0" max="255" value="235"><span class="val" id="pkBv">235</span></div>
+    <div class="pk-sl"><label>透明度 A</label>
+      <input type="range" id="pkA" min="0" max="100" value="100"><span class="val" id="pkAv">100%</span></div>
+  </div>
+  <div class="pk-sw" id="pkPresets"></div>
+  <div class="pk-note">拖动滑块，看四个数值怎么联动。
+    <b>Alpha 写成两位十六进制时 <code>80</code> ≈ 50%</b>，不是 80%。</div>
 </div>
 
 <!-- NAV-AUTO -->
@@ -478,8 +412,9 @@ std::sort(v.begin(), v.end(),
 </div>
 <!-- /NAV-AUTO -->
 <footer>
-UME 项目组内部教程 · R03《字典序、自然序与 QCollator》<br>
-文中所有输出与报错，均使用 g++ 13.1.0（<code>-std=c++17</code>）与 Qt 6.5 实际编译运行核对（编译器指纹：<code>GCC 13.1.0</code> · MinGW-w64 x86_64-posix-seh；验证程序与产物见 <code>tools/_c_check/</code>）；代码示例以 <b>Consolas</b> 等宽字体呈现。
+UME 项目组内部教程 · R03《十六进制颜色模型、HSV 与 Alpha》<br>
+文中所有输出与报错，均使用 g++ 13.1.0（<code>-std=c++17</code>）实际编译运行核对；
+代码示例以 <b>Consolas</b> 等宽字体呈现。
 </footer>
 </main>
 </div>
@@ -540,7 +475,6 @@ UME 项目组内部教程 · R03《字典序、自然序与 QCollator》<br>
   btn.addEventListener('click', function(){
     setOpen(!toc.classList.contains('open'));
   });
-  /* 点目录里的链接后自动收起；点遮罩（#toc 之外的区域）也收起 */
   toc.addEventListener('click', function(e){
     if (e.target.closest('a')) setOpen(false);
   });
@@ -552,12 +486,12 @@ UME 项目组内部教程 · R03《字典序、自然序与 QCollator》<br>
   document.addEventListener('keydown', function(e){
     if (e.key === 'Escape') setOpen(false);
   });
-  /* 窄屏进入页面时默认收起，宽屏则清掉状态 */
   function sync(){ if (window.innerWidth > 980) setOpen(false); }
   window.addEventListener('resize', sync);
   sync();
 })();
 </script>
+<script src="assets/r03-picker.js" defer></script>
 <script src="assets/series-common.js"></script>
 </body>
 </html>

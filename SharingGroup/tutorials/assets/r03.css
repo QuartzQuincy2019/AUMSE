@@ -1,13 +1,13 @@
 /* ---------- R 系列主色 ---------- */:root{
-  --r-main:#b5304f;
-  --r-deep:#7d1f36;
-  --r-bright:#e06287;
-  --r-pale:#f4a0b8;
-  --r-soft-strong:#e06287;
-  --r-chiplight:color-mix(in srgb, #b5304f 12%, #fff);
+  --r-main:#d1435b;
+  --r-deep:#a02b40;
+  --r-bright:#ef7288;
+  --r-pale:#f7a8b6;
+  --r-soft-strong:#ef7288;
+  --r-chiplight:color-mix(in srgb, #d1435b 12%, #fff);
   /* 强调色改用红：.card.key 的标题、行内 .k、.tag.v */
-  --violet:#7d1f36;
-  --violet-soft:color-mix(in srgb, #b5304f 12%, #fff);
+  --violet:#a02b40;
+  --violet-soft:color-mix(in srgb, #d1435b 12%, #fff);
 }/* =====================================================================
    表面变量（亮色）
    ---------------------------------------------------------------------
@@ -234,3 +234,38 @@
   padding:10px 12px;border:1px solid var(--line-2);border-radius:10px;background:var(--sfc)}.bars .b{flex:1;background:var(--r-main);border-radius:3px 3px 0 0;
   display:flex;align-items:flex-start;justify-content:center;
   color:#fff;font:700 11px/1.4 var(--mono);padding-top:3px;transition:height .25s}.bars .b.on{background:var(--r-deep)}.bars .b.done{background:var(--r-soft-strong)}/* 比较次数统计表 */.stat{margin:16px 0;border:1px solid var(--line-2);border-radius:11px;overflow:hidden}.stat table{margin:0;width:100%;border-collapse:collapse}.stat th,.stat td{padding:8px 12px;font-size:13.5px;border-bottom:1px solid var(--line-2)}.stat th{background:var(--r-chiplight);font-weight:700;color:var(--r-deep)}.stat tr:last-child td{border-bottom:0}.stat td.num{font-family:var(--mono);text-align:right}
+
+/* =====================================================================
+   R04 专有：颜色拾取器
+   ---------------------------------------------------------------------
+   本页比 R 系列其它篇多一个「颜色拾取器」演示（pk-* 一组 class）。
+   这些规则原来在 FE 系列的 fe_base.css 里 —— R04 从 FE 转过来后
+   文档页不加载 fe_base.css，所以把用到的那几条复制到这里。
+   ===================================================================== */
+.picker{border:1px solid var(--line-2);border-radius:16px;overflow:hidden; background:var(--surface);margin:18px 0; -webkit-backdrop-filter:blur(10px);backdrop-filter:blur(10px); box-shadow:0 4px 20px rgba(76,29,149,.10)}
+.picker .pk-ctl{padding:14px 16px;display:grid;gap:12px}
+.picker .pk-native{margin:0 16px 12px}
+.picker .pk-note{padding:0 16px 15px;font-size:12px;color:var(--fg-3);line-height:1.7}
+.picker .pk-out{flex:1 1 320px;padding:14px 16px;display:grid;gap:9px; align-content:center;background:var(--sfc-glass)}
+.picker .pk-row{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+.picker .pk-row .cp2{margin-left:auto;font-size:11.5px;color:var(--blue);cursor:pointer; border:1px solid rgba(124,58,237,.32);border-radius:7px;padding:1px 9px; background:var(--sfc-glass)}
+.picker .pk-row .cp2:hover{background:var(--blue);color:#fff;border-color:var(--blue)}
+.picker .pk-row b{min-width:78px;color:var(--fg-3);font-weight:600; font-family:var(--mono);font-size:12px}
+.picker .pk-row code{font-size:12.5px;background:var(--sfc-glass)}
+.picker .pk-row.pk-hex{align-items:baseline}
+.picker .pk-row.pk-hex code{font-size:27px;font-weight:700;letter-spacing:.02em; padding:4px 12px;border-radius:10px;line-height:1.25;color:#4c1d95; background:linear-gradient(135deg,#ede9fe,#fce7f3); border:1px solid rgba(124,58,237,.35); text-shadow:0 1px 0 rgba(255,255,255,.7)}
+.picker .pk-sl{display:grid;grid-template-columns:104px 1fr 70px;align-items:center;gap:12px; font-size:13px}
+.picker .pk-sl .val{font-family:var(--mono);font-size:12.5px;color:var(--fg-2); text-align:right}
+.picker .pk-sl input[type=range]{width:100%;height:22px;cursor:pointer; -webkit-appearance:none;appearance:none;background:transparent}
+.picker .pk-sl input[type=range]::-webkit-slider-runnable-track{height:11px; border-radius:6px;border:1px solid var(--line-2);background:var(--tk,#e3e8f0)}
+.picker .pk-sl input[type=range]::-webkit-slider-thumb{-webkit-appearance:none; width:19px;height:19px;margin-top:-5px;border-radius:50%;background:var(--sfc); border:2px solid #7c3aed;box-shadow:0 1px 4px rgba(76,29,149,.4)}
+.picker .pk-sl label{font-family:var(--mono);font-size:12.5px;color:var(--fg-2)}
+.picker .pk-sw{display:flex;flex-wrap:wrap;gap:7px;padding:0 16px 14px}
+.picker .pk-sw i{width:30px;height:30px;border-radius:9px;cursor:pointer; border:1px solid rgba(0,0,0,.14);transition:transform .12s}
+.picker .pk-sw i:hover{transform:scale(1.16)}
+.picker .pk-swatch{flex:1 1 200px;min-height:156px;display:flex;align-items:flex-end; padding:14px 16px;background:#7c3aed;transition:background .12s}
+.picker .pk-swatch span{font:700 15px/1.4 var(--mono);color:#fff; text-shadow:0 1px 4px rgba(0,0,0,.55)}
+.picker .pk-top{display:flex;flex-wrap:wrap;border-bottom:1px solid var(--line)}
+
+/* 拾取器里的数值要等宽对齐，读数才不会跳动 */
+.cp2{font-variant-numeric:tabular-nums}
