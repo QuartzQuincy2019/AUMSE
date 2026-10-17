@@ -1,0 +1,426 @@
+<p>这一篇讲<b>构建系统</b>：你写的那几行项目描述，是怎么一步步变成
+一条条编译器命令的。</p>
+
+<p>会出现的名字有点多 —— CMake、qmake、CMakeLists、Makefile、.sln、
+Ninja、GNU Make、MSBuild。别怕，它们其实只是<b>同一条流水线上的四个岗位</b>，
+每个岗位都有好几个「同岗不同人」的实现。看完这一篇，你应该能做到：
+听到任何一个名字，立刻知道<b>它站在哪一层、上面是谁、下面是谁</b>。</p>
+
+<!-- ============================================================ -->
+<h2 id="s1"><span class="n">1</span>一条四层流水线</h2>
+
+<p>先看全貌。这张图是这一篇的地图，后面每一节只放大其中一层。</p>
+
+<div class="pfig">
+  <img class="pl" src="assets/pro.svg"
+       alt="四层流水线：项目描述（CMakeLists.txt 或 .pro）→ 生成器（CMake 或 qmake）→ 构建文件（build.ninja / Makefile / .sln+.vcxproj）→ 构建引擎（Ninja / GNU Make / MSBuild）→ 编译器驱动（g++ 或 cl.exe）">
+  <img class="pd" src="assets/pro_nd.svg"
+       alt="同上的暗色版本：四层流水线">
+  <p class="pcap">图里的箭头就是<b>数据流</b>：上一层的产物是下一层的输入。
+  竖着读一遍，就是一次构建的完整路径。</p>
+</div>
+
+<div class="card key">
+  <div class="card-t">先记住这一句</div>
+  <p><b>除了最下面那层，没有任何一层在真正「编译」你的源码。</b></p>
+  <p>CMake 不编译，qmake 不编译，Ninja 也<b>不</b>编译 —— 它们的活是
+  <b>把「要做什么」翻译成「谁在什么时候调哪条命令」</b>。
+  真正把 <code>.cpp</code> 变成 <code>.obj</code> 的，只有最底下那个
+  <code>g++</code> / <code>cl.exe</code>。</p>
+</div>
+
+<table>
+<thead><tr><th style="width:16%">层</th><th style="width:26%">输入</th>
+<th style="width:28%">谁来干</th><th>输出</th></tr></thead>
+<tbody>
+<tr><td><b>① 项目描述</b></td><td>你手写的文本</td>
+    <td>（不干，是你写的）</td>
+    <td><code>CMakeLists.txt</code> / <code>.pro</code></td></tr>
+<tr><td><b>② 生成器</b></td><td><code>CMakeLists.txt</code> / <code>.pro</code></td>
+    <td>CMake / qmake</td>
+    <td>构建文件（下一行那三种）</td></tr>
+<tr><td><b>③ 构建文件</b></td><td>生成器的输出</td>
+    <td>（不干，是文件）</td>
+    <td><code>build.ninja</code> / <code>Makefile</code> / <code>.sln</code>+<code>.vcxproj</code></td></tr>
+<tr><td><b>④ 构建引擎</b></td><td>构建文件</td>
+    <td>Ninja / GNU Make·nmake / MSBuild</td>
+    <td>一条条编译命令</td></tr>
+<tr><td><b>⑤ 编译器驱动</b></td><td>一条条命令 + 源码</td>
+    <td><code>g++</code> / <code>cl.exe</code></td>
+    <td><code>.obj</code> → <code>.exe</code></td></tr>
+</tbody>
+</table>
+
+<p>图里画的是 <b>4 层</b>（把「项目描述」当输入、不算一层），
+上表把项目描述也算进来，所以是 5 行。两种数法都对，看你要不要把它当岗位。</p>
+
+<!-- ============================================================ -->
+<h2 id="s2"><span class="n">2</span>项目描述：CMakeLists.txt 与 .pro</h2>
+
+<p>这是唯一<b>由人写</b>的一层。它只回答三个问题：
+<b>源码有哪些、产物叫什么、用什么标准编</b>。</p>
+
+<div class="code-wrap"><div class="bar"><span class="dot r"></span><span class="dot y"></span><span class="dot g"></span><span class="name">CMakeLists.txt（CMake 读）</span><span class="cp">复制</span></div><pre>cmake_minimum_required(VERSION 3.16)
+project(demo CXX)
+
+set(CMAKE_CXX_STANDARD 17)
+set(CMAKE_CXX_STANDARD_REQUIRED ON)
+
+add_executable(demo main.cpp widget.cpp)</pre></div>
+
+<div class="code-wrap"><div class="bar"><span class="dot r"></span><span class="dot y"></span><span class="dot g"></span><span class="name">demo.pro（qmake 读）</span><span class="cp">复制</span></div><pre>TEMPLATE = app
+TARGET   = demoq
+CONFIG  += console c++17
+CONFIG  -= qt app_bundle
+SOURCES += main.cpp widget.cpp
+HEADERS += widget.h</pre></div>
+
+<p>两份文件<b>语法完全不同，说的是同一件事</b>：</p>
+
+<table>
+<thead><tr><th style="width:26%">要表达的事</th><th style="width:37%">CMakeLists.txt</th><th>demo.pro</th></tr></thead>
+<tbody>
+<tr><td>产物是个可执行文件</td><td class="c"><code>add_executable(…)</code></td><td class="c"><code>TEMPLATE = app</code></td></tr>
+<tr><td>产物叫什么</td><td class="c">第一个参数 <code>demo</code></td><td class="c"><code>TARGET = demoq</code></td></tr>
+<tr><td>源码有哪些</td><td class="c"><code>main.cpp widget.cpp</code></td><td class="c"><code>SOURCES += …</code></td></tr>
+<tr><td>用 C++17</td><td class="c"><code>CMAKE_CXX_STANDARD 17</code></td><td class="c"><code>CONFIG += c++17</code></td></tr>
+</tbody>
+</table>
+
+<div class="card tip">
+  <div class="card-t">选哪个</div>
+  <p><b>新项目用 CMake</b>。它是事实标准，CMake 能生成的后端比 qmake 多得多
+  （下一节就有清单）。</p>
+  <p><b>qmake 是 Qt 自己的老工具</b>，Qt 5 时代到处是它；Qt 6 起官方主推 CMake，
+  但 qmake 仍在维护，遇到老项目必须看得懂 <code>.pro</code>。</p>
+</div>
+
+<!-- ============================================================ -->
+<h2 id="s3"><span class="n">3</span>生成器：CMake 与 qmake</h2>
+
+<p>生成器的活只有一件：<b>读项目描述，写构建文件。</b>
+它<b>不编译</b>，也<b>不链接</b> —— 跑完你只会在目录里多出一堆文件。</p>
+
+<h3>同一份 CMakeLists.txt，换一个 <code>-G</code> 就换一种后端</h3>
+
+<p><code>-G</code> 是 generator（生成器）的缩写。我们这台机器上实测：</p>
+
+<div class="out-wrap"><div class="cap">实机执行（同一份 CMakeLists.txt，三个不同的 -G）</div><pre>&gt; cmake -S . -B b-ninja -G Ninja
+-- Configuring done (3.4s)
+-- Generating done (0.0s)
+-- Build files have been written to: …/b-ninja
+
+&gt; cmake -S . -B b-make -G "MinGW Makefiles"
+-- Configuring done (2.4s)
+-- Generating done (0.1s)
+-- Build files have been written to: …/b-make</pre></div>
+
+<p>注意最后那行的措辞：<b>Build files have been written</b> ——
+它说的是「写文件」，不是「编译完成」。这就是生成器这一层的全部工作。</p>
+
+<h3><code>-G</code> 后面能跟什么</h3>
+
+<p><code>cmake --help</code> 会列出本机支持的全部生成器（节选）：</p>
+
+<div class="out-wrap"><div class="cap">cmake --help（节选，已核对）</div><pre>Visual Studio 17 2022        = Generates Visual Studio 2022 project files.
+* NMake Makefiles              = Generates NMake makefiles.
+MSYS Makefiles               = Generates MSYS makefiles.
+MinGW Makefiles              = Generates a make file for use with mingw32-make.
+Unix Makefiles               = Generates standard UNIX makefiles.
+Ninja                        = Generates build.ninja files.
+Ninja Multi-Config           = Generates build-&lt;Config&gt;.ninja files.</pre></div>
+
+<p>带 <code>*</code> 的是本机默认。<b>同一个项目描述，后面接什么构建引擎，
+全看你给哪个 <code>-G</code></b> —— 这就是「等价关系」最直接的证据。</p>
+
+<h3>qmake 也一样的两个后端</h3>
+
+<div class="out-wrap"><div class="cap">实机执行（qmake 6.12，MSVC 套件）</div><pre>&gt; qmake ..\demo.pro -tp vc
+Info: creating stash file .qmake.stash
+（生成 demoq.vcxproj）
+
+&gt; qmake ..\demo.pro
+（生成 Makefile、Makefile.Debug、Makefile.Release）</pre></div>
+
+<p><code>-tp vc</code> 是「template = Visual Studio C++ project」，
+意思是<b>改出 Visual Studio 工程</b>；不加则是默认的 Makefile。</p>
+
+<table>
+<thead><tr><th style="width:22%">生成器</th><th style="width:34%">命令</th><th>实际产出（本机实测）</th></tr></thead>
+<tbody>
+<tr><td rowspan="2"><b>CMake</b><br>3.30.5</td>
+    <td class="c">cmake -B b -G Ninja</td>
+    <td class="c"><code>build.ninja</code> 18,914 B</td></tr>
+<tr><td class="c">cmake -B b -G "MinGW Makefiles"</td>
+    <td class="c"><code>Makefile</code> 6,092 B</td></tr>
+<tr><td rowspan="2"><b>qmake</b><br>6.12</td>
+    <td class="c">qmake demo.pro -tp vc</td>
+    <td class="c"><code>demoq.vcxproj</code> 9,513 B</td></tr>
+<tr><td class="c">qmake demo.pro</td>
+    <td class="c"><code>Makefile</code> 33,740 B（另有 .Debug/.Release 两个）</td></tr>
+</tbody>
+</table>
+
+<!-- ============================================================ -->
+<h2 id="s4"><span class="n">4</span>构建文件：三种名字，一种内容</h2>
+
+<p>这一层是<b>中间物</b>，不长在源码树里（一般放在 <code>b-xxx/</code> 这种构建目录），
+你可以整目录删掉重建 —— 因为它们<b>不是手写的，是可再生的</b>。</p>
+
+<table>
+<thead><tr><th style="width:28%">文件</th><th style="width:24%">谁生成</th><th>谁消费</th></tr></thead>
+<tbody>
+<tr><td class="c">build.ninja</td>
+    <td class="c">CMake <code>-G Ninja</code></td>
+    <td class="c">Ninja</td></tr>
+<tr><td class="c">Makefile</td>
+    <td class="c">CMake <code>-G "…Makefiles"</code><br>或 qmake（默认）</td>
+    <td class="c">GNU Make / mingw32-make / nmake</td></tr>
+<tr><td class="c">.sln + .vcxproj</td>
+    <td class="c">CMake <code>-G "Visual Studio …"</code><br>或 qmake <code>-tp vc</code></td>
+    <td class="c">MSBuild</td></tr>
+</tbody>
+</table>
+
+<div class="card key">
+  <div class="card-t">三种构建文件，本质是同一张表</div>
+  <p>它们都在写同一件事：<b>「哪个产物依赖哪些输入、过期了就用哪条命令重做」</b>。</p>
+  <p>差别只在<b>语法和表达能力</b>：Ninja 极简（只给机器读，快），
+  Makefile 靠 Tab 缩进（人和机器都读），MSBuild 是 XML（能塞很多 IDE 属性）。
+  换一种写法，<b>依赖关系本身不变</b>。</p>
+</div>
+
+<!-- ============================================================ -->
+<h2 id="s5"><span class="n">5</span>构建引擎：Ninja、GNU Make、MSBuild</h2>
+
+<p>引擎读构建文件，<b>决定哪些目标过期了</b>，然后逐条执行命令。
+你平时敲的「生成 / 构建 / Build」按钮，按的就是这一层。</p>
+
+<p>三个引擎的进度输出长得完全不一样，但说的都是同一件事（本机实测原文）：</p>
+
+<div class="out-wrap"><div class="cap">Ninja（读 build.ninja）</div><pre>&gt; ninja -C b-ninja
+ninja: Entering directory `b-ninja'
+[1/3] Building CXX object CMakeFiles/demo.dir/widget.cpp.obj
+[2/3] Building CXX object CMakeFiles/demo.dir/main.cpp.obj
+[3/3] Linking CXX executable demo.exe</pre></div>
+
+<div class="out-wrap"><div class="cap">GNU Make（mingw32-make，读 Makefile）</div><pre>&gt; mingw32-make -C b-make
+[ 33%] Building CXX object CMakeFiles/demo.dir/widget.cpp.obj
+[ 66%] Building CXX object CMakeFiles/demo.dir/main.cpp.obj
+[100%] Built target demo</pre></div>
+
+<div class="out-wrap"><div class="cap">MSBuild（读 .vcxproj）</div><pre>&gt; MSBuild demoq.vcxproj /p:Configuration=Release /p:Platform=x64
+  main.cpp
+  widget.cpp
+正在生成代码...
+  demoq.vcxproj -&gt; …\release\demoq.exe</pre></div>
+
+<p>三种进度条后面，跑的<b>都是同样的两步</b>：先把每个 <code>.cpp</code> 编成
+<code>.obj</code>，再把 <code>.obj</code> 链接成 <code>.exe</code>。
+本章上一篇（F03）手工敲 <code>cl /c</code> 和 <code>link</code>，
+做的正是这两步 —— <b>引擎只是替你按依赖顺序调度它们</b>。</p>
+
+<div class="card note">
+  <div class="card-t">那 MSBuild 和另外两个的差别在哪</div>
+  <p>Ninja 与 Make 只认「文件依赖」，非常薄；
+  MSBuild 认得<b>解决方案、项目、配置、平台</b>这一整套概念，
+  所以它能被 Visual Studio 直接打开、能在 IDE 里跳转。
+  代价是它读的那套 XML 文件比 Makefile 啰嗦得多。</p>
+</div>
+
+<!-- ============================================================ -->
+<h2 id="s6"><span class="n">6</span>编译器驱动：g++ 与 cl.exe</h2>
+
+<p>流水线的最底下才是真正的编译器。上面前两种引擎都调 <code>g++</code>
+（因为 <code>-G` 选的是 MinGW 系），MSBuild 调 <code>cl.exe</code>。</p>
+
+<p>三种路径跑出来的程序<b>一模一样</b>（本机实测）：</p>
+
+<div class="out-wrap"><div class="cap">三个可执行文件，同一个输出</div><pre>demo.exe   （CMake + Ninja 编出来的）      title = UME
+demo.exe   （CMake + MinGW Makefiles）     title = UME
+demoq.exe  （qmake + MSBuild，14,848 B）   title = UME</pre></div>
+
+<div class="card tip">
+  <div class="card-t">这一层你其实已经会了</div>
+  <p>F03 里手敲的 <code>cl /c main.cpp widget.cpp</code> + <code>link …</code>，
+  就是直接抱住了这一层、跳过上面全部。项目小的时候这么干最快；
+  一旦文件多了、要跨平台了，才需要上面那几层来管调度。</p>
+</div>
+
+<!-- ============================================================ -->
+<h2 id="s7"><span class="n">7</span>等价关系总表</h2>
+
+<p>把四层摊平成一张表，「谁和谁是同一个岗位」就一目了然了：</p>
+
+<table>
+<thead><tr><th style="width:15%">岗位</th><th style="width:28%">CMake 路线</th>
+<th style="width:26%">qmake 路线</th><th>能不能换</th></tr></thead>
+<tbody>
+<tr><td><b>项目描述</b></td><td class="c"><code>CMakeLists.txt</code></td>
+    <td class="c"><code>xxx.pro</code></td><td>要重写，但语义可以一一对应</td></tr>
+<tr><td><b>生成器</b></td><td class="c"><code>cmake</code></td>
+    <td class="c"><code>qmake</code></td><td>能，换的是「谁来翻译」</td></tr>
+<tr><td><b>构建文件</b></td><td class="c"><code>build.ninja</code> /
+    <code>Makefile</code> / <code>.sln+.vcxproj</code></td>
+    <td class="c">同上三种</td><td>能，而且<b>同一个生成器</b>就能产出三种</td></tr>
+<tr><td><b>构建引擎</b></td><td class="c">Ninja / GNU Make / MSBuild</td>
+    <td class="c">同上</td><td>能，但它必须认得第 3 层给的文件</td></tr>
+<tr><td><b>编译器驱动</b></td><td class="c"><code>g++</code> / <code>cl.exe</code></td>
+    <td class="c">同上</td><td>能，<b>但整条链必须统一</b>（见常见错误 5）</td></tr>
+</tbody>
+</table>
+
+<div class="mnemonic">
+  <b>同一层可以换人，跨层不能跳过。</b><br>
+  Ninja 不能直接吃 <code>CMakeLists.txt</code>；MSBuild 也不认识 <code>.pro</code>。
+  每一层只认它上面那一层的产物 —— 这正是图上箭头只在相邻层之间连的原因。
+</div>
+
+<!-- ============================================================ -->
+<h2 id="s8"><span class="n">8</span>流程控制：一次构建到底怎么走</h2>
+
+<h3>从零开始</h3>
+
+<ol>
+  <li><b>生成</b>：<code>cmake -S . -B build -G Ninja</code> →
+  读 <code>CMakeLists.txt</code>，写 <code>build/build.ninja</code>。
+  <b>这一步不编译任何源码。</b></li>
+  <li><b>构建</b>：<code>ninja -C build</code> →
+  读 <code>build.ninja</code>，发现所有目标都过期，于是
+  <code>g++ …</code> 一条条跑。</li>
+  <li>得到 <code>demo.exe</code>。</li>
+</ol>
+
+<h3>改了一个 .cpp 之后 —— 增量构建</h3>
+
+<p>只把 <code>widget.cpp</code> 的修改时间改一下，再构建：
+<b>只重编它一个，然后重链接</b>，另外那个 <code>main.cpp</code> 不动。</p>
+
+<div class="out-wrap"><div class="cap">Ninja（已核对）</div><pre>&gt; ninja -C b-ninja
+[1/2] Building CXX object CMakeFiles/demo.dir/widget.cpp.obj
+[2/2] Linking CXX executable demo.exe</pre></div>
+
+<div class="out-wrap"><div class="cap">mingw32-make（已核对）</div><pre>&gt; mingw32-make -C b-make
+[ 33%] Building CXX object CMakeFiles/demo.dir/widget.cpp.obj
+[100%] Built target demo</pre></div>
+
+<p>三个目标里重做了 1 个（33%）—— <b>依赖图就是这么省时间的</b>：
+它比较「源文件和 .obj 谁新」，只重跑不新鲜的那些。</p>
+
+<div class="card warn">
+  <div class="card-t">改了 CMakeLists.txt 却直接构建，会怎样</div>
+  <p><code>CMakeLists.txt</code> 变了，<b>构建文件本身</b>还是旧的 ——
+  引擎照着旧文件跑，等于你的修改没生效。</p>
+  <p>正确做法：<b>重新跑一次 cmake</b>（或让 IDE 帮你「重新生成」）。
+  CMake 生成的 Makefile / build.ninja 里有依赖规则盯着这件事，
+  但手敲命令时容易漏。</p>
+</div>
+
+<!-- ============================================================ -->
+<h2 id="s9"><span class="n">9</span>常见错误</h2>
+
+<h3>错误 1 · 以为 <code>cmake .</code> 就等于编译</h3>
+
+<p>它只写构建文件。看到「Build files have been written」别以为编完了，
+<b>还要再跑一次引擎</b>。</p>
+
+<h3>错误 2 · 在源码目录里直接 cmake</h3>
+
+<div class="out-wrap"><div class="cap">不要这样</div><pre>&gt; cmake .            ✗ 构建文件全塞进源码树，和 .cpp 混在一起</pre></div>
+
+<p>用 <code>-S . -B build</code> 把产物集中到一个目录。
+这样「清干净重来」只要<b>删掉那一个目录</b>。</p>
+
+<h3>错误 3 · 换了编译器却没清缓存</h3>
+
+<p>CMake 会把第一次检测到的编译器写进 <code>CMakeCache.txt</code>。
+换编译器（比如从 MinGW 换 MSVC）却沿用同一个构建目录，会报
+「compiler has changed」或直接编出诡异错误。<b>换编译器就换个目录，或删掉缓存。</b></p>
+
+<h3>错误 4 · CMake 的 VS 生成器找不到 Visual Studio</h3>
+
+<div class="out-wrap"><div class="cap">实机报错（已核对，这台机器上真的踩到了）</div><pre>CMake Error at CMakeLists.txt:2 (project):
+  Generator
+    Visual Studio 17 2022
+  could not find any instance of Visual Studio.</pre></div>
+
+<p>指定实例路径也未必管用：</p>
+
+<div class="out-wrap"><div class="cap">再试（已核对）</div><pre>  could not find specified instance of Visual Studio:
+    D:/MicrosoftVisualStudio/Community
+  The directory exists, but the instance is not known to the Visual Studio
+  Installer, and no 'version=' field was given.</pre></div>
+
+<p>意思是：目录在，但它<b>没有登记到 Visual Studio Installer</b> 的实例列表里，
+CMake 不认。这种情况下换用 <code>-G Ninja</code> + <code>cl</code>，
+或者干脆走 qmake <code>-tp vc</code> 生成 <code>.vcxproj</code> 再交给 MSBuild
+—— 本文第 3 节就是这么绕过去的。</p>
+
+<h3>错误 5 · 混用编译器</h3>
+
+<p>MinGW 编出来的 <code>.obj</code> 和 MSVC 的 <code>.lib</code> <b>ABI 不兼容</b>，
+不能链在一起。整条链必须统一：</p>
+
+<table>
+<thead><tr><th style="width:30%">选定的编译器</th><th>生成器 / 引擎搭配</th></tr></thead>
+<tbody>
+<tr><td><b>g++</b>（MinGW）</td>
+    <td class="c">-G Ninja / -G "MinGW Makefiles" + mingw32-make</td></tr>
+<tr><td><b>cl.exe</b>（MSVC）</td>
+    <td class="c">-G "Visual Studio …" + MSBuild，或 -G "NMake Makefiles" + nmake</td></tr>
+</tbody>
+</table>
+
+<!-- ============================================================ -->
+<h2 id="s10"><span class="n">10</span>一页速查</h2>
+
+<table>
+<thead><tr><th style="width:22%">你想干的事</th><th>命令 / 结论</th></tr></thead>
+<tbody>
+<tr><td>写项目描述</td>
+    <td class="c"><code>CMakeLists.txt</code>（新项目）或 <code>xxx.pro</code>（Qt 老项目）</td></tr>
+<tr><td>生成构建文件</td>
+    <td class="c"><code>cmake -S . -B build -G Ninja</code></td></tr>
+<tr><td>看有哪些后端</td>
+    <td class="c"><code>cmake --help</code>（<code>-G</code> 清单）</td></tr>
+<tr><td>构建</td>
+    <td class="c"><code>ninja -C build</code> / <code>mingw32-make -C build</code> /
+    <code>MSBuild xxx.vcxproj</code></td></tr>
+<tr><td>qmake 出 Makefile</td>
+    <td class="c"><code>qmake xxx.pro</code></td></tr>
+<tr><td>qmake 出 VS 工程</td>
+    <td class="c"><code>qmake xxx.pro -tp vc</code></td></tr>
+<tr><td>清干净重来</td>
+    <td>删掉构建目录（<code>b-xxx/</code>），源码树不动</td></tr>
+<tr><td>改了 CMakeLists</td>
+    <td>重跑一次 <code>cmake</code>，别直接构建</td></tr>
+</tbody>
+</table>
+
+<div class="card key">
+  <div class="card-t">本篇要记住的四句话</div>
+  <ol>
+    <li><b>四层：项目描述 → 生成器 → 构建文件 → 构建引擎 → 编译器驱动。</b>
+    只有最后一层在真正编译。</li>
+    <li><b>同一层可以换人</b>：CMake/qmake 换翻译，Ninja/Make/MSBuild 换调度，
+    g++/cl 换编译。换的是实现，不是依赖关系。</li>
+    <li><b>跨层不能跳过</b>：每层只认上一层给的东西。</li>
+    <li><b>构建文件可再生</b>：它不该进源码树，删了能重建；
+    但你手写的那份项目描述要进版本库。</li>
+  </ol>
+</div>
+
+<div class="see-also">
+  <div class="card-t">想接着看</div>
+  <ul>
+    <li><a href="f03.html">F03 · 编译与链接、头文件与库</a>
+      <span class="why">—— 最底下那层（<code>g++</code> / <code>cl.exe</code>）
+      在那篇是手敲的；本篇讲的引擎，只是替你调度它。</span></li>
+    <li><a href="f01.html">F01 · 命令提示符（cmd）初步</a>
+      <span class="why">—— 上面那些命令都在命令行里敲，
+      路径、环境变量、<code>cd</code> 的基础在那篇。</span></li>
+    <li><a href="f02.html">F02 · 相对文件路径与宏</a>
+      <span class="why">—— <code>$(SolutionDir)</code> 这类路径宏，
+      就是构建文件里描述「东西在哪」的方式。</span></li>
+  </ul>
+</div>

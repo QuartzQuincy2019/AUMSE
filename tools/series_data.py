@@ -204,6 +204,9 @@ PAGES = [
      "F", "F02", "相对文件路径与宏", "重点：相对路径、宏的广义定义", True),
     ("f03.html", "f03.html",
      "F", "F03", "编译与链接、头文件与库", "重点：cpp→exe / 编译期与运行时 / 头文件与文件依赖", True),
+    ("f04.html", "f04.html",
+     "F", "F04", "构建系统生成器与构建工具",
+     "重点：CMake / qmake、Makefile / build.ninja / .sln、Ninja / Make / MSBuild 四层等价关系", True),
 
     # ---- T：核心理论 ----
     ("t01.html", "t01.html",
