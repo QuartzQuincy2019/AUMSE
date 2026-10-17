@@ -26,6 +26,27 @@ body{margin:0;background:var(--bg);color:var(--fg);
 header h1{font-size:29px;margin:0 0 6px}
 header .sub{color:var(--fg-3);font-size:14px;margin:0 0 4px}
 header .meta{color:var(--fg-3);font-size:13px;margin:0}
+/* 工具入口：编辑器 / 造形测试。放在标题区下方，两栏并排，窄屏堆叠 */
+.tools{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin:20px 0 6px}
+.tools .tool{display:flex;flex-direction:column;gap:3px;text-decoration:none;
+  border:1px solid var(--line-2);border-radius:12px;padding:13px 16px;
+  background:var(--bg-soft);color:var(--fg);transition:border-color .16s,box-shadow .16s,transform .16s}
+.tools .tool:hover{border-color:var(--blue);box-shadow:0 6px 18px rgba(30,45,70,.10);
+  transform:translateY(-2px)}
+.tools .tool-k{align-self:flex-start;font-size:11px;font-weight:700;letter-spacing:.04em;
+  color:#fff;background:var(--blue);border-radius:5px;padding:1px 7px}
+.tools .tool-t{font-size:15.5px;font-weight:700;margin-top:3px}
+.tools .tool-d{font-size:12.5px;color:var(--fg-3);line-height:1.6}
+@media (max-width:720px){.tools{grid-template-columns:1fr;gap:9px}
+  .tools .tool{padding:11px 13px}.tools .tool-t{font-size:14.5px}}
+@media (prefers-color-scheme: dark){
+  .tools .tool{background:#171b23;border-color:#333b48}
+  .tools .tool:hover{border-color:#4d8ff0;box-shadow:0 6px 18px rgba(0,0,0,.45)}
+  .tools .tool-k{background:#4d8ff0}
+  .tools .tool-t{color:#e6ebf2}
+  .tools .tool-d{color:#79849a}
+}
+
 
 h2{font-size:15px;letter-spacing:.10em;text-transform:uppercase;
   color:var(--fg-3);margin:42px 0 14px;padding-bottom:8px;
@@ -341,6 +362,19 @@ a.card .sb{display:inline-block;margin-top:8px;font:700 10.5px/1.8 var(--sans);
   <p class="sub">回鹘蒙文编辑器（Uyghur-Mongolian Script Editor）</p>
   <p class="meta">共 45 篇 · 其中 21 篇为重点 · 卡片列表由脚本按数据生成</p>
 </header>
+
+<nav class="tools" aria-label="工具入口">
+  <a class="tool" href="web/UME.html">
+    <span class="tool-k">编辑器</span>
+    <span class="tool-t">UME 回鹘蒙文编辑器</span>
+    <span class="tool-d">竖排渲染 · 码位核对 · 字符面板 · 导出 SVG / PNG</span>
+  </a>
+  <a class="tool" href="web/globpreview.html">
+    <span class="tool-k">测试</span>
+    <span class="tool-t">globpreview 造形测试</span>
+    <span class="tool-d">独立 / 上形 / 中形 / 下形 · 元音组合 · 借词辅音 · FVS 变体</span>
+  </a>
+</nav>
 
 <div class="lead">
   <p><b>怎么用这套教程</b>：按系列走。每个系列内部的编号就是建议顺序，
