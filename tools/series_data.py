@@ -178,6 +178,12 @@ PAGES = [
     ("q09.html", "q09.html",
      "Q", "Q09", "指针进阶：函数指针",
      "函数指针与成员函数指针；Qt connect 那一句的四个参数", True),
+    ("q10.html", "q10.html",
+     "Q", "Q10", "智能指针",
+     "重点：泄漏、重复释放、悬空指针怎么被挡掉；unique / shared / weak", True),
+    ("q11.html", "q11.html",
+     "Q", "Q11", "互斥锁",
+     "重点：竞态、临界区、死锁；lock_guard / unique_lock / scoped_lock", True),
 
     # ---- E：补充练习 ----
     ("e01.html", "e01.html",

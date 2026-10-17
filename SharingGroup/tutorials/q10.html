@@ -1,0 +1,508 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Q10 · 智能指针</title>
+<link rel="stylesheet" href="assets/genelayout.css">
+<link rel="stylesheet" href="assets/q10.css">
+<link rel="stylesheet" href="assets/series-theme.css">
+<link rel="stylesheet" href="assets/tg_L.css">
+<link rel="stylesheet" href="assets/tg_D.css">
+
+</head>
+<body class="qseries" data-series="Q">
+<div id="shell">
+
+<nav id="toc">
+  <h5>目录</h5>
+  <a href="#s1">1 · 手动 new / delete 的三类事故</a>
+  <a href="#s2">2 · RAII：把释放绑在对象的生命周期上</a>
+  <a href="#s3">3 · unique_ptr：独占所有权</a>
+  <a href="#s4">4 · shared_ptr：共享所有权与引用计数</a>
+  <a href="#s5">5 · weak_ptr：打破循环引用</a>
+  <a href="#s6">6 · 常见错误</a>
+  <a href="#s7">7 · 一页速查</a>
+</nav>
+
+<main>
+<h1>智能指针<span class="star" title="与本项目施行密切相关">*</span></h1>
+<p class="sub-title">UME 项目组内部教程 · Q10（Q） · 重点不在怎么用，而在它挡住了哪几类内存错误</p>
+<p><span class="lang cpp">C++</span> <span class="tag">内存安全</span> <span class="tag b">智能指针</span></p>
+
+<p>这一篇讲<b>智能指针</b>（<code>std::unique_ptr</code> / <code>shared_ptr</code> /
+<code>weak_ptr</code>）。</p>
+
+<p>但重点不是「怎么用」—— 用法三分钟就能查完。重点是：
+<b>它到底替你挡住了哪几类内存错误</b>。所以每一节都从「不用它会出什么事」讲起。</p>
+
+<div class="card key">
+  <div class="card-t">一句话</div>
+  <p><b>智能指针不是「更高级的指针」，而是「把释放内存这件事交给类型系统」。</b>
+  它的对手不是指针，是<b>泄漏</b>、<b>重复释放</b>和<b>悬空指针</b>。</p>
+</div>
+
+<!-- ============================================================ -->
+<h2 id="s1"><span class="n">1</span>手动 new / delete 的三类事故</h2>
+
+<p>先看清楚敌人。裸指针 + <code>new</code> / <code>delete</code> 的写法，
+出错方式其实只有三类，但每一类都很常见。</p>
+
+<table>
+<thead><tr><th style="width:20%">事故</th><th style="width:34%">怎么发生</th><th>后果</th></tr></thead>
+<tbody>
+<tr><td><b>泄漏</b></td>
+    <td><code>new</code> 了却忘了 <code>delete</code>；
+    或者中途 <code>return</code> / 抛异常，跳过了 <code>delete</code></td>
+    <td>内存一直占着，程序越跑越胖，最后被系统杀掉</td></tr>
+<tr><td><b>重复释放</b></td>
+    <td>同一次 <code>new</code> 被 <code>delete</code> 了两次；
+    或两份代码都以为自己是所有者</td>
+    <td>堆结构被破坏，通常<b>当场崩溃</b>，而且现场看不出原因</td></tr>
+<tr><td><b>悬空指针</b></td>
+    <td><code>delete</code> 之后指针没置空，后面又用了它</td>
+    <td>读到的可能是别人的数据，也可能是垃圾 —— <b>最难查</b>的一种</td></tr>
+</tbody>
+</table>
+
+<h3>最容易被忽略的是「泄漏」里的第二种</h3>
+
+<p>忘记 <code>delete</code> 好理解。但「中途退出跳过了 <code>delete</code>」才是
+真正让人栽跟头的地方 —— 而且它<b>看起来完全正确</b>：</p>
+
+<div class="code-wrap"><div class="bar"><span class="dot r"></span><span class="dot y"></span><span class="dot g"></span><span class="name">裸指针 + 提前退出 = 泄漏</span><span class="cp">复制</span></div><pre><span class="hl-k">void</span> <span class="hl-f">load</span>(<span class="hl-k">const</span> <span class="hl-k">char</span>* path) {
+    <span class="hl-k">int</span>* buf = <span class="hl-k">new</span> <span class="hl-k">int</span>[<span class="hl-n">1024</span>];
+
+    <span class="hl-k">if</span> (!path) {
+        <span class="hl-k">return</span>;              <span class="hl-c">/* ← 泄漏：buf 没人 delete */</span>
+    }
+    <span class="hl-k">if</span> (!open(path)) {       <span class="hl-c">/* 也可能抛异常 */</span>
+        <span class="hl-k">return</span>;              <span class="hl-c">/* ← 又一条泄漏路径 */</span>
+    }
+
+    <span class="hl-k">delete</span>[] buf;           <span class="hl-c">/* 只有走到底才释放 */</span>
+}</pre></div>
+
+<p>每加一个「提前返回」，就多一条泄漏路径。
+<b>靠人工保证「每条路都记得 delete」是不现实的</b> —— 尤其在多人维护的代码里。</p>
+
+<div class="card warn">
+  <div class="card-t">真正的结论</div>
+  <p>问题不在「你粗心」，而在<b>这种写法要求人记住每一条退出路径</b>。
+  只要结构上存在「必须手动配对」的地方，早晚会漏。</p>
+  <p>所以解法不是「更小心」，是<b>换一种结构</b>：让释放由对象生命周期自动触发。</p>
+</div>
+
+<!-- ============================================================ -->
+<h2 id="s2"><span class="n">2</span>RAII：把释放绑在对象的生命周期上</h2>
+
+<p>这条思路叫 <b>RAII</b>（Resource Acquisition Is Initialization，
+资源获取即初始化）。名字拗口，做法只有一句话：</p>
+
+<div class="mnemonic">
+  <b>把资源和对象绑在一起：构造时拿到，析构时还掉。</b><br>
+  这样一来，<b>「什么时候还」由编译器保证，不由你记性保证。</b>
+</div>
+
+<p>为什么这能解决上一节的问题？因为 <b>析构函数一定会执行</b> ——
+不管是正常走到函数末尾、提前 <code>return</code>、还是抛异常把栈展开。
+这是语言保证的，不需要你写任何东西。</p>
+
+<p>下面这段就是智能指针的全部原理（当然真实实现要复杂得多）：</p>
+
+<div class="code-wrap"><div class="bar"><span class="dot r"></span><span class="dot y"></span><span class="dot g"></span><span class="name">一个最小的 RAII 包装</span><span class="cp">复制</span></div><pre><span class="hl-k">class</span> IntBuf {
+<span class="hl-k">public</span>:
+    <span class="hl-k">explicit</span> <span class="hl-f">IntBuf</span>(<span class="hl-k">int</span> n) : p_(<span class="hl-k">new</span> <span class="hl-k">int</span>[n]) { }
+    ~<span class="hl-f">IntBuf</span>() { <span class="hl-k">delete</span>[] p_; }          <span class="hl-c">/* ← 一定会执行 */</span>
+
+    IntBuf(<span class="hl-k">const</span> IntBuf&amp;) = <span class="hl-k">delete</span>;            <span class="hl-c">/* 不许拷贝，防止两份都去 delete */</span>
+    IntBuf&amp; <span class="hl-k">operator</span>=(<span class="hl-k">const</span> IntBuf&amp;) = <span class="hl-k">delete</span>;
+
+<span class="hl-k">private</span>:
+    <span class="hl-k">int</span>* p_;
+};</pre></div>
+
+<p>注意那两个 <code>= delete</code>：<b>一旦有了析构函数负责释放，
+就绝不能让这个对象被随便拷贝</b> —— 否则两份副本都以为自己该释放，
+就变成上一节的「重复释放」。</p>
+
+<p>这条约束，正是 <code>unique_ptr</code> 和 <code>shared_ptr</code> 的分界线。</p>
+
+<!-- ============================================================ -->
+<h2 id="s3"><span class="n">3</span><code>unique_ptr</code>：独占所有权</h2>
+
+<p><code>std::unique_ptr</code> 表达的是：<b>这块资源只有一个主人。</b>
+所以它<b>禁止拷贝</b>，只允许<b>转移</b>（move）。</p>
+
+<div class="code-wrap"><div class="bar"><span class="dot r"></span><span class="dot y"></span><span class="dot g"></span><span class="name">独占：能 move，不能 copy</span><span class="cp">复制</span></div><pre><span class="hl-p">#include</span> <span class="hl-s">&lt;memory&gt;</span>
+
+std::unique_ptr&lt;Widget&gt; a(<span class="hl-k">new</span> Widget);
+<span class="hl-c">/* std::unique_ptr&lt;Widget&gt; b = a;        ✗ 编译不过：拷贝构造已被删除 */</span>
+std::unique_ptr&lt;Widget&gt; b = std::move(a);  <span class="hl-c">/* ✓ 转移：现在 b 是主人，a 变成空 */</span></pre></div>
+
+<p>硬要拷贝，编译器会直接拒绝：</p>
+
+<div class="out-wrap"><div class="cap">实机报错（已核对）</div><pre>error C2280: “std::unique_ptr&lt;int,std::default_delete&lt;int&gt;&gt;::unique_ptr(
+    const std::unique_ptr&lt;int,std::default_delete&lt;int&gt;&gt; &amp;)”:
+    尝试引用已删除的函数
+note: “std::unique_ptr&lt;int,…&gt;::unique_ptr(const std::unique_ptr&lt;int,…&gt; &amp;)”: 已隐式删除函数</pre></div>
+
+<p>这条报错看着吓人，但只要认出 <code>C2280</code> 和「<b>已删除的函数</b>」，
+就知道是<b>你在拷贝一个不准拷贝的类型</b> —— 改成 <code>std::move</code> 即可。</p>
+
+<h3>它怎么保证不泄漏：实测</h3>
+
+<p>下面这段用一个「活着几个」的计数器来观察：</p>
+
+<div class="code-wrap"><div class="bar"><span class="dot r"></span><span class="dot y"></span><span class="dot g"></span><span class="name">转移与提前退出</span><span class="cp">复制</span></div><pre><span class="hl-p">#include</span> <span class="hl-s">&lt;cstdio&gt;</span>
+<span class="hl-p">#include</span> <span class="hl-s">&lt;memory&gt;</span>
+
+<span class="hl-k">struct</span> Tracked {
+    <span class="hl-k">static</span> <span class="hl-k">int</span> alive;
+    <span class="hl-k">int</span> id;
+    <span class="hl-k">explicit</span> <span class="hl-f">Tracked</span>(<span class="hl-k">int</span> i) : id(i) { ++alive; }
+    ~<span class="hl-f">Tracked</span>() { --alive; }
+};
+<span class="hl-k">int</span> Tracked::alive = <span class="hl-n">0</span>;
+
+<span class="hl-k">int</span> <span class="hl-f">main</span>() {
+    {
+        std::unique_ptr&lt;Tracked&gt; a(<span class="hl-k">new</span> Tracked(<span class="hl-n">1</span>));
+        std::printf(<span class="hl-s">"created, alive = %d\n"</span>, Tracked::alive);
+
+        std::unique_ptr&lt;Tracked&gt; b = std::move(a);
+        std::printf(<span class="hl-s">"after move, a is null = %s\n"</span>, a ? <span class="hl-s">"no"</span> : <span class="hl-s">"yes"</span>);
+        std::printf(<span class="hl-s">"alive = %d (no extra object)\n"</span>, Tracked::alive);
+    }
+    std::printf(<span class="hl-s">"out of scope, alive = %d\n"</span>, Tracked::alive);
+
+    {
+        std::unique_ptr&lt;Tracked&gt; p(<span class="hl-k">new</span> Tracked(<span class="hl-n">2</span>));
+        std::printf(<span class="hl-s">"before early exit, alive = %d\n"</span>, Tracked::alive);
+        <span class="hl-k">goto</span> skip;                 <span class="hl-c">/* 模拟提前退出 */</span>
+    }
+skip:
+    std::printf(<span class="hl-s">"after early exit, alive = %d (released)\n"</span>, Tracked::alive);
+    <span class="hl-k">return</span> <span class="hl-n">0</span>;
+}</pre></div>
+
+<div class="out-wrap"><div class="cap">运行结果（已核对）</div><pre>created, alive = 1
+after move, a is null = yes
+alive = 1 (no extra object)
+out of scope, alive = 0
+before early exit, alive = 1
+after early exit, alive = 0 (released)</pre></div>
+
+<p>两件事被证实了：</p>
+
+<ul>
+  <li><b>转移不产生第二个对象</b>：move 之后 <code>alive</code> 还是 1，
+  只是「主人」从 <code>a</code> 换成了 <code>b</code>。</li>
+  <li><b>提前退出也会释放</b>：<code>goto</code> 跳出作用域后
+  <code>alive</code> 立刻回到 0 —— 没有任何一行代码显式 <code>delete</code>。</li>
+</ul>
+
+<div class="card tip">
+  <div class="card-t">优先用 <code>std::make_unique</code></div>
+  <p><code>std::make_unique&lt;Widget&gt;(参数)</code> 比
+  <code>std::unique_ptr&lt;Widget&gt;(new Widget(参数))</code> 更好：</p>
+  <ul>
+    <li><b>只写一次类型</b>，改类型时不会漏</li>
+    <li><b>异常更安全</b>：<code>new</code> 成功、智能指针还没构造出来的时候，
+    如果别的参数求值抛了异常，那块内存就漏了。
+    <code>make_unique</code> 把分配和接管合成一步，没有这个缝</li>
+  </ul>
+</div>
+
+<!-- ============================================================ -->
+<h2 id="s4"><span class="n">4</span><code>shared_ptr</code>：共享所有权与引用计数</h2>
+
+<p>需要「多个地方都用这块资源，谁最后放手谁释放」时，用
+<code>std::shared_ptr</code>。它内部有一份<b>引用计数</b>，
+拷贝一次加一，析构一次减一，减到 0 才真正释放。</p>
+
+<div class="out-wrap"><div class="cap">运行结果（已核对）</div><pre>s1 created, use_count = 1
+after copy, use_count = 2
+copy gone, use_count = 1
+all gone, alive = 0</pre></div>
+
+<p>四条对得很整齐：<b>计数归零的那一刻，对象才真正死掉</b>
+（<code>alive</code> 从 1 变 0）。这就是「共享所有权」的全部含义。</p>
+
+<div class="card note">
+  <div class="card-t">代价：它比裸指针大</div>
+  <p>实测这台机器上：<code>sizeof(unique_ptr&lt;int&gt;)</code> = <b>8</b>（就是一个指针），
+  <code>sizeof(shared_ptr&lt;int&gt;)</code> = <b>16</b>（两个指针：
+  对象地址 + 控制块地址，控制块里放引用计数）。</p>
+  <p>所以<b>能独占就别共享</b>：<code>unique_ptr</code> 更小、更快、语义更清楚。
+  <code>shared_ptr</code> 只在确实「谁都可能先用完」时才用。</p>
+</div>
+
+<h3>拷贝是「共享」，不是「复制对象」</h3>
+
+<p>这一点最容易搞混：拷贝一个 <code>shared_ptr</code>，<b>不会复制它指向的对象</b>，
+只是让计数加一。<b>两个 <code>shared_ptr</code> 指向的是同一块内存。</b></p>
+
+<p>因此：<b>通过一个 <code>shared_ptr</code> 改对象，另一个也看得见。</b>
+如果你要的是「各自一份」，那就是深拷贝，得自己写 —— 智能指针不管这件事。</p>
+
+<!-- ============================================================ -->
+<h2 id="s5"><span class="n">5</span><code>weak_ptr</code>：打破循环引用</h2>
+
+<p><code>shared_ptr</code> 有一个致命的结构性缺陷：
+<b>两个对象互相持有时，计数永远减不到 0。</b></p>
+
+<p>下面这段是可运行的、能直接看出泄漏的实验：</p>
+
+<div class="code-wrap"><div class="bar"><span class="dot r"></span><span class="dot y"></span><span class="dot g"></span><span class="name">成环 → 泄漏；改成弱引用 → 正常释放</span><span class="cp">复制</span></div><pre><span class="hl-k">struct</span> Node {
+    std::shared_ptr&lt;Node&gt; next;   <span class="hl-c">/* 强引用 */</span>
+    std::weak_ptr&lt;Node&gt;   wnext;  <span class="hl-c">/* 弱引用 */</span>
+};
+
+std::weak_ptr&lt;Node&gt; observe;      <span class="hl-c">/* 放在外面，用来观察对象还在不在 */</span>
+
+<span class="hl-c">/* ① 两边都强引用：成环 */</span>
+{
+    <span class="hl-k">auto</span> a = std::make_shared&lt;Node&gt;();
+    <span class="hl-k">auto</span> b = std::make_shared&lt;Node&gt;();
+    a-&gt;next = b;
+    b-&gt;next = a;
+    observe = a;
+}
+<span class="hl-c">/* ② 一条改成弱引用：环被打破 */</span>
+{
+    <span class="hl-k">auto</span> a = std::make_shared&lt;Node&gt;();
+    <span class="hl-k">auto</span> b = std::make_shared&lt;Node&gt;();
+    a-&gt;next  = b;
+    b-&gt;wnext = a;
+    observe = a;
+}</pre></div>
+
+<div class="out-wrap"><div class="cap">运行结果（已核对）</div><pre>4) cycle, a.use_count = 2
+   after scope, expired = 0 (0 = still alive = leak)
+5) with weak_ptr, a.use_count = 1
+   after scope, expired = 1 (1 = released)</pre></div>
+
+<p>这两行就是全部证据：</p>
+
+<ul>
+  <li><b>成环时 <code>use_count</code> 是 2</b>（<code>a</code> 自己一份 + <code>b-&gt;next</code> 一份），
+  出作用域后谁也没放手 → <code>expired()</code> 还是 <b>0</b>，说明对象<b>没被释放</b>，
+  也就是<b>漏了</b>。</li>
+  <li><b>改成 <code>weak_ptr</code> 之后 <code>use_count</code> 是 1</b>
+  （弱引用<b>不计入</b>引用计数）→ 出作用域就归零 → <code>expired()</code> 变 <b>1</b>，
+  正常释放。</li>
+</ul>
+
+<div class="card key">
+  <div class="card-t"><code>weak_ptr</code> 的三条规矩</div>
+  <ol>
+    <li><b>它是「观察者」，不是「所有者」</b>：<code>weak_ptr</code>
+    构造/析构都不影响引用计数。</li>
+    <li><b>它不能直接解引用</b>：没有 <code>*w</code> 也没有 <code>w-&gt;</code>。
+    必须先 <code>w.lock()</code> 拿到一个临时的 <code>shared_ptr</code>，
+    再判断是否为空。</li>
+    <li><b>为什么必须这样</b>：如果我刚检查完「对象还在」，
+    另一个线程就把它释放了呢？<code>lock()</code> 把「检查」和「拿到」
+    合成一步，不给这个缝。</li>
+  </ol>
+</div>
+
+<div class="code-wrap"><div class="bar"><span class="dot r"></span><span class="dot y"></span><span class="dot g"></span><span class="name">正确用法：先 lock 再判断</span><span class="cp">复制</span></div><pre>std::weak_ptr&lt;Node&gt; w = observe;
+
+<span class="hl-k">if</span> (<span class="hl-k">auto</span> sp = w.lock()) {
+    <span class="hl-c">/* 到这里 sp 一定有效，而且在 sp 生命周期内不会释放 */</span>
+    std::printf(<span class="hl-s">"still alive, use_count = %ld\n"</span>, sp.use_count());
+} <span class="hl-k">else</span> {
+    std::printf(<span class="hl-s">"already gone\n"</span>);
+}</pre></div>
+
+<div class="card warn">
+  <div class="card-t">别用 <code>expired()</code> 做「检查再使用」</div>
+  <p><code>if (!w.expired()) { w.lock()-&gt;doSomething(); }</code>
+  是典型的<b>错误用法</b>：在 <code>expired()</code> 返回 false 之后、
+  <code>lock()</code> 之前，对象可能已经被释放 —— 这是<b>竞态</b>。
+  正确写法只有一种：<b>直接 <code>lock()</code>，然后判断拿到的指针</b>。</p>
+</div>
+
+<!-- ============================================================ -->
+<h2 id="s6"><span class="n">6</span>常见错误</h2>
+
+<h3>错误 1 · 用同一个裸指针造两个智能指针</h3>
+
+<div class="code-wrap"><div class="bar"><span class="dot r"></span><span class="dot y"></span><span class="dot g"></span><span class="name">两次接管同一块内存 = 迟早重复释放</span><span class="cp">复制</span></div><pre><span class="hl-k">int</span>* raw = <span class="hl-k">new</span> <span class="hl-k">int</span>(<span class="hl-n">1</span>);
+std::unique_ptr&lt;<span class="hl-k">int</span>&gt; a(raw);
+std::unique_ptr&lt;<span class="hl-k">int</span>&gt; b(raw);   <span class="hl-c">/* ✗ 两个「主人」都以为自己该 delete */</span>
+<span class="hl-c">/* 程序结束时 a 和 b 各 delete 一次 raw → 重复释放 */</span></pre></div>
+
+<p><b>规则：一块 <code>new</code> 出来的内存，只交给一个智能指针。</b>
+要么从头就用 <code>make_unique</code>，不要中间经过裸指针。</p>
+
+<h3>错误 2 · 拷贝 <code>unique_ptr</code></h3>
+
+<p>就是第 3 节那个 <code>C2280</code>。改法是把所有权<b>转移</b>出去
+（<code>std::move</code>），而不是「复制一份」—— 因为按定义就只能有一个主人。</p>
+
+<h3>错误 3 · 从 <code>shared_ptr</code> 取出裸指针后又拿去 new</h3>
+
+<p><code>p.get()</code> 只是「借看一眼」，<b>不转移所有权</b>。
+拿这个裸指针再去造一个智能指针，就变成错误 1。</p>
+
+<div class="card warn">
+  <div class="card-t"><code>get()</code> 的定位</div>
+  <p><code>get()</code> 只该用于<b>短时间把裸指针交给不接受智能指针的老接口</b>
+  （比如某些 C 函数）。用完之后不要再保存它、更不要用它接管所有权。</p>
+</div>
+
+<h3>错误 4 · 用 <code>shared_ptr</code> 成环</h3>
+
+<p>第 5 节实测过：<code>expired()</code> 一直是 0，对象永远不释放。
+<b>只要图里可能出现环，就必须有一条边用 <code>weak_ptr</code>。</b></p>
+
+<!-- ============================================================ -->
+<h2 id="s7"><span class="n">7</span>一页速查</h2>
+
+<table>
+<thead><tr><th style="width:32%">想做的事</th><th>写法 / 结论</th></tr></thead>
+<tbody>
+<tr><td>独占一块资源</td>
+    <td class="c"><code>auto p = std::make_unique&lt;T&gt;(参数);</code></td></tr>
+<tr><td>转移所有权</td>
+    <td class="c"><code>auto q = std::move(p);</code>（之后 <code>p</code> 为空）</td></tr>
+<tr><td>共享所有权</td>
+    <td class="c"><code>auto s = std::make_shared&lt;T&gt;(参数);</code></td></tr>
+<tr><td>看有多少个持有者</td>
+    <td class="c"><code>s.use_count()</code></td></tr>
+<tr><td>观察但不持有</td>
+    <td class="c"><code>std::weak_ptr&lt;T&gt; w = s;</code></td></tr>
+<tr><td>从弱引用安全取值</td>
+    <td class="c"><code>if (auto sp = w.lock()) { … }</code></td></tr>
+<tr><td>把裸指针交给老接口</td>
+    <td class="c"><code>p.get()</code>（不转移所有权）</td></tr>
+<tr><td>禁止拷贝</td>
+    <td class="c"><code>unique_ptr</code> 本身就是；自己的类写 <code>= delete</code></td></tr>
+</tbody>
+</table>
+
+<div class="card key">
+  <div class="card-t">本讲要记住的四句话</div>
+  <ol>
+    <li><b>手动 <code>new</code> / <code>delete</code> 的问题是结构性的</b> ——
+    每多一条退出路径就多一条泄漏路径，靠小心没用。</li>
+    <li><b>RAII 把「什么时候释放」从你的记性交给了编译器</b>：
+    析构函数一定执行，包括提前 <code>return</code> 和抛异常。</li>
+    <li><b><code>unique_ptr</code> 独占、<code>shared_ptr</code> 共享、
+    <code>weak_ptr</code> 只观察</b>；能独占就别共享。</li>
+    <li><b><code>shared_ptr</code> 成环必漏</b>，必须用 <code>weak_ptr</code>
+    打开一条边；取值一律走 <code>lock()</code>。</li>
+  </ol>
+</div>
+
+<div class="see-also">
+  <div class="card-t">想接着看</div>
+  <ul>
+    <li><a href="m05.html">M05 · 静态、动态内存与内存安全初步</a>
+      <span class="why">—— 栈与堆、<code>malloc</code> / <code>free</code> 在那里；
+      智能指针管的正是那块堆内存。</span></li>
+    <li><a href="m09.html">M09 · vector 和 array</a>
+      <span class="why">—— <code>vector</code> 自己就是 RAII 的例子：
+      你不用管它的内存，它自己会释放。</span></li>
+    <li><a href="m04.html">M04 · 指针初步</a>
+      <span class="why">—— 智能指针只是「带析构的指针」，
+      底层仍然是指针；<code>&amp;</code>、<code>*</code> 那套没变。</span></li>
+    <li><a href="q11.html">Q11 · 互斥锁</a>
+      <span class="why">—— 同样用 RAII：<code>lock_guard</code> 就是
+      「把解锁绑在析构上」。两篇可以对照着看。</span></li>
+  </ul>
+</div>
+
+<!-- NAV-AUTO -->
+<a class="home-fab" href="../../index.html" title="返回教程总目录">返回 home</a>
+
+</div>
+
+</div>
+<!-- /NAV-AUTO -->
+<footer>
+UME 项目组内部教程 · Q10《智能指针》<br>
+文中所有输出与报错，均使用 <b>MSVC 14.51</b>（x64）实际编译运行核对；
+代码示例以 <b>Consolas</b> 等宽字体呈现。
+</footer>
+</main>
+</div>
+
+<script>
+/* 目录滚动高亮 */
+(function(){
+  const links = [...document.querySelectorAll('#toc a')];
+  const targets = links.map(a => document.querySelector(a.getAttribute('href'))).filter(Boolean);
+  const setOn = id => links.forEach(a => a.classList.toggle('on', a.getAttribute('href') === '#'+id));
+  const io = new IntersectionObserver(es => {
+    const vis = es.filter(e => e.isIntersecting)
+                  .sort((a,b) => a.boundingClientRect.top - b.boundingClientRect.top);
+    if (vis[0]) setOn(vis[0].target.id);
+  }, { rootMargin:'-8% 0px -72% 0px', threshold:0 });
+  targets.forEach(t => io.observe(t));
+})();
+
+/* 复制按钮 */
+(function(){
+  document.querySelectorAll('.code-wrap').forEach(box => {
+    const btn = box.querySelector('.cp');
+    const pre = box.querySelector('pre');
+    if (!btn || !pre) return;
+    btn.addEventListener('click', async () => {
+      const text = pre.textContent;
+      try { await navigator.clipboard.writeText(text); }
+      catch (e) {
+        const ta = document.createElement('textarea');
+        ta.value = text; document.body.appendChild(ta);
+        ta.select(); document.execCommand('copy'); ta.remove();
+      }
+      const old = btn.textContent;
+      btn.textContent = '已复制 ✓';
+      setTimeout(() => { btn.textContent = old; }, 1200);
+    });
+  });
+})();
+</script>
+<script>
+/* 移动端：生成「目录」按钮，点击呼出/收起侧滑目录 */
+(function(){
+  var toc = document.getElementById('toc');
+  if (!toc) return;
+  var btn = document.createElement('button');
+  btn.id = 'tocToggle';
+  btn.type = 'button';
+  btn.setAttribute('aria-controls','toc');
+  btn.textContent = '目录';
+  document.body.appendChild(btn);
+
+  function setOpen(on){
+    toc.classList.toggle('open', on);
+    document.body.classList.toggle('toc-open', on);
+    btn.setAttribute('aria-expanded', on ? 'true' : 'false');
+    btn.textContent = on ? '收起' : '目录';
+  }
+  btn.addEventListener('click', function(){
+    setOpen(!toc.classList.contains('open'));
+  });
+  toc.addEventListener('click', function(e){
+    if (e.target.closest('a')) setOpen(false);
+  });
+  document.addEventListener('click', function(e){
+    if (!toc.classList.contains('open')) return;
+    if (e.target === toc || toc.contains(e.target) || e.target === btn) return;
+    setOpen(false);
+  });
+  document.addEventListener('keydown', function(e){
+    if (e.key === 'Escape') setOpen(false);
+  });
+  function sync(){ if (window.innerWidth > 980) setOpen(false); }
+  window.addEventListener('resize', sync);
+  sync();
+})();
+</script>
+<script src="assets/series-common.js"></script>
+</body>
+</html>
