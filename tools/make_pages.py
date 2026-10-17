@@ -421,6 +421,7 @@ CARD_BG = {
     "f02.html": "SharingGroup/tutorials/assets/macro.png",
     "m10.html": "SharingGroup/tutorials/assets/virtual_function.gif",
     "t02.html": "SharingGroup/tutorials/assets/unicode.webp",
+    "f04.html": "SharingGroup/tutorials/assets/CMake.webp",
 }
 
 # 遮罩配色现在是**自动推导**（见 pack()）：重点卡底色是暖黄 → 默认暖黄遮罩；
