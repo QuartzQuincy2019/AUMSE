@@ -1,0 +1,555 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Q09 · 指针进阶：函数指针</title>
+<link rel="stylesheet" href="assets/genelayout.css">
+<link rel="stylesheet" href="assets/q09.css">
+<link rel="stylesheet" href="assets/series-theme.css">
+<link rel="stylesheet" href="assets/tg_L.css">
+<link rel="stylesheet" href="assets/tg_D.css">
+
+</head>
+<body class="qseries" data-series="Q">
+<div id="shell">
+
+<nav id="toc">
+  <h5>目录</h5>
+  <a href="#s1">1 · 函数也有地址</a>
+  <a href="#s2">2 · 指向函数的指针：括号的位置是关键</a>
+  <a href="#s3">3 · 怎么调用，它有什么用</a>
+  <a href="#s4">4 · 指向成员函数的指针：多一个「哪个对象」</a>
+  <a href="#s5">5 · Qt 的 connect：这一句到底传了什么</a>
+  <a href="#s6">6 · 为什么现在都这么写</a>
+  <a href="#s7">7 · 常见错误</a>
+  <a href="#s8">8 · 一页速查</a>
+</nav>
+
+<main>
+<h1>指针进阶：函数指针<span class="star" title="与本项目施行密切相关">*</span></h1>
+<p class="sub-title">UME 项目组内部教程 · Q09（Q） · 函数也有地址；最后落到 Qt 的 connect 那一句</p>
+<p><span class="lang cpp">C++</span> <span class="tag">指针</span> <span class="tag b">Qt 信号与槽</span></p>
+
+<p>Q03 讲的是「指向<b>对象</b>的指针」。这一篇讲另一种指针 ——
+<b>指向函数的指针</b>。</p>
+
+<p>它本身不难，难的是一句话：<b>Qt 的 <code>connect</code> 就是靠它工作的</b>。
+这一篇前半段把函数指针讲清，后半段只用一句话把它落到
+Qt 的信号与槽上。</p>
+
+<!-- ============================================================ -->
+<h2 id="s1"><span class="n">1</span>函数也有地址</h2>
+
+<p>M04 讲过：变量住在编了号的房间里，<code>&amp;</code> 能问出房间号。
+函数也一样 —— 它同样是一段指令，占着一块内存，有一个<b>首地址</b>。</p>
+
+<div class="card key">
+  <div class="card-t">一句话区分「调用」和「取地址」</div>
+  <p><b>函数名后面加括号，是调用它；不加括号，它就代表它的地址。</b></p>
+</div>
+
+<div class="code-wrap"><div class="bar"><span class="dot r"></span><span class="dot y"></span><span class="dot g"></span><span class="name">同一个名字，两种用法</span><span class="cp">复制</span></div><pre><span class="hl-k">int</span> <span class="hl-f">add</span>(<span class="hl-k">int</span> a, <span class="hl-k">int</span> b) { <span class="hl-k">return</span> a + b; }
+
+add(<span class="hl-n">3</span>, <span class="hl-n">4</span>);        <span class="hl-c">/* ← 加括号：调用它，得到 7 */</span>
+&amp;add            <span class="hl-c">/* ← 不加括号：取它的地址，得到 int(*)(int,int) */</span></pre></div>
+
+<p>既然地址能取出来，就能存进一个变量 —— 这个变量就叫<b>函数指针</b>。
+它和 M04 讲的指针是同一类东西：<b>内容是一个地址</b>。
+只是它指向的不是数据，而是一段「能被调用的代码」。</p>
+
+<!-- ============================================================ -->
+<h2 id="s2"><span class="n">2</span>指向函数的指针：括号的位置是关键</h2>
+
+<p>函数的类型里带着「参数是什么、返回什么」。所以声明一个函数指针，
+也要把这些都写出来。而写法上有一个<b>非常容易错的点</b>：</p>
+
+<div class="two">
+  <div class="side">
+    <div class="hd good">✅ 指向函数的指针</div>
+    <pre><span class="hl-k">int</span> (*fp)(<span class="hl-k">int</span>, <span class="hl-k">int</span>);</pre>
+    <p><code>fp</code> 外面有一对括号。<br>
+    读作「<code>fp</code> 是一个指针，指向一个
+    收两个 <code>int</code>、返回 <code>int</code> 的函数」。</p>
+  </div>
+  <div class="side">
+    <div class="hd bad">❌ 这是「函数」，不是指针</div>
+    <pre><span class="hl-k">int</span> *fp(<span class="hl-k">int</span>, <span class="hl-k">int</span>);</pre>
+    <p>少了那对括号。<br>
+    读作「<code>fp</code> 是一个函数，收两个 <code>int</code>、
+    返回 <code>int*</code>」—— <b><code>fp</code> 根本不是一个变量</b>。</p>
+  </div>
+</div>
+
+<div class="mnemonic">
+  <b>读法（从里往外）：</b>先看 <code>fp</code> 紧挨着什么 ——<br>
+  紧挨着 <code>*</code> 且带括号 → 它是<b>指针</b>；<br>
+  紧挨着 <code>(</code> → 它是<b>函数</b>。<br>
+  <b>那对括号的作用，就是把 <code>*</code> 和 <code>fp</code> 绑在一起。</b>
+</div>
+
+<p>下面这段只用 <code>static_assert</code> 让编译器替我们确认两者的类型：</p>
+
+<div class="code-wrap"><div class="bar"><span class="dot r"></span><span class="dot y"></span><span class="dot g"></span><span class="name">让编译器自己说：一个是指针，一个是函数</span><span class="cp">复制</span></div><pre><span class="hl-p">#include</span> <span class="hl-s">&lt;cstdio&gt;</span>
+<span class="hl-p">#include</span> <span class="hl-s">&lt;type_traits&gt;</span>
+
+<span class="hl-k">int</span> <span class="hl-f">plus1</span>(<span class="hl-k">int</span> a) { <span class="hl-k">return</span> a + <span class="hl-n">1</span>; }
+
+<span class="hl-k">int</span> (*fp1)(<span class="hl-k">int</span>);      <span class="hl-c">/* 指针 */</span>
+<span class="hl-k">int</span>* fp2(<span class="hl-k">int</span>);        <span class="hl-c">/* 这是函数声明！ */</span>
+
+<span class="hl-k">static_assert</span>(std::is_pointer_v&lt;<span class="hl-k">decltype</span>(fp1)&gt;);
+<span class="hl-k">static_assert</span>(std::is_function_v&lt;std::remove_pointer_t&lt;<span class="hl-k">decltype</span>(fp2)&gt;&gt;);
+
+<span class="hl-k">int</span>* fp2(<span class="hl-k">int</span> v) { <span class="hl-k">static</span> <span class="hl-k">int</span> x; x = v; <span class="hl-k">return</span> &amp;x; }
+
+<span class="hl-k">int</span> <span class="hl-f">main</span>() {
+    fp1 = plus1;
+    std::printf(<span class="hl-s">"fp1(41)     = %d\n"</span>, fp1(<span class="hl-n">41</span>));
+    std::printf(<span class="hl-s">"*fp2(7)     = %d\n"</span>, *fp2(<span class="hl-n">7</span>));
+    std::printf(<span class="hl-s">"sizeof(fp1) = %d\n"</span>, (<span class="hl-k">int</span>)<span class="hl-k">sizeof</span>(fp1));
+    <span class="hl-k">return</span> <span class="hl-n">0</span>;
+}</pre></div>
+
+<div class="out-wrap"><div class="cap">运行结果（已核对）</div><pre>fp1(41)     = 42
+*fp2(7)     = 7
+sizeof(fp1) = 8</pre></div>
+
+<p>两条 <code>static_assert</code> 都过了 —— 这就证明了：
+<b><code>int (*fp1)(int)</code> 是指针，<code>int* fp2(int)</code> 是函数。</b></p>
+
+<h4>给这个类型起个名字</h4>
+
+<p>函数指针的类型写起来很长，可以先起个名字再反复用。两种写法等价，
+新的那种（<code>using</code>）更好读：</p>
+
+<div class="code-wrap"><div class="bar"><span class="dot r"></span><span class="dot y"></span><span class="dot g"></span><span class="name">typedef 与 using</span><span class="cp">复制</span></div><pre><span class="hl-k">typedef</span> <span class="hl-k">int</span> (*BinOp)(<span class="hl-k">int</span>, <span class="hl-k">int</span>);   <span class="hl-c">/* 老写法：名字夹在中间 */</span>
+<span class="hl-k">using</span> BinOp = <span class="hl-k">int</span> (*)(<span class="hl-k">int</span>, <span class="hl-k">int</span>);   <span class="hl-c">/* 新写法：名字在等号左边，一眼看清 */</span></pre></div>
+
+<!-- ============================================================ -->
+<h2 id="s3"><span class="n">3</span>怎么调用，它有什么用</h2>
+
+<h3>两种调用写法，完全等价</h3>
+
+<div class="code-wrap"><div class="bar"><span class="dot r"></span><span class="dot y"></span><span class="dot g"></span><span class="name">fp(a,b) 与 (*fp)(a,b) 是同一件事</span><span class="cp">复制</span></div><pre><span class="hl-p">#include</span> <span class="hl-s">&lt;cstdio&gt;</span>
+<span class="hl-k">int</span> <span class="hl-f">add</span>(<span class="hl-k">int</span> a, <span class="hl-k">int</span> b) { <span class="hl-k">return</span> a + b; }
+
+<span class="hl-k">int</span> <span class="hl-f">main</span>() {
+    <span class="hl-k">int</span> (*fp)(<span class="hl-k">int</span>, <span class="hl-k">int</span>) = add;            <span class="hl-c">/* 函数名 → 地址 */</span>
+    std::printf(<span class="hl-s">"fp(3,4)     = %d\n"</span>, fp(<span class="hl-n">3</span>, <span class="hl-n">4</span>));
+    std::printf(<span class="hl-s">"(*fp)(3,4)  = %d\n"</span>, (*fp)(<span class="hl-n">3</span>, <span class="hl-n">4</span>));
+    <span class="hl-k">return</span> <span class="hl-n">0</span>;
+}</pre></div>
+
+<div class="out-wrap"><div class="cap">运行结果（已核对）</div><pre>fp(3,4)     = 7
+(*fp)(3,4)  = 7</pre></div>
+
+<div class="card note">
+  <div class="card-t">给普通函数取地址，加不加 <code>&amp;</code> 都一样</div>
+  <p><code>int (*fp)(int,int) = add;</code> 与 <code>… = &amp;add;</code> 是等价的，
+  两种都行。平时<b>建议写 <code>&amp;add</code></b> —— 一眼能看出「这里取的是地址」，
+  而不是漏写了括号的调用。</p>
+  <p>但这一条<b>只对普通函数成立</b>。指向<b>成员函数</b>时必须写 <code>&amp;</code>，
+  下面第 4 节会看到编译器直接拒绝。</p>
+</div>
+
+<h3>它到底有什么用：把「要做的事」当参数传</h3>
+
+<p>函数指针最大的用处，是让一个函数把「<b>具体做什么</b>」交给调用方决定。
+下面这个 <code>apply</code> <b>不知道自己要算什么</b>，它只知道
+「你会给我一个能收两个 <code>int</code> 的东西」：</p>
+
+<div class="code-wrap"><div class="bar"><span class="dot r"></span><span class="dot y"></span><span class="dot g"></span><span class="name">同一个 apply，两种行为</span><span class="cp">复制</span></div><pre><span class="hl-p">#include</span> <span class="hl-s">&lt;cstdio&gt;</span>
+
+<span class="hl-k">using</span> BinOp = <span class="hl-k">int</span> (*)(<span class="hl-k">int</span>, <span class="hl-k">int</span>);   <span class="hl-c">/* 给类型起名 */</span>
+
+<span class="hl-k">int</span> <span class="hl-f">add</span>(<span class="hl-k">int</span> a, <span class="hl-k">int</span> b) { <span class="hl-k">return</span> a + b; }
+<span class="hl-k">int</span> <span class="hl-f">mul</span>(<span class="hl-k">int</span> a, <span class="hl-k">int</span> b) { <span class="hl-k">return</span> a * b; }
+
+<span class="hl-k">int</span> <span class="hl-f">apply</span>(BinOp op, <span class="hl-k">int</span> a, <span class="hl-k">int</span> b) {    <span class="hl-c">/* 参数就是一个「函数」 */</span>
+    <span class="hl-k">return</span> op(a, b);
+}
+
+<span class="hl-k">int</span> <span class="hl-f">main</span>() {
+    std::printf(<span class="hl-s">"apply(add, 3, 4) = %d\n"</span>, apply(add, <span class="hl-n">3</span>, <span class="hl-n">4</span>));
+    std::printf(<span class="hl-s">"apply(mul, 3, 4) = %d\n"</span>, apply(mul, <span class="hl-n">3</span>, <span class="hl-n">4</span>));
+    <span class="hl-k">return</span> <span class="hl-n">0</span>;
+}</pre></div>
+
+<div class="out-wrap"><div class="cap">运行结果（已核对）</div><pre>apply(add, 3, 4) = 7
+apply(mul, 3, 4) = 12</pre></div>
+
+<p>同一个 <code>apply</code>，传 <code>add</code> 就是加，传 <code>mul</code> 就是乘 ——
+<b>代码没有改，行为变了</b>。这种「把函数当参数传」的用法叫<b>回调</b>（callback）。</p>
+
+<div class="card tip">
+  <div class="card-t">打个比方</div>
+  <p><code>apply</code> 像一台「<b>只会按按钮的机器</b>」：你给它一个按钮，
+  它就在该按的时候按下去，但它<b>不在乎那个按钮会触发什么</b>。</p>
+  <p>至于是「加法按钮」还是「乘法按钮」，是你在外面装上去的。</p>
+</div>
+
+<!-- ============================================================ -->
+<h2 id="s4"><span class="n">4</span>指向<b>成员函数</b>的指针：多一个「哪个对象」</h2>
+
+<p>到这里是普通函数。类里的成员函数有个额外的麻烦：
+<b>它不属于某一个对象，而属于整个类</b>。所以它的指针也得多带一样东西 ——
+「<b>这是哪个类的成员</b>」。</p>
+
+<div class="code-wrap"><div class="bar"><span class="dot r"></span><span class="dot y"></span><span class="dot g"></span><span class="name">多出来的那一截 <code>MyButton::</code></span><span class="cp">复制</span></div><pre><span class="hl-k">struct</span> MyButton {
+    <span class="hl-k">void</span> <span class="hl-f">clicked</span>()    { <span class="hl-c">/* … */</span> }
+    <span class="hl-k">void</span> <span class="hl-f">testSignal</span>() { <span class="hl-c">/* … */</span> }
+};
+
+<span class="hl-k">void</span> (*pf)()           = &amp;普通函数;          <span class="hl-c">/* 普通函数指针 */</span>
+<span class="hl-k">void</span> (MyButton::*pmf)() = &amp;MyButton::clicked;  <span class="hl-c">/* 成员函数指针 */</span>
+<span class="hl-c">/*   ^^^^^^^^^^^^^ 这一截就是「哪个类的成员」 */</span></pre></div>
+
+<table>
+<thead><tr><th style="width:24%"></th><th style="width:34%">普通函数指针</th><th>成员函数指针</th></tr></thead>
+<tbody>
+<tr><td><b>声明</b></td><td class="c"><code>void (*pf)()</code></td>
+    <td class="c"><code>void (MyButton::*pmf)()</code></td></tr>
+<tr><td><b>类型里带什么</b></td><td>参数 + 返回</td>
+    <td>参数 + 返回 <b>+ 属于哪个类</b></td></tr>
+<tr><td><b>怎么调用</b></td><td class="c"><code>pf()</code></td>
+    <td class="c"><code>(obj.*pmf)()</code><br><code>(ptr-&gt;*pmf)()</code></td></tr>
+<tr><td><b>要不要对象</b></td><td>不要</td>
+    <td><b>要</b> —— 它自己不知道 <code>this</code> 是谁</td></tr>
+</tbody>
+</table>
+
+<div class="code-wrap"><div class="bar"><span class="dot r"></span><span class="dot y"></span><span class="dot g"></span><span class="name">必须配一个对象，才能调</span><span class="cp">复制</span></div><pre><span class="hl-p">#include</span> <span class="hl-s">&lt;cstdio&gt;</span>
+
+<span class="hl-k">struct</span> MyButton {
+    <span class="hl-k">void</span> <span class="hl-f">clicked</span>()    { std::printf(<span class="hl-s">"clicked 被调用\n"</span>); }
+    <span class="hl-k">void</span> <span class="hl-f">testSignal</span>() { std::printf(<span class="hl-s">"testSignal 被调用\n"</span>); }
+};
+
+<span class="hl-k">int</span> <span class="hl-f">main</span>() {
+    <span class="hl-k">void</span> (MyButton::*pmf)() = &amp;MyButton::clicked;
+    std::printf(<span class="hl-s">"sizeof(成员函数指针) = %d\n"</span>, (<span class="hl-k">int</span>)<span class="hl-k">sizeof</span>(pmf));
+
+    MyButton b;
+    (b.*pmf)();                 <span class="hl-c">/* 用对象调 */</span>
+
+    MyButton* p = &amp;b;
+    (p-&gt;*pmf)();                <span class="hl-c">/* 用指针调 */</span>
+    <span class="hl-k">return</span> <span class="hl-n">0</span>;
+}</pre></div>
+
+<div class="out-wrap"><div class="cap">运行结果（已核对，MSVC 14.51 x64）</div><pre>sizeof(成员函数指针) = 8
+clicked 被调用
+clicked 被调用</pre></div>
+
+<div class="card warn">
+  <div class="card-t">「一样大」不等于「一样」</div>
+  <p>这台机器上成员函数指针也是 <b>8 字节</b>，和普通函数指针一样大。
+  但<b>类型完全不同</b> —— 把后者赋给前者，编译器直接拦下来：</p>
+  <div class="out-wrap" style="margin-top:10px"><div class="cap">实机报错（已核对）</div><pre>error C2440: “初始化”: 无法从“void (__cdecl MyButton::* )(void)”
+              转换为“void (__cdecl *)(void)”</pre></div>
+  <p style="margin-top:10px">看清楚报错里那两种写法：一个有 <code>MyButton::</code>、
+  一个没有。<b>编译器分得清清楚楚，别被 sizeof 骗了。</b></p>
+</div>
+
+<!-- ============================================================ -->
+<h2 id="s5"><span class="n">5</span>Qt 的 connect：这一句到底传了什么</h2>
+
+<p>前面都是铺垫。Qt 里那句最常见的 <code>connect</code>，就是把
+<b>两个成员函数指针</b>当参数传进去：</p>
+
+<div class="code-wrap"><div class="bar"><span class="dot r"></span><span class="dot y"></span><span class="dot g"></span><span class="name">Qt 的信号与槽连接</span><span class="cp">复制</span></div><pre><span class="hl-f">connect</span>(<span class="hl-k">this</span>, &amp;MyButton::clicked, <span class="hl-k">this</span>, &amp;MyButton::testSignal);</pre></div>
+
+<h3>四个参数，两对</h3>
+
+<table>
+<thead><tr><th style="width:6%">#</th><th style="width:26%">写的</th><th style="width:30%">是什么</th><th>类型</th></tr></thead>
+<tbody>
+<tr><td class="c">1</td><td class="c"><code>this</code></td>
+    <td><b>发送者</b>：谁发出信号</td>
+    <td class="c"><code>QObject*</code><br>（这里就是 <code>MyButton*</code>）</td></tr>
+<tr><td class="c">2</td><td class="c"><code>&amp;MyButton::clicked</code></td>
+    <td><b>信号</b>：发出什么</td>
+    <td class="c">指向成员函数的指针</td></tr>
+<tr><td class="c">3</td><td class="c"><code>this</code></td>
+    <td><b>接收者</b>：谁来处理</td>
+    <td class="c"><code>QObject*</code></td></tr>
+<tr><td class="c">4</td><td class="c"><code>&amp;MyButton::testSignal</code></td>
+    <td><b>槽</b>：用什么函数处理</td>
+    <td class="c">指向成员函数的指针</td></tr>
+</tbody>
+</table>
+
+<p>读成一句话就是：</p>
+
+<div class="mnemonic">
+  <b>当</b>（第 1 个参数那个对象）的（第 2 个参数那个函数）<b>被发出时</b>，<br>
+  <b>就调用</b>（第 3 个参数那个对象）的（第 4 个参数那个函数）。
+</div>
+
+<h3>这就是第 4 节说的「多一个哪个对象」</h3>
+
+<p>回看第 4 节的结论：<b>成员函数指针自己不知道 <code>this</code> 是谁，
+必须配一个对象才能调。</b></p>
+
+<p>而 <code>connect</code> 的第 1、3 个参数，<b>给的正好就是那两个对象</b>。
+换句话说：</p>
+
+<div class="card key">
+  <div class="card-t">connect 干的事，就是替你「配对」</div>
+  <p>你交了两只「指向成员函数的指针」（第 2、4 个参数），
+  再交两个对象（第 1、3 个参数）——</p>
+  <p><b><code>connect</code> 把「指针 + 对象」配成两对存起来。
+  等信号真的发出，它就照着配对去调槽。</b></p>
+  <p>所以那一句里的 <code>this</code> 不能省：<b>没有对象，成员函数指针就调不动。</b></p>
+</div>
+
+<h3>逐项确认这几件事</h3>
+
+<div class="alias">
+  <div class="row"><span class="k">为什么要写 <code>&amp;</code></span>
+    <span class="v"><code>&amp;MyButton::clicked</code> 里那个 <code>&amp;</code>
+    是<b>取地址</b>，不是调用。<b>不加会被编译器拒绝</b> —— 见下面第 7 节的实机报错。</span></div>
+  <div class="row"><span class="k">为什么不是 <code>clicked()</code></span>
+    <span class="v">加括号就是<b>调用它</b>了，得到的不是地址。
+    而且非静态成员函数也不能凭空调用（它要 <code>this</code>），编译器同样会拦。</span></div>
+  <div class="row"><span class="k">信号和槽是什么</span>
+    <span class="v">都只是<b>普通的成员函数</b>。区别只在写法约定：
+    信号一般只声明、实现由 Qt 的元对象机制生成；槽则和普通函数一样自己写。</span></div>
+  <div class="row"><span class="k">为什么两个 <code>this</code></span>
+    <span class="v">这句写在 <code>MyButton</code> 自己的成员函数里，
+    所以发送者和接收者都是自己 —— <b>「我自己的信号，接到我自己的槽上」</b>。
+    两个 <code>this</code> 恰好说明「哪两个配对」。</span></div>
+</div>
+
+<div class="card note">
+  <div class="card-t">我实际验证到了哪一步</div>
+  <p>本机<b>没有装 Qt</b>，所以 <code>connect</code> 本身没法编译。
+  下面这些是<b>实机验证过</b>的（用 MSVC 14.51，配一个<b>形状相同</b>的模板函数）：</p>
+  <ul>
+    <li><code>&amp;MyButton::clicked</code> 的类型确实是
+    <code>void (MyButton::*)()</code>（<code>static_assert</code> 通过）</li>
+    <li>它和 <code>&amp;MyButton::testSignal</code> <b>类型相同</b> ——
+    所以同一个模板参数吃得下这两个实参</li>
+    <li><b>这一句的四个实参，能按这个顺序传进一个收
+    「对象指针、成员函数指针、对象指针、成员函数指针」的模板函数</b></li>
+  </ul>
+  <p>至于 Qt 内部怎么存、怎么在信号发出时回调，属于 Qt 的实现细节，
+  本篇不靠推测展开。</p>
+</div>
+
+<!-- ============================================================ -->
+<h2 id="s6"><span class="n">6</span>为什么现在都这么写</h2>
+
+<p>Qt4 时代的写法是把函数名写成<b>字符串</b>：</p>
+
+<div class="code-wrap"><div class="bar"><span class="dot r"></span><span class="dot y"></span><span class="dot g"></span><span class="name">旧写法：字符串</span><span class="cp">复制</span></div><pre><span class="hl-f">connect</span>(btn, SIGNAL(clicked()), <span class="hl-k">this</span>, SLOT(testSignal()));   <span class="hl-c">/* Qt4 */</span></pre></div>
+
+<table>
+<thead><tr><th style="width:22%"></th><th style="width:39%">旧：<code>SIGNAL</code> / <code>SLOT</code> 宏</th><th>新：<code>&amp;类名::函数名</code></th></tr></thead>
+<tbody>
+<tr><td><b>传的是什么</b></td><td>一段<b>字符串</b></td><td>一个<b>成员函数指针</b></td></tr>
+<tr><td><b>名字打错</b></td><td>照样编译过，<b>运行时</b>才发现槽没被调用</td>
+    <td><b>编译期</b>就报错：没有这个成员</td></tr>
+<tr><td><b>签名对不上</b></td><td>运行时才发现</td><td><b>编译期</b>就报错</td></tr>
+<tr><td><b>改了函数名</b></td><td>字符串不会跟着改，运行时悄悄失效</td>
+    <td>跟着一起改，改漏了编译不过</td></tr>
+</tbody>
+</table>
+
+<p>一句话：<b>旧的把错误推到运行时，新的把错误拉到编译期。</b>
+这也是为什么现在的 Qt 代码几乎都用 <code>&amp;类名::函数名</code>。</p>
+
+<!-- ============================================================ -->
+<h2 id="s7"><span class="n">7</span>常见错误</h2>
+
+<h3>错误 1 · 少写括号，把指针写成了函数</h3>
+
+<div class="code-wrap"><div class="bar"><span class="dot r"></span><span class="dot y"></span><span class="dot g"></span><span class="name">手滑</span><span class="cp">复制</span></div><pre><span class="hl-k">int</span> (*fp)(<span class="hl-k">int</span>);   <span class="hl-c">/* ✅ 指针 */</span>
+<span class="hl-k">int</span> *fp(<span class="hl-k">int</span>);    <span class="hl-c">/* ❌ 这是函数声明 */</span></pre></div>
+
+<p>如果还想给它赋初值，编译器会直接懵：</p>
+
+<div class="out-wrap"><div class="cap">实机报错（已核对）</div><pre>error C2061: 语法错误: 标识符“add”
+error C2610: “int *fp(int)”: 不是可默认为的特殊成员函数或比较运算符</pre></div>
+
+<p>第二条报错看着莫名其妙 —— <b>因为它把你的话当成了「声明一个函数」。</b>
+看到这类奇怪的报错，先回头数括号。</p>
+
+<h3>错误 2 · 成员函数指针没配对象就想调</h3>
+
+<div class="code-wrap"><div class="bar"><span class="dot r"></span><span class="dot y"></span><span class="dot g"></span><span class="name">少了一个对象</span><span class="cp">复制</span></div><pre><span class="hl-k">void</span> (MyButton::*pmf)() = &amp;MyButton::clicked;
+pmf();          <span class="hl-c">/* ❌ 它不知道 this 是谁 */</span>
+(b.*pmf)();     <span class="hl-c">/* ✅ 配上对象才行 */</span></pre></div>
+
+<div class="out-wrap"><div class="cap">实机报错（已核对）</div><pre>error C2064: 项不会计算为接受 0 个参数的函数</pre></div>
+
+<h3>错误 3 · 忘了写 <code>&amp;</code></h3>
+
+<div class="code-wrap"><div class="bar"><span class="dot r"></span><span class="dot y"></span><span class="dot g"></span><span class="name">成员函数必须写 &amp;</span><span class="cp">复制</span></div><pre><span class="hl-f">connect</span>(<span class="hl-k">this</span>, MyButton::clicked, <span class="hl-k">this</span>, MyButton::testSignal);   <span class="hl-c">/* ❌ 少了 & */</span></pre></div>
+
+<div class="out-wrap"><div class="cap">实机报错（已核对）</div><pre>error C3867: “MyButton::clicked”: 非标准语法；请使用 "&amp;" 来创建指向成员的指针
+error C3867: “MyButton::testSignal”: 非标准语法；请使用 "&amp;" 来创建指向成员的指针</pre></div>
+
+<p>编译器把该怎么做都写在报错里了 ——<b>「请使用 &amp; 来创建指向成员的指针」</b>。</p>
+
+<h3>错误 4 · 加括号当成了取地址</h3>
+
+<div class="code-wrap"><div class="bar"><span class="dot r"></span><span class="dot y"></span><span class="dot g"></span><span class="name">括号是调用</span><span class="cp">复制</span></div><pre><span class="hl-f">connect</span>(<span class="hl-k">this</span>, &amp;MyButton::clicked(), <span class="hl-k">this</span>, &amp;MyButton::testSignal);
+<span class="hl-c">/*                          ↑ 括号 = 调用，不是取地址 */</span></pre></div>
+
+<div class="out-wrap"><div class="cap">实机报错（已核对）</div><pre>error C2352: “MyButton::clicked”: 调用非静态成员函数需要一个对象</pre></div>
+
+<h3>错误 5 · 以为「大小一样」就能互转</h3>
+
+<p>两者 <code>sizeof</code> 都是 8，但类型不同，赋不过去（回看第 4 节那张
+<code>C2440</code>）。<b>sizeof 相同不代表能互换 —— 类型系统认的是类型。</b></p>
+
+<!-- ============================================================ -->
+<h2 id="s8"><span class="n">8</span>一页速查</h2>
+
+<table>
+<thead><tr><th style="width:34%">想做的事</th><th>写法</th></tr></thead>
+<tbody>
+<tr><td>声明一个函数指针</td>
+    <td class="c"><code>int (*fp)(int, int);</code></td></tr>
+<tr><td>指向一个普通函数</td>
+    <td class="c"><code>fp = add;</code>&nbsp;&nbsp;或&nbsp;&nbsp;<code>fp = &amp;add;</code></td></tr>
+<tr><td>调用它</td>
+    <td class="c"><code>fp(a, b)</code>&nbsp;&nbsp;或&nbsp;&nbsp;<code>(*fp)(a, b)</code></td></tr>
+<tr><td>给类型起名</td>
+    <td class="c"><code>using BinOp = int (*)(int, int);</code></td></tr>
+<tr><td>把「做什么」当参数传</td>
+    <td class="c"><code>int apply(BinOp op, int a, int b)</code></td></tr>
+<tr><td>声明一个成员函数指针</td>
+    <td class="c"><code>void (MyButton::*pmf)();</code></td></tr>
+<tr><td>指向一个成员函数（<b>必须带 &amp;</b>）</td>
+    <td class="c"><code>pmf = &amp;MyButton::clicked;</code></td></tr>
+<tr><td>调用成员函数指针</td>
+    <td class="c"><code>(obj.*pmf)()</code>&nbsp;&nbsp;或&nbsp;&nbsp;<code>(ptr-&gt;*pmf)()</code></td></tr>
+<tr><td>Qt 连接信号与槽</td>
+    <td class="c"><code>connect(发送者, &amp;发送者类::信号,<br>
+    &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;接收者, &amp;接收者类::槽);</code></td></tr>
+</tbody>
+</table>
+
+<div class="card key">
+  <div class="card-t">本讲要记住的四句话</div>
+  <ol>
+    <li><b>函数名不加括号，就是它的地址。</b>加了括号是调用。</li>
+    <li><b><code>int (*fp)(int)</code> 是指针，<code>int *fp(int)</code> 是函数。</b>
+    区别就在那对括号。</li>
+    <li><b>成员函数指针多一层「属于哪个类」</b>，所以必须配一个对象才能调用。</li>
+    <li><b><code>connect</code> 的四个参数，就是「两只指针 + 两个对象」</b> ——
+    它替你把这些配成对。</li>
+  </ol>
+</div>
+
+<div class="see-also">
+  <div class="card-t">想接着看</div>
+  <ul>
+    <li><a href="q03.html">Q03 · 指针进阶：指向对象的指针与引用</a>
+      <span class="why">—— 本篇前半段的「指针」部分就是接着它讲的；
+      对象指针、引用与解引用都在那里。</span></li>
+    <li><a href="q04.html">Q04 · 接口</a>
+      <span class="why">—— 信号与槽本质上还是「对外公开的函数」，
+      谁公开了什么，那篇把这个概念讲清了。</span></li>
+    <li><a href="m04.html">M04 · 指针初步</a>
+      <span class="why">—— <code>&amp;</code> 与 <code>*</code> 的基础在这里，
+      函数指针只是「指向的东西从数据换成了函数」。</span></li>
+    <li><a href="f03.html">F03 · 编译与链接、头文件与库</a>
+      <span class="why">—— 想看编译期检查到底发生在哪一步，那篇有用。</span></li>
+  </ul>
+</div>
+
+<!-- NAV-AUTO -->
+<a class="home-fab" href="../../index.html" title="返回教程总目录">返回 home</a>
+
+</div>
+
+</div>
+<!-- /NAV-AUTO -->
+<footer>
+UME 项目组内部教程 · Q09《指针进阶：函数指针》<br>
+文中所有输出与报错，均使用 <b>MSVC 14.51</b>（x64，<code>/std:c++17</code>）实际编译运行核对；
+第 5 节 Qt 那段 <code>connect</code> 本机无 Qt 工具链、未编译 ——
+只按等价模板验证了四个实参的类型与传参方式。代码示例以 <b>Consolas</b> 等宽字体呈现。
+</footer>
+</main>
+</div>
+
+<script>
+/* 目录滚动高亮 */
+(function(){
+  const links = [...document.querySelectorAll('#toc a')];
+  const targets = links.map(a => document.querySelector(a.getAttribute('href'))).filter(Boolean);
+  const setOn = id => links.forEach(a => a.classList.toggle('on', a.getAttribute('href') === '#'+id));
+  const io = new IntersectionObserver(es => {
+    const vis = es.filter(e => e.isIntersecting)
+                  .sort((a,b) => a.boundingClientRect.top - b.boundingClientRect.top);
+    if (vis[0]) setOn(vis[0].target.id);
+  }, { rootMargin:'-8% 0px -72% 0px', threshold:0 });
+  targets.forEach(t => io.observe(t));
+})();
+
+/* 复制按钮 */
+(function(){
+  document.querySelectorAll('.code-wrap').forEach(box => {
+    const btn = box.querySelector('.cp');
+    const pre = box.querySelector('pre');
+    if (!btn || !pre) return;
+    btn.addEventListener('click', async () => {
+      const text = pre.textContent;
+      try { await navigator.clipboard.writeText(text); }
+      catch (e) {
+        const ta = document.createElement('textarea');
+        ta.value = text; document.body.appendChild(ta);
+        ta.select(); document.execCommand('copy'); ta.remove();
+      }
+      const old = btn.textContent;
+      btn.textContent = '已复制 ✓';
+      setTimeout(() => { btn.textContent = old; }, 1200);
+    });
+  });
+})();
+</script>
+<script>
+/* 移动端：生成「目录」按钮，点击呼出/收起侧滑目录 */
+(function(){
+  var toc = document.getElementById('toc');
+  if (!toc) return;
+  var btn = document.createElement('button');
+  btn.id = 'tocToggle';
+  btn.type = 'button';
+  btn.setAttribute('aria-controls','toc');
+  btn.textContent = '目录';
+  document.body.appendChild(btn);
+
+  function setOpen(on){
+    toc.classList.toggle('open', on);
+    document.body.classList.toggle('toc-open', on);
+    btn.setAttribute('aria-expanded', on ? 'true' : 'false');
+    btn.textContent = on ? '收起' : '目录';
+  }
+  btn.addEventListener('click', function(){
+    setOpen(!toc.classList.contains('open'));
+  });
+  toc.addEventListener('click', function(e){
+    if (e.target.closest('a')) setOpen(false);
+  });
+  document.addEventListener('click', function(e){
+    if (!toc.classList.contains('open')) return;
+    if (e.target === toc || toc.contains(e.target) || e.target === btn) return;
+    setOpen(false);
+  });
+  document.addEventListener('keydown', function(e){
+    if (e.key === 'Escape') setOpen(false);
+  });
+  function sync(){ if (window.innerWidth > 980) setOpen(false); }
+  window.addEventListener('resize', sync);
+  sync();
+})();
+</script>
+<script src="assets/series-common.js"></script>
+</body>
+</html>
