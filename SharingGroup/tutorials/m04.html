@@ -104,84 +104,6 @@
   纸条上写的不是「42」，而是「<b>去哪里找 42</b>」。
 </div>
 
-<div class="card tip">
-  <div class="card-t">回扣 M03：数组的类型是 <code>int[n]</code></div>
-  <p>M03 最后一节说过：<code>int arr[4]</code> 里 <code>arr</code> 的类型是
-  <b><code>int[4]</code></b>，不是 <code>int</code>。现在有了指针，可以接着往下说：</p>
-  <div class="code-wrap"><div class="bar"><span class="dot r"></span><span class="dot y"></span><span class="dot g"></span><span class="name">数组名会「退化」成指针</span><span class="cp">复制</span></div><pre><span class="hl-k">int</span>  arr[<span class="hl-n">4</span>] = {<span class="hl-n">10</span>, <span class="hl-n">20</span>, <span class="hl-n">30</span>, <span class="hl-n">40</span>};
-<span class="hl-k">int</span> *p = arr;        <span class="hl-c">/* arr 原类型 int[4] → 这里退化成 int* */</span></pre></div>
-  <p><code>arr</code> 原本是 <code>int[4]</code>；一旦要赋给指针，
-  它就<b>退化</b>成「指向第一个元素的指针」，类型变成 <code>int*</code>。</p>
-  <p>所以 <code>p</code> 指向的是 <code>arr[0]</code>，
-  <code>*p</code> 取到的是 <b>10</b>。</p>
-</div>
-
-<div class="card key">
-  <div class="card-t">由此得到指针的一条硬规矩</div>
-  <p><b>指针的类型，必须与它指向的东西对得上。</b></p>
-  <p><code>int *p</code> 只能指向 <code>int</code>；
-  要指向 <code>char</code> 就用 <code>char *</code>，
-  要指向 <code>double</code> 就用 <code>double *</code>。</p>
-  <p>原因 M03 已经讲过：<b>类型决定步长</b>。
-  <code>int *</code> 加 1 前进 4 字节，<code>char *</code> 加 1 只前进 1 字节。
-  类型写错了，指针就会在内存里走错格。</p>
-</div>
-
-<h4>附：为什么多维数组只有第一维可以省</h4>
-
-<p>写二维数组时有个常被问的问题：下面三种声明，为什么只有中间那个能过？</p>
-
-<div class="code-wrap"><div class="bar"><span class="dot r"></span><span class="dot y"></span><span class="dot g"></span><span class="name">三种写法</span><span class="cp">复制</span></div><pre><span class="hl-k">int</span> a1[<span class="hl-n">2</span>][<span class="hl-n">3</span>];   <span class="hl-c">/* ✓ 合法 */</span>
-<span class="hl-k">int</span> a2[][<span class="hl-n">3</span>];    <span class="hl-c">/* ✓ 合法：第一维省掉 */</span>
-<span class="hl-k">int</span> a3[<span class="hl-n">2</span>][];    <span class="hl-c">/* ✗ 非法：第二维不能省 */</span></pre></div>
-
-<p>关键在于<b>编译器要能算出一个元素占多大</b>。</p>
-
-<p><code>int[2][3]</code> 可以理解成「<b>2 个 <code>int[3]</code></b>」——
-它的一层元素是 <code>int[3]</code>，占 12 字节。所以：</p>
-
-<div class="mnemonic">
-  <code>a[i]</code> 的地址 = 起始地址 + <b>i × 12</b><br>
-  —— 每跨一行，正好跳过 12 字节
-</div>
-
-<p>这个「12」必须由<b>第二维</b>算出来。所以：</p>
-
-<table>
-<thead><tr><th style="width:22%">写法</th><th style="width:22%">每行多大</th>
-<th>行不行</th></tr></thead>
-<tbody>
-<tr><td class="c"><code>int a[2][3]</code></td><td class="c">3 × 4 = 12</td>
-    <td class="c">行 —— 两个都说了</td></tr>
-<tr><td class="c"><code>int a[][3]</code></td><td class="c">3 × 4 = 12</td>
-    <td class="c"><b>行</b> —— 行宽有了，「几行」以后再补也行</td></tr>
-<tr><td class="c"><code>int a[2][]</code></td><td class="c"><b>算不出来</b></td>
-    <td class="c"><b>不行</b> —— 不知道一行多宽，<code>a[1]</code> 就找不到</td></tr>
-</tbody>
-</table>
-
-<div class="card key">
-  <div class="card-t">一句话</div>
-  <p><b>第一维是「有几行」，第二维是「一行多宽」。</b></p>
-  <p>「几行」可以临时不知道 —— 有时能由初始化列表数出来；
-  但<b>「一行多宽」必须知道</b>，否则连第二行从哪开始都算不出来。</p>
-</div>
-
-<p>顺带一个推论：<code>sizeof(int[2][3])</code> 是 <b>24</b>
-（2 × 12）—— 和多维无关，仍然是「整个类型占多大」。</p>
-
-<div class="card tip">
-  <div class="card-t">和这一节的回扣连起来看</div>
-  <p>回扣说的是「<code>arr</code> 的类型是 <code>int[4]</code> 而不是 <code>int</code>」；
-  这里说的是「<code>a</code> 的类型是 <code>int[2][3]</code>，
-  它的一层元素是 <code>int[3]</code>」。</p>
-  <p><b>同一个道理：数组的类型里带着「每一维多大」，这是编译器算地址的依据。</b>
-  省掉第一维还有救，省掉后面任何一维就断了这条依据。</p>
-</div>
-
-
-
-<!-- ============================================================ -->
 <h2 id="s2"><span class="n">2</span>两个符号：&amp; 和 *</h2>
 
 <p>学指针只需要两个符号，它们的作用正好相反：</p>
@@ -337,12 +259,10 @@ p     = 000000000060FD74   （p 里装的就是 &x）
 <span class="hl-k">int</span><span class="arw">*</span> p = <span class="arw">&amp;</span>x;
 
 <span class="hl-c">/* 第 2 行：* 是【解引用运算符】，取出 p 指向的值 */</span>
-<span class="hl-f">printf</span>(<span class="hl-s">"%d
-"</span>, <span class="arw">*</span>p);      <span class="hl-c">/* 42 */</span>
+<span class="hl-f">printf</span>(<span class="hl-s">"%d\n"</span>, <span class="arw">*</span>p);      <span class="hl-c">/* 42 */</span>
 
 <span class="hl-c">/* 第 3 行：* 是【乘号】 */</span>
-<span class="hl-f">printf</span>(<span class="hl-s">"%d
-"</span>, x <span class="arw">*</span> <span class="hl-n">2</span>);    <span class="hl-c">/* 84 */</span></pre></div>
+<span class="hl-f">printf</span>(<span class="hl-s">"%d\n"</span>, x <span class="arw">*</span> <span class="hl-n">2</span>);    <span class="hl-c">/* 84 */</span></pre></div>
 
 <div class="out-wrap"><div class="cap">运行结果</div><pre>42
 84</pre></div>
@@ -626,6 +546,10 @@ p 没指向任何地方，不能解引用</pre></div>
     <b><code>arr[i]</code> 和 <code>*(arr + i)</code> 是一回事</b>，
     方括号只是「从首地址出发加偏移、再解引用」的简写。</p>
 
+    <p><a href="e03.html">E03 · 语法糖</a> 把这一层拆得更细：
+    <code>arr[i]</code> 与 <code>arr[i][j]</code> 本质上都是「先算地址、再取值」，
+    方括号只是编译器替你写好的糖。</p>
+
     <div class="code-wrap"><div class="bar"><span class="dot r"></span><span class="dot y"></span><span class="dot g"></span><span class="name">两种写法完全等价</span><span class="cp">复制</span></div><pre><span class="hl-p">#include</span> <span class="hl-s">&lt;stdio.h&gt;</span>
 
 <span class="hl-k">int</span> <span class="hl-f">main</span>(<span class="hl-k">void</span>) {
@@ -684,6 +608,109 @@ sizeof(p)   = 8   （只是一个指针）</pre></div>
       <p>第 3 点正是<b>下一问</b>的关键 —— 因为「数组名一进函数就退化成指针」，
       所以函数里再也拿不到数组的真实大小，只能靠外面多传一个长度进来。</p>
     </div>
+<h4>先把「退化」说清楚</h4>
+
+<p>上面第 2 层说「数组名会自动变成首元素的地址」。这件事有个正式说法，叫<b>退化</b> —— 后面到处会遇到，所以这里讲准它。</p>
+
+<div class="card key">
+  <div class="card-t">一句话</div>
+  <p><b>数组名用在「需要指针」的位置时，编译器会自动把它换成一个
+  「指向第一个元素的指针」。</b></p>
+  <p>这个过程就叫<b>退化</b>（英文 decay）。从类型上看，是
+  <code>int[4]</code> 变成了 <code>int*</code>。</p>
+</div>
+
+<div class="card note">
+  <div class="card-t">先岔一句：编译器是什么</div>
+  <p>上面反复说「编译器」。它就是<b>把你写的源代码翻译成机器能执行的程序的那个工具</b>
+  —— <code>gcc</code>、<code>g++</code>、<code>cl.exe</code> 都是它。</p>
+  <p>为什么这里要提它：<b>「类型占多大」「地址怎么走」「数组名要不要退化」，
+  这些决定全是编译器做的</b>，不是运行时的事。你在编辑器里写下的
+  <code>int arr[4]</code>，它得先算出「这占 16 字节、下一格在 4 字节后」，
+  才能把后面每一句翻译成正确的指令。</p>
+  <p>它具体做了哪几步、报错分别出在哪一步 ——
+  <a href="f03.html">F03 · 编译与链接、头文件与库</a> 讲得最清楚
+  （第 3 节就叫「编译：各自翻译」）。本篇只用到其中一件事：
+  <b>编译器会按类型规则改写你的表达式</b>。</p>
+</div>
+
+
+<p>三个要点，把它和「类型转换」区分开：</p>
+
+<table>
+<thead><tr><th style="width:22%">要点</th><th>意思</th></tr></thead>
+<tbody>
+<tr><td class="c"><b>自动发生</b></td>
+    <td>你什么都不用写。只要把数组名放在一个需要指针的地方，编译器自己就换了
+    —— 所以你甚至感觉不到它发生过</td></tr>
+<tr><td class="c"><b>只换「看法」，<br>不换数据</b></td>
+    <td>内存里那 16 字节一个都没动，也不会另存一份指针。
+    变的只是<b>编译器此刻怎么理解这个数组名</b></td></tr>
+<tr><td class="c"><b>丢掉长度</b></td>
+    <td>退化之后只剩「从哪开始」，<b>「有多长」没了</b> ——
+    下面那条「必须另传长度」的根源就在这里</td></tr>
+</tbody>
+</table>
+
+<p>它的痕迹很好认：上面第 3 层那个 <code>sizeof(arr) = 40</code> 与
+<code>sizeof(p) = 8</code>，就是同一块内存被两种类型看出来的差别。
+下一问会更直白 —— <b>同一个 <code>sizeof(arr)</code>，在 <code>main</code> 里是 40，
+一进函数就变成 8</b>。</p>
+
+<h4>附：为什么多维数组只有第一维可以省</h4>
+
+<p>写二维数组时有个常被问的问题：下面三种声明，为什么只有中间那个能过？</p>
+
+<div class="code-wrap"><div class="bar"><span class="dot r"></span><span class="dot y"></span><span class="dot g"></span><span class="name">三种写法</span><span class="cp">复制</span></div><pre><span class="hl-k">int</span> a1[<span class="hl-n">2</span>][<span class="hl-n">3</span>];   <span class="hl-c">/* ✓ 合法 */</span>
+<span class="hl-k">int</span> a2[][<span class="hl-n">3</span>];    <span class="hl-c">/* ✓ 合法：第一维省掉 */</span>
+<span class="hl-k">int</span> a3[<span class="hl-n">2</span>][];    <span class="hl-c">/* ✗ 非法：第二维不能省 */</span></pre></div>
+
+<p>关键在于<b>编译器要能算出一个元素占多大</b>。</p>
+
+<p><code>int[2][3]</code> 可以理解成「<b>2 个 <code>int[3]</code></b>」——
+它的一层元素是 <code>int[3]</code>，占 12 字节。所以：</p>
+
+<div class="mnemonic">
+  <code>a[i]</code> 的地址 = 起始地址 + <b>i × 12</b><br>
+  —— 每跨一行，正好跳过 12 字节
+</div>
+
+<p>这个「12」必须由<b>第二维</b>算出来。所以：</p>
+
+<table>
+<thead><tr><th style="width:22%">写法</th><th style="width:22%">每行多大</th>
+<th>行不行</th></tr></thead>
+<tbody>
+<tr><td class="c"><code>int a[2][3]</code></td><td class="c">3 × 4 = 12</td>
+    <td class="c">行 —— 两个都说了</td></tr>
+<tr><td class="c"><code>int a[][3]</code></td><td class="c">3 × 4 = 12</td>
+    <td class="c"><b>行</b> —— 行宽有了，「几行」以后再补也行</td></tr>
+<tr><td class="c"><code>int a[2][]</code></td><td class="c"><b>算不出来</b></td>
+    <td class="c"><b>不行</b> —— 不知道一行多宽，<code>a[1]</code> 就找不到</td></tr>
+</tbody>
+</table>
+
+<div class="card key">
+  <div class="card-t">一句话</div>
+  <p><b>第一维是「有几行」，第二维是「一行多宽」。</b></p>
+  <p>「几行」可以临时不知道 —— 有时能由初始化列表数出来；
+  但<b>「一行多宽」必须知道</b>，否则连第二行从哪开始都算不出来。</p>
+</div>
+
+<p>顺带一个推论：<code>sizeof(int[2][3])</code> 是 <b>24</b>
+（2 × 12）—— 和多维无关，仍然是「整个类型占多大」。</p>
+
+<div class="card tip">
+  <div class="card-t">和「退化」连起来看</div>
+  <p>多维数组的类型里，每一维的大小都写着；而只要缺一维，编译器就没法算「下一行在哪」。</p>
+  <p><b>同一个道理：数组的类型里带着「每一维多大」，这是编译器算地址的依据。</b>
+  省掉第一维还有救，省掉后面任何一维就断了这条依据。</p>
+</div>
+
+
+
+<!-- ============================================================ -->
+
   </div>
 </div>
 
@@ -756,6 +783,8 @@ sizeof(int*)       = 8</pre></div>
       所以调用方有责任传对：<b>传大了会越界，传小了会漏算。</b></p>
       <p>另外，函数内部只用 <code>a[i]</code>（<code>0 &lt;= i &lt; n</code>），
       不要试图用 <code>sizeof(a)</code> 去算长度 —— 那一定是你以为的那个数。</p>
+      <p>「C 数组天生缺什么」这件事，<a href="m09.html">M09 · vector 和 array</a>
+      归成了三条短板（长度写死、不知道自己多长、不检查越界），可以对照着看。</p>
     </div>
   </div>
 </div>

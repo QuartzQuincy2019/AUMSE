@@ -157,12 +157,10 @@
 }
 
 <span class="hl-k">int</span> <span class="hl-f">main</span>(<span class="hl-k">void</span>) {
-    <span class="hl-f">printf</span>(<span class="hl-s">"开始: gCount = %d
-"</span>, gCount);
+    <span class="hl-f">printf</span>(<span class="hl-s">"开始: gCount = %d\n"</span>, gCount);
     <span class="hl-f">addOne</span>();
     <span class="hl-f">addOne</span>();
-    <span class="hl-f">printf</span>(<span class="hl-s">"调用两次后: gCount = %d
-"</span>, gCount);
+    <span class="hl-f">printf</span>(<span class="hl-s">"调用两次后: gCount = %d\n"</span>, gCount);
     <span class="hl-k">return</span> <span class="hl-n">0</span>;
 }</pre></div>
 
@@ -178,15 +176,13 @@
 <span class="hl-k">void</span> <span class="hl-f">normal</span>(<span class="hl-k">void</span>) {
     <span class="hl-k">int</span> n = <span class="hl-n">0</span>;        <span class="hl-c">/* 每次进来都重新变成 0 */</span>
     n++;
-    <span class="hl-f">printf</span>(<span class="hl-s">"普通局部   n = %d
-"</span>, n);
+    <span class="hl-f">printf</span>(<span class="hl-s">"普通局部   n = %d\n"</span>, n);
 }
 
 <span class="hl-k">void</span> <span class="hl-f">keep</span>(<span class="hl-k">void</span>) {
     <span class="hl-k">static</span> <span class="hl-k">int</span> n = <span class="hl-n">0</span>;  <span class="hl-c">/* 只初始化一次，之后一直留着 */</span>
     n++;
-    <span class="hl-f">printf</span>(<span class="hl-s">"static局部 n = %d
-"</span>, n);
+    <span class="hl-f">printf</span>(<span class="hl-s">"static局部 n = %d\n"</span>, n);
 }
 
 <span class="hl-k">int</span> <span class="hl-f">main</span>(<span class="hl-k">void</span>) {
@@ -228,10 +224,8 @@ static局部 n = 3</pre></div>
     <span class="hl-k">int</span> a = <span class="hl-n">1</span>;
     <span class="hl-k">int</span> b = <span class="hl-n">2</span>;
     <span class="hl-k">int</span> c = <span class="hl-n">3</span>;
-    <span class="hl-f">printf</span>(<span class="hl-s">"a=%d b=%d c=%d
-"</span>, a, b, c);
-    <span class="hl-f">printf</span>(<span class="hl-s">"&amp;a=%p  &amp;b=%p  &amp;c=%p
-"</span>, (<span class="hl-k">void</span> *)&amp;a, (<span class="hl-k">void</span> *)&amp;b, (<span class="hl-k">void</span> *)&amp;c);
+    <span class="hl-f">printf</span>(<span class="hl-s">"a=%d b=%d c=%d\n"</span>, a, b, c);
+    <span class="hl-f">printf</span>(<span class="hl-s">"&amp;a=%p  &amp;b=%p  &amp;c=%p\n"</span>, (<span class="hl-k">void</span> *)&amp;a, (<span class="hl-k">void</span> *)&amp;b, (<span class="hl-k">void</span> *)&amp;c);
     <span class="hl-c">/* 地址是挨着的，说明它们挤在同一块「栈」上 */</span>
 }
 
@@ -308,8 +302,7 @@ static局部 n = 3</pre></div>
     <span class="hl-k">int</span> *p = <span class="hl-f">malloc</span>(<span class="hl-k">sizeof</span>(<span class="hl-k">int</span>) * n);
 
     <span class="hl-k">if</span> (p == <span class="hl-n">NULL</span>) {          <span class="hl-c">/* 判断是否成功，好习惯 */</span>
-        <span class="hl-f">printf</span>(<span class="hl-s">"申请失败
-"</span>);
+        <span class="hl-f">printf</span>(<span class="hl-s">"申请失败\n"</span>);
         <span class="hl-k">return</span> <span class="hl-n">1</span>;
     }
 
@@ -320,8 +313,7 @@ static局部 n = 3</pre></div>
     <span class="hl-k">for</span> (<span class="hl-k">int</span> i = <span class="hl-n">0</span>; i &lt; n; i++) {
         <span class="hl-f">printf</span>(<span class="hl-s">"%d "</span>, p[i]);
     }
-    <span class="hl-f">printf</span>(<span class="hl-s">"
-"</span>);
+    <span class="hl-f">printf</span>(<span class="hl-s">"\n"</span>);
 
     <span class="hl-f">free</span>(p);               <span class="hl-c">/* 用完还回去 */</span>
     <span class="hl-k">return</span> <span class="hl-n">0</span>;
@@ -351,10 +343,8 @@ static局部 n = 3</pre></div>
 
 <div class="code-wrap"><div class="bar"><span class="dot r"></span><span class="dot y"></span><span class="dot g"></span><span class="name">malloc 与 calloc 的差别</span><span class="cp">复制</span></div><pre><span class="hl-k">int</span> *a = <span class="hl-f">malloc</span>(<span class="hl-k">sizeof</span>(<span class="hl-k">int</span>) * <span class="hl-n">4</span>);
 <span class="hl-k">int</span> *b = <span class="hl-f">calloc</span>(<span class="hl-n">4</span>, <span class="hl-k">sizeof</span>(<span class="hl-k">int</span>));
-<span class="hl-f">printf</span>(<span class="hl-s">"malloc: %d %d %d %d
-"</span>, a[<span class="hl-n">0</span>], a[<span class="hl-n">1</span>], a[<span class="hl-n">2</span>], a[<span class="hl-n">3</span>]);
-<span class="hl-f">printf</span>(<span class="hl-s">"calloc: %d %d %d %d
-"</span>, b[<span class="hl-n">0</span>], b[<span class="hl-n">1</span>], b[<span class="hl-n">2</span>], b[<span class="hl-n">3</span>]);</pre></div>
+<span class="hl-f">printf</span>(<span class="hl-s">"malloc: %d %d %d %d\n"</span>, a[<span class="hl-n">0</span>], a[<span class="hl-n">1</span>], a[<span class="hl-n">2</span>], a[<span class="hl-n">3</span>]);
+<span class="hl-f">printf</span>(<span class="hl-s">"calloc: %d %d %d %d\n"</span>, b[<span class="hl-n">0</span>], b[<span class="hl-n">1</span>], b[<span class="hl-n">2</span>], b[<span class="hl-n">3</span>]);</pre></div>
 
 <div class="out-wrap"><div class="cap">运行结果（malloc 那几个数每次都可能不同）</div><pre>malloc: 341 47 0 0
 calloc: 0 0 0 0</pre></div>
@@ -368,18 +358,15 @@ calloc: 0 0 0 0</pre></div>
 
 <div class="code-wrap"><div class="bar"><span class="dot r"></span><span class="dot y"></span><span class="dot g"></span><span class="name">规范写法：free 之后置 NULL</span><span class="cp">复制</span></div><pre><span class="hl-k">int</span> *q = <span class="hl-f">malloc</span>(<span class="hl-k">sizeof</span>(<span class="hl-k">int</span>) * <span class="hl-n">4</span>);
 *q = <span class="hl-n">7</span>;
-<span class="hl-f">printf</span>(<span class="hl-s">"用的时候 *q = %d
-"</span>, *q);
+<span class="hl-f">printf</span>(<span class="hl-s">"用的时候 *q = %d\n"</span>, *q);
 
 <span class="hl-f">free</span>(q);        <span class="hl-c">/* 还回去 */</span>
 q = <span class="hl-n">NULL</span>;         <span class="hl-c">/* 立刻置空，防止以后误用 */</span>
 
 <span class="hl-k">if</span> (q != <span class="hl-n">NULL</span>) {
-    <span class="hl-f">printf</span>(<span class="hl-s">"还指向旧地址，不能碰
-"</span>);
+    <span class="hl-f">printf</span>(<span class="hl-s">"还指向旧地址，不能碰\n"</span>);
 } <span class="hl-k">else</span> {
-    <span class="hl-f">printf</span>(<span class="hl-s">"已经是空指针，可以安全判断
-"</span>);
+    <span class="hl-f">printf</span>(<span class="hl-s">"已经是空指针，可以安全判断\n"</span>);
 }</pre></div>
 
 <div class="out-wrap"><div class="cap">运行结果</div><pre>用的时候 *q = 7
@@ -417,8 +404,7 @@ free 后 q == NULL 吗？ 1
     <span class="hl-k">for</span> (<span class="hl-k">int</span> i = <span class="hl-n">0</span>; i &lt; n; i++) p[i] = i + <span class="hl-n">1</span>;
     <span class="hl-f">printf</span>(<span class="hl-s">"扩容前: "</span>);
     <span class="hl-k">for</span> (<span class="hl-k">int</span> i = <span class="hl-n">0</span>; i &lt; n; i++) <span class="hl-f">printf</span>(<span class="hl-s">"%d "</span>, p[i]);
-    <span class="hl-f">printf</span>(<span class="hl-s">"
-"</span>);
+    <span class="hl-f">printf</span>(<span class="hl-s">"\n"</span>);
 
     <span class="hl-c">/* 想扩到 6 个 —— 用临时变量接住返回值 */</span>
     <span class="hl-k">int</span> n2 = <span class="hl-n">6</span>;
@@ -432,8 +418,7 @@ free 后 q == NULL 吗？ 1
     <span class="hl-k">for</span> (<span class="hl-k">int</span> i = n; i &lt; n2; i++) p[i] = (i + <span class="hl-n">1</span>) * <span class="hl-n">100</span>;
     <span class="hl-f">printf</span>(<span class="hl-s">"扩容后: "</span>);
     <span class="hl-k">for</span> (<span class="hl-k">int</span> i = <span class="hl-n">0</span>; i &lt; n2; i++) <span class="hl-f">printf</span>(<span class="hl-s">"%d "</span>, p[i]);
-    <span class="hl-f">printf</span>(<span class="hl-s">"
-"</span>);
+    <span class="hl-f">printf</span>(<span class="hl-s">"\n"</span>);
 
     <span class="hl-f">free</span>(p);
     <span class="hl-k">return</span> <span class="hl-n">0</span>;
@@ -508,10 +493,8 @@ free 后 q == NULL 吗？ 1
 <div class="code-wrap"><div class="bar"><span class="dot r"></span><span class="dot y"></span><span class="dot g"></span><span class="name">同样是 10 个 int</span><span class="cp">复制</span></div><pre><span class="hl-k">int</span> stackArr[<span class="hl-n">10</span>];                          <span class="hl-c">/* 栈上，自动的 */</span>
 <span class="hl-k">int</span> *heapArr = <span class="hl-f">malloc</span>(<span class="hl-k">sizeof</span>(<span class="hl-k">int</span>) * <span class="hl-n">10</span>);   <span class="hl-c">/* 堆上，要手动 free */</span>
 
-<span class="hl-f">printf</span>(<span class="hl-s">"sizeof(stackArr) = %d
-"</span>, (<span class="hl-k">int</span>)<span class="hl-k">sizeof</span>(stackArr));
-<span class="hl-f">printf</span>(<span class="hl-s">"sizeof(heapArr)  = %d
-"</span>, (<span class="hl-k">int</span>)<span class="hl-k">sizeof</span>(heapArr));
+<span class="hl-f">printf</span>(<span class="hl-s">"sizeof(stackArr) = %d\n"</span>, (<span class="hl-k">int</span>)<span class="hl-k">sizeof</span>(stackArr));
+<span class="hl-f">printf</span>(<span class="hl-s">"sizeof(heapArr)  = %d\n"</span>, (<span class="hl-k">int</span>)<span class="hl-k">sizeof</span>(heapArr));
 <span class="hl-f">free</span>(heapArr);</pre></div>
 
 <div class="out-wrap"><div class="cap">运行结果</div><pre>sizeof(stackArr) = 40  （整个数组）
@@ -537,8 +520,7 @@ sizeof(heapArr)  = 8  （只是指针）</pre></div>
     <span class="hl-f">scanf</span>(<span class="hl-s">"%d"</span>, &amp;v);
     sum += v;               <span class="hl-c">/* 读完就加，不存 */</span>
 }
-<span class="hl-f">printf</span>(<span class="hl-s">"平均 = %.2f
-"</span>, n &gt; <span class="hl-n">0</span> ? sum / n : <span class="hl-n">0.0</span>);</pre></div>
+<span class="hl-f">printf</span>(<span class="hl-s">"平均 = %.2f\n"</span>, n &gt; <span class="hl-n">0</span> ? sum / n : <span class="hl-n">0.0</span>);</pre></div>
 
 <p>但如果<b>需要回头再看</b>（比如倒序输出、排序、找第二大），
 就必须把数都存下来 —— 这时才需要数组，也才可能需要堆。</p>
@@ -556,8 +538,7 @@ sizeof(heapArr)  = 8  （只是指针）</pre></div>
 <span class="hl-k">for</span> (<span class="hl-k">int</span> i = n - <span class="hl-n">1</span>; i &gt;= <span class="hl-n">0</span>; i--) {
     <span class="hl-f">printf</span>(<span class="hl-s">"%d "</span>, p[i]);
 }
-<span class="hl-f">printf</span>(<span class="hl-s">"
-"</span>);
+<span class="hl-f">printf</span>(<span class="hl-s">"\n"</span>);
 <span class="hl-f">free</span>(p);</pre></div>
 
 <h4>情况二：要带回函数外面</h4>
@@ -580,8 +561,7 @@ sizeof(heapArr)  = 8  （只是指针）</pre></div>
     <span class="hl-k">if</span> (r != <span class="hl-n">NULL</span>) {
         <span class="hl-f">printf</span>(<span class="hl-s">"makeRange(6) = "</span>);
         <span class="hl-k">for</span> (<span class="hl-k">int</span> i = <span class="hl-n">0</span>; i &lt; <span class="hl-n">6</span>; i++) <span class="hl-f">printf</span>(<span class="hl-s">"%d "</span>, r[i]);
-        <span class="hl-f">printf</span>(<span class="hl-s">"
-"</span>);
+        <span class="hl-f">printf</span>(<span class="hl-s">"\n"</span>);
         <span class="hl-f">free</span>(r);               <span class="hl-c">/* 谁用谁负责还 */</span>
     }
     <span class="hl-k">return</span> <span class="hl-n">0</span>;
@@ -643,16 +623,14 @@ p = <span class="hl-n">NULL</span>;</pre>
 
 <div class="code-wrap"><div class="bar"><span class="dot r"></span><span class="dot y"></span><span class="dot g"></span><span class="name">对比</span><span class="cp">复制</span></div><pre><span class="hl-c">/* ❌ 危险：free 之后指针还指着那块地方 */</span>
 <span class="hl-f">free</span>(p);
-<span class="hl-f">printf</span>(<span class="hl-s">"%d
-"</span>, *p);      <span class="hl-c">/* 用了已经归还的内存 */</span>
+<span class="hl-f">printf</span>(<span class="hl-s">"%d\n"</span>, *p);      <span class="hl-c">/* 用了已经归还的内存 */</span>
 <span class="hl-f">free</span>(p);                <span class="hl-c">/* 重复释放，可能直接崩 */</span>
 
 <span class="hl-c">/* ✅ 安全：还完就置空 */</span>
 <span class="hl-f">free</span>(p);
 p = <span class="hl-n">NULL</span>;
 <span class="hl-k">if</span> (p != <span class="hl-n">NULL</span>) {
-    <span class="hl-f">printf</span>(<span class="hl-s">"%d
-"</span>, *p);  <span class="hl-c">/* 进不来，安全 */</span>
+    <span class="hl-f">printf</span>(<span class="hl-s">"%d\n"</span>, *p);  <span class="hl-c">/* 进不来，安全 */</span>
 }
 <span class="hl-f">free</span>(p);                <span class="hl-c">/* free(NULL) 安全 */</span></pre></div>
 
@@ -678,8 +656,7 @@ p[<span class="hl-n">0</span>] = <span class="hl-n">1</span>;
 <span class="hl-c">/* ✅ 先判断再用 */</span>
 <span class="hl-k">int</span> *p = <span class="hl-f">malloc</span>(<span class="hl-k">sizeof</span>(<span class="hl-k">int</span>) * n);
 <span class="hl-k">if</span> (p == <span class="hl-n">NULL</span>) {
-    <span class="hl-f">printf</span>(<span class="hl-s">"内存不足
-"</span>);
+    <span class="hl-f">printf</span>(<span class="hl-s">"内存不足\n"</span>);
     <span class="hl-k">return</span> <span class="hl-n">1</span>;
 }
 p[<span class="hl-n">0</span>] = <span class="hl-n">1</span>;</pre></div>
@@ -787,8 +764,7 @@ t = Mongol  strlen = 6</pre></div>
 
 <h4>错误 2 · 用了已释放的内存</h4>
 <div class="code-wrap"><div class="bar"><span class="dot r"></span><span class="dot y"></span><span class="dot g"></span><span class="name">对比</span><span class="cp">复制</span></div><pre><span class="hl-f">free</span>(p);
-<span class="hl-f">printf</span>(<span class="hl-s">"%d
-"</span>, p[<span class="hl-n">0</span>]);   <span class="hl-c">/* ❌ 那块内存已经不属于你 */</span>
+<span class="hl-f">printf</span>(<span class="hl-s">"%d\n"</span>, p[<span class="hl-n">0</span>]);   <span class="hl-c">/* ❌ 那块内存已经不属于你 */</span>
 
 <span class="hl-f">free</span>(p);
 p = <span class="hl-n">NULL</span>;               <span class="hl-c">/* ✅ 置空后就不会误用 */</span></pre></div>

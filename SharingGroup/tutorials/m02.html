@@ -216,7 +216,7 @@
 <p>函数要发挥作用，需要两步：</p>
 
 <div class="flow">
-  <div class="s"><div class="t">① 定义</div><div class="d">把「怎么算」写出来，告诉编译器有这么个工具</div></div>
+  <div class="s"><div class="t">① 定义</div><div class="d">把「怎么算」写出来，让后面的代码知道有这么个工具</div></div>
   <div class="s"><div class="t">② 调用</div><div class="d">在需要的地方写上名字，让它干活</div></div>
 </div>
 
@@ -335,7 +335,7 @@ square(square(2)) = 16</pre></div>
   <ul>
     <li><b>该返回却没返回。</b>如果函数声明是 <code>int</code>，
       但某条路径走下来没有 <code>return</code>，结果就是<b>不确定的</b>。
-      编译器可能只给个警告，程序照样跑 —— 这种 bug 很难查。</li>
+      程序可能只给个警告，照样往下跑 —— 这种 bug 很难查。</li>
     <li><b>把 <code>void</code> 函数的返回值拿来用。</b>
       <code>int x = printLine(5);</code> 是错的，因为它不还东西。</li>
   </ul>
@@ -554,7 +554,7 @@ f 里的 a = 100
 
 <div class="code-wrap"><div class="bar"><span class="dot r"></span><span class="dot y"></span><span class="dot g"></span><span class="name">先声明，后定义</span><span class="cp">复制</span></div><pre><span class="hl-p">#include</span> <span class="hl-s">&lt;stdio.h&gt;</span>
 
-<span class="hl-c">/* ① 声明：告诉编译器「有这么个函数」，先不写怎么做 */</span>
+<span class="hl-c">/* ① 声明：先声明「有这么个函数」，暂时不写怎么做 */</span>
 <span class="hl-k">int</span> <span class="hl-f">cube</span>(<span class="hl-k">int</span> x);
 
 <span class="hl-k">int</span> <span class="hl-f">main</span>(<span class="hl-k">void</span>) {
@@ -575,7 +575,7 @@ f 里的 a = 100
 <table>
 <thead><tr><th style="width:22%"></th><th>写法</th><th style="width:26%">作用</th></tr></thead>
 <tbody>
-<tr><td><b>声明</b></td><td class="c">int cube(int x);</td><td>告诉编译器「有这个东西」</td></tr>
+<tr><td><b>声明</b></td><td class="c">int cube(int x);</td><td>告诉后面要用的代码「有这个东西」</td></tr>
 <tr><td><b>定义</b></td><td class="c">int cube(int x) { ... }</td><td>真正写出怎么做</td></tr>
 </tbody>
 </table>
@@ -880,7 +880,7 @@ n = <span class="hl-f">doubled</span>(n);    <span class="hl-c">/* ✅ 把返回
 }</pre></div>
 
 <h4>错误 6 · 定义写在调用之后，又没声明</h4>
-<div class="code-wrap"><div class="bar"><span class="dot r"></span><span class="dot y"></span><span class="dot g"></span><span class="name">对比</span><span class="cp">复制</span></div><pre><span class="hl-c">/* ❌ main 在 cube 之前，编译器没见过 cube */</span>
+<div class="code-wrap"><div class="bar"><span class="dot r"></span><span class="dot y"></span><span class="dot g"></span><span class="name">对比</span><span class="cp">复制</span></div><pre><span class="hl-c">/* ❌ main 在 cube 之前，还没见过 cube */</span>
 <span class="hl-k">int</span> <span class="hl-f">main</span>(<span class="hl-k">void</span>) {
     <span class="hl-f">printf</span>(<span class="hl-s">"%d\n"</span>, <span class="hl-f">cube</span>(<span class="hl-n">3</span>));
     <span class="hl-k">return</span> <span class="hl-n">0</span>;
@@ -947,7 +947,7 @@ n = <span class="hl-f">doubled</span>(n);    <span class="hl-c">/* ✅ 把返回
 <!-- /NAV-AUTO -->
 <footer>
 UME 项目组内部教程 · M02《函数初步》<br>
-代码示例均以 <b>Consolas</b> 等宽字体呈现；文中所有「运行结果」均使用 g++ 13.1.0（<code>-std=c++17</code>）实际编译运行核对。
+代码示例均以 <b>Consolas</b> 等宽字体呈现；文中所有「运行结果」均使用 g++ 13.1.0（<code>-std=c++17</code>）构建，实际运行核对。
 </footer>
 
 </main>

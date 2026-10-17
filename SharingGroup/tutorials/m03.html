@@ -47,7 +47,7 @@
 <div class="card note">
   <div class="card-t">怎么用这份文档</div>
   <p>每个知识点都是「<b>先讲清楚，再给代码，代码后面紧跟运行结果</b>」。
-  本文里<b>所有「运行结果」都是均使用 g++ 13.1.0（<code>-std=c++17</code>）实际编译运行核对的</b>，不是编的。</p>
+  本文里<b>所有「运行结果」都是均使用 g++ 13.1.0（<code>-std=c++17</code>）构建后实际运行核对的</b>，不是编的。</p>
   <p>本讲是M04《指针初步》的地基，特别是第 9、10 节的「地址」概念，
   <b>请务必看懂再往下走</b>。</p>
 </div>
@@ -317,7 +317,7 @@ double      8 字节</pre></div>
   <div class="card-t">两点必须注意</div>
   <ul>
     <li><b>上表是「常见情况」，不是铁律。</b>C 标准只规定了最少位数，
-      具体大小由「编译器 + 平台」决定。
+      具体多大要看所用的平台和工具。
       比如 <code>long</code> 在 64 位 Windows 上是 <b>4 字节</b>，
       在 64 位 Linux 上却是 <b>8 字节</b>。</li>
     <li><b>想确定就用 <code>sizeof</code> 量</b>，不要凭记忆猜。
@@ -835,14 +835,14 @@ sizeof(x)      = 4</pre></div>
 就该是 4。它是 16，正说明<b>量到的是一个「4 个 int」的整体</b>。</p>
 
 <p>这也解释了一件容易被忽略的事：<b><code>sizeof</code> 不需要真的去数内存，
-它在编译期就算好了</b> —— 因为它只需要知道类型。</p>
+它只看类型就能算出来</b>。</p>
 
 <h4>② 它解释了为什么不能把数组塞给 int</h4>
 
-<div class="code-wrap"><div class="bar"><span class="dot r"></span><span class="dot y"></span><span class="dot g"></span><span class="name">类型不匹配，编译不过</span><span class="cp">复制</span></div><pre><span class="hl-k">int</span> arr[<span class="hl-n">4</span>];
+<div class="code-wrap"><div class="bar"><span class="dot r"></span><span class="dot y"></span><span class="dot g"></span><span class="name">类型不匹配，写错了</span><span class="cp">复制</span></div><pre><span class="hl-k">int</span> arr[<span class="hl-n">4</span>];
 <span class="hl-k">int</span> x = arr;      <span class="hl-c">/* 错：int[4] 不能塞进 int */</span></pre></div>
 
-<p>编译器会直接报错。这不是「规矩多」，而是<b>真的放不下</b>：
+<p>这样写会直接报错。这不是「规矩多」，而是<b>真的放不下</b>：
 <code>arr</code> 是 16 字节，<code>x</code> 只有 4 字节。</p>
 
 <h4>③ 它是 M04 讲指针的入口</h4>
@@ -955,7 +955,7 @@ M04 讲指针时会正面用到 —— 那里会回扣本节，还会顺带说�
 <!-- /NAV-AUTO -->
 <footer>
 UME 项目组内部教程 · M03《类型概论》<br>
-代码示例均以 <b>Consolas</b> 等宽字体呈现；文中所有「运行结果」均使用 g++ 13.1.0（<code>-std=c++17</code>）实际编译运行核对。<br>
+代码示例均以 <b>Consolas</b> 等宽字体呈现；文中所有「运行结果」均使用 g++ 13.1.0（<code>-std=c++17</code>）构建，实际运行核对。<br>
 本讲不涉及 float / double 的 IEEE 754 编码细节（留待进阶）。
 </footer>
 
