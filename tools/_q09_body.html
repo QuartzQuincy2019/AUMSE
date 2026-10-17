@@ -3,7 +3,7 @@
 
 <p>它本身不难，难的是一句话：<b>Qt 的 <code>connect</code> 就是靠它工作的</b>。
 这一篇前半段把函数指针讲清，后半段只用一句话把它落到
-Qt 的信号与槽上。</p>
+Qt 的 <code>connect</code> 上。</p>
 
 <!-- ============================================================ -->
 <h2 id="s1"><span class="n">1</span>函数也有地址</h2>
@@ -225,33 +225,41 @@ clicked 被调用</pre></div>
 <p>前面都是铺垫。Qt 里那句最常见的 <code>connect</code>，就是把
 <b>两个成员函数指针</b>当参数传进去：</p>
 
-<div class="code-wrap"><div class="bar"><span class="dot r"></span><span class="dot y"></span><span class="dot g"></span><span class="name">Qt 的信号与槽连接</span><span class="cp">复制</span></div><pre><span class="hl-f">connect</span>(<span class="hl-k">this</span>, &amp;MyButton::clicked, <span class="hl-k">this</span>, &amp;MyButton::testSignal);</pre></div>
+<div class="code-wrap"><div class="bar"><span class="dot r"></span><span class="dot y"></span><span class="dot g"></span><span class="name">Qt 里把一个成员函数接到另一个成员函数上</span><span class="cp">复制</span></div><pre><span class="hl-f">connect</span>(<span class="hl-k">this</span>, &amp;MyButton::clicked, <span class="hl-k">this</span>, &amp;MyButton::testSignal);</pre></div>
 
 <h3>四个参数，两对</h3>
 
 <table>
-<thead><tr><th style="width:6%">#</th><th style="width:26%">写的</th><th style="width:30%">是什么</th><th>类型</th></tr></thead>
+<thead><tr><th style="width:6%">#</th><th style="width:27%">写的</th><th style="width:28%">是什么</th><th>类型</th></tr></thead>
 <tbody>
 <tr><td class="c">1</td><td class="c"><code>this</code></td>
-    <td><b>发送者</b>：谁发出信号</td>
+    <td><b>第一个对象</b>：谁先动</td>
     <td class="c"><code>QObject*</code><br>（这里就是 <code>MyButton*</code>）</td></tr>
 <tr><td class="c">2</td><td class="c"><code>&amp;MyButton::clicked</code></td>
-    <td><b>信号</b>：发出什么</td>
+    <td><b>第一个成员函数</b><br>（Qt 里的说法是「信号」）</td>
     <td class="c">指向成员函数的指针</td></tr>
 <tr><td class="c">3</td><td class="c"><code>this</code></td>
-    <td><b>接收者</b>：谁来处理</td>
+    <td><b>第二个对象</b>：谁跟着动</td>
     <td class="c"><code>QObject*</code></td></tr>
 <tr><td class="c">4</td><td class="c"><code>&amp;MyButton::testSignal</code></td>
-    <td><b>槽</b>：用什么函数处理</td>
+    <td><b>第二个成员函数</b><br>（这里<b>也是一个信号</b>）</td>
     <td class="c">指向成员函数的指针</td></tr>
 </tbody>
 </table>
 
-<p>读成一句话就是：</p>
+<p>写成一句话：<b>当（1）的（2）发生，就去触发（3）的（4）。</b></p>
 
-<div class="mnemonic">
-  <b>当</b>（第 1 个参数那个对象）的（第 2 个参数那个函数）<b>被发出时</b>，<br>
-  <b>就调用</b>（第 3 个参数那个对象）的（第 4 个参数那个函数）。
+<div class="card note">
+  <div class="card-t">这一句里，两个都是<b>信号</b></div>
+  <p><code>testSignal</code> 名字里就带着 Signal，这不是巧合 ——
+  它在 Qt 里确实是一个信号。而第 4 个位置<b>允许填信号</b>：
+  <b>信号可以连信号</b>。</p>
+  <p>所以这一句干的事是：<b><code>clicked</code> 一响，<code>testSignal</code>
+  跟着响</b> —— 等于把 <code>clicked</code> 转发成 <code>testSignal</code>。
+  这样外部只需要关心 <code>testSignal</code> 一个名字。</p>
+  <p><b>至于「信号」和「槽」在 Qt 里各是什么、内部怎么工作 ——
+  那要等学到 Qt 才讲，本篇不展开。</b>这里只需要记住一件事：
+  <b>第 2、4 个位置填的都是「指向成员函数的指针」。</b></p>
 </div>
 
 <h3>这就是第 4 节说的「多一个哪个对象」</h3>
@@ -266,8 +274,8 @@ clicked 被调用</pre></div>
   <div class="card-t">connect 干的事，就是替你「配对」</div>
   <p>你交了两只「指向成员函数的指针」（第 2、4 个参数），
   再交两个对象（第 1、3 个参数）——</p>
-  <p><b><code>connect</code> 把「指针 + 对象」配成两对存起来。
-  等信号真的发出，它就照着配对去调槽。</b></p>
+  <p><b><code>connect</code> 把「指针 + 对象」配成两对收下。等第一个真的被触发，
+  它就照着配对去调第二个。</b></p>
   <p>所以那一句里的 <code>this</code> 不能省：<b>没有对象，成员函数指针就调不动。</b></p>
 </div>
 
@@ -280,13 +288,14 @@ clicked 被调用</pre></div>
   <div class="row"><span class="k">为什么不是 <code>clicked()</code></span>
     <span class="v">加括号就是<b>调用它</b>了，得到的不是地址。
     而且非静态成员函数也不能凭空调用（它要 <code>this</code>），编译器同样会拦。</span></div>
-  <div class="row"><span class="k">信号和槽是什么</span>
-    <span class="v">都只是<b>普通的成员函数</b>。区别只在写法约定：
-    信号一般只声明、实现由 Qt 的元对象机制生成；槽则和普通函数一样自己写。</span></div>
   <div class="row"><span class="k">为什么两个 <code>this</code></span>
-    <span class="v">这句写在 <code>MyButton</code> 自己的成员函数里，
-    所以发送者和接收者都是自己 —— <b>「我自己的信号，接到我自己的槽上」</b>。
-    两个 <code>this</code> 恰好说明「哪两个配对」。</span></div>
+    <span class="v">这两个成员函数都属于同一个对象。
+    第 1、3 个参数都填它，正好说明「谁和谁配成一对」——
+    <b>换了对象，就是另外一对。</b></span></div>
+  <div class="row"><span class="k">这两个函数是什么</span>
+    <span class="v">就只是 <code>MyButton</code> 的<b>两个普通成员函数</b>。
+    Qt 给它们起了「信号」「槽」这样的名字，属于 Qt 的约定 ——
+    但类型上没什么特别：都是「指向成员函数的指针」。</span></div>
 </div>
 
 <div class="card note">
@@ -301,11 +310,12 @@ clicked 被调用</pre></div>
     <li><b>这一句的四个实参，能按这个顺序传进一个收
     「对象指针、成员函数指针、对象指针、成员函数指针」的模板函数</b></li>
   </ul>
-  <p>至于 Qt 内部怎么存、怎么在信号发出时回调，属于 Qt 的实现细节，
+  <p>至于 Qt 内部怎么存、怎么在触发时回调，属于 Qt 的实现细节，
   本篇不靠推测展开。</p>
 </div>
 
 <!-- ============================================================ -->
+
 <h2 id="s6"><span class="n">6</span>为什么现在都这么写</h2>
 
 <p>Qt4 时代的写法是把函数名写成<b>字符串</b>：</p>
@@ -316,7 +326,7 @@ clicked 被调用</pre></div>
 <thead><tr><th style="width:22%"></th><th style="width:39%">旧：<code>SIGNAL</code> / <code>SLOT</code> 宏</th><th>新：<code>&amp;类名::函数名</code></th></tr></thead>
 <tbody>
 <tr><td><b>传的是什么</b></td><td>一段<b>字符串</b></td><td>一个<b>成员函数指针</b></td></tr>
-<tr><td><b>名字打错</b></td><td>照样编译过，<b>运行时</b>才发现槽没被调用</td>
+<tr><td><b>名字打错</b></td><td>照样编译过，<b>运行时</b>才发现连接没生效</td>
     <td><b>编译期</b>就报错：没有这个成员</td></tr>
 <tr><td><b>签名对不上</b></td><td>运行时才发现</td><td><b>编译期</b>就报错</td></tr>
 <tr><td><b>改了函数名</b></td><td>字符串不会跟着改，运行时悄悄失效</td>
@@ -394,9 +404,9 @@ error C3867: “MyButton::testSignal”: 非标准语法；请使用 "&amp;" 来
     <td class="c"><code>pmf = &amp;MyButton::clicked;</code></td></tr>
 <tr><td>调用成员函数指针</td>
     <td class="c"><code>(obj.*pmf)()</code>&nbsp;&nbsp;或&nbsp;&nbsp;<code>(ptr-&gt;*pmf)()</code></td></tr>
-<tr><td>Qt 连接信号与槽</td>
-    <td class="c"><code>connect(发送者, &amp;发送者类::信号,<br>
-    &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;接收者, &amp;接收者类::槽);</code></td></tr>
+<tr><td>Qt 里把两个成员函数接起来</td>
+    <td class="c"><code>connect(对象1, &amp;类1::函数1,<br>
+    &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;对象2, &amp;类2::函数2);</code></td></tr>
 </tbody>
 </table>
 
@@ -419,8 +429,8 @@ error C3867: “MyButton::testSignal”: 非标准语法；请使用 "&amp;" 来
       <span class="why">—— 本篇前半段的「指针」部分就是接着它讲的；
       对象指针、引用与解引用都在那里。</span></li>
     <li><a href="q04.html">Q04 · 接口</a>
-      <span class="why">—— 信号与槽本质上还是「对外公开的函数」，
-      谁公开了什么，那篇把这个概念讲清了。</span></li>
+      <span class="why">—— <code>connect</code> 传的那两个东西，
+      说到底也是这个类对外公开的函数；谁公开了什么，那篇讲清了。</span></li>
     <li><a href="m04.html">M04 · 指针初步</a>
       <span class="why">—— <code>&amp;</code> 与 <code>*</code> 的基础在这里，
       函数指针只是「指向的东西从数据换成了函数」。</span></li>
