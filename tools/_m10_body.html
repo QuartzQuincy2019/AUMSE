@@ -1,0 +1,515 @@
+<div class="card warn">
+  <div class="card-t">前置条件：请先学完「多态与虚函数」</div>
+  <p><b>这一篇不是入门。</b>C++ 课本已经详细讲过<b>虚函数</b>与<b>多态</b>，
+  所以本篇<b>不再解释</b>「什么是虚函数」「为什么基类指针能调到派生类的函数」
+  「<code>override</code> 起什么作用」——这些都默认你已经会了。</p>
+  <p>这里只补课本通常讲得不够透的两件事：<b>抽象基类的设计初衷</b>，
+  以及<b>它在本项目的类型树里究竟怎么落地</b>。</p>
+  <p><b>如果还没学过虚函数与多态，请先回去学完再读这一篇。</b>
+  没有那个基础，下面的「纯虚」「抽象类」会变成死记的语法。</p>
+</div>
+
+<!-- ============================================================ -->
+<h2 id="s1"><span class="n">1</span>设计初衷：抽象基类解决什么问题</h2>
+
+<p>先说清楚一件事：<b>抽象基类不是为了「让代码更高级」而存在的</b>，
+它解决的是一个很具体的问题 ——</p>
+
+<div class="card key">
+  <div class="card-t">问题</div>
+  <p><b>有些概念在代码里存在、在现实中却不存在。</b></p>
+  <p>我们的游戏里有 <code>Actor</code>（角色）、<code>Enemy</code>（敌人）、
+  <code>Tools</code>（工具）、<code>Mine</code>（矿）。这些都能在屏幕上看到、能操作。</p>
+  <p>但「<b>一个 Sprite</b>」是什么？没法回答。
+  它只是一个<b>统称</b>：凡是能更新、能报出名字的东西，都叫 sprite。
+  <b>你不会在游戏里放一个「光秃秃的 sprite」。</b></p>
+</div>
+
+<p>问题就在这里：既然「一个 sprite」不存在，那它<b>就不该被造出来</b>。
+可如果 <code>Sprite</code> 是个普通类，编译器没有任何理由阻止你写
+<code>new Sprite</code> —— 而这样造出来的对象<b>没有意义</b>：
+它的 <code>update()</code> 该干什么？谁也不知道。</p>
+
+<p>更强的理由是这个：如果 <code>Sprite::update()</code> 不是纯虚的，
+你就必须给它写一个函数体。可写在里面的任何东西都是错的 ——</p>
+
+<div class="code-wrap"><div class="bar"><span class="dot r"></span><span class="dot y"></span><span class="dot g"></span><span class="name">错误示范：给一个「不存在的概念」硬凑实现</span><span class="cp">复制</span></div><pre><span class="hl-k">class</span> Sprite {
+<span class="hl-k">public</span>:
+    <span class="hl-k">virtual</span> <span class="hl-k">void</span> <span class="hl-f">update</span>() { <span class="hl-c">/* 这里该写什么？ */</span> }
+    <span class="hl-k">virtual</span> ~Sprite() = <span class="hl-k">default</span>;
+};</pre></div>
+
+<p>写什么都不对。而只要它有了函数体，<b>派生类忘了重写它，编译器也不会提醒</b> ——
+于是你得到一个「什么都不做」的对象，而且它<b>能通过编译</b>。</p>
+
+<p><b>抽象基类就是把这个漏洞堵上</b>：它把「必须由派生类实现」这件事写进类型里，
+让<b>漏实现</b>从「运行时的静默错误」变成<b>编译期的硬性报错</b>。</p>
+
+<div class="card tip">
+  <div class="card-t">一句话概括设计初衷</div>
+  <p><b>抽象类 = 只描述「必须有什么」，不提供「怎么做」。</b>
+  它是一份<b>契约</b>：想成为我的派生类，这几件事你必须自己交代清楚。</p>
+</div>
+
+<!-- ============================================================ -->
+<h2 id="s2"><span class="n">2</span>纯虚函数与抽象类的语法</h2>
+
+<p>把虚函数写成 <code>= 0</code>，它就是<b>纯虚函数</b>；
+含有纯虚函数的类就是<b>抽象类</b>。</p>
+
+<div class="code-wrap"><div class="bar"><span class="dot r"></span><span class="dot y"></span><span class="dot g"></span><span class="name">抽象基类 Sprite</span><span class="cp">复制</span></div><pre><span class="hl-k">class</span> Sprite {
+<span class="hl-k">public</span>:
+    <span class="hl-k">virtual</span> ~Sprite() = <span class="hl-k">default</span>;              <span class="hl-c">/* ① 基类析构必须是虚的 */</span>
+
+    <span class="hl-k">virtual</span> <span class="hl-k">void</span>        <span class="hl-f">update</span>()          = <span class="hl-n">0</span>;  <span class="hl-c">/* ② 纯虚：更新一帧 */</span>
+    <span class="hl-k">virtual</span> <span class="hl-k">const</span> <span class="hl-k">char</span>* <span class="hl-f">kindName</span>()  <span class="hl-k">const</span> = <span class="hl-n">0</span>;  <span class="hl-c">/* ③ 纯虚：叫什么 */</span>
+};</pre></div>
+
+<div class="two">
+  <div class="side">
+    <div class="hd good">能做到</div>
+    <ul>
+      <li>声明<b>数据成员</b>（比如坐标）</li>
+      <li>写<b>普通成员函数</b>（有实现）</li>
+      <li>定义<b>构造函数</b>（派生类会用到）</li>
+      <li>定义<b>虚析构函数</b></li>
+      <li>作为<b>指针 / 引用的类型</b>使用</li>
+    </ul>
+  </div>
+  <div class="side">
+    <div class="hd bad">做不到</div>
+    <ul>
+      <li><b>不能声明对象</b>：<code>Sprite s;</code> ✗</li>
+      <li><b>不能 new</b>：<code>new Sprite</code> ✗</li>
+      <li><b>不能按值传参 / 按值返回</b>（那要造对象）</li>
+    </ul>
+  </div>
+</div>
+
+<p>「不能造对象」不是限制，<b>正是它的全部意义</b>。</p>
+
+<h3>派生类的两条路</h3>
+
+<table>
+<thead><tr><th style="width:26%">派生类的做法</th><th>结果</th></tr></thead>
+<tbody>
+<tr><td>把<b>所有</b>纯虚函数都实现</td><td><b>具体类</b> —— 可以 <code>new</code> 了</td></tr>
+<tr><td>只实现一部分（或一个都没实现）</td>
+    <td><b>它自己仍然是抽象类</b> —— 仍然不能 <code>new</code>，
+    并把这个义务继续往下一层传</td></tr>
+</tbody>
+</table>
+
+<p>这条规则很关键，它是<b>中间层</b>能存在的原因（第 4 节会用上）。</p>
+
+<h3>编译器怎么报错（实机原文）</h3>
+
+<p><b>① 直接实例化抽象基类：</b></p>
+
+<div class="code-wrap"><div class="bar"><span class="dot r"></span><span class="dot y"></span><span class="dot g"></span><span class="name">Sprite s;</span><span class="cp">复制</span></div><pre><span class="hl-k">class</span> Sprite {
+<span class="hl-k">public</span>:
+    <span class="hl-k">virtual</span> <span class="hl-k">void</span> <span class="hl-f">update</span>() = <span class="hl-n">0</span>;
+    <span class="hl-k">virtual</span> ~Sprite() = <span class="hl-k">default</span>;
+};
+
+<span class="hl-k">int</span> <span class="hl-f">main</span>() { Sprite s; <span class="hl-k">return</span> <span class="hl-n">0</span>; }   <span class="hl-c">/* ✗ */</span></pre></div>
+
+<div class="out-wrap"><div class="cap">实机报错（已核对）</div><pre>error C2259: “Sprite”: 无法实例化抽象类
+note: 由于下列成员:
+note: “void Sprite::update(void)”: 是抽象的</pre></div>
+
+<p><code>C2259</code> 这个编号值得记住 —— 它几乎总是「你试图造一个抽象类」。
+而且 note 里会<b>指名道姓地告诉你缺哪个函数</b>，照着补就行。</p>
+
+<p><b>② 派生类漏实现一个：</b></p>
+
+<div class="out-wrap"><div class="cap">实机报错（已核对）</div><pre>error C2259: “Enemy”: 无法实例化抽象类
+note: 由于下列成员:
+note: “const char *Sprite::kindName(void) const”: 是抽象的</pre></div>
+
+<p>注意报错的<b>措辞</b>：它说「<code>Enemy</code> 无法实例化」，
+但列出来的是 <code>Sprite::kindName</code> ——
+<b>这就是「义务往下传」的样子：你继承了它，就得替它办完。</b></p>
+
+<!-- ============================================================ -->
+<h2 id="s3"><span class="n">3</span>本项目的类型树</h2>
+
+<p>本项目的图形对象就是按这个思路分层的。先看全貌：</p>
+
+<div class="cdfig">
+  <img class="cdl" src="assets/m10-class-light.svg"
+       alt="继承树：抽象基类 Sprite 分出 Entity 与 IntProp；Entity 分出 Actor 与 Enemy；IntProp 分出 Tools 与 Mine">
+  <img class="cdd" src="assets/m10-class-dark.svg"
+       alt="继承树（暗色配色）：抽象基类 Sprite 分出 Entity 与 IntProp；Entity 分出 Actor 与 Enemy；IntProp 分出 Tools 与 Mine">
+  <div class="cdlegend">
+    <b>«abstract»</b> 标注＝<b>抽象类</b>，不能 <code>new</code>
+    &nbsp;·&nbsp;
+    空心三角箭头＝<b>继承</b>（从派生类指向基类）
+    &nbsp;·&nbsp;
+    没标 «abstract» 的四个＝<b>具体类</b>，能 <code>new</code>
+    <span class="cdswipe">← 图较宽，可左右滑动 →</span>
+  </div>
+</div>
+
+<h3>每一层放什么</h3>
+
+<table>
+<thead><tr><th style="width:20%">层</th><th style="width:16%">性质</th><th>这一层放的东西</th></tr></thead>
+<tbody>
+<tr><td class="c"><code>Sprite</code></td><td><b>抽象</b></td>
+    <td>只有「所有图形对象共有」的两件事：<code>update()</code>、<code>kindName()</code>。
+    <b>没有任何数据成员</b> —— 再往下才谈得上坐标。</td></tr>
+<tr><td class="c"><code>Entity</code></td><td><b>抽象</b></td>
+    <td>实体共有的：坐标 <code>x, y</code>、血量 <code>hp</code>。
+    但「一个实体」还是太笼统，不具体。</td></tr>
+<tr><td class="c"><code>IntProp</code></td><td><b>抽象</b></td>
+    <td>可交互道具共有的：坐标 <code>x, y</code>、耐久 <code>durability</code>。
+    同样不具体。</td></tr>
+<tr><td class="c"><code>Actor</code> / <code>Enemy</code></td><td>具体</td>
+    <td>各自实现 <code>update()</code>：角色回血、敌人扣血。</td></tr>
+<tr><td class="c"><code>Tools</code> / <code>Mine</code></td><td>具体</td>
+    <td>各自加自己的字段：<code>efficiency</code>（效率）、
+    <code>kind</code>（种类），并实现那两个纯虚函数。</td></tr>
+</tbody>
+</table>
+
+<div class="card key">
+  <div class="card-t">一条贯穿全树的规律</div>
+  <p><b>越往上，共性越多、特性越少；越往下，共性越少、特性越多。</b></p>
+  <p>到了叶子（<code>Actor</code>/<code>Enemy</code>/<code>Tools</code>/<code>Mine</code>），
+  才<b>第一次</b>凑齐「能更新 + 能报名字」，所以只有它们能 <code>new</code>。</p>
+</div>
+
+<!-- ============================================================ -->
+<h2 id="s4"><span class="n">4</span>中间层为什么也要抽象</h2>
+
+<p>初学者常问：既然最后只有叶子能 <code>new</code>，
+为什么还要 <code>Entity</code> 和 <code>IntProp</code> 这两层？<b>直接
+Sprite → Actor / Enemy / Tools / Mine 不行吗？</b></p>
+
+<p>行，但你会在两个地方立刻后悔。</p>
+
+<h3>理由一：数据成员没地方放</h3>
+
+<p><code>Actor</code> 和 <code>Enemy</code> 都需要 <code>x, y, hp</code>。
+如果中间没有 <code>Entity</code>，这两个字段就要在两个类里各写一遍 ——
+<b>同一份数据定义写两次，改的时候必然漏一个</b>。</p>
+
+<p><code>Tools</code> 和 <code>Mine</code> 都需要 <code>durability</code>，同理。
+而更关键的是：<b>实体和道具的共有数据并不相同</b>（实体要血量，道具要耐久），
+所以它们不能都塞进 <code>Sprite</code> —— 必须分成两支。</p>
+
+<h3>理由二：按「类」做统一操作时没有抓手</h3>
+
+<p>假设你想写一个只处理实体的函数（比如「所有实体的碰撞检测」）。
+没有 <code>Entity</code> 这一层，你就只能写
+<code>void collide(std::vector&lt;Sprite*&gt;&amp;)</code> 然后在里面
+<b>用 <code>dynamic_cast</code> 一个个试</b> —— 既慢又容易漏。</p>
+
+<p>有了 <code>Entity</code>，直接写 <code>void collide(Entity*)</code> 就行，
+<b>类型系统替你保证了「进来的东西一定有 hp 和坐标」</b>。</p>
+
+<div class="card note">
+  <div class="card-t">中间层是抽象的，但一点都不「多余」</div>
+  <p>「抽象」说的是<b>不能直接造对象</b>，不是说<b>没有用</b>。
+  <code>Entity</code> 这个类型有实实在在的用处：</p>
+  <ul>
+    <li>装共有数据（<code>hp</code>、坐标）</li>
+    <li>当函数参数的类型（<code>collide(Entity*)</code>）</li>
+    <li>当容器的元素类型（<code>std::vector&lt;Entity*&gt;</code>）</li>
+    <li>规定「往下的分支必须是什么形状」</li>
+  </ul>
+</div>
+
+<!-- ============================================================ -->
+<h2 id="s5"><span class="n">5</span>实际应用：一套接口管四种东西</h2>
+
+<p>抽象基类真正的价值，在这里才显出来：<b>你可以用一个容器装下全部四种对象，
+用同一个调用更新它们</b>。</p>
+
+<div class="code-wrap"><div class="bar"><span class="dot r"></span><span class="dot y"></span><span class="dot g"></span><span class="name">完整例子：一棵树、一个容器、一次循环</span><span class="cp">复制</span></div><pre><span class="hl-p">#include</span> <span class="hl-s">&lt;cstdio&gt;</span>
+<span class="hl-p">#include</span> <span class="hl-s">&lt;vector&gt;</span>
+
+<span class="hl-c">/* ---------- 抽象基类 ---------- */</span>
+<span class="hl-k">class</span> Sprite {
+<span class="hl-k">public</span>:
+    <span class="hl-k">virtual</span> ~Sprite() = <span class="hl-k">default</span>;
+    <span class="hl-k">virtual</span> <span class="hl-k">void</span>        <span class="hl-f">update</span>()          = <span class="hl-n">0</span>;
+    <span class="hl-k">virtual</span> <span class="hl-k">const</span> <span class="hl-k">char</span>* <span class="hl-f">kindName</span>()  <span class="hl-k">const</span> = <span class="hl-n">0</span>;
+};
+
+<span class="hl-c">/* ---------- 中间层：都是抽象类 ---------- */</span>
+<span class="hl-k">class</span> Entity : <span class="hl-k">public</span> Sprite {       <span class="hl-c">/* 实体 */</span>
+<span class="hl-k">public</span>:
+    <span class="hl-k">int</span> x = <span class="hl-n">0</span>, y = <span class="hl-n">0</span>;
+    <span class="hl-k">int</span> hp = <span class="hl-n">100</span>;
+};
+
+<span class="hl-k">class</span> IntProp : <span class="hl-k">public</span> Sprite {      <span class="hl-c">/* 可交互式道具 */</span>
+<span class="hl-k">public</span>:
+    <span class="hl-k">int</span> x = <span class="hl-n">0</span>, y = <span class="hl-n">0</span>;
+    <span class="hl-k">int</span> durability = <span class="hl-n">100</span>;
+};
+
+<span class="hl-c">/* ---------- 具体类：四个叶子 ---------- */</span>
+<span class="hl-k">class</span> Actor : <span class="hl-k">public</span> Entity {
+<span class="hl-k">public</span>:
+    <span class="hl-k">void</span> <span class="hl-f">update</span>() <span class="hl-k">override</span> { hp += <span class="hl-n">1</span>; }
+    <span class="hl-k">const</span> <span class="hl-k">char</span>* <span class="hl-f">kindName</span>() <span class="hl-k">const</span> <span class="hl-k">override</span> { <span class="hl-k">return</span> <span class="hl-s">"Actor"</span>; }
+};
+
+<span class="hl-k">class</span> Enemy : <span class="hl-k">public</span> Entity {
+<span class="hl-k">public</span>:
+    <span class="hl-k">void</span> <span class="hl-f">update</span>() <span class="hl-k">override</span> { hp -= <span class="hl-n">1</span>; }
+    <span class="hl-k">const</span> <span class="hl-k">char</span>* <span class="hl-f">kindName</span>() <span class="hl-k">const</span> <span class="hl-k">override</span> { <span class="hl-k">return</span> <span class="hl-s">"Enemy"</span>; }
+};
+
+<span class="hl-k">class</span> Tools : <span class="hl-k">public</span> IntProp {
+<span class="hl-k">public</span>:
+    <span class="hl-k">int</span> efficiency = <span class="hl-n">1</span>;                              <span class="hl-c">/* 效率 */</span>
+    <span class="hl-k">void</span> <span class="hl-f">update</span>() <span class="hl-k">override</span> { --durability; }
+    <span class="hl-k">const</span> <span class="hl-k">char</span>* <span class="hl-f">kindName</span>() <span class="hl-k">const</span> <span class="hl-k">override</span> { <span class="hl-k">return</span> <span class="hl-s">"Tools"</span>; }
+};
+
+<span class="hl-k">class</span> Mine : <span class="hl-k">public</span> IntProp {
+<span class="hl-k">public</span>:
+    <span class="hl-k">enum</span> Kind { Iron, Coal };
+    Kind kind = Iron;                                <span class="hl-c">/* 种类 */</span>
+    <span class="hl-k">void</span> <span class="hl-f">update</span>() <span class="hl-k">override</span> { --durability; }
+    <span class="hl-k">const</span> <span class="hl-k">char</span>* <span class="hl-f">kindName</span>() <span class="hl-k">const</span> <span class="hl-k">override</span> { <span class="hl-k">return</span> <span class="hl-s">"Mine"</span>; }
+};
+
+<span class="hl-c">/* ---------- 关键：一个容器装下四种 ---------- */</span>
+<span class="hl-k">int</span> <span class="hl-f">main</span>() {
+    std::vector&lt;Sprite*&gt; world;
+    world.push_back(<span class="hl-k">new</span> Actor);
+    world.push_back(<span class="hl-k">new</span> Enemy);
+    world.push_back(<span class="hl-k">new</span> Tools);
+    world.push_back(<span class="hl-k">new</span> Mine);
+
+    <span class="hl-k">for</span> (<span class="hl-k">int</span> frame = <span class="hl-n">0</span>; frame &lt; <span class="hl-n">2</span>; ++frame) {
+        std::printf(<span class="hl-s">"frame %d\n"</span>, frame);
+        <span class="hl-k">for</span> (Sprite* s : world) {
+            s-&gt;<span class="hl-f">update</span>();                              <span class="hl-c">/* 同一个调用，四种行为 */</span>
+            std::printf(<span class="hl-s">"  %-6s ok\n"</span>, s-&gt;<span class="hl-f">kindName</span>());
+        }
+    }
+
+    <span class="hl-k">for</span> (Sprite* s : world) <span class="hl-k">delete</span> s;       <span class="hl-c">/* 虚析构：都能正确释放 */</span>
+    <span class="hl-k">return</span> <span class="hl-n">0</span>;
+}</pre></div>
+
+<div class="out-wrap"><div class="cap">运行结果（已核对）</div><pre>frame 0
+  Actor  ok
+  Enemy  ok
+  Tools  ok
+  Mine   ok
+frame 1
+  Actor  ok
+  Enemy  ok
+  Tools  ok
+  Mine   ok</pre></div>
+
+<p>请盯住这两行看：</p>
+
+<div class="code-wrap"><div class="bar"><span class="dot r"></span><span class="dot y"></span><span class="dot g"></span><span class="name">整个例子里最关键的两行</span><span class="cp">复制</span></div><pre>std::vector&lt;Sprite*&gt; world;      <span class="hl-c">/* 装的是「Sprite 的指针」 */</span>
+s-&gt;<span class="hl-f">update</span>();                   <span class="hl-c">/* 调的是「它实际是什么」的 update */</span></pre></div>
+
+<div class="card key">
+  <div class="card-t">这就是抽象基类的收益</div>
+  <ol>
+    <li><b>容器只有一个类型</b>：<code>Sprite*</code>。
+    不用为每种东西各写一个 <code>vector</code>。</li>
+    <li><b>循环里没有分支</b>：不需要
+    <code>if (它是 Actor) … else if (它是 Enemy) …</code>。
+    真按类型写分支，<b>每加一种东西就要改这串 if</b>。</li>
+    <li><b>新增一种对象，循环一行都不用改</b>：写个新类继承
+    <code>Entity</code> 或 <code>IntProp</code>，
+    <code>push_back</code> 进去就自动被更新、被绘制。
+    这正是 Q05 讲的<b>开闭原则</b> —— 对扩展开放，对修改关闭。</li>
+  </ol>
+</div>
+
+<div class="card warn">
+  <div class="card-t">别忘了虚析构</div>
+  <p>上面用 <code>new</code> 出来的对象是<b>通过基类指针</b>删掉的：
+  <code>for (Sprite* s : world) delete s;</code>。</p>
+  <p>如果 <code>~Sprite()</code> <b>不是虚的</b>，这一句只会调
+  <code>~Sprite()</code>，<b>派生类的析构函数根本不会执行</b> ——
+  派生类里申请的资源就漏了。所以抽象基类的析构函数一定写成
+  <code>virtual ~Sprite() = default;</code>。</p>
+</div>
+
+<div class="card tip">
+  <div class="card-t">现代写法（知道有就行）</div>
+  <p>手动 <code>new</code> / <code>delete</code> 容易漏。C++11 起可以用
+  <code>std::vector&lt;std::unique_ptr&lt;Sprite&gt;&gt;</code>：
+  存进去就自动管理，<b>连 <code>delete</code> 那一行都不用写</b>。
+  本篇为了聚焦在「抽象类」上，仍用裸指针。</p>
+</div>
+
+<!-- ============================================================ -->
+<h2 id="s6"><span class="n">6</span>常见错误</h2>
+
+<h3>错误 1 · 直接造抽象类</h3>
+
+<div class="out-wrap"><div class="cap">实机报错（已核对）</div><pre>error C2259: “Sprite”: 无法实例化抽象类
+note: 由于下列成员:
+note: “void Sprite::update(void)”: 是抽象的</pre></div>
+
+<p><b>先看 note</b>，它会列出缺哪些函数。多数情况不是「不该 <code>new</code>」，
+而是<b>你 <code>new</code> 错了类型</b> —— 该 <code>new Actor</code> 却写了 <code>new Sprite</code>。</p>
+
+<h3>错误 2 · 派生类漏实现某个纯虚函数</h3>
+
+<p>表现和上一条一模一样（也是 <code>C2259</code>），
+但报错的名字变成了你的派生类。看到 <code>C2259</code> 先数一件事：
+<b>基类有几个纯虚函数？我一个不漏地实现了吗？</b></p>
+
+<h3>错误 3 · 签名写错，<code>override</code> 帮不了你</h3>
+
+<p>这是<b>最隐蔽</b>的一种：把 <code>update</code> 写成 <code>Update</code>。
+它算「实现」吗？<b>不算</b> —— 它只是在你自己的类里加了个新函数，
+基类的纯虚函数<b>一个都没被实现</b>。所以这个类仍然抽象。</p>
+
+<p>好消息是：<b>加了 <code>override</code> 编译器会当场指出来</b>：</p>
+
+<div class="code-wrap"><div class="bar"><span class="dot r"></span><span class="dot y"></span><span class="dot g"></span><span class="name">大小写错了</span><span class="cp">复制</span></div><pre><span class="hl-k">class</span> Enemy : <span class="hl-k">public</span> Sprite {
+<span class="hl-k">public</span>:
+    <span class="hl-k">void</span> <span class="hl-f">Update</span>() <span class="hl-k">override</span> { }      <span class="hl-c">/* ✗ 基类没有 Update */</span>
+};</pre></div>
+
+<div class="out-wrap"><div class="cap">实机报错（已核对）</div><pre>error C3668: “Enemy::Update”: 包含重写说明符“override”的方法没有重写任何基类方法</pre></div>
+
+<div class="card key">
+  <div class="card-t">所以：重写虚函数时<code>override</code>一个都别省</div>
+  <p>有 <code>override</code>，编译器帮你核对签名；没有它，写错就是个静默的新函数，
+  <b>要等到 <code>new</code> 的那一刻才以 <code>C2259</code> 的形式暴露</b>，
+  而且报错点在 <code>new</code> 那里，离真正的错误很远。</p>
+</div>
+
+<h3>错误 4 · 纯虚析构函数忘了写函数体</h3>
+
+<p>纯虚析构函数是个特例：<b>它可以声明为纯虚，但必须提供函数体</b>。
+因为派生类的析构函数执行完，一定会调用基类的析构 —— 它不能「没有」。</p>
+
+<div class="code-wrap"><div class="bar"><span class="dot r"></span><span class="dot y"></span><span class="dot g"></span><span class="name">声明了纯虚，却没给定义</span><span class="cp">复制</span></div><pre><span class="hl-k">class</span> A {
+<span class="hl-k">public</span>:
+    <span class="hl-k">virtual</span> ~A() = <span class="hl-n">0</span>;      <span class="hl-c">/* 只有声明 */</span>
+};
+<span class="hl-c">/* 少了 A::~A() {} —— 错误 */</span>
+
+<span class="hl-k">class</span> B : <span class="hl-k">public</span> A {
+<span class="hl-k">public</span>:
+    ~B() <span class="hl-k">override</span> = <span class="hl-k">default</span>;
+};</pre></div>
+
+<div class="out-wrap"><div class="cap">实机报错（已核对）</div><pre>error LNK2019: 无法解析的外部符号
+      "public: virtual __cdecl A::~A(void)"，函数
+      "public: virtual __cdecl B::~B(void)" 中引用了该符号
+fatal error LNK1120: 1 个无法解析的外部命令</pre></div>
+
+<p>注意这是<b>链接期</b>错误（<code>LNK</code> 开头），不是编译期 ——
+编译过了，链接时才说「找不到 <code>~A</code> 的实现」。补上一行就好：</p>
+
+<div class="code-wrap"><div class="bar"><span class="dot r"></span><span class="dot y"></span><span class="dot g"></span><span class="name">补上定义</span><span class="cp">复制</span></div><pre>A::~A() { }        <span class="hl-c">/* 纯虚析构也必须有函数体 */</span></pre></div>
+
+<h3>错误 5 · 以为纯虚函数「不能有函数体」</h3>
+
+<p><code>= 0</code> 的意思是「<b>派生类必须重写</b>」，<b>不是</b>「基类不写实现」。
+纯虚函数完全可以有函数体，派生类还能显式调用它来复用公共部分：</p>
+
+<div class="code-wrap"><div class="bar"><span class="dot r"></span><span class="dot y"></span><span class="dot g"></span><span class="name">纯虚 + 公共实现</span><span class="cp">复制</span></div><pre><span class="hl-k">class</span> Sprite {
+<span class="hl-k">public</span>:
+    <span class="hl-k">virtual</span> <span class="hl-k">void</span> <span class="hl-f">update</span>() = <span class="hl-n">0</span>;                 <span class="hl-c">/* 纯虚 */</span>
+    <span class="hl-k">virtual</span> ~Sprite() = <span class="hl-k">default</span>;
+};
+
+<span class="hl-k">void</span> Sprite::<span class="hl-f">update</span>() {                       <span class="hl-c">/* 仍然可以给定义 */</span>
+    <span class="hl-c">/* 所有对象都要做的公共部分 */</span>
+}
+
+<span class="hl-k">class</span> Actor : <span class="hl-k">public</span> Sprite {
+<span class="hl-k">public</span>:
+    <span class="hl-k">void</span> <span class="hl-f">update</span>() <span class="hl-k">override</span> {
+        Sprite::<span class="hl-f">update</span>();                     <span class="hl-c">/* 先跑公共部分 */</span>
+        hp += <span class="hl-n">1</span>;                            <span class="hl-c">/* 再加自己的 */</span>
+    }
+};</pre></div>
+
+<p>这个写法不算少见，但要记住：<b>它仍然是抽象类，仍然不能 <code>new</code></b>。</p>
+
+<!-- ============================================================ -->
+<h2 id="s7"><span class="n">7</span>一页速查</h2>
+
+<table>
+<thead><tr><th style="width:34%">想做的事</th><th>写法 / 结论</th></tr></thead>
+<tbody>
+<tr><td>声明纯虚函数</td>
+    <td class="c"><code>virtual void update() = 0;</code></td></tr>
+<tr><td>抽象类的判定</td>
+    <td>含<b>至少一个</b>纯虚函数 → 抽象类</td></tr>
+<tr><td>派生类成为具体类的条件</td>
+    <td>把<b>所有</b>纯虚函数都实现（签名完全一致）</td></tr>
+<tr><td>派生类只实现一部分</td>
+    <td>它<b>仍是抽象类</b>，义务继续往下传</td></tr>
+<tr><td>抽象类的析构</td>
+    <td class="c"><code>virtual ~Sprite() = default;</code>（必须虚）</td></tr>
+<tr><td>纯虚析构</td>
+    <td>可以纯虚，但<b>必须</b>给函数体</td></tr>
+<tr><td>纯虚函数能有函数体吗</td>
+    <td><b>能</b>。派生类可写 <code>Base::f()</code> 复用</td></tr>
+<tr><td>抽象类能做什么</td>
+    <td>数据成员 / 普通成员函数 / 构造函数 / 当指针或引用的类型</td></tr>
+<tr><td>抽象类不能做什么</td>
+    <td>声明对象、<code>new</code>、按值传参或返回</td></tr>
+<tr><td>统一管理多种对象</td>
+    <td class="c"><code>std::vector&lt;Sprite*&gt;</code> +
+    <code>virtual</code> 调用</td></tr>
+<tr><td>本项目的树</td>
+    <td class="c">Sprite → Entity → { Actor, Enemy }<br>
+    Sprite → IntProp → { Tools, Mine }</td></tr>
+</tbody>
+</table>
+
+<div class="card key">
+  <div class="card-t">本讲要记住的四句话</div>
+  <ol>
+    <li><b>抽象类描述「必须有什么」，不提供「怎么做」</b> ——
+    它是契约，不是半个实现。</li>
+    <li><b>纯虚 = 派生类必须重写</b>；含纯虚的类不能被实例化。</li>
+    <li><b>漏实现会把抽象性传给下一层</b> —— 这就是中间层（<code>Entity</code>、
+    <code>IntProp</code>）能存在的原因。</li>
+    <li><b>收益在容器里兑现</b>：一个 <code>vector&lt;Sprite*&gt;</code>
+    管住所有对象，新增类型不必改循环。</li>
+  </ol>
+</div>
+
+<h3>读这一篇的前提</h3>
+
+<div class="card warn">
+  <div class="card-t">再强调一次</div>
+  <p>本篇<b>默认你已学过「多态与虚函数」</b>：
+  知道虚函数怎么声明、为什么基类指针能调到派生类的函数、
+  <code>override</code> 是干什么的。</p>
+  <p>如果这些还含糊，<b>请先回去补上再读这里</b> ——
+  否则「纯虚」「抽象类」只是两条要背的语法，看不出它们为什么存在。</p>
+</div>
+
+<div class="see-also">
+  <div class="card-t">想接着看</div>
+  <ul>
+    <li><a href="m06.html">M06 · 类、结构体</a>
+      <span class="why">—— 类的成员、<code>private</code> /
+      <code>public</code> 在那里；本篇直接从「继承」接着讲。</span></li>
+    <li><a href="q04.html">Q04 · 接口</a>
+      <span class="why">—— 抽象基类常被当成「接口」用：
+      只放纯虚函数、不放数据。两者的差别那篇讲得清楚。</span></li>
+    <li><a href="q05.html">Q05 · 单一职责原则和开闭原则</a>
+      <span class="why">—— 第 5 节那句「新增类型不必改循环」，
+      就是开闭原则（OCP）在这棵树上的一次兑现。</span></li>
+    <li><a href="q06.html">Q06 · 组件化编程与解耦合</a>
+      <span class="why">—— 继承是一种耦合；什么时候该用继承、
+      什么时候该改用组合，那篇给了判断依据。</span></li>
+  </ul>
+</div>

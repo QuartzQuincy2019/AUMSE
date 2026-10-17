@@ -1,0 +1,59 @@
+%% M10《抽象基类和纯虚函数》的继承树源文本
+%%
+%% 改完这个文件后，用 tools/render_mermaid.js 离线重渲染两套主题：
+%%   node tools/render_mermaid.js
+%% 会生成 assets/m10-class-light.svg 与 assets/m10-class-dark.svg。
+%% 依赖本机 mermaid（C:\Users\lenovo\.dsh\profiles\desktop\node_modules\mermaid），
+%% 不是页面运行时依赖。
+
+classDiagram
+  direction TB
+
+  class Sprite {
+    <<abstract>>
+    +update()*
+    +kindName() const char**
+  }
+
+  class Entity {
+    <<abstract>>
+    +int x
+    +int y
+    +int hp
+  }
+
+  class IntProp {
+    <<abstract>>
+    +int x
+    +int y
+    +int durability
+  }
+
+  class Actor {
+    +update()
+    +kindName() const char*
+  }
+
+  class Enemy {
+    +update()
+    +kindName() const char*
+  }
+
+  class Tools {
+    +int efficiency
+    +update()
+    +kindName() const char*
+  }
+
+  class Mine {
+    +Kind kind
+    +update()
+    +kindName() const char*
+  }
+
+  Sprite <|-- Entity
+  Sprite <|-- IntProp
+  Entity <|-- Actor
+  Entity <|-- Enemy
+  IntProp <|-- Tools
+  IntProp <|-- Mine
