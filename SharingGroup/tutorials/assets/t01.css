@@ -82,3 +82,8 @@
     --bg-code:#0b0f16;
     --bg-out:#070a0f;
   }}
+
+/* 宽版插图：鲍培转写的辅音表是 2048×984 的横表，
+   套默认的 .fig（限宽 360px）会小到看不清，另开一档。 */
+.fig.wide img{max-width:min(760px,100%)}
+@media (max-width:720px){.fig.wide img{max-width:100%}}
