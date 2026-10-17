@@ -16,12 +16,12 @@
 
 <nav id="toc">
   <h5>目录</h5>
-  <a href="#s1">1 · 函数也有地址</a>
-  <a href="#s2">2 · 指向函数的指针：括号的位置是关键</a>
-  <a href="#s3">3 · 怎么调用，它有什么用</a>
-  <a href="#s4">4 · 指向成员函数的指针：多一个「哪个对象」</a>
-  <a href="#s5">5 · Qt 的 connect：这一句到底传了什么</a>
-  <a href="#s6">6 · 为什么现在都这么写</a>
+  <a href="#s1">1 · 函数的地址</a>
+  <a href="#s2">2 · 指向函数的指针：声明形式与括号的作用</a>
+  <a href="#s3">3 · 函数指针的调用与回调</a>
+  <a href="#s4">4 · 指向成员函数的指针：类作用域与对象绑定</a>
+  <a href="#s5">5 · Qt connect 的四个参数</a>
+  <a href="#s6">6 · 字符串式连接与成员函数指针式连接</a>
   <a href="#s7">7 · 常见错误</a>
   <a href="#s8">8 · 一页速查</a>
 </nav>
@@ -39,7 +39,7 @@
 Qt 的 <code>connect</code> 上。</p>
 
 <!-- ============================================================ -->
-<h2 id="s1"><span class="n">1</span>函数也有地址</h2>
+<h2 id="s1"><span class="n">1</span>函数的地址</h2>
 
 <p>M04 讲过：变量住在编了号的房间里，<code>&amp;</code> 能问出房间号。
 函数也一样 —— 它同样是一段指令，占着一块内存，有一个<b>首地址</b>。</p>
@@ -59,7 +59,7 @@ add(<span class="hl-n">3</span>, <span class="hl-n">4</span>);        <span clas
 只是它指向的不是数据，而是一段「能被调用的代码」。</p>
 
 <!-- ============================================================ -->
-<h2 id="s2"><span class="n">2</span>指向函数的指针：括号的位置是关键</h2>
+<h2 id="s2"><span class="n">2</span>指向函数的指针：声明形式与括号的作用</h2>
 
 <p>函数的类型里带着「参数是什么、返回什么」。所以声明一个函数指针，
 也要把这些都写出来。而写法上有一个<b>非常容易错的点</b>：</p>
@@ -118,7 +118,7 @@ sizeof(fp1) = 8</pre></div>
 <p>两条 <code>static_assert</code> 都过了 —— 这就证明了：
 <b><code>int (*fp1)(int)</code> 是指针，<code>int* fp2(int)</code> 是函数。</b></p>
 
-<h4>给这个类型起个名字</h4>
+<h4>类型别名：<code>typedef</code> 与 <code>using</code></h4>
 
 <p>函数指针的类型写起来很长，可以先起个名字再反复用。两种写法等价，
 新的那种（<code>using</code>）更好读：</p>
@@ -127,9 +127,9 @@ sizeof(fp1) = 8</pre></div>
 <span class="hl-k">using</span> BinOp = <span class="hl-k">int</span> (*)(<span class="hl-k">int</span>, <span class="hl-k">int</span>);   <span class="hl-c">/* 新写法：名字在等号左边，一眼看清 */</span></pre></div>
 
 <!-- ============================================================ -->
-<h2 id="s3"><span class="n">3</span>怎么调用，它有什么用</h2>
+<h2 id="s3"><span class="n">3</span>函数指针的调用与回调</h2>
 
-<h3>两种调用写法，完全等价</h3>
+<h3>两种等价的调用写法</h3>
 
 <div class="code-wrap"><div class="bar"><span class="dot r"></span><span class="dot y"></span><span class="dot g"></span><span class="name">fp(a,b) 与 (*fp)(a,b) 是同一件事</span><span class="cp">复制</span></div><pre><span class="hl-p">#include</span> <span class="hl-s">&lt;cstdio&gt;</span>
 <span class="hl-k">int</span> <span class="hl-f">add</span>(<span class="hl-k">int</span> a, <span class="hl-k">int</span> b) { <span class="hl-k">return</span> a + b; }
@@ -153,7 +153,7 @@ sizeof(fp1) = 8</pre></div>
   下面第 4 节会看到编译器直接拒绝。</p>
 </div>
 
-<h3>它到底有什么用：把「要做的事」当参数传</h3>
+<h3>用途：把函数作为参数传入（回调）</h3>
 
 <p>函数指针最大的用处，是让一个函数把「<b>具体做什么</b>」交给调用方决定。
 下面这个 <code>apply</code> <b>不知道自己要算什么</b>，它只知道
@@ -190,7 +190,7 @@ apply(mul, 3, 4) = 12</pre></div>
 </div>
 
 <!-- ============================================================ -->
-<h2 id="s4"><span class="n">4</span>指向<b>成员函数</b>的指针：多一个「哪个对象」</h2>
+<h2 id="s4"><span class="n">4</span>指向成员函数的指针：类作用域与对象绑定</h2>
 
 <p>到这里是普通函数。类里的成员函数有个额外的麻烦：
 <b>它不属于某一个对象，而属于整个类</b>。所以它的指针也得多带一样东西 ——
@@ -253,14 +253,14 @@ clicked 被调用</pre></div>
 </div>
 
 <!-- ============================================================ -->
-<h2 id="s5"><span class="n">5</span>Qt 的 connect：这一句到底传了什么</h2>
+<h2 id="s5"><span class="n">5</span>Qt connect 的四个参数</h2>
 
 <p>前面都是铺垫。Qt 里那句最常见的 <code>connect</code>，就是把
 <b>两个成员函数指针</b>当参数传进去：</p>
 
 <div class="code-wrap"><div class="bar"><span class="dot r"></span><span class="dot y"></span><span class="dot g"></span><span class="name">Qt 里把一个成员函数接到另一个成员函数上</span><span class="cp">复制</span></div><pre><span class="hl-f">connect</span>(<span class="hl-k">this</span>, &amp;MyButton::clicked, <span class="hl-k">this</span>, &amp;MyButton::testSignal);</pre></div>
 
-<h3>四个参数，两对</h3>
+<h3>四个参数，两组「对象 + 成员函数」</h3>
 
 <table>
 <thead><tr><th style="width:6%">#</th><th style="width:27%">写的</th><th style="width:28%">是什么</th><th>类型</th></tr></thead>
@@ -287,7 +287,7 @@ clicked 被调用</pre></div>
   <p><code>testSignal</code> 名字里就带着 Signal，这不是巧合 ——
   它在 Qt 里确实是一个信号。而第 4 个位置<b>允许填信号</b>：
   <b>信号可以连信号</b>。</p>
-  <p>所以这一句干的事是：<b><code>clicked</code> 一响，<code>testSignal</code>
+  <p>所以这一句的效果是：<b><code>clicked</code> 一响，<code>testSignal</code>
   跟着响</b> —— 等于把 <code>clicked</code> 转发成 <code>testSignal</code>。
   这样外部只需要关心 <code>testSignal</code> 一个名字。</p>
   <p><b>至于「信号」和「槽」在 Qt 里各是什么、内部怎么工作 ——
@@ -295,7 +295,7 @@ clicked 被调用</pre></div>
   <b>第 2、4 个位置填的都是「指向成员函数的指针」。</b></p>
 </div>
 
-<h3>这就是第 4 节说的「多一个哪个对象」</h3>
+<h3>与第 4 节的结论对应：对象由参数给出</h3>
 
 <p>回看第 4 节的结论：<b>成员函数指针自己不知道 <code>this</code> 是谁，
 必须配一个对象才能调。</b></p>
@@ -304,7 +304,7 @@ clicked 被调用</pre></div>
 换句话说：</p>
 
 <div class="card key">
-  <div class="card-t">connect 干的事，就是替你「配对」</div>
+  <div class="card-t">connect 的作用：把指针与对象配对</div>
   <p>你交了两只「指向成员函数的指针」（第 2、4 个参数），
   再交两个对象（第 1、3 个参数）——</p>
   <p><b><code>connect</code> 把「指针 + 对象」配成两对收下。等第一个真的被触发，
@@ -312,20 +312,20 @@ clicked 被调用</pre></div>
   <p>所以那一句里的 <code>this</code> 不能省：<b>没有对象，成员函数指针就调不动。</b></p>
 </div>
 
-<h3>逐项确认这几件事</h3>
+<h3>要点确认</h3>
 
 <div class="alias">
-  <div class="row"><span class="k">为什么要写 <code>&amp;</code></span>
+  <div class="row"><span class="k"><code>&amp;</code> 的必要性</span>
     <span class="v"><code>&amp;MyButton::clicked</code> 里那个 <code>&amp;</code>
     是<b>取地址</b>，不是调用。<b>不加会被编译器拒绝</b> —— 见下面第 7 节的实机报错。</span></div>
-  <div class="row"><span class="k">为什么不是 <code>clicked()</code></span>
+  <div class="row"><span class="k">不能写成 <code>clicked()</code></span>
     <span class="v">加括号就是<b>调用它</b>了，得到的不是地址。
     而且非静态成员函数也不能凭空调用（它要 <code>this</code>），编译器同样会拦。</span></div>
-  <div class="row"><span class="k">为什么两个 <code>this</code></span>
+  <div class="row"><span class="k">两个 <code>this</code> 的含义</span>
     <span class="v">这两个成员函数都属于同一个对象。
     第 1、3 个参数都填它，正好说明「谁和谁配成一对」——
     <b>换了对象，就是另外一对。</b></span></div>
-  <div class="row"><span class="k">这两个函数是什么</span>
+  <div class="row"><span class="k">这两个函数的性质</span>
     <span class="v">就只是 <code>MyButton</code> 的<b>两个普通成员函数</b>。
     Qt 给它们起了「信号」「槽」这样的名字，属于 Qt 的约定 ——
     但类型上没什么特别：都是「指向成员函数的指针」。</span></div>
@@ -349,7 +349,7 @@ clicked 被调用</pre></div>
 
 <!-- ============================================================ -->
 
-<h2 id="s6"><span class="n">6</span>为什么现在都这么写</h2>
+<h2 id="s6"><span class="n">6</span>字符串式连接与成员函数指针式连接</h2>
 
 <p>Qt4 时代的写法是把函数名写成<b>字符串</b>：</p>
 
@@ -373,7 +373,7 @@ clicked 被调用</pre></div>
 <!-- ============================================================ -->
 <h2 id="s7"><span class="n">7</span>常见错误</h2>
 
-<h3>错误 1 · 少写括号，把指针写成了函数</h3>
+<h3>错误 1 · 漏写括号，把指针声明写成函数声明</h3>
 
 <div class="code-wrap"><div class="bar"><span class="dot r"></span><span class="dot y"></span><span class="dot g"></span><span class="name">手滑</span><span class="cp">复制</span></div><pre><span class="hl-k">int</span> (*fp)(<span class="hl-k">int</span>);   <span class="hl-c">/* ✅ 指针 */</span>
 <span class="hl-k">int</span> *fp(<span class="hl-k">int</span>);    <span class="hl-c">/* ❌ 这是函数声明 */</span></pre></div>
@@ -386,7 +386,7 @@ error C2610: “int *fp(int)”: 不是可默认为的特殊成员函数或比�
 <p>第二条报错看着莫名其妙 —— <b>因为它把你的话当成了「声明一个函数」。</b>
 看到这类奇怪的报错，先回头数括号。</p>
 
-<h3>错误 2 · 成员函数指针没配对象就想调</h3>
+<h3>错误 2 · 未绑定对象就调用成员函数指针</h3>
 
 <div class="code-wrap"><div class="bar"><span class="dot r"></span><span class="dot y"></span><span class="dot g"></span><span class="name">少了一个对象</span><span class="cp">复制</span></div><pre><span class="hl-k">void</span> (MyButton::*pmf)() = &amp;MyButton::clicked;
 pmf();          <span class="hl-c">/* ❌ 它不知道 this 是谁 */</span>
@@ -394,7 +394,7 @@ pmf();          <span class="hl-c">/* ❌ 它不知道 this 是谁 */</span>
 
 <div class="out-wrap"><div class="cap">实机报错（已核对）</div><pre>error C2064: 项不会计算为接受 0 个参数的函数</pre></div>
 
-<h3>错误 3 · 忘了写 <code>&amp;</code></h3>
+<h3>错误 3 · 漏写取址运算符 <code>&amp;</code></h3>
 
 <div class="code-wrap"><div class="bar"><span class="dot r"></span><span class="dot y"></span><span class="dot g"></span><span class="name">成员函数必须写 &amp;</span><span class="cp">复制</span></div><pre><span class="hl-f">connect</span>(<span class="hl-k">this</span>, MyButton::clicked, <span class="hl-k">this</span>, MyButton::testSignal);   <span class="hl-c">/* ❌ 少了 & */</span></pre></div>
 
@@ -403,14 +403,14 @@ error C3867: “MyButton::testSignal”: 非标准语法；请使用 "&amp;" 来
 
 <p>编译器把该怎么做都写在报错里了 ——<b>「请使用 &amp; 来创建指向成员的指针」</b>。</p>
 
-<h3>错误 4 · 加括号当成了取地址</h3>
+<h3>错误 4 · 误把调用当成取址</h3>
 
 <div class="code-wrap"><div class="bar"><span class="dot r"></span><span class="dot y"></span><span class="dot g"></span><span class="name">括号是调用</span><span class="cp">复制</span></div><pre><span class="hl-f">connect</span>(<span class="hl-k">this</span>, &amp;MyButton::clicked(), <span class="hl-k">this</span>, &amp;MyButton::testSignal);
 <span class="hl-c">/*                          ↑ 括号 = 调用，不是取地址 */</span></pre></div>
 
 <div class="out-wrap"><div class="cap">实机报错（已核对）</div><pre>error C2352: “MyButton::clicked”: 调用非静态成员函数需要一个对象</pre></div>
 
-<h3>错误 5 · 以为「大小一样」就能互转</h3>
+<h3>错误 5 · 误以为大小相同即可互转</h3>
 
 <p>两者 <code>sizeof</code> 都是 8，但类型不同，赋不过去（回看第 4 节那张
 <code>C2440</code>）。<b>sizeof 相同不代表能互换 —— 类型系统认的是类型。</b></p>
