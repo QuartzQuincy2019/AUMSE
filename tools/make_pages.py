@@ -420,6 +420,7 @@ CARD_BG = {
     "t03.html": "SharingGroup/tutorials/assets/dive_into_fonts.webp",
     "f02.html": "SharingGroup/tutorials/assets/macro.png",
     "m10.html": "SharingGroup/tutorials/assets/virtual_function.gif",
+    "t02.html": "SharingGroup/tutorials/assets/unicode.webp",
 }
 
 # 遮罩配色现在是**自动推导**（见 pack()）：重点卡底色是暖黄 → 默认暖黄遮罩；
