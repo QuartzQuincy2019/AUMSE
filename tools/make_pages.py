@@ -151,15 +151,17 @@ a.card.has-bg.mono:hover{--card-veil:linear-gradient(100deg,
   rgba(255,255,255,1) 0%, rgba(255,255,255,.99) 16%,
   rgba(255,255,255,.50) 46%, rgba(255,255,255,.50) 54%,
   rgba(255,255,255,.96) 84%, rgba(255,255,255,1) 100%)}
-/* 带图卡片的文字光晕：让标题与说明从背景图里分离出来。
+/* 带图卡片的文字阴影：让标题与说明从背景图里分离出来。
    只作用于 .has-bg —— 普通卡片底色干净，加阴影反而发虚。
-   三层阴影由近到远，颜色与卡片底色同色（浅色白 / 暗色黑），
-   既有分离度，又不会在图上糊出一圈死白。 */
+
+   形状：不用大范围光晕，而是「贴边 + 短投影」两段，都带 1~2px 下移，
+        模糊半径只有 1px / 3px —— 像文字轻轻压在纸上，而不是发光。
+   颜色：第一段用暖白（几乎是纸色），第二段用**暖褐**而不是纯白/纯黑，
+        与暖黄的重点卡同调。 */
 a.card.has-bg .tt,
 a.card.has-bg .ds{text-shadow:
-  0 1px 2px rgba(255,255,255,.96),
-  0 0 7px rgba(255,255,255,.92),
-  0 0 15px rgba(255,255,255,.78)}
+  0 1px 1px rgba(255,252,240,.98),
+  0 2px 3px rgba(122,96,44,.34)}
 a.card .sb{display:inline-block;margin-top:8px;font:700 10.5px/1.8 var(--sans);
   letter-spacing:.04em;color:#fff;background:var(--gold);
   border-radius:999px;padding:0 9px}
@@ -279,12 +281,11 @@ a.card .sb{display:inline-block;margin-top:8px;font:700 10.5px/1.8 var(--sans);
     rgba(21,23,28,1) 0%, rgba(21,23,28,.99) 16%,
     rgba(21,23,28,.54) 46%, rgba(21,23,28,.54) 54%,
     rgba(21,23,28,.98) 84%, rgba(21,23,28,1) 100%)}
-  /* 暗色：文字是浅色，光晕换成黑色 */
+  /* 暗色：同样收紧，颜色用近黑 + 深褐（不是纯黑） */
   a.card.has-bg .tt,
   a.card.has-bg .ds{text-shadow:
-    0 1px 2px rgba(0,0,0,.96),
-    0 0 7px rgba(0,0,0,.92),
-    0 0 15px rgba(0,0,0,.80)}
+    0 1px 1px rgba(0,0,0,.92),
+    0 2px 3px rgba(38,28,12,.72)}
   .k-c,.k-M{background:#1b2740;color:#a9c8f5;border-color:#2e4265}
   .k-cpp{background:#241d38;color:#c9b0ff;border-color:#3d3160}
   .k-extra{background:#2c2415;color:#e6c078;border-color:#4a3c1c}
@@ -410,17 +411,16 @@ CARD_BG = {
     "r01.html": "SharingGroup/tutorials/assets/EM_Square.webp",
     "r03.html": "SharingGroup/tutorials/assets/HSV_Model.webp",
     "t01.html": "SharingGroup/tutorials/assets/first_journey_to_Uyghur_Mongolian.jpg",
+    "q04.html": "SharingGroup/tutorials/assets/interface.webp",
+    "fe-01.html": "SharingGroup/tutorials/assets/first_journey_to_HTML.webp",
+    "fe-03.html": "SharingGroup/tutorials/assets/first_journey_to_CSS.webp",
+    "fe-08.html": "SharingGroup/tutorials/assets/first_journey_to_JS.webp",
 }
 
-# 遮罩配色。没写的用「重点卡」的暖黄；写 "mono" 的用白（浅色）/ 黑（暗色）。
-# Q11 已经不是重点卡，底色是 --bg-soft，所以它要 mono。
-CARD_VEIL = {
-    # 非重点卡（底色是 --bg-soft）一律用 mono，遮罩才不会和底色打架。
-    # 重点卡（F01 / R03）底色是暖黄，留空走默认的暖黄遮罩。
-    "q11.html": "mono",
-    "e02.html": "mono",
-    "r01.html": "mono",
-}
+# 遮罩配色现在是**自动推导**（见 pack()）：重点卡底色是暖黄 → 默认暖黄遮罩；
+# 非重点卡底色是 --bg-soft → mono（浅色白 / 暗色用 body 底色）。
+# 这个表只留作「需要手工覆盖」的口子，正常情况下应为空。
+CARD_VEIL = {}
 
 
 def pack(items):
@@ -440,8 +440,11 @@ def pack(items):
                "star": bool(f)}
         if a in CARD_BG:
             rec["bg"] = CARD_BG[a]
-        if a in CARD_VEIL:
-            rec["veil"] = CARD_VEIL[a]
+            # 遮罩配色跟着「是不是重点卡」走，不用手工登记：
+            #   重点卡底色是暖黄 → 走默认暖黄遮罩（不写 veil）
+            #   非重点卡底色是 --bg-soft → mono（浅色白 / 暗色 body 底色）
+            # 手工覆盖只走 CARD_VEIL。
+            rec["veil"] = CARD_VEIL.get(a) or ("default" if f else "mono")
         out.append(rec)
     return out
 
