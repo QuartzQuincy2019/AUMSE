@@ -220,7 +220,154 @@ clicked 被调用</pre></div>
 </div>
 
 <!-- ============================================================ -->
-<h2 id="s5"><span class="n">5</span>Qt connect 的四个参数</h2>
+<!-- ============================================================ -->
+<h2 id="s5"><span class="n">5</span>重载函数怎么取地址</h2>
+
+<p>前面几节默认「这个函数名只对应一个函数」。一旦有<b>重载</b>
+（同名、参数不同），情况就变了。</p>
+
+<div class="card key">
+  <div class="card-t">先记住这一句</div>
+  <p><b>重载之后，函数名不再代表「一个函数」，而是一组候选。</b></p>
+  <p>所以 <code>&amp;show</code> 单独拿出来是<b>没有确定类型的</b> ——
+  必须有「目标类型」帮编译器挑出其中<b>一个</b>。
+  挑不出来就是编译错误，不会替你猜。</p>
+</div>
+
+<h3>自由函数：靠左边的声明挑</h3>
+
+<p>技巧很简单：<b>你把它赋给什么类型的指针，就取哪个重载。</b></p>
+
+<div class="code-wrap"><div class="bar"><span class="dot r"></span><span class="dot y"></span><span class="dot g"></span><span class="name">目标类型决定取哪一个</span><span class="cp">复制</span></div><pre><span class="hl-k">void</span> <span class="hl-f">show</span>(<span class="hl-k">int</span> x);
+<span class="hl-k">void</span> <span class="hl-f">show</span>(<span class="hl-k">double</span> x);
+
+<span class="hl-c">/* 左边是 void(*)(int)，所以取 show(int) */</span>
+<span class="hl-k">void</span> (*fp)(<span class="hl-k">int</span>)    = show;
+
+<span class="hl-c">/* 左边是 void(*)(double)，所以取 show(double) */</span>
+<span class="hl-k">void</span> (*fd)(<span class="hl-k">double</span>) = show;
+
+fp(<span class="hl-n">7</span>);
+fd(<span class="hl-n">7.0</span>);</pre></div>
+
+<div class="out-wrap"><div class="cap">运行结果（已核对）</div><pre>show(int)     7
+show(double)  7.0</pre></div>
+
+<p>同一个 <code>show</code>，被两次赋给不同类型，取到了两个不同的函数。
+<b>决定权完全在左边那个类型上。</b></p>
+
+<h3>没有目标类型就挑不出来</h3>
+
+<p>用 <code>auto</code> 时左边<b>没有</b>类型可参考，编译器就无从下手：</p>
+
+<div class="code-wrap"><div class="bar"><span class="dot r"></span><span class="dot y"></span><span class="dot g"></span><span class="name">取不出来</span><span class="cp">复制</span></div><pre><span class="hl-k">auto</span> p = show;                 <span class="hl-c">/* ✗ 不知道要哪一个 */</span>
+<span class="hl-k">auto</span> m = &amp;Actor::damage;       <span class="hl-c">/* ✗ 成员函数重载同样不行 */</span></pre></div>
+
+<div class="out-wrap"><div class="cap">实机报错（已核对）</div><pre>error C3535: 无法推导“auto”的类型(依据“overloaded-function”)</pre></div>
+
+<p>注意报错里那个词：<b><code>overloaded-function</code></b>
+（重载函数）。看到它就知道是「没给目标类型」，不是别的问题。</p>
+
+<h3>写明白：<code>static_cast</code></h3>
+
+<p>靠左边的声明来挑，能工作，但<b>读代码的人得先看一眼左边</b>。
+想让人一眼看出选了哪个，就显式写出来：</p>
+
+<div class="code-wrap"><div class="bar"><span class="dot r"></span><span class="dot y"></span><span class="dot g"></span><span class="name">显式指定</span><span class="cp">复制</span></div><pre><span class="hl-k">auto</span> f = <span class="hl-k">static_cast</span>&lt;<span class="hl-k">void</span> (*)(<span class="hl-k">int</span>)&gt;(show);
+f(<span class="hl-n">8</span>);</pre></div>
+
+<div class="out-wrap"><div class="cap">运行结果（已核对）</div><pre>show(int)     8</pre></div>
+
+<div class="card tip">
+  <div class="card-t">什么时候该写 <code>static_cast</code></div>
+  <ul>
+    <li><b>只有一行、类型就写在左边</b> → 直接用「靠左边挑」的写法，简洁。</li>
+    <li><b>要传进别的函数、或者类型很长</b> → 写 <code>static_cast</code>，
+    否则读者要在两处之间来回找。</li>
+  </ul>
+  <p>两种写法<b>结果完全一样</b>，差别只在可读性。</p>
+</div>
+
+<h3>成员函数：规则一模一样</h3>
+
+<p>第 4 节说过，成员函数指针要多带一个「属于哪个类」。
+遇到重载时，它<b>同样靠目标类型挑</b> —— 只是那个类型长一点：</p>
+
+<div class="code-wrap"><div class="bar"><span class="dot r"></span><span class="dot y"></span><span class="dot g"></span><span class="name">成员函数重载</span><span class="cp">复制</span></div><pre><span class="hl-k">struct</span> Actor {
+    <span class="hl-k">int</span> hp = <span class="hl-n">100</span>;
+    <span class="hl-k">void</span> <span class="hl-f">damage</span>(<span class="hl-k">int</span> n);       <span class="hl-c">/* 扣固定点数 */</span>
+    <span class="hl-k">void</span> <span class="hl-f">damage</span>(<span class="hl-k">double</span> r);    <span class="hl-c">/* 扣百分比 */</span>
+    <span class="hl-k">int</span>  <span class="hl-f">read</span>() <span class="hl-k">const</span>;          <span class="hl-c">/* 只读 */</span>
+};
+
+<span class="hl-c">/* 目标类型是「Actor 的、参数是 int 的成员函数」→ 取 damage(int) */</span>
+<span class="hl-k">void</span> (Actor::*p1)(<span class="hl-k">int</span>)    = &amp;Actor::damage;
+
+<span class="hl-c">/* 目标类型换成 double → 取 damage(double) */</span>
+<span class="hl-k">void</span> (Actor::*p2)(<span class="hl-k">double</span>) = &amp;Actor::damage;
+
+<span class="hl-c">/* 注意末尾的 const：它也是类型的一部分 */</span>
+<span class="hl-k">int</span>  (Actor::*pr)() <span class="hl-k">const</span> = &amp;Actor::read;
+
+Actor a;
+(a.*p1)(<span class="hl-n">10</span>);                       <span class="hl-c">/* hp: 100 → 90 */</span>
+(a.*p2)(<span class="hl-n">0.5</span>);                      <span class="hl-c">/* hp: 90 → 45 */</span>
+std::printf(<span class="hl-s">"read() via object = %d\n"</span>, (a.*pr)());
+
+Actor* pa = &amp;a;                    <span class="hl-c">/* 换用对象指针，同一套指针照样能用 */</span>
+(pa-&gt;*p2)(<span class="hl-n">0.2</span>);                    <span class="hl-c">/* hp: 45 → 36 */</span>
+std::printf(<span class="hl-s">"read() via ptr    = %d\n"</span>, (pa-&gt;*pr)());</pre></div>
+
+<div class="out-wrap"><div class="cap">运行结果（已核对）</div><pre>damage(int)     hp=90
+damage(double)  hp=45
+read() via object = 45
+damage(double)  hp=36
+read() via ptr    = 36</pre></div>
+
+<p>三件事都对上了：</p>
+
+<ul>
+  <li><b>两个重载各取一个</b>：<code>p1</code> 扣固定 10 点，<code>p2</code>
+  扣 50%，血量 100 → 90 → 45。</li>
+  <li><b><code>const</code> 是类型的一部分</b>：<code>read</code> 是
+  <code>int (Actor::*)() const</code>，漏掉 <code>const</code> 就赋不过去。</li>
+  <li><b>同一套指针，换对象照样用</b>：<code>(a.*p2)</code> 与
+  <code>(pa-&gt;*p2)</code> 效果一样 —— 这正是第 4 节说的
+  「指针不知道自己属于哪个对象」。</li>
+</ul>
+
+<div class="card warn">
+  <div class="card-t">别把成员函数指针赋给普通函数指针</div>
+  <div class="code-wrap"><div class="bar"><span class="dot r"></span><span class="dot y"></span><span class="dot g"></span><span class="name">类型不同</span><span class="cp">复制</span></div><pre><span class="hl-k">void</span> (*bad)(<span class="hl-k">int</span>) = &amp;Actor::damage;   <span class="hl-c">/* ✗ 少了「属于哪个类」 */</span></pre></div>
+  <div class="out-wrap"><div class="cap">实机报错（已核对）</div><pre>error C2440: “初始化”: 无法从“overloaded-function”转换为“void (__cdecl *)(int)”</pre></div>
+  <p>这两种指针<b>不是一回事</b>：普通函数指针就是一个地址；
+  成员函数指针还要知道「哪个对象」。所以不能互转。</p>
+</div>
+
+<h3>三种写法的对照</h3>
+
+<table>
+<thead><tr><th style="width:40%">写法</th><th style="width:22%">结果</th><th>说明</th></tr></thead>
+<tbody>
+<tr><td class="c"><code>void (*p)(int) = show;</code></td>
+    <td>✅</td><td>最常用：靠左边的声明挑重载</td></tr>
+<tr><td class="c"><code>auto p = static_cast&lt;void(*)(int)&gt;(show);</code></td>
+    <td>✅</td><td>把选择写在明面上，可读性最好</td></tr>
+<tr><td class="c"><code>auto p = show;</code></td>
+    <td>❌ C3535</td><td>没有目标类型，挑不出来</td></tr>
+<tr><td class="c"><code>void (*p)(int) = &amp;Actor::damage;</code></td>
+    <td>❌ C2440</td><td>成员函数指针 ≠ 普通函数指针</td></tr>
+</tbody>
+</table>
+
+<div class="card key">
+  <div class="card-t">这一节一句话</div>
+  <p><b>重载的取地址 = 「用目标类型做选择」。</b>
+  自由函数和成员函数是同一套规则，只是成员函数那个类型里
+  多带一个「属于哪个类」和可能的 <code>const</code>。</p>
+</div>
+
+<h2 id="s6"><span class="n">6</span>Qt connect 的四个参数</h2>
 
 <p>前面都是铺垫。Qt 里那句最常见的 <code>connect</code>，就是把
 <b>两个成员函数指针</b>当参数传进去：</p>
@@ -284,7 +431,7 @@ clicked 被调用</pre></div>
 <div class="alias">
   <div class="row"><span class="k"><code>&amp;</code> 的必要性</span>
     <span class="v"><code>&amp;MyButton::clicked</code> 里那个 <code>&amp;</code>
-    是<b>取地址</b>，不是调用。<b>不加会被编译器拒绝</b> —— 见下面第 7 节的实机报错。</span></div>
+    是<b>取地址</b>，不是调用。<b>不加会被编译器拒绝</b> —— 见下面第 8 节的实机报错。</span></div>
   <div class="row"><span class="k">不能写成 <code>clicked()</code></span>
     <span class="v">加括号就是<b>调用它</b>了，得到的不是地址。
     而且非静态成员函数也不能凭空调用（它要 <code>this</code>），编译器同样会拦。</span></div>
@@ -316,7 +463,7 @@ clicked 被调用</pre></div>
 
 <!-- ============================================================ -->
 
-<h2 id="s6"><span class="n">6</span>字符串式连接与成员函数指针式连接</h2>
+<h2 id="s7"><span class="n">7</span>字符串式连接与成员函数指针式连接</h2>
 
 <p>Qt4 时代的写法是把函数名写成<b>字符串</b>：</p>
 
@@ -338,7 +485,7 @@ clicked 被调用</pre></div>
 这也是为什么现在的 Qt 代码几乎都用 <code>&amp;类名::函数名</code>。</p>
 
 <!-- ============================================================ -->
-<h2 id="s7"><span class="n">7</span>常见错误</h2>
+<h2 id="s8"><span class="n">8</span>常见错误</h2>
 
 <h3>错误 1 · 漏写括号，把指针声明写成函数声明</h3>
 
@@ -383,7 +530,7 @@ error C3867: “MyButton::testSignal”: 非标准语法；请使用 "&amp;" 来
 <code>C2440</code>）。<b>sizeof 相同不代表能互换 —— 类型系统认的是类型。</b></p>
 
 <!-- ============================================================ -->
-<h2 id="s8"><span class="n">8</span>一页速查</h2>
+<h2 id="s9"><span class="n">9</span>一页速查</h2>
 
 <table>
 <thead><tr><th style="width:34%">想做的事</th><th>写法</th></tr></thead>
@@ -404,6 +551,12 @@ error C3867: “MyButton::testSignal”: 非标准语法；请使用 "&amp;" 来
     <td class="c"><code>pmf = &amp;MyButton::clicked;</code></td></tr>
 <tr><td>调用成员函数指针</td>
     <td class="c"><code>(obj.*pmf)()</code>&nbsp;&nbsp;或&nbsp;&nbsp;<code>(ptr-&gt;*pmf)()</code></td></tr>
+<tr><td>有重载时取其中一个</td>
+    <td class="c"><code>void (*p)(int) = show;</code><br>
+    或 <code>static_cast&lt;void(*)(int)&gt;(show)</code></td></tr>
+<tr><td>成员函数也有重载</td>
+    <td class="c"><code>void (A::*p)(int) = &amp;A::f;</code><br>
+    <code>const</code> 要一起写进类型</td></tr>
 <tr><td>Qt 里把两个成员函数接起来</td>
     <td class="c"><code>connect(对象1, &amp;类1::函数1,<br>
     &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;对象2, &amp;类2::函数2);</code></td></tr>
