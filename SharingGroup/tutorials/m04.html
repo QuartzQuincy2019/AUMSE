@@ -127,6 +127,59 @@
   类型写错了，指针就会在内存里走错格。</p>
 </div>
 
+<h4>附：为什么多维数组只有第一维可以省</h4>
+
+<p>写二维数组时有个常被问的问题：下面三种声明，为什么只有中间那个能过？</p>
+
+<div class="code-wrap"><div class="bar"><span class="dot r"></span><span class="dot y"></span><span class="dot g"></span><span class="name">三种写法</span><span class="cp">复制</span></div><pre><span class="hl-k">int</span> a1[<span class="hl-n">2</span>][<span class="hl-n">3</span>];   <span class="hl-c">/* ✓ 合法 */</span>
+<span class="hl-k">int</span> a2[][<span class="hl-n">3</span>];    <span class="hl-c">/* ✓ 合法：第一维省掉 */</span>
+<span class="hl-k">int</span> a3[<span class="hl-n">2</span>][];    <span class="hl-c">/* ✗ 非法：第二维不能省 */</span></pre></div>
+
+<p>关键在于<b>编译器要能算出一个元素占多大</b>。</p>
+
+<p><code>int[2][3]</code> 可以理解成「<b>2 个 <code>int[3]</code></b>」——
+它的一层元素是 <code>int[3]</code>，占 12 字节。所以：</p>
+
+<div class="mnemonic">
+  <code>a[i]</code> 的地址 = 起始地址 + <b>i × 12</b><br>
+  —— 每跨一行，正好跳过 12 字节
+</div>
+
+<p>这个「12」必须由<b>第二维</b>算出来。所以：</p>
+
+<table>
+<thead><tr><th style="width:22%">写法</th><th style="width:22%">每行多大</th>
+<th>行不行</th></tr></thead>
+<tbody>
+<tr><td class="c"><code>int a[2][3]</code></td><td class="c">3 × 4 = 12</td>
+    <td class="c">行 —— 两个都说了</td></tr>
+<tr><td class="c"><code>int a[][3]</code></td><td class="c">3 × 4 = 12</td>
+    <td class="c"><b>行</b> —— 行宽有了，「几行」以后再补也行</td></tr>
+<tr><td class="c"><code>int a[2][]</code></td><td class="c"><b>算不出来</b></td>
+    <td class="c"><b>不行</b> —— 不知道一行多宽，<code>a[1]</code> 就找不到</td></tr>
+</tbody>
+</table>
+
+<div class="card key">
+  <div class="card-t">一句话</div>
+  <p><b>第一维是「有几行」，第二维是「一行多宽」。</b></p>
+  <p>「几行」可以临时不知道 —— 有时能由初始化列表数出来；
+  但<b>「一行多宽」必须知道</b>，否则连第二行从哪开始都算不出来。</p>
+</div>
+
+<p>顺带一个推论：<code>sizeof(int[2][3])</code> 是 <b>24</b>
+（2 × 12）—— 和多维无关，仍然是「整个类型占多大」。</p>
+
+<div class="card tip">
+  <div class="card-t">和这一节的回扣连起来看</div>
+  <p>回扣说的是「<code>arr</code> 的类型是 <code>int[4]</code> 而不是 <code>int</code>」；
+  这里说的是「<code>a</code> 的类型是 <code>int[2][3]</code>，
+  它的一层元素是 <code>int[3]</code>」。</p>
+  <p><b>同一个道理：数组的类型里带着「每一维多大」，这是编译器算地址的依据。</b>
+  省掉第一维还有救，省掉后面任何一维就断了这条依据。</p>
+</div>
+
+
 
 <!-- ============================================================ -->
 <h2 id="s2"><span class="n">2</span>两个符号：&amp; 和 *</h2>

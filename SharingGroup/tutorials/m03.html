@@ -829,25 +829,13 @@ sizeof(x)      = 4</pre></div>
 
 <h3>为什么这件事重要</h3>
 
-<h4>① 它解释了「步长」</h4>
+<h4>① 它解释了 sizeof 为什么是 16</h4>
 
-<p>上一节说「地址加 1 前进多少，由类型决定」。现在可以精确说了：</p>
+<p>如果 <code>arr</code> 的类型真是 <code>int</code>，<code>sizeof(arr)</code>
+就该是 4。它是 16，正说明<b>量到的是一个「4 个 int」的整体</b>。</p>
 
-<div class="vs">
-<table>
-<thead><tr><th style="width:26%">表达式</th><th style="width:22%">类型</th>
-<th>加 1 前进</th></tr></thead>
-<tbody>
-<tr><td class="c"><code>arr</code></td><td class="c"><code>int[4]</code></td>
-    <td class="c"><b>16 字节</b>（跨过整个数组）</td></tr>
-<tr><td class="c"><code>&amp;arr[0]</code></td><td class="c"><code>int*</code></td>
-    <td class="c"><b>4 字节</b>（跨过一个 int）</td></tr>
-</tbody>
-</table>
-</div>
-
-<p>同样是「加 1」，一个前进 16 字节、一个前进 4 字节 —— 因为
-<b>两个东西的类型不一样</b>。</p>
+<p>这也解释了一件容易被忽略的事：<b><code>sizeof</code> 不需要真的去数内存，
+它在编译期就算好了</b> —— 因为它只需要知道类型。</p>
 
 <h4>② 它解释了为什么不能把数组塞给 int</h4>
 
@@ -861,12 +849,13 @@ sizeof(x)      = 4</pre></div>
 
 <p>还有一个细节：<b>数组名在多数场合会「退化」成指向首元素的指针</b>，
 也就是从 <code>int[4]</code> 变成 <code>int*</code>。这件事
-M04 讲指针时会正面用到 —— 那里会回扣本节。</p>
+M04 讲指针时会正面用到 —— 那里会回扣本节，还会顺带说清
+<b>多维数组为什么能省掉第一维</b>。</p>
 
 <div class="take">
   <b>记住这一条：</b>看到 <code>int arr[4]</code>，把它的类型读成
   <b><code>int[4]</code></b>，不要读成 <code>int</code>。<br>
-  类型不同，<code>sizeof</code> 不同，步长不同，能不能赋值也不同。
+  类型不同，<code>sizeof</code> 不同，能不能赋值也不同。
 </div>
 
 <h2 id="s12"><span class="n">12</span>常见错误</h2>
