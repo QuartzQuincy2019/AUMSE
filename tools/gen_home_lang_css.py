@@ -45,8 +45,8 @@ TOOLS = os.path.dirname(os.path.abspath(__file__))
 sys.path.insert(0, TOOLS)
 
 # 顺序固定，输出才稳定（html / css / cpp / c 是用户指定的四门，
-# sh / py 是我补的，js 单独一套色）
-ORDER = ["html", "css", "cpp", "c", "sh", "py", "js"]
+# qt 本轮新增，sh / py 是我补的，js 单独一套色）
+ORDER = ["html", "css", "cpp", "c", "qt", "sh", "py", "js"]
 
 # 首页这套的版式（与教程页不同，见文件头说明）
 GEOM = ("display:inline-block;font:700 11px/1.7 var(--mono);\n"
@@ -54,7 +54,10 @@ GEOM = ("display:inline-block;font:700 11px/1.7 var(--mono);\n"
         "  letter-spacing:.02em")
 # 教程页的版式，用来从 LANG_CSS 里抠出「哪些属性是颜色、哪些是版式」——
 # 实际上不需要：只要有 .lang.xx{…} 的整块，再挑出颜色属性即可。
-COLOR_PROPS = ("background", "color", "border", "border-color")
+# 这些是「视觉」属性，其余（字号、圆角、padding）属于版式，由首页自己定。
+# background-image 是给渐变用的（Qt 没有单一 background 色）。
+COLOR_PROPS = ("background", "background-image", "color",
+               "border", "border-color")
 
 
 def _load_tg():
@@ -137,15 +140,22 @@ def chip_colors():
     """
     light, _ = _load_tg()
     inline, dark_ink = {}, {}
+    DISP = {"html": "HTML", "css": "CSS", "js": "JS", "cpp": "C++",
+            "c": "C", "qt": "Qt", "sh": "Shell", "py": "Python"}
     for lang in ORDER:
         props = _props(light, lang)
+        disp = DISP[lang]
+        # ① 实色底（绝大部分）—— 返回 #rrggbb，供内联 style 用
         mb = re.search(r"background\s*:\s*(#[0-9a-fA-F]{6})", props)
-        if not mb:
-            continue
-        # 语言显示名：把 class 名映射回显示名
-        disp = {"html": "HTML", "css": "CSS", "js": "JS", "cpp": "C++",
-                "c": "C", "sh": "Shell", "py": "Python"}[lang]
-        inline[disp] = mb.group(1)
+        if mb:
+            inline[disp] = mb.group(1)
+        else:
+            # ② 渐变底（Qt）—— 内联 style 里写 background-image 更简单，
+            #    直接给字符串，让调用方自己决定是用 background 还是
+            #    background-image。这里包一层 dict 区分两种来源。
+            mg = re.search(r"background-image\s*:\s*(linear-gradient\([^}]*?\))", props)
+            if mg:
+                inline[disp] = {"image": mg.group(1)}
         mc = re.search(r"(?<!border-)color\s*:\s*(#[0-9a-fA-F]{6})", props)
         if mc:
             dark_ink[disp] = mc.group(1)

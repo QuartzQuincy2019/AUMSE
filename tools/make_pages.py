@@ -20,7 +20,7 @@ import sys
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 from series_data import (SERIES, PAGES, ORDER, FE_PAGES,  # noqa: E402
-                         pages_of)
+                         pages_of, LANG_OF, LANG_CLS)
 
 try:
     sys.stdout.reconfigure(encoding="utf-8", errors="replace")
@@ -352,10 +352,24 @@ CARD_BG = {
 
 
 def pack(items):
-    return [{"file": a, "num": b, "title": c, "desc": d,
-             "kind": e, "star": bool(f),
-             **({"bg": CARD_BG[a]} if a in CARD_BG else {})}
-            for a, b, c, d, e, f in items]
+    """items 里第 5 项现在是 [(显示名, class), …]。
+
+    同时导出两个字段：
+        kind   语言**显示名**用「 / 」连起来（如 "Qt / JS"）——人读、比对用
+        kinds  原样的 [(名, class), …] —— home-cards.js 按它逐个画徽章
+    保留 kind 是因为若干检查脚本还在按字符串比对；两者同源，不会漂。
+    """
+    out = []
+    for a, b, c, d, e, f in items:
+        specs = list(e or [])
+        rec = {"file": a, "num": b, "title": c, "desc": d,
+               "kind": " / ".join(n for n, _ in specs),
+               "kinds": [[n, cls] for n, cls in specs],
+               "star": bool(f)}
+        if a in CARD_BG:
+            rec["bg"] = CARD_BG[a]
+        out.append(rec)
+    return out
 
 
 def build_html():
@@ -368,18 +382,21 @@ def build_html():
     for sk in ORDER:
         s = SERIES[sk]
         ps = pages_of(sk)
-        # 这里第 5 个字段必须是**语言**（p[2] 是系列 key，不是语言）。
-        # 原先写成 sk，等于把语言覆盖成系列名，首页卡片上就看不到
-        # HTML / CSS / JS 了 —— FE 八篇会一律显示「FE」。
-        # 非 FE 各页的数据里没有语言字段，所以按系列查 SERIES_LANG。
+        # 第 5 个字段必须是**语言显示名**（p[2] 是系列 key，不是语言）。
+        # 语言一律从 LANG_OF 取 —— 那是唯一权威来源（M01-M08→C、
+        # R03/FE-09→Qt、T01-T03→不显示徽章）。原先这里自己算
+        # PAGE_LANG.get(...) or SERIES_LANG.get(sk)，等于把派生逻辑抄了第二遍，
+        # 结果首页与教程页会不一致（实测：M01-M08 首页显示 C++、页面显示 C）。
         items = [(p[1], p[3], p[4], p[5],
-                  PAGE_LANG.get(p[1], SERIES_LANG.get(sk, "C++")),
+                  LANG_OF.get(p[1]) or [],
                   bool(p[6])) for p in ps]
         groups.append({"key": sk, "label": s["label"], "banner": s["banner"],
                        "desc": s["desc"], "count": len(items),
                        "items": items})
-    # FE 页的 FE_PAGES 里第 5 个字段本来就是语言（HTML / CSS / JS），直接用
-    fe_items = [(a, b, c, d, e, f) for a, b, c, d, e, f in FE_PAGES]
+    # FE_PAGES 的第 5 项现在是**语言显示名的列表**（如 ['Qt','JS']）。
+    # pack() 要的是 [(显示名, class), …]，所以在这里补上 class。
+    fe_items = [(a, b, c, d, [(n, LANG_CLS[n]) for n in e], f)
+                for a, b, c, d, e, f in FE_PAGES]
     # FE 的 label / banner / desc 以前是**硬写**在这里的，与
     # series_data.py 的 FE_PAGES 分成两处。现在统一从 SERIES["FE"] 取 ——
     # 生成器 gen_series_tables.py 也依赖 SERIES 里有 FE。
@@ -397,7 +414,13 @@ def build_html():
                         "banner": g["banner"], "desc": g["desc"],
                         "count": g["count"],
                         "cards": pack(g["items"])} for g in groups],
-            "total": total, "star": n_star}
+            "total": total, "star": n_star,
+            # 语言 → class。首页卡片的 .lang 需要它；原来这张表手写在
+            # home-cards.js 的 LCLS 里，加 Qt 时漏了更新，结果首页的 Qt
+            # 徽章没有 class、样式整个丢掉。改成从 series_data 派生。
+            # LANG_OF 的值现在是列表；展平后去重，得到「有哪些语言」
+            "langs": {name: "lang " + cls
+                      for v in LANG_OF.values() for name, cls in v}}
     js = json.dumps(data, ensure_ascii=False, separators=(",", ":"))
 
     def plain(items):
@@ -408,14 +431,24 @@ def build_html():
         INLINE, DARK_INK = _LANGCSS.chip_colors()
         for a, b, c, d, e, f in items:
             s = " <b>&#9733;</b>" if f else ""
-            bg = INLINE.get(e)
             chip = ""
-            if bg:
-                fg = DARK_INK.get(e, "#fff")
-                chip = ('<span style="display:inline-block;font:700 11px/1.7 '
-                        'Consolas,monospace;border-radius:999px;padding:0 8px;'
-                        'margin-right:6px;background:%s;color:%s">%s</span>'
-                        % (bg, fg, e))
+            # 一篇可以有**多个**语言（FE-09 = Qt + JS），逐个画
+            for _name, _cls in e:
+                bg = INLINE.get(_name)
+                if not bg:
+                    continue
+                fg = DARK_INK.get(_name, "#fff")
+                # bg 有两种形态：实色字符串（绝大多数），或
+                # {"image": "linear-gradient(…)"}（Qt 这类渐变底）——
+                # 后者要写 background-image 而不是 background。
+                if isinstance(bg, dict):
+                    fill = "background-image:%s;" % bg["image"]
+                else:
+                    fill = "background:%s;" % bg
+                chip += ('<span style="display:inline-block;font:700 11px/1.7 '
+                         'Consolas,monospace;border-radius:999px;padding:0 8px;'
+                         'margin-right:6px;%scolor:%s">%s</span>'
+                         % (fill, fg, _name))
             out.append('<li>%s<a href="SharingGroup/tutorials/%s">%s %s</a>%s</li>'
                        % (chip, a, b, c, s))
         out.append("</ul>")

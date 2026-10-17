@@ -201,17 +201,17 @@ PAGES = [
 
 # ---------------------------------------------------------------- 前端系列
 FE_PAGES = [
-    ("fe-01.html",     "FE-01",     "HTML 入门与标签语法",            "所写即所得、注释、空格无效性",              "HTML", False),
-    ("fe-02.html",     "FE-02",     "HTML 常用标签",                 "p / i / strong / span / ul / div / form / table / a", "HTML", False),
-    ("fe-03-F01.html", "FE-03-F01", "十六进制颜色模型、HSV 与 Alpha", "重点：十六进制颜色模型、Alpha 通道",         "CSS",  True),
-    ("fe-03.html",     "FE-03",     "CSS 入门",                      "字体、背景色、字体色、装饰、阴影、cursor",   "CSS",  False),
-    ("fe-04.html",     "FE-04",     "CSS 选择器语法",                 "标签/类/id、后代、属性限定、伪类、伪元素", "CSS", False),
-    ("fe-05.html",     "FE-05",     "Display 与盒模型尺寸",           "block / inline-block / inline、边框、阴影、宽高", "CSS", False),
-    ("fe-06.html",     "FE-06",     "Writing Mode 与溢出滚动",        "重点：writing-mode、word-break",             "CSS",  True),
-    ("fe-07.html",     "FE-07",     "鼠标悬停与 transition",          "hover、过渡、缓动、常用动效",                "CSS",  False),
-    ("fe-08.html",     "FE-08",     "JavaScript 语法初步",           "与 C/C++ 的相似性、console.log / var / alert / prompt", "JS", False),
+    ("fe-01.html",     "FE-01",     "HTML 入门与标签语法",            "所写即所得、注释、空格无效性",              ["HTML"], False),
+    ("fe-02.html",     "FE-02",     "HTML 常用标签",                 "p / i / strong / span / ul / div / form / table / a", ["HTML"], False),
+    ("fe-03-F01.html", "FE-03-F01", "十六进制颜色模型、HSV 与 Alpha", "重点：十六进制颜色模型、Alpha 通道",         ["CSS"],  True),
+    ("fe-03.html",     "FE-03",     "CSS 入门",                      "字体、背景色、字体色、装饰、阴影、cursor",   ["CSS"],  False),
+    ("fe-04.html",     "FE-04",     "CSS 选择器语法",                 "标签/类/id、后代、属性限定、伪类、伪元素", ["CSS"], False),
+    ("fe-05.html",     "FE-05",     "Display 与盒模型尺寸",           "block / inline-block / inline、边框、阴影、宽高", ["CSS"], False),
+    ("fe-06.html",     "FE-06",     "Writing Mode 与溢出滚动",        "重点：writing-mode、word-break",             ["CSS"],  True),
+    ("fe-07.html",     "FE-07",     "鼠标悬停与 transition",          "hover、过渡、缓动、常用动效",                ["CSS"],  False),
+    ("fe-08.html",     "FE-08",     "JavaScript 语法初步",           "与 C/C++ 的相似性、console.log / var / alert / prompt", ["JS"], False),
     ("fe-09.html",     "FE-09",     "DOM 操作基础",
-     "getElementById / createElement / append；DOM 树与 Qt addWidget 的对照", "JS", True),
+     "getElementById / createElement / append；DOM 树与 Qt addWidget 的对照", ["Qt", "JS"], True),
 ]
 
 # ---------------------------------------------------------------- 派生量
@@ -273,36 +273,49 @@ if __name__ == "__main__":
 # FE 各篇的语言不在上表里 —— 它本来就写在 FE_PAGES 的第 5 项，
 # 直接从那里取，避免又造一份副本。
 SERIES_LANG = {
-    "T": "HTML",    # 理论三篇：示例都是 HTML
-    "F": "Shell",   # F01/F02 命令提示符、F03 编译与链接的工具链
-    "M": "C++",
-    "Q": "C++",
-    "R": "C++",
-    "E": "C++",     # E01/E03 是 C++，E02 见下面的单篇覆盖
+    # T 系列不加语言徽章 —— 正文讲的是文字与编码，没有「用什么语言写」这回事
+    "T": [],
+    "F": ["Shell"],   # F01/F02 命令提示符、F03 编译与链接的工具链
+    "M": ["C"],       # 课本前半部分是 C（M09 例外，见下）
+    "Q": ["C++"],
+    "R": ["C++"],
+    "E": ["C++"],     # E01/E03 是 C++，E02 见下面的单篇覆盖
 }
+
+# 单篇的语言与系列默认不同时，用这里**整篇替换**（不是追加）——
+# 若做成追加，想「拿掉系列默认语言」就没法表达了。
 PAGE_LANG = {
+    # M09 讲 vector / array —— 那是 C++ 标准库，不是 C
+    "m09-vector-and-array.html": ["C++"],
     # E02 是批处理（.bat），与 E 系列默认的 C++ 不同
-    "e02-batch-and-cmd.html": "Shell",
+    "e02-batch-and-cmd.html": ["Shell"],
     # R01 只讲字体度量（EM Square / x 字高 / 行高），一个编程语言例子都没有；
     # 它讲的东西正是 CSS 关心的，所以归 CSS（与首页卡片一致）。
-    "r01-font-design-metrics.html": "CSS",
+    "r01-font-design-metrics.html": ["CSS"],
+    # R03 讲蒙古文排序，正文用的是 Qt 的 QString 相关接口
+    "r03-collation.html": ["Qt"],
+    # FE-09 同时是 Qt 与 JS：DOM 那半是 JS，与 Qt 对照那半是 Qt
+    "fe-09.html": ["Qt", "JS"],
 }
 LANG_CLS = {"HTML": "html", "CSS": "css", "JS": "js",
-            "C++": "cpp", "C": "c", "Shell": "sh", "Python": "py"}
+            "C++": "cpp", "C": "c", "Shell": "sh", "Python": "py",
+            "Qt": "qt"}
 
 
 def _lang_of_pages():
+    """文件名 → 语言列表。"""
     out = {}
     for key in PAGE_ORDER:
         if key == "FE":
             continue
         for p in pages_of(key):
             fn = p[1]
-            out[fn] = PAGE_LANG.get(fn, SERIES_LANG[key])
+            out[fn] = list(PAGE_LANG.get(fn, SERIES_LANG[key]))
     for p in FE_PAGES:
-        out[p[0]] = p[4]          # FE_PAGES 的第 5 项就是语言
+        out[p[0]] = list(p[4]) if p[4] else []   # FE_PAGES 第 5 项，现在是列表
     return out
 
 
-# 文件名 → (显示名, class)
-LANG_OF = {fn: (lang, LANG_CLS[lang]) for fn, lang in _lang_of_pages().items()}
+# 文件名 → [(显示名, class), …]。**空列表**表示这篇不显示语言徽章。
+LANG_OF = {fn: [(lang, LANG_CLS[lang]) for lang in langs]
+           for fn, langs in _lang_of_pages().items()}

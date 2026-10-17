@@ -1,5 +1,14 @@
 # -*- coding: utf-8 -*-
-"""核对语言徽章：每页恰好 1 个，且样式表里真的有对应规则。"""
+"""核对语言徽章：一篇可以有**多个**，逐个比对。
+
+为什么重写
+    原来的判定建立在「一篇恰好 1 个徽章」上：
+        if len(hits) != 1: 异常
+    而 FE-09 现在有 2 个（Qt + JS）—— 那不是异常，是新需求。
+    所以改成「**序列**比对」：页面上找到的徽章顺序必须与期望的完全一致。
+
+期望值仍然来自 series_data.LANG_OF（列表），不手写。
+"""
 import io
 import os
 import re
@@ -10,53 +19,59 @@ sys.stdout.reconfigure(encoding="utf-8", errors="replace")
 T = r"E:\QKMansion\CSX10\w\UME\SharingGroup\tutorials"
 A = os.path.join(T, "assets")
 
-EXPECT = {
-    "t01-mongolian-script-intro.html": "html", "t02-unicode-and-encoding.html": "html",
-    "t03-font-file-anatomy.html": "html",
-    "f01-command-prompt.html": "sh", "f02-paths-and-env.html": "sh",
-    "f03-compile-and-link.html": "sh",
-    "m01-c-arrays.html": "cpp", "m02-c-functions.html": "cpp", "m03-c-types.html": "cpp",
-    "m04-c-pointers.html": "cpp", "m05-memory.html": "cpp", "m06-class-struct.html": "cpp",
-    "m07-scope.html": "cpp", "m08-c-strings.html": "cpp", "m09-vector-and-array.html": "cpp",
-    "q01-std-and-namespace.html": "cpp", "q02-references.html": "cpp",
-    "r01-font-design-metrics.html": "css", "r02-bubble-sort.html": "cpp",
-    "r03-collation.html": "cpp",
-    "e01-recursion.html": "cpp", "e02-batch-and-cmd.html": "sh",
-    "e03-syntactic-sugar.html": "cpp",
-    "fe-01.html": "html", "fe-02.html": "html", "fe-03-F01.html": "css",
-    "fe-03.html": "css", "fe-04.html": "css", "fe-05.html": "css",
-    "fe-06.html": "css", "fe-07.html": "css", "fe-08.html": "js",
-}
+sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+from series_data import LANG_OF  # noqa: E402
 
-# 页面上「渲染后可见」的徽章形态：class="lang xx"
-PAT = re.compile(r'class="lang ([a-z]+)"')
+# 文件名 → 期望的 [(显示名, class), …]；空列表 = 这篇不该有徽章
+EXPECT = dict(LANG_OF)
+
+# 两种写法都要认：文档页 class="lang xx"、FE 页 class=\"lang xx\"
+BADGE = re.compile(r'<span class=\\?"lang ([a-z]+)\\?">([^<]*)')
+
+
+def badges(html):
+    return [(m.group(2), m.group(1)) for m in BADGE.finditer(html)]
+
 
 bad = 0
 for f in sorted(os.listdir(T)):
     if not f.endswith(".html"):
         continue
-    t = io.open(os.path.join(T, f), encoding="utf-8").read()
-    # 文档页直接出现；FE 页在 JSON 里带反斜杠转义
-    hits = re.findall(r'class=\\?"lang ([a-z]+)\\?"', t)
-    want = EXPECT.get(f)
-    if want is None:
-        print("  %-34s （未登记，跳过）" % f)
+    if f not in EXPECT:
+        print("  %-34s （LANG_OF 里没有，跳过）" % f)
         continue
-    if len(hits) != 1:
-        bad += 1
-        print("  !! %-32s 徽章 %d 个 %s" % (f, len(hits), hits))
-    elif hits[0] != want:
-        bad += 1
-        print("  !! %-32s 徽章是 %s，期望 %s" % (f, hits[0], want))
+    t = io.open(os.path.join(T, f), encoding="utf-8").read()
+    got = badges(t)
+    want = EXPECT[f]
+
+    if not want:
+        if got:
+            bad += 1
+            print("  !! %-32s 不应有徽章，却有 %d 个 %s"
+                  % (f, len(got), [n for n, _ in got]))
+        else:
+            print("  OK %-32s （无徽章，符合预期）" % f)
+        continue
+
+    got_cls = [c for _, c in got]
+    want_cls = [c for _, c in want]
+    if got_cls == want_cls:
+        print("  OK %-32s %s" % (f, " ".join(n for n, _ in got)))
     else:
-        print("  OK %-32s %s" % (f, hits[0]))
+        bad += 1
+        print("  !! %-32s 徽章 %-14s 期望 %s"
+              % (f, " ".join(n for n, _ in got) or "无",
+                 " ".join(n for n, _ in want)))
+
 print()
 print("  异常 %d 篇 %s" % (bad, "OK" if bad == 0 else "FAIL"))
 
-# 样式表侧：tg_L / tg_D 里必须有每一条规则
+# 样式表侧：每个出现过的 class 都要有规则
 print()
+need = sorted({c for v in EXPECT.values() for _, c in v})
 for fn in ("tg_L.css", "tg_D.css"):
     c = io.open(os.path.join(A, fn), encoding="utf-8").read()
-    missing = [k for k in ("html", "css", "js", "cpp", "c", "sh", "py")
-               if (".lang.%s{" % k) not in c.replace(" ", "")]
-    print("  %-10s 缺规则: %s" % (fn, missing if missing else "无 OK"))
+    squashed = c.replace(" ", "")
+    missing = [k for k in need if (".lang.%s{" % k) not in squashed]
+    print("  %-10s 需 %d 条规则，缺: %s"
+          % (fn, len(need), missing if missing else "无 OK"))

@@ -22,10 +22,20 @@
      不再是系列 key。
      这里同时保留旧的系列 key 映射：万一有人还往数据里塞系列名，
      也不至于把「M」当成语言显示出来。 */
-  var LCLS = {
-    HTML: 'lang html', CSS: 'lang css', JS: 'lang js',
-    C: 'lang c', 'C++': 'lang cpp', Shell: 'lang sh', Python: 'lang py'
-  };
+  /* 语言 → class。**优先用页面注入的 D.langs**（由 make_pages.py 从
+     series_data.LANG_OF 派生），下面这份只是兜底 —— 万一有人单独拿这个
+     js 去用、没有 __HOME__.langs，也还能显示最常用的几种。
+     原来这里是唯一来源，加 Qt 时漏改，首页的 Qt 徽章就没有 class、
+     样式整个丢掉（实测：首页只有 5 种语言，Qt 缺席）。 */
+  var LCLS = (D && D.langs) || {};
+  if (!LCLS.Qt) {   // 兜底表（仅在没拿到 D.langs 时生效）
+    var FALLBACK = {
+      HTML: 'lang html', CSS: 'lang css', JS: 'lang js',
+      C: 'lang c', 'C++': 'lang cpp', Shell: 'lang sh',
+      Python: 'lang py', Qt: 'lang qt'
+    };
+    for (var k in FALLBACK) if (!LCLS[k]) LCLS[k] = FALLBACK[k];
+  }
 
   function el(tag, cls, text) {
     var n = document.createElement(tag);
@@ -98,9 +108,18 @@
     }
 
     a.appendChild(el('span', 'no', c.num));
-    if (LCLS[c.kind]) {
-      a.appendChild(el('span', LCLS[c.kind], c.kind));
-    }
+    /* 语言徽章：一篇可以有**多个**（FE-09 = Qt + JS 两个），
+       所以遍历 c.kinds 逐个画。若某条数据只有单个 c.kind 字符串
+       （旧格式），也照样画得出来。 */
+    var kinds = (c.kinds && c.kinds.length)
+      ? c.kinds
+      : (c.kind ? [[c.kind, null]] : []);
+    kinds.forEach(function (k) {
+      var name = k[0], cls = k[1];
+      var label = LCLS[name] || (cls ? 'lang ' + cls : null);
+      if (!label) return;          // 没有对应样式就不画，别留个裸文字
+      a.appendChild(el('span', label, name));
+    });
     a.appendChild(el('span', 'tt', c.title));
     a.appendChild(el('span', 'ds', c.desc));
 

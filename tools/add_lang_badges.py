@@ -44,6 +44,79 @@ from series_data import LANG_OF as LANG  # noqa: E402
 
 TAGROW = re.compile(r'(<p)(>)(\s*<span class="tag)', re.S)
 
+# ---- 徽章的「读 / 删 / 换」（支持多个）-------------------------------
+# 两个坑（都踩过）：
+#   ① FE 页的正文在 JSON 里，引号写成 \" —— 两种写法都要认。
+#      raw string 里 \\? 表示「一个反斜杠，出现 0 或 1 次」。
+#   ② FE 页的闭标签是 <\/span>（斜杠被转义），所以不能对整份 HTML 直接做
+#      正则替换 —— 必须解析 JSON、在 body 字段里操作。下面这些函数收的是
+#      **body**（已反转义的普通 HTML），两种页面都能用。
+#
+# 一篇可以有**多个**语言徽章（FE-09 = Qt + JS），所以这里返回/处理的是
+# 「徽章序列」而不是单个。
+_BADGE_RE = re.compile(r'<span class=\\?lang ([a-z]+)\\?>([^<]*)</span>[ \t]*')
+
+
+def find_badges(body):
+    """返回 [(显示名, class), …]，按出现顺序。"""
+    return [(m.group(2), m.group(1)) for m in _BADGE_RE.finditer(body)]
+
+
+def _render(specs):
+    return " ".join(badge(name, cls) for name, cls in specs)
+
+
+def set_badges(body, specs):
+    """把正文里的徽章序列整串换成 specs。
+
+    没有徽章时按 patch_doc / patch_fe 的位置规则插入一个；
+    已有徽章时把它们整串替换掉（通常都挤在同一处，不担心版面）。
+    """
+    hits = list(_BADGE_RE.finditer(body))
+    if hits:
+        a, b = hits[0].start(), hits[-1].end()
+        return body[:a] + _render(specs) + body[b:]
+    return None      # 交给调用方按位置规则插入
+
+
+def drop_badges(body):
+    """删掉所有语言徽章，并清理因此空掉的段落。"""
+    out = _BADGE_RE.sub("", body)
+    return re.sub(r'<p(?: [^>]*)?>\s*</p>\s*', "", out)
+
+
+TAGROW = re.compile(r'(<p)(>)(\s*<span class="tag)', re.S)
+
+# ---- 徽章的「读 / 删 / 换」 ----------------------------------------------
+# 两个坑（都踩过）：
+#   ① FE 页的正文在 JSON 里，引号写成 \" —— 两种写法都要认。
+#      raw string 里 \\? 表示「一个反斜杠，出现 0 或 1 次」。
+#   ② FE 页的闭标签是 <\/span>（斜杠被转义），所以不能对整份 HTML 直接做
+#      正则替换 —— 必须解析 JSON、在 body 字段里操作。下面三个函数收的是
+#      **body**（已反转义的普通 HTML），两种页面都能用。
+_BADGE_RE = re.compile(r'<span class=\\?"lang ([a-z]+)\\?">([^<]*)</span>')
+
+
+def find_badge(body):
+    """返回 (显示名, class)，没有则 None。"""
+    m = _BADGE_RE.search(body)
+    return (m.group(2), m.group(1)) if m else None
+
+
+def drop_badge(body):
+    """删掉语言徽章，并清理因此空掉的段落。
+
+    标签行里通常只有这一个徽章，删完会剩下一个空 <p>（页面上是一片空白），
+    所以整行一起删；行里还有别的标签时只删徽章、保留其余。
+    """
+    out = _BADGE_RE.sub("", body)
+    return re.sub(r'<p(?: [^>]*)?>\s*</p>\s*', "", out)
+
+
+def swap_badge(body, lang, cls):
+    """把已有徽章换成指定语言。"""
+    return _BADGE_RE.sub(badge(lang, cls), body, count=1)
+
 
 def badge(lang, cls):
     return '<span class="lang %s">%s</span>' % (cls, lang)
@@ -119,33 +192,81 @@ def main():
         if not f.endswith(".html"):
             continue
         if f not in LANG:
-            print("  %-34s （未指定语言，跳过）" % f)
+            print("  %-34s （LANG_OF 里没有，跳过）" % f)
             continue
-        lang, cls = LANG[f]
+
+        want = LANG[f]           # [(名, class), …]；空列表 = 不要徽章
         p = os.path.join(T, f)
         t = io.open(p, encoding="utf-8").read()
-        # 幂等判断：注意 FE 页的正文是 JSON，引号被转义成 \" ——
-        # 只匹配 class="lang 会漏掉它们，于是同一篇被插两次、徽章翻倍。
-        # 两种写法都要认。（第一版就漏了这个，靠「再跑一次」才发现。）
-        if 'class="lang ' in t or 'class=\\"lang ' in t:
-            print("  %-34s 已有语言徽章，跳过" % f)
-            continue
+        tag = "+".join(n for n, _ in want) or "-"
 
+        # ---------------- FE 页：先解析 JSON ----------------
         if f.startswith("fe-"):
-            t2, how = patch_fe(t, lang, cls)
-        else:
-            t2, how = patch_doc(t, lang, cls)
+            m = re.search(
+                r'(window\.__FE_PAGE__\s*=\s*)(\{.*?\})(;\s*\n</script>)',
+                t, re.S)
+            if not m:
+                print("  %-34s !! 找不到 __FE_PAGE__" % f)
+                miss += 1
+                continue
+            data = json.loads(m.group(2))
+            body = data.get("body", "")
+            cur = find_badges(body)
 
-        if t2 == t:
-            miss += 1
-            print("  %-34s %s" % (f, how))
+            if cur == want:
+                print("  %-34s 徽章正确（%s），跳过" % (f, tag))
+                continue
+
+            if not want:
+                data["body"] = drop_badges(body)
+                how = "移除徽章（%s）" % " ".join(n for n, _ in cur)
+            else:
+                nb = set_badges(body, want)
+                if nb is None:
+                    nb = "<p>" + _render(want) + "</p>\n\n" + body
+                    how = "正文开头新建标签行"
+                else:
+                    how = "徽章 %s → %s" % (
+                        " ".join(n for n, _ in cur) or "无", tag)
+                data["body"] = nb
+
+            js = json.dumps(data, ensure_ascii=False, separators=(",", ":"))
+            js = js.replace("</", "<\\/")
+            t2 = t[:m.start(2)] + js + t[m.end(2):]
+            done += 1
+            print("  %-34s %-9s %s" % (f, tag, how))
+            if not dry:
+                io.open(p, "w", encoding="utf-8", newline="").write(t2)
             continue
+
+        # ---------------- 文档页：直接在 HTML 上操作 ----------------
+        cur = find_badges(t)
+        if cur == want:
+            print("  %-34s 徽章正确（%s），跳过" % (f, tag))
+            continue
+
+        if not want:
+            t2 = drop_badges(t)
+            how = "移除徽章（%s）" % " ".join(n for n, _ in cur)
+        else:
+            t2 = set_badges(t, want)
+            if t2 is None:
+                t2, how = patch_doc(t, want[0][0], want[0][1])
+                # 多个语言时把其余徽章补在后面
+                if len(want) > 1:
+                    t2 = set_badges(t2, want) or t2
+            else:
+                how = "徽章 %s → %s" % (
+                    " ".join(n for n, _ in cur) or "无", tag)
+
         done += 1
-        print("  %-34s %-6s %s" % (f, lang, how))
+        print("  %-34s %-9s %s" % (f, tag, how))
         if not dry:
             io.open(p, "w", encoding="utf-8", newline="").write(t2)
+
     print()
-    print("  处理 %d 篇，未插入 %d 篇%s" % (done, miss, "  [dry-run]" if dry else ""))
+    print("  处理 %d 篇，未处理 %d 篇%s"
+          % (done, miss, "  [dry-run]" if dry else ""))
 
 
 if __name__ == "__main__":

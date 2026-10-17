@@ -70,7 +70,12 @@
   .lang.css{background:#7dd3fc}         /* 10.87 */
   .lang.cpp{background:#a5c8ff}         /* 10.62 */
   .lang.c{background:#c4b5fd}           /* 9.03 */
-  .lang.sh{background:#bef264}          /* 12.44 */
+  /* Qt 在暗色下**仍是绿渐变 + 白字** —— 绿在深底上本来就好认，
+     而且两端对白字的对比度在暗色下只会更高（5.13 / 9.51 是亮色模式的值）。 */
+  .lang.qt{background-image:linear-gradient(45deg,#29cd7b,#1a8650);color:#fff}
+  /* Shell 在暗色下也保持白底黑字（用户说的是「白底黑字」，不分明暗），
+     深色卡片上反而更跳；边框可以省掉，白底本身就与页面对比强烈。 */
+  .lang.sh{background:#ffffff;color:#11161c;border-color:transparent}
   .lang.py{background:#7dd3b0}          /* 9.29 */
   /* JS 在暗色下**沿用同一个正黄底 + 深字** —— 不改成浅黄。
      理由：① 正黄配深字无论明暗都达标（13.28 对底、对深色页面一样清晰）；

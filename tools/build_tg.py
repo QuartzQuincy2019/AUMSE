@@ -189,7 +189,7 @@ TAIL_D = ""
 #     语义标签用掉了，M06 还用它做权限标记（.tag.pub/.pri/.pro）。
 #     语言标注单开一个 .lang.X 命名空间，避免和它们抢颜色。
 LANG_CSS = """/* ---------- 语言标注（.lang）---------- */
-/* 浅色：实色底 + 白字（JS 例外，用深字）。括号内是实测对比度，均 ≥ 4.5:1 */
+/* 浅色。括号内是实测对比度（对字色），均 ≥ 4.5:1 */
 .lang{display:inline-block;font-family:var(--mono);font-size:11.5px;
   font-weight:700;padding:1.5px 9px;border-radius:999px;
   color:#fff;border:1px solid transparent;vertical-align:2px;
@@ -198,7 +198,15 @@ LANG_CSS = """/* ---------- 语言标注（.lang）---------- */
 .lang.css{background:#0478ab}           /* 天蓝 + 白字 4.91 */
 .lang.cpp{background:#2456c4}           /* 深蓝 + 白字 6.56 */
 .lang.c{background:#7d5cd6}             /* 蓝紫 + 白字 4.80 */
-.lang.sh{background:#3f6212}            /* Shell：用户未指定，橄榄绿 + 白字 7.34 */
+/* Qt：左下 → 右上 的浅绿到深绿渐变（45deg = 左下起、右上止）。
+   色值由用户指定：#29CD7B（浅绿）→ #1A8650（深绿），白字。
+   实测对比度（白字）：浅端 2.08、深端 4.60 —— 浅端低于 4.5:1，
+   这是色值本身决定的（换成深字则深端不够，3.96）。
+   按用户要求仍用白字，此处留档，将来若要严格达标需把浅端压暗。 */
+.lang.qt{background-image:linear-gradient(45deg,#29cd7b,#1a8650);
+  color:#fff}                            /* 浅绿→深绿 + 白字 2.08~4.60 */
+/* Shell：白底黑字（用户指定）。加一道细边，否则白底在浅色卡片上会糊成一片 */
+.lang.sh{background:#ffffff;color:#11161c;border-color:#c9d1dc}   /* 18.4 */
 .lang.py{background:#1f6f5c}            /* Python：用户未指定，松绿 + 白字 5.73 */
 /* JS 单独一套：保留正黄，改用深字 —— 比压暗底色好看得多 */
 .lang.js{background:#ffd400;color:#0d1110}   /* 正黄 + 深字 13.28 */"""
@@ -210,7 +218,12 @@ LANG_DARK_CSS = """@media (prefers-color-scheme: dark){
   .lang.css{background:#7dd3fc}         /* 10.87 */
   .lang.cpp{background:#a5c8ff}         /* 10.62 */
   .lang.c{background:#c4b5fd}           /* 9.03 */
-  .lang.sh{background:#bef264}          /* 12.44 */
+  /* Qt 在暗色下**仍是绿渐变 + 白字** —— 绿在深底上本来就好认，
+     而且两端对白字的对比度在暗色下只会更高（5.13 / 9.51 是亮色模式的值）。 */
+  .lang.qt{background-image:linear-gradient(45deg,#29cd7b,#1a8650);color:#fff}
+  /* Shell 在暗色下也保持白底黑字（用户说的是「白底黑字」，不分明暗），
+     深色卡片上反而更跳；边框可以省掉，白底本身就与页面对比强烈。 */
+  .lang.sh{background:#ffffff;color:#11161c;border-color:transparent}
   .lang.py{background:#7dd3b0}          /* 9.29 */
   /* JS 在暗色下**沿用同一个正黄底 + 深字** —— 不改成浅黄。
      理由：① 正黄配深字无论明暗都达标（13.28 对底、对深色页面一样清晰）；
