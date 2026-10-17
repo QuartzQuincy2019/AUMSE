@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 """生成第 10 讲：std 与命名空间初步
 
-做法：从已有的 m09-vector-and-array.html 里取外壳（head/导航/脚本骨架），
+做法：从已有的 m09.html 里取外壳（head/导航/脚本骨架），
 换上本篇的正文与目录，CSS 写成 assets/10.css。
 
 所有示例、报错信息均用 g++ 13.1.0（-std=c++17）实际编译运行核对。
@@ -18,8 +18,8 @@ except Exception:
 
 TUT = r"E:\QKMansion\CSX10\w\UME\SharingGroup\tutorials"
 ASSETS = os.path.join(TUT, "assets")
-SHELL_FROM = "m09-vector-and-array.html"
-OUT_HTML = "q01-std-and-namespace.html"
+SHELL_FROM = "m09.html"
+OUT_HTML = "q01.html"
 OUT_CSS = "10.css"
 
 TOC = """  <a href="#s1">1 · 为什么需要命名空间</a>

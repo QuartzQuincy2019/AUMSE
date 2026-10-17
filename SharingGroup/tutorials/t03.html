@@ -1,0 +1,592 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>T03 · 字体文件结构大揭秘</title>
+<link rel="stylesheet" href="assets/genelayout.css">
+<link rel="stylesheet" href="assets/f03.css">
+<link rel="stylesheet" href="assets/t-theme.css">
+<link rel="stylesheet" href="assets/series-theme.css">
+<link rel="stylesheet" href="assets/tg_L.css">
+<link rel="stylesheet" href="assets/tg_D.css">
+</head>
+<body class="tseries" data-series="T">
+<script>
+/* 极早执行：在样式生效前就按系统偏好声明配色方案，避免亮→暗闪一下 */
+(function(){var d=window.matchMedia&&window.matchMedia('(prefers-color-scheme: dark)').matches;
+var m=document.createElement('meta');m.name='color-scheme';
+m.content=d?'dark light':'light dark';document.head.appendChild(m);})();
+</script>
+<button id="tocToggle">目录</button>
+<div id="shell">
+
+<nav id="toc">
+  <h5>目录</h5>
+  <a href="#s1">1 · 全局：18 张表</a>
+  <a href="#s2">2 · head 与 hhea：坐标系</a>
+  <a href="#s3">3 · cmap：只有 517 条</a>
+  <a href="#s4">4 · GSUB 才是主角</a>
+  <a href="#s5">5 · 字形名字里有音节</a>
+  <a href="#s6">6 · hmtx 与 loca</a>
+  <a href="#s7">7 · 把数字串起来</a>
+  <a href="#s8">8 · 自己复现</a>
+  <a href="#s9">9 · 回到项目</a>
+</nav>
+
+<main id="top">
+<h1>字体文件结构大揭秘</h1>
+<p class="sub-title">UME 项目组内部教程 · T03（Theory） ·  · 深入到字体文件内部</p>
+<p> <span class="tag">只讨论 MNG</span>
+  <span class="tag b">所有数字来自实际解析字体文件</span>
+  <span class="tag y">动手：改一个字节看会怎样</span>
+</p>
+
+<div class="card note">
+  <div class="card-t">这一篇讲什么</div>
+  <p>一个字体的 <code>.ttf</code> 文件里到底装了什么？为什么
+  <b>171 个蒙文码位</b>能撑起 <b>3715 个字形</b>？</p>
+  <p>这一篇把 <code>NotoSansMongolian-Regular.ttf</code>（388,168 字节）
+  拆开给你看。范围严格限定在这一款字体的这一种文字 ——
+  <b>不涉及其他形式的回鹘文</b>，也不涉及其他字体。</p>
+  <p>文中每个数字都可以自己复现，命令在最后一节。</p>
+  <p><b>它承接 T02</b>：T02 讲到「码位」为止，T03 接着讲这些码位在字体文件里<b>怎么变成字形</b>。建议先看 T01 → T02。</p>
+</div>
+
+<h2 id="s1"><span class="n">1</span>先看全局：一个文件装了 18 张表</h2>
+
+<p>打开字体文件的头 12 个字节，就能知道它有多大、有多少张表：</p>
+
+<div class="code-wrap"><div class="bar"><span class="dot r"></span><span class="dot y"></span><span class="dot g"></span><span class="name">文件头（offset table）</span><span class="cp">复制</span></div><pre>偏移 0   sfnt 版本 + 表数量 + 查找参数
+        00 01 00 00   ← 版本 1.0（TrueType）
+        00 12         ← <b>18</b> 张表
+        00 40 00 03   ← 查找范围
+...</pre></div>
+
+<p>紧接着是 <b>18 条目录项</b>，每条 16 字节：标签、校验和、偏移、长度。
+所以「表」就是文件里一段一段的字节，靠这张目录找。</p>
+
+<table>
+<thead><tr><th style="width:22%">表</th><th style="width:16%">大小</th><th>装什么</th></tr></thead>
+<tbody>
+<tr><td class="c">glyf</td><td class="c">215,258 B</td><td><b>字形轮廓</b>（占了整份文件的 55%）</td></tr>
+<tr><td class="c">post</td><td class="c">63,511 B</td><td>PostScript 信息 —— 主要是<b>字形名字</b></td></tr>
+<tr><td class="c">GSUB</td><td class="c">59,284 B</td><td><b>字形替换</b>：连字、位置变体（本篇主角）</td></tr>
+<tr><td class="c">loca</td><td class="c">14,864 B</td><td>字形在 glyf 里的<b>索引表</b></td></tr>
+<tr><td class="c">hmtx</td><td class="c">14,860 B</td><td>每个字形的<b>推进量</b>（advance）</td></tr>
+<tr><td class="c">GPOS</td><td class="c">10,782 B</td><td>位置微调：kern / mark / mkmk</td></tr>
+<tr><td class="c">cmap</td><td class="c">3,702 B</td><td><b>码位 → 字形</b>的映射表</td></tr>
+<tr><td class="c">fpgm / prep / cvt</td><td class="c">3,848 B</td><td>TrueType 指令（微调像素）</td></tr>
+<tr><td class="c">name</td><td class="c">1,344 B</td><td>字体名、版权、许可证</td></tr>
+<tr><td class="c">GDEF</td><td class="c">190 B</td><td>字形分类（基础字 / 连字 / 标记）</td></tr>
+<tr><td class="c">head / hhea / maxp / OS/2</td><td class="c">218 B</td><td>头部标量：单位、上下沿、字重…</td></tr>
+<tr><td class="c">gasp</td><td class="c">8 B</td><td>栅格化提示</td></tr>
+</tbody>
+</table>
+
+<div class="card key">
+  <div class="card-t">第一眼就该注意到的比例</div>
+  <p><b>glyf 占 55%</b> —— 轮廓是绝对大头。<b>GSUB 占 15%</b> 排第二，
+  而且比 GPOS 大 <b>5.5 倍</b>。</p>
+  <p>这个比例本身就说明问题：蒙文排版的难点<b>不在「摆位置」，而在「换字形」</b>。
+  GPOS 只做点标记微调，GSUB 才是主战场。</p>
+</div>
+
+<h2 id="s2"><span class="n">2</span>head 与 hhea：字体自己的坐标系</h2>
+
+<div class="code-wrap"><div class="bar"><span class="dot r"></span><span class="dot y"></span><span class="dot g"></span><span class="name">实测值</span><span class="cp">复制</span></div><pre>head.unitsPerEm      = <b>1000</b>    ← 字号 100px 时，1 单位 = 0.1px
+head.magicNumber     = 0x5F0F3CF5
+head.indexToLocFormat= 0（短格式 loca）
+
+hhea.ascender        = <b>1457</b>
+hhea.descender       = <b>-293</b>
+hhea.lineGap         = 0
+hhea.advanceWidthMax = <b>1596</b>
+
+OS/2.sTypoAscender   = 1457
+OS/2.sTypoDescender  = -293
+OS/2.usWeightClass   = 400（Regular）
+OS/2.sxHeight = 500   sCapHeight = 700
+maxp.numGlyphs       = <b>3715</b></pre></div>
+
+<div class="card key">
+  <div class="card-t">为什么蒙文字体的 ascender 这么大</div>
+  <p>拉丁字体的 <code>ascender</code> 通常约等于 0.8 × unitsPerEm。
+  这个字体是 <b>1457 / 1000 = 1.457 倍</b>，明显超出正方框。</p>
+  <p>原因：<b>蒙文是竖排的</b>。字形要在竖直方向上依次「挂」下来，
+  所以纵向（在字体坐标系里是 y 轴）需要留出比拉丁字母高得多的空间。</p>
+  <p>这也解释了我们排版时列宽的来历：一列的宽度 ≈
+  ascender − descender = <code>1457 + 293 = 1750</code> 单位 ——
+  一行的高度里，字形只占其中一部分。</p>
+</div>
+
+<h2 id="s3"><span class="n">3</span>cmap：码位 → 字形，只有 517 条</h2>
+
+<p><code>cmap</code> 是「你输入 U+1820，该画哪个字形」的查询表。
+实测这份字体：</p>
+
+<div class="code-wrap"><div class="bar"><span class="dot r"></span><span class="dot y"></span><span class="dot g"></span><span class="name">实测</span><span class="cp">复制</span></div><pre>cmap 总映射数        = <b>517</b>
+其中蒙文区           = <b>171</b>   （U+1800 .. U+1166C）
+拉丁 / 西里尔 / 希腊 = 其余 346   （数字、标点等）
+
+maxp.numGlyphs       = <b>3715</b>
+
+517 / 3715 = <b>13.9%</b>   ← 只有不到七分之一的字形能被直接输入</pre></div>
+
+<div class="card warn">
+  <div class="card-t">这就是全篇的核心问题</div>
+  <p>能直接输入 517 个字形，字体里却有 3715 个。
+  <b>剩下 3198 个（86%）从哪来？</b></p>
+  <p>答案：<b>由 GSUB 表在排版时现场「换」出来</b>。
+  你永远输入不到它们，它们只在特定上下文中出现。</p>
+</div>
+
+<h3>171 个蒙文码位长什么样</h3>
+
+<p>用 <code>unicodedata</code> 取官方名称，用 <code>hmtx</code> 取推进量：</p>
+
+<div class="code-wrap"><div class="bar"><span class="dot r"></span><span class="dot y"></span><span class="dot g"></span><span class="name">节选（完整 171 行见 tools/_mng_font_dump.json）</span><span class="cp">复制</span></div><pre>U+1800  uni1800  MONGOLIAN BIRGA                        aw=614
+U+1801  uni1801  MONGOLIAN ELLIPSIS                     aw=1086
+U+1802  uni1802  MONGOLIAN COMMA                        aw=324
+U+1803  uni1803  MONGOLIAN FULL STOP                    aw=578
+U+1806  uni1806  MONGOLIAN TODO SOFT HYPHEN             aw=630
+U+1807  uni1807  MONGOLIAN SIBE SYLLABLE BOUNDARY MARK  aw=284
+U+180A  uni180A  MONGOLIAN NIRUGU                       aw=168
+U+180B  uni180B  MONGOLIAN FREE VARIATION SELECTOR ONE  aw=770
+U+180C  uni180C  MONGOLIAN FREE VARIATION SELECTOR TWO  aw=770
+U+180D  uni180D  MONGOLIAN FREE VARIATION SELECTOR THREE aw=770
+U+180E  uni180E  MONGOLIAN VOWEL SEPARATOR              aw=770
+U+180F  fvs4     MONGOLIAN FREE VARIATION SELECTOR FOUR aw=770
+U+1810  uni1810  MONGOLIAN DIGIT ZERO                   aw=572
+...
+U+1820  uni1820  MONGOLIAN LETTER A                     aw=919
+U+1821  uni1821  MONGOLIAN LETTER E                     aw=824
+U+1822  uni1822  MONGOLIAN LETTER I                     aw=993
+U+1823  uni1823  MONGOLIAN LETTER O                     aw=932
+U+1824  uni1824  MONGOLIAN LETTER U                     aw=1065
+U+1825  uni1825  MONGOLIAN LETTER OE                    aw=1235
+U+1826  uni1826  MONGOLIAN LETTER UE                    aw=1426
+U+1827  uni1827  MONGOLIAN LETTER EE                    aw=1200
+U+1828  uni1828  MONGOLIAN LETTER NA                    aw=492
+U+1829  uni1829  MONGOLIAN LETTER ANG                   aw=614
+U+182A  uni182A  MONGOLIAN LETTER BA                    aw=557
+U+182B  uni182B  MONGOLIAN LETTER PA                    aw=552
+U+182C  uni182C  MONGOLIAN LETTER QA                    aw=788
+U+182D  uni182D  MONGOLIAN LETTER GA                    aw=788
+...</pre></div>
+
+<div class="card tip">
+  <div class="card-t">注意两件事</div>
+  <ol>
+    <li><b>U+180F 的字形名不是 <code>uni180F</code> 而是 <code>fvs4</code></b> ——
+      因为 FVS4 是后来才补进 Unicode 的，字形名沿用了旧习惯。
+      看得出这个文件经历过多次修订。</li>
+    <li><b>FVS / MVS 的 advance 都是 770</b>，和普通字母差不多。
+      它们在语义上是「修饰符」，但在字体里占了一整格宽度 ——
+      这正是我们排版时要按字素簇处理、不能让它们独立成格的原因。</li>
+  </ol>
+</div>
+
+<h3>cmap 为什么只有 3,702 字节</h3>
+
+<p>517 条映射平均每条 7 字节 —— 因为用的是 <b>format 4</b>
+（按区间压缩的查表格式）。如果每个码位都单独存一条，
+光映射就要几万字节。</p>
+
+<h2 id="s4"><span class="n">4</span>GSUB 才是主角</h2>
+
+<p>GSUB = <b>G</b>lyph <b>SUB</b>stitution，字形替换。
+它按「脚本 + 语言 + 特性」组织：</p>
+
+<div class="code-wrap"><div class="bar"><span class="dot r"></span><span class="dot y"></span><span class="dot g"></span><span class="name">GSUB 脚本与特性（实测）</span><span class="cp">复制</span></div><pre>script <b>mong</b>  →  aalt, ccmp, <b>fina, init, isol, medi</b>, ordn, <b>rclt</b>, vert
+script DFLT  →  同上
+script latn  →  aalt, ccmp, ordn          ← 拉丁字母只做基础处理
+script cyrl  →  aalt, ccmp, ordn
+script grek  →  aalt, ccmp, ordn</pre></div>
+
+<table>
+<thead><tr><th style="width:14%">特性</th><th>作用</th></tr></thead>
+<tbody>
+<tr><td class="c">isol</td><td><b>孤立形</b>：字母两边都不连</td></tr>
+<tr><td class="c">init</td><td><b>词首形</b>：右边连接后面的字母</td></tr>
+<tr><td class="c">medi</td><td><b>词中形</b>：两边都连</td></tr>
+<tr><td class="c">fina</td><td><b>词尾形</b>：左边承接前面的字母</td></tr>
+<tr><td class="c">ccmp</td><td>字形组合 / 分解（预处理的替换）</td></tr>
+<tr><td class="c">rclt</td><td><b>必需连字</b>：不做会读错，必须执行</td></tr>
+<tr><td class="c">vert</td><td>竖排替换（25 个字形带这个后缀）</td></tr>
+<tr><td class="c">aalt</td><td>全部替代字形（给用户挑选用）</td></tr>
+</tbody>
+</table>
+
+<div class="card key">
+  <div class="card-t">为什么必须是 rclt 而不是普通连字</div>
+  <p>OpenType 里连字特性分两种：<code>liga</code>（可选，关了也能读）
+  和 <code>rclt</code>（必需，关了就读错）。</p>
+  <p>蒙文的音节连写属于后者 —— 同一串字母，
+  <b>连与不连是不同的词</b>。所以它写在 <code>rclt</code> 里。</p>
+  <p><b>这也解释了我们代码里那条禁令</b>：绝对不能写
+  <code>font-feature-settings</code> 去手动打开 init/medi/fina/isol。
+  那会覆盖掉引擎本来会做的上下文判断，把连写拆散。</p>
+</div>
+
+<h3>查表（lookup）的实际构成</h3>
+
+<div class="code-wrap"><div class="bar"><span class="dot r"></span><span class="dot y"></span><span class="dot g"></span><span class="name">实测：GSUB 里 202 个 lookup</span><span class="cp">复制</span></div><pre>type 1  Single            <b>113</b> 个   ← 一对一换字形（位置变体主力）
+type 2  Multiple          10 个   ← 一变多（分解）
+type 4  Ligature          <b>13</b> 个   ← 多对一（连字）
+type 5  Context           11 个   ← 按上下文
+type 6  ChainingContext   <b>54</b> 个   ← 按前后文链式判断
+type 8  ReverseChaining    1 个
+
+连字（Ligature）规则总数 = <b>1944</b> 条</pre></div>
+
+<div class="card tip">
+  <div class="card-t">113 个 Single 说明什么</div>
+  <p>把 759 个「单码位位置变体」分摊到 113 个 lookup 里，
+  平均每个 lookup 管 7 个字形 —— 也就是<b>按字母分组</b>：
+  每个字母一组，内部再分 isol/init/medi/fina。</p>
+  <p>而 <code>ChainingContext</code> 有 54 个，是全表第二多。
+  它负责「看前一个字母是什么，再决定当前字母取哪个形」——
+  <b>上下文相关的连写，全靠这一类</b>。</p>
+</div>
+
+<h2 id="s5"><span class="n">5</span>最有意思的部分：字形名字里有音节</h2>
+
+<p>看 <code>post</code> 表里的字形名。它们不是随意编号，而是<b>有语法</b>的：</p>
+
+<div class="code-wrap"><div class="bar"><span class="dot r"></span><span class="dot y"></span><span class="dot g"></span><span class="name">命名结构</span><span class="cp">复制</span></div><pre>u182A_u1820.BA.init
+└──┬───┘ └┬┘ └┬─┘
+   │      │   └── 位置：init（词首）
+   │      └── <b>音节型：BA</b>（用拉丁转写拼出来的音节）
+   └── 参与组合的码位：U+182A + U+1820</pre></div>
+
+<p>也就是说：<b>字形名 = 码位串 + 拉丁音节 + 位置</b>。
+那个拉丁音节是<b>设计者手写的读音标注</b> ——
+BA、BO、GO、AGM、GxO…</p>
+
+<h3>音节型一共 448 种</h3>
+
+<div class="code-wrap"><div class="bar"><span class="dot r"></span><span class="dot y"></span><span class="dot g"></span><span class="name">出现次数最多的音节型（实测）</span><span class="cp">复制</span></div><pre>GO    66      GA    22      GI    20      GL    12
+GxO   40      A     20      GxOI  20      GUe   12
+I     26      AGM   20      AGL   19      GW    12
+BO    26      G     20      O     16      GM    12
+KO    26      GAa   20      BI    16
+GOI   24                             ...共 448 种
+K2O   24
+</pre></div>
+
+<p>读几个就明白规则了：<code>G</code>=GA、<code>O</code>=O、<code>I</code>=I、
+<code>A</code>=A、<code>M</code>=MA、<code>L</code>=LA、<code>B</code>=BA、
+<code>K</code>=KA。于是：</p>
+
+<table>
+<thead><tr><th style="width:18%">音节型</th><th style="width:30%">拆开</th><th>意思</th></tr></thead>
+<tbody>
+<tr><td class="c">GO</td><td>GA + O</td><td>音节「go」</td></tr>
+<tr><td class="c">GOI</td><td>GA + O + I</td><td>「goi」</td></tr>
+<tr><td class="c">AGM</td><td>A + GA + MA</td><td>「agma」—— 闭音节</td></tr>
+<tr><td class="c">GxO</td><td>GA + x + O</td><td>带 <code>x</code> 标记的特殊 GA 形</td></tr>
+<tr><td class="c">K2O</td><td>KA + 2 + O</td><td><code>2</code> 是另一个变体标记</td></tr>
+</tbody>
+</table>
+
+<div class="card key">
+  <div class="card-t">所以「连字」在这里的真正含义</div>
+  <p>蒙文不是一个字母一个字形。<b>它是以「音节」为单位的。</b></p>
+  <p>字形名的结构清楚地告诉我们：设计者写这个字体时，
+  脑子里想的不是「182A 这个字母有几种写法」，
+  而是「<b>ba、bo、bi、bue… 这些音节各自该怎么连</b>」。</p>
+  <p>448 种音节型 × 4 个位置 × 变体 = 3715 个字形。
+  这就是为什么 cmap 只有 517 条。</p>
+</div>
+
+<h3>参与组合的码位个数</h3>
+
+<div class="code-wrap"><div class="bar"><span class="dot r"></span><span class="dot y"></span><span class="dot g"></span><span class="name">实测（有后缀的字形共 3196 个）</span><span class="cp">复制</span></div><pre>单码位变体        <b>759</b>   ← 一个字母，四种位置形 + 变体
+双码位连字       <b>2165</b>   ← 两个字母的连写（绝对主力，占 68%）
+三码位及以上       <b>272</b>   ← 少见但存在
+
+最长的连字名例子：
+  u1807_u1863_u182E.AGM.medi     ← SIBE 符 + 一个字母 + MA，词中形
+  u182A_u1826_u1822.BOI.init     ← BA + UE + I，词首形</pre></div>
+
+<div class="card warn">
+  <div class="card-t">这对排版意味着什么</div>
+  <p><b>2165 个双码位连字</b>意味着：任意两个相邻字母，
+  都可能合成一个<b>全新字形</b> —— 它的宽度和两个字母单独排<b>不一样</b>。</p>
+  <p>所以我们量一行的长度时<b>不能把字母宽度相加</b>。
+  必须让引擎真的把整行排出来，再逐个字素簇量实际高度
+  （<code>UMCompos</code> 就是这么做的：1000px 量尺 + 相邻相减）。</p>
+</div>
+
+<h2 id="s6"><span class="n">6</span>hmtx 与 loca：两个不起眼但关键的表</h2>
+
+<h3>loca —— 字形索引进 glyf 的地址簿</h3>
+
+<div class="code-wrap"><div class="bar"><span class="dot r"></span><span class="dot y"></span><span class="dot g"></span><span class="name">结构</span><span class="cp">复制</span></div><pre>loca 是 (numGlyphs + 1) 个偏移量：
+  loca[0] = 0
+  loca[1] = 字形 0 的长度
+  ...
+  loca[3714+1] = glyf 表总长
+
+字形 i 的字节区间 = [ loca[i], loca[i+1] )
+
+head.indexToLocFormat = 0  → 短格式，每项 2 字节、单位是「2 字节」
+所以 loca 大小 = (3715 + 1) × 2 = 7,432 B
+但实测是 14,864 B —— 正好两倍，说明实际用了长格式（每项 4 字节）。
+loca = 14864 = 3716 × 4  ✔ 对上了</pre></div>
+
+<div class="card tip">
+  <div class="card-t">为什么要有 loca 这一层</div>
+  <p>因为 <b>glyf 里每个字形的长度都不一样</b>（轮廓点数不同）。
+  想随机访问第 2000 个字形，就得先查地址簿。</p>
+  <p>这也解释了「字形越多，文件越大」的具体方式：
+  3715 × 4 字节的 loca 就是 14.8 KB 的固定开销。</p>
+</div>
+
+<h3>hmtx —— 每个字形的推进量</h3>
+
+<p>我们排版时依赖的 <code>advance</code> 就来自这里。实测几个：</p>
+
+<table>
+<thead><tr><th>码位</th><th>字母</th><th>advance</th><th>相对最窄</th></tr></thead>
+<tbody>
+<tr><td class="c">U+180A</td><td>NIRUGU</td><td class="c">168</td><td>1.0×（最窄）</td></tr>
+<tr><td class="c">U+1828</td><td>NA</td><td class="c">492</td><td>2.9×</td></tr>
+<tr><td class="c">U+182A</td><td>BA</td><td class="c">557</td><td>3.3×</td></tr>
+<tr><td class="c">U+1820</td><td>A</td><td class="c">919</td><td>5.5×</td></tr>
+<tr><td class="c">U+1826</td><td>UE</td><td class="c">1426</td><td>8.5×</td></tr>
+</tbody>
+</table>
+
+<p>但请注意 <code>hhea.advanceWidthMax = 1596</code>，
+而字形里最宽的记录是 1426 —— 差值说明<b>真正最宽的字形是连字</b>，
+不是这些单字母。</p>
+
+<h2 id="s7"><span class="n">7</span>把所有数字串起来</h2>
+
+<div class="code-wrap"><div class="bar"><span class="dot r"></span><span class="dot y"></span><span class="dot g"></span><span class="name">一个文件的全貌</span><span class="cp">复制</span></div><pre>NotoSansMongolian-Regular.ttf          388,168 B
+├─ 18 张表（目录 18 × 16 = 288 B + 头 12 B）
+├─ glyf  215 KB  ████████████████████████████░░░░  55%  轮廓
+├─ post   63 KB  ████████░░░░░░░░░░░░░░░░░░░░░░░░   16%  字形名
+├─ GSUB   59 KB  ███████░░░░░░░░░░░░░░░░░░░░░░░░░   15%  字形替换 ★
+├─ 其它   50 KB  ██████░░░░░░░░░░░░░░░░░░░░░░░░░░   13%
+└─
+
+字形账本
+  码位可寻（cmap）              517   13.9%
+  位置变体 / 连字（GSUB 产出）  3198   86.1%
+  ────────────────────────────────────────
+  合计字形（maxp）             3715  100%
+
+替换规则
+  Single            113 lookup
+  Ligature           13 lookup → <b>1944 条连字规则</b>
+  ChainingContext    54 lookup
+  音节型            448 种
+  双码位连字       2165 个
+
+度量
+  unitsPerEm   1000
+  ascender     1457     ← 竖排文字，纵向要留得比拉丁多
+  descender    -293
+  轮廓点      48,190 个</pre></div>
+
+<h2 id="s8"><span class="n">8</span>自己复现这些数字</h2>
+
+<p>上面每个数字都能用 <code>fontTools</code> 复现。先装：</p>
+
+<div class="code-wrap"><div class="bar"><span class="dot r"></span><span class="dot y"></span><span class="dot g"></span><span class="name">安装</span><span class="cp">复制</span></div><pre>pip install fonttools</pre></div>
+
+<h3>① 看表清单与大小</h3>
+<div class="code-wrap"><div class="bar"><span class="dot r"></span><span class="dot y"></span><span class="dot g"></span><span class="name">dump_tables.py</span><span class="cp">复制</span></div><pre>from fontTools.ttLib import TTFont
+import os
+
+P = "font/NotoSansMongolian-Regular.ttf"
+print("文件大小", os.path.getsize(P), "B")
+
+f = TTFont(P)
+rows = sorted(((e.length, tag) for tag, e in f.reader.tables.items()),
+              reverse=True)
+for size, tag in rows:
+    print("%-6s %8d B" % (tag, size))</pre></div>
+
+<h3>② 看码位、字形名、advance</h3>
+<div class="code-wrap"><div class="bar"><span class="dot r"></span><span class="dot y"></span><span class="dot g"></span><span class="name">dump_cmap.py</span><span class="cp">复制</span></div><pre>from fontTools.ttLib import TTFont
+import unicodedata
+
+f = TTFont("font/NotoSansMongolian-Regular.ttf")
+cmap, hmtx = f.getBestCmap(), f["hmtx"]
+
+mong = sorted(c for c in cmap
+              if 0x1800 &lt;= c &lt;= 0x18AF or 0x11660 &lt;= c &lt;= 0x1167F)
+print("cmap 总数", len(cmap), " 蒙文区", len(mong))
+
+for c in mong[:20]:
+    g = cmap[c]
+    print("U+%04X  %-22s %-44s aw=%d"
+          % (c, g, unicodedata.name(chr(c)), hmtx[g][0]))</pre></div>
+
+<h3>③ 看 GSUB 的特性与 lookup 构成</h3>
+<div class="code-wrap"><div class="bar"><span class="dot r"></span><span class="dot y"></span><span class="dot g"></span><span class="name">dump_gsub.py</span><span class="cp">复制</span></div><pre>from fontTools.ttLib import TTFont
+import collections
+
+f = TTFont("font/NotoSansMongolian-Regular.ttf")
+g = f["GSUB"].table
+
+# 每个 script 支持哪些特性
+for sr in g.ScriptList.ScriptRecord:
+    if not sr.Script.DefaultLangSys:
+        continue
+    tags = [g.FeatureList.FeatureRecord[i].FeatureTag
+            for i in sr.Script.DefaultLangSys.FeatureIndex]
+    print(sr.ScriptTag, "→", ", ".join(sorted(tags)))
+
+# lookup 类型统计
+c = collections.Counter(l.LookupType for l in g.LookupList.Lookup)
+for t, n in sorted(c.items()):
+    print("type", t, n)
+
+# 连字规则总数
+lig = sum(len(ls) for l in g.LookupList.Lookup if l.LookupType == 4
+          for st in l.SubTable for ls in getattr(st, "ligatures", {}).values())
+print("连字规则总数", lig)</pre></div>
+
+<h3>④ 看字形名里的音节型</h3>
+<div class="code-wrap"><div class="bar"><span class="dot r"></span><span class="dot y"></span><span class="dot g"></span><span class="name">dump_syllables.py</span><span class="cp">复制</span></div><pre>from fontTools.ttLib import TTFont
+import collections
+
+f = TTFont("font/NotoSansMongolian-Regular.ttf")
+syl = collections.Counter()
+for gname in f.getGlyphOrder():
+    if "." in gname:
+        parts = gname.split(".")
+        if len(parts) &gt;= 2:
+            syl[parts[1]] += 1     # 第 2 段就是音节型
+
+print("音节型共", len(syl), "种")
+for k, v in syl.most_common(20):
+    print("  %-8s %4d" % (k, v))</pre></div>
+
+<div class="card tip">
+  <div class="card-t">本项目的现成脚本</div>
+  <p>仓库里已有一份更完整的解析脚本：<code>tools/analyze_font.py</code>，
+  以及给 <code>web/ttf-basics.html</code> 用的数据生成器
+  <code>tools/extract_ttf_basics.py</code>。</p>
+  <p>本篇的两份原始数据也存在 <code>tools/</code> 下：
+  <code>_mng_font_dump.json</code>（171 行码位表）与
+  <code>_mng_syllables.json</code>（音节型统计）。</p>
+</div>
+
+<h2 id="s9"><span class="n">9</span>回到项目：这些结构决定了我们的排版代码</h2>
+
+<table>
+<thead><tr><th style="width:38%">字体里的事实</th><th>我们代码里对应的做法</th></tr></thead>
+<tbody>
+<tr><td><b>3715 字形 vs 517 码位</b></td>
+    <td>排版必须<b>按字素簇</b>，不能按码位切</td></tr>
+<tr><td><b>FVS/MVS 的 advance = 770</b></td>
+    <td>它们语义上是修饰符却占一格，
+      <b>必须黏附到前一字素</b>（UAX #29 GB9）</td></tr>
+<tr><td><b>2165 个双码位连字</b></td>
+    <td>行长度<b>不能靠加字母宽度算</b>，
+      必须真实排版后逐簇测量</td></tr>
+<tr><td><b>rclt 是「必需连字」</b></td>
+    <td>代码里<b>禁止</b>写 <code>font-feature-settings</code>
+      手动开关 init/medi/fina/isol</td></tr>
+<tr><td><b>ascender 1457 / descender -293</b></td>
+    <td>竖排列宽按 <code>1.42 × 字号</code> 估，
+      来自这个 1750 单位的纵向空间</td></tr>
+<tr><td><b>GSUB 59 KB &gt; GPOS 10 KB</b></td>
+    <td>难点在「换字形」不在「摆位置」，
+      所以调字距收益远小于把连写交给引擎</td></tr>
+</tbody>
+</table>
+
+<div class="card key">
+  <div class="card-t">这一篇要记住的五句话</div>
+  <ol>
+    <li><b>字体是一堆表的集合</b>，靠开头 12 字节 + 18 条目录索引。
+      <code>glyf</code> 管轮廓、<code>cmap</code> 管码位、<code>GSUB</code> 管换字形。</li>
+    <li><b>cmap 只覆盖 13.9% 的字形</b> ——
+      剩下 86% 由 <code>GSUB</code> 在排版时现场换出来，
+      所以你<b>输入不到</b>它们。</li>
+    <li><b>GSUB 里 rclt 是必需连字</b>。蒙文的连写会改变词义，
+      所以不能用普通可选连字的方式去干预。</li>
+    <li><b>字形名里有音节（448 种）</b> ——
+      设计者以音节为单位组织字形，双码位连字有 2165 个。
+      这解释了为什么行长度必须实测。</li>
+    <li><b>ascender 是 unitsPerEm 的 1.46 倍</b> ——
+      竖排文字在纵向要留出远超拉丁的空间。</li>
+  </ol>
+</div>
+
+<div class="card note">
+  <div class="card-t">下一步</div>
+  <p>这一篇是「<b>文件里有什么</b>」。想看「<b>这些表怎么协同工作</b>」，
+  可以打开仓库里的交互页 <code>web/ttf-basics.html</code>，
+  它把同一款字体的表结构做成了可点击的视图。</p>
+  <p>而竖排排版怎么用这些数据，见 <code>web/UMCompos.js</code>。</p>
+  <p><b>回到理论系列</b>：<b>T01</b> 讲文字本身、<b>T02</b> 讲码位与 UTF-8，本篇（<b>T03</b>）讲码位到字形。三篇连起来就是「文字 → 编号 → 画出来」。</p>
+  <p>本篇的渲染示例（如果有）同样由 <code>web/UMCompos.js</code> 完成 —— 它用的推进量数据，正是下面这张表里量出来的。</p>
+</div>
+
+<div class="see-also">
+  <div class="hd">延伸阅读</div>
+  <ul>
+    <li><a href="r01.html">R01 · 字体设计里的几个基本概念</a>
+      <span class="why">—— 本篇量出来的 ascender / descender / x 字高 / 行高，
+      在那一篇里讲清了各自的定义与相互关系。看完就知道这些数字为什么必须实测。</span></li>
+  </ul>
+</div>
+
+<footer>
+UME 项目组内部教程 · T03《字体文件结构大揭秘》<br>
+本文只讨论 <b>Noto Sans Mongolian 3.103</b>（SIL OFL 1.1，Monotype Design Team），
+不涉及其他回鹘文形式或其他字体。所有数字均由 <code>fontTools 4.67.0</code>
+实际解析 <code>font/NotoSansMongolian-Regular.ttf</code> 得到。
+</footer>
+
+</div>
+
+</div>
+</main>
+</div>
+
+<a class="home-fab" href="../../index.html" title="返回教程总目录">返回 home</a>
+
+<script>
+(function(){
+  var toc = document.getElementById('toc');
+  var btn = document.getElementById('tocToggle');
+  if (btn && toc) {
+    btn.addEventListener('click', function(){ toc.classList.toggle('open'); });
+  }
+  var links = [].slice.call(document.querySelectorAll('#toc a[href^="#"]'));
+  var targets = links.map(function(a){ return document.querySelector(a.getAttribute('href')); })
+                     .filter(Boolean);
+  if (targets.length && window.IntersectionObserver) {
+    var io = new IntersectionObserver(function(es){
+      var vis = es.filter(function(e){ return e.isIntersecting; })
+                  .sort(function(a,b){ return a.boundingClientRect.top - b.boundingClientRect.top; });
+      if (vis[0]) {
+        var id = vis[0].target.id;
+        links.forEach(function(a){ a.classList.toggle('on', a.getAttribute('href') === '#' + id); });
+      }
+    }, { rootMargin: '-10% 0px -70% 0px' });
+    targets.forEach(function(t){ io.observe(t); });
+  }
+  document.querySelectorAll('.cp').forEach(function(b){
+    b.addEventListener('click', function(){
+      var pre = b.closest('.code-wrap').querySelector('pre');
+      navigator.clipboard.writeText(pre.innerText).then(function(){
+        var old = b.textContent; b.textContent = '已复制';
+        setTimeout(function(){ b.textContent = old; }, 1200);
+      });
+    });
+  });
+})();
+</script>
+<script src="assets/series-common.js"></script>
+</body>
+</html>

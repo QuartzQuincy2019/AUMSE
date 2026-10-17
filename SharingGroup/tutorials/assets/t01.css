@@ -7,7 +7,7 @@
 
    ⚠ 金色渐变的色标（#fffdf5 / #fdf3dc / #fbe9c4 …）**不在**这套变量里 ——
      它们是主题色，不是中性表面。
-   ===================================================================== *//* ==== t01-mongolian-script-intro.html
+   ===================================================================== *//* ==== t01.html
        理论系列 T01 专属补充样式（通用部分见 f03_compile_and_link.css）==== *//* 竖排演示框：让 UMCompos 的输出和教程版式协调 */.umc-demo{margin:16px 0;padding:12px 14px;overflow-x:auto;
   background:var(--bg-soft);border:1px solid var(--line-2);border-radius:12px}.umc-inline{display:inline-block;line-height:1.4;vertical-align:middle}/* ---------- 窄屏表格与图片：防横向溢出 ---------- *//* 表格在窄屏容易撑破容器。这里统一「可横向滚动 + 单元格内强制换行」，
    与其它 25 篇的处理方式一致。 */table{display:block;overflow-x:auto;max-width:100%}@media (max-width:720px){table{display:block;overflow-x:auto}table th,table td{overflow-wrap:anywhere;word-break:break-word}/* 竖排演示与图片都不得超过容器 */.umc-demo,.fig,.umc-demo .umc{max-width:100%}.fig img{max-width:100%;height:auto}}.fig{margin:18px 0;text-align:center}.fig img{max-width:min(360px,100%);height:auto;

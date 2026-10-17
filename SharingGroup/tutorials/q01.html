@@ -1,0 +1,385 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Q01 · std 与命名空间初步</title>
+<link rel="stylesheet" href="assets/genelayout.css">
+<link rel="stylesheet" href="assets/q01.css">
+<link rel="stylesheet" href="assets/series-theme.css">
+<link rel="stylesheet" href="assets/tg_L.css">
+<link rel="stylesheet" href="assets/tg_D.css">
+
+</head>
+<body class="qseries" data-series="Q">
+<div id="shell">
+
+<nav id="toc">
+  <h5>目录</h5>
+  <a href="#s1">1 · 为什么需要命名空间</a>
+  <a href="#s2">2 · 谁的谁：给名字加上「姓」</a>
+  <a href="#s3">3 · :: 作用域解析运算符</a>
+  <a href="#s4">4 · std 是什么</a>
+</nav>
+
+<main>
+<h1>std 与命名空间初步</h1>
+<p class="sub-title">UME 项目组内部教程 · Q01（Q） · 为什么需要命名空间、谁的谁、:: 运算符与 std</p>
+<p><span class="tag">命名空间</span> <span class="tag b">C++ 入门</span></p>
+
+<p><span class="lang cpp">C++</span> <span class="tag b">本讲：命名空间</span></p>
+
+<p>前八讲讲的是 <b>C</b>。从这一讲起转向 <b>C++</b> ——
+而 C++ 代码里第一个让人不习惯的东西，就是一堆双冒号：
+
+<code>std::cout</code>、<code>std::string</code>、<code>Qt::AlignCenter</code>。</p>
+
+<p>它们都和同一个概念有关：<b>命名空间</b>。这一篇只讲三件事 ——
+<b>为什么要它</b>、<b>「谁的谁」怎么读</b>、<b>那个 <code>::</code> 是什么</b>。</p>
+<h2 id="s1" class="key-h"><span class="key-mark" title="重点内容">★</span><span class="n">1</span>为什么需要命名空间</h2>
+
+<p>C 有一个绕不过去的老问题：<b>全局名字只有一层，很容易撞车</b>。</p>
+
+<p>设想两个人都给项目写了工具函数，都叫 <code>hello</code>：</p>
+
+<div class="code-wrap"><div class="bar"><span class="dot r"></span><span class="dot y"></span><span class="dot g"></span><span class="name">C 里的重名问题</span><span class="cp">复制</span></div><pre><span class="hl-c">/* 小明的文件 utils_a.c */</span>
+<span class="hl-k">void</span> <span class="hl-f">hello</span>(<span class="hl-k">void</span>) { <span class="hl-f">printf</span>(<span class="hl-s">"我是小明的 hello\n"</span>); }
+
+<span class="hl-c">/* 小红的文件 utils_b.c */</span>
+<span class="hl-k">void</span> <span class="hl-f">hello</span>(<span class="hl-k">void</span>) { <span class="hl-f">printf</span>(<span class="hl-s">"我是小红的 hello\n"</span>); }
+
+<span class="hl-c">/* 链接时：两个 hello，撞了 → multiple definition */</span></pre></div>
+
+<p>更麻烦的是<b>第三方库</b>。你用了两个库，它们内部都有个
+<code>init</code>，你根本没法改别人的代码。</p>
+
+<p>C 时代的办法是<b>靠命名约定手工避开</b>：</p>
+
+<table>
+<thead><tr><th style="width:38%">C 的做法</th><th>问题</th></tr></thead>
+<tbody>
+<tr><td class="c">ume_hello()</td><td>得记住前缀，漏写就撞</td></tr>
+<tr><td class="c">UME_Init()</td><td>同上</td></tr>
+<tr><td class="c">font_init()</td><td>模块多了前缀越来越长</td></tr>
+</tbody>
+</table>
+
+<div class="card key">
+  <div class="card-t">命名空间解决的正是这件事</div>
+  <p><b>命名空间（namespace）给名字加了一层「姓」。</b></p>
+  <p>你叫 <code>hello</code>，他叫 <code>hello</code>，但你们姓不同 ——
+  <code>小明::hello</code> 和 <code>小红::hello</code>，
+  从此互不打扰。</p>
+  <p>它和「文件夹」是一个道理：两台电脑上都可以有
+  <code>readme.txt</code>，只要放在不同文件夹里就不会混。</p>
+</div>
+
+<div class="code-wrap"><div class="bar"><span class="dot r"></span><span class="dot y"></span><span class="dot g"></span><span class="name">C++ 的写法</span><span class="cp">复制</span></div><pre><span class="hl-p">#include</span> <span class="hl-s">&lt;iostream&gt;</span>
+
+<span class="hl-k">namespace</span> ume {                  <span class="hl-c">// 开一个命名空间</span>
+    <span class="hl-k">int</span> version = <span class="hl-n">10</span>;
+    <span class="hl-k">void</span> <span class="hl-f">hello</span>() { <span class="hl-f">std::cout</span> &lt;&lt; <span class="hl-s">"ume::hello() 被调用\n"</span>; }
+}
+
+<span class="hl-k">namespace</span> other {
+    <span class="hl-k">int</span> version = <span class="hl-n">99</span>;              <span class="hl-c">// 同名，但不冲突</span>
+    <span class="hl-k">void</span> <span class="hl-f">hello</span>() { <span class="hl-f">std::cout</span> &lt;&lt; <span class="hl-s">"other::hello() 被调用\n"</span>; }
+}
+
+<span class="hl-k">int</span> <span class="hl-f">main</span>() {
+    <span class="hl-f">std::cout</span> &lt;&lt; <span class="hl-s">"ume::version   = "</span> &lt;&lt; ume::version   &lt;&lt; <span class="hl-s">"\n"</span>;
+    <span class="hl-f">std::cout</span> &lt;&lt; <span class="hl-s">"other::version = "</span> &lt;&lt; other::version &lt;&lt; <span class="hl-s">"\n"</span>;
+    ume::<span class="hl-f">hello</span>();
+    other::<span class="hl-f">hello</span>();
+    <span class="hl-k">return</span> <span class="hl-n">0</span>;
+}</pre></div>
+
+<div class="out-wrap"><div class="cap">运行结果</div><pre>ume::version   = 10
+other::version = 99
+ume::hello() 被调用
+other::hello() 被调用</pre></div>
+
+<div class="card tip">
+  <div class="card-t"><code>::</code> 这个符号怎么读</div>
+  <p><code>::</code> 叫<b>作用域解析运算符</b>（scope resolution operator），
+  口语里念「<b>双冒号</b>」或者「<b>的</b>」。</p>
+  <p><code>ume::version</code> 读成「<b>ume 的 version</b>」，
+  意思一目了然：<b>那个命名空间里的那个名字</b>。</p>
+  <p>C 里没有这个符号，它是 C++ 的。</p>
+</div>
+
+<!-- ============================================================ -->
+<h2 id="s2" class="key-h"><span class="key-mark" title="重点内容">★</span><span class="n">2</span>谁的谁：给名字加上「姓」</h2>
+
+<p>命名空间的效果，一句话就能说清：
+<b>它给名字加了一层「姓」，从此每个名字都归属于某个「谁」。</b></p>
+
+<div class="card key">
+  <div class="card-t">把 <code>::</code> 读作「的」</div>
+  <p><code>A::b</code> 读成「<b>A 的 b</b>」。句子读得通，写法就对了。</p>
+  <table>
+  <thead><tr><th style="width:34%">写法</th><th style="width:22%">读作</th><th>是谁的</th></tr></thead>
+  <tbody>
+  <tr><td class="c">std::cout</td><td>std 的 cout</td><td>标准库</td></tr>
+  <tr><td class="c">ume::version</td><td>ume 的 version</td><td>ume 这个命名空间</td></tr>
+  <tr><td class="c">other::version</td><td>other 的 version</td><td>other 这个命名空间</td></tr>
+  <tr><td class="c">::count</td><td>全局的 count</td><td>不属于任何命名空间</td></tr>
+  </tbody>
+  </table>
+  <p><b>同名不怕</b>：<code>ume::version</code> 和 <code>other::version</code>
+  可以同时存在，因为它们的「谁」不同。</p>
+</div>
+
+<p>回到开头那段代码，现在读起来应该没有障碍了 ——
+两个 <code>version</code>、两个 <code>hello</code>，各归各的：</p>
+<div class="code-wrap"><div class="bar"><span class="dot r"></span><span class="dot y"></span><span class="dot g"></span><span class="name">C++ 的写法</span><span class="cp">复制</span></div><pre><span class="hl-p">#include</span> <span class="hl-s">&lt;iostream&gt;</span>
+
+<span class="hl-k">namespace</span> ume {                  <span class="hl-c">// 开一个命名空间</span>
+    <span class="hl-k">int</span> version = <span class="hl-n">10</span>;
+    <span class="hl-k">void</span> <span class="hl-f">hello</span>() { <span class="hl-f">std::cout</span> &lt;&lt; <span class="hl-s">"ume::hello() 被调用\n"</span>; }
+}
+
+<span class="hl-k">namespace</span> other {
+    <span class="hl-k">int</span> version = <span class="hl-n">99</span>;              <span class="hl-c">// 同名，但不冲突</span>
+    <span class="hl-k">void</span> <span class="hl-f">hello</span>() { <span class="hl-f">std::cout</span> &lt;&lt; <span class="hl-s">"other::hello() 被调用\n"</span>; }
+}
+
+<span class="hl-k">int</span> <span class="hl-f">main</span>() {
+    <span class="hl-f">std::cout</span> &lt;&lt; <span class="hl-s">"ume::version   = "</span> &lt;&lt; ume::version   &lt;&lt; <span class="hl-s">"\n"</span>;
+    <span class="hl-f">std::cout</span> &lt;&lt; <span class="hl-s">"other::version = "</span> &lt;&lt; other::version &lt;&lt; <span class="hl-s">"\n"</span>;
+    ume::<span class="hl-f">hello</span>();
+    other::<span class="hl-f">hello</span>();
+    <span class="hl-k">return</span> <span class="hl-n">0</span>;
+}</pre></div>
+<div class="out-wrap"><div class="cap">运行结果</div><pre>ume::version   = 10
+other::version = 99
+ume::hello() 被调用
+other::hello() 被调用</pre></div>
+<div class="card tip">
+  <div class="card-t">「谁的谁」这个读法为什么值得养成</div>
+  <p>因为它把<b>「这个名字从哪来」</b>变成了看一眼就知道的事。</p>
+  <p>读 <code>QMessageBox::warning(...)</code> 时，你不需要知道
+  <code>QMessageBox</code> 内部长什么样，就知道
+  <b>这个函数是它家的</b>；读 <code>::count</code> 就知道
+  <b>这是全局那个</b>，不是某个局部的同名变量。</p>
+  <p>以后看别人的代码，<b>先看 <code>::</code> 左边是谁</b>，
+  一半的疑问就没了。</p>
+</div>
+<h2 id="s3" class="key-h"><span class="key-mark" title="重点内容">★</span><span class="n">3</span><code>::</code> 作用域解析运算符</h2>
+
+<p>你已经一直在写 <code>std::cout</code>，但可能没细看中间那两个冒号。
+它叫 <b>作用域解析运算符</b>（scope resolution operator），
+是 C++ 里最不起眼、出现频率却最高的运算符之一。</p>
+
+<p>它只有两种读法，记住这两个就够：</p>
+<div class="card key">
+  <div class="card-t">一句话</div>
+  <p><b><code>::</code> = 「左边的名字里，找右边那个名字」。</b></p>
+  <p>左边的名字可以是<b>全局</b>、<b>命名空间</b>、<b>类</b>，或者<b>什么都不写</b>。
+  所以它只有两种读法，记住这两个就够：</p>
+  <ul>
+    <li><b>有左操作数</b>：<code>A::b</code> —— 读作「<b>A 里的 b</b>」</li>
+    <li><b>没左操作数</b>：<code>::b</code> —— 读作「<b>全局的 b</b>」（强制点名外层的那个）</li>
+  </ul>
+</div>
+
+<h4>① 定位命名空间里的东西</h4>
+
+<p>这是最常见的一种，你早就在用了：</p>
+
+<div class="code-wrap">
+  <div class="bar"><span class="dot r"></span><span class="dot y"></span><span class="dot g"></span>
+    <span class="name">定位命名空间</span><span class="cp">复制</span></div>
+<pre>std::cout &lt;&lt; <span class="hl-s">"你好"</span> &lt;&lt; std::endl;
+std::string s = <span class="hl-s">"UME"</span>;
+std::vector&lt;<span class="hl-k">int</span>&gt; v{1, 2, 3};
+
+QString name = <span class="hl-s">"Uyghur"</span>;      <span class="hl-c">// 没写 ::</span>
+Qt::AlignCenter;                          <span class="hl-c">// 写了 ::，因为 AlignCenter 住在 Qt 里</span></pre>
+</div>
+<div class="out-wrap">
+  <div class="cap">编译器看到的</div>
+<pre>std::cout        →  标准库命名空间 std 里的 cout
+Qt::AlignCenter  →  命名空间 Qt 里的 AlignCenter（一个枚举值）</pre>
+</div>
+
+<h4>④ 前面什么都不写：<code>::name</code> 强制用外层的那个</h4>
+
+<p>当局部变量<b>把全局变量挡住了</b>（名字冲突），写 <code>::</code> 就能点名要外层的：</p>
+
+<div class="code-wrap">
+  <div class="bar"><span class="dot r"></span><span class="dot y"></span><span class="dot g"></span>
+    <span class="name">名字被挡住时</span><span class="cp">复制</span></div>
+<pre><span class="hl-k">int</span> count = 100;              <span class="hl-c">// 全局</span>
+
+<span class="hl-k">int</span> main() {
+    <span class="hl-k">int</span> count = 7;            <span class="hl-c">// 局部，把全局的挡住了</span>
+
+    std::cout &lt;&lt; count   &lt;&lt; <span class="hl-s">"\n"</span>;   <span class="hl-c">// 就近原则 → 局部的 7</span>
+    std::cout &lt;&lt; ::count &lt;&lt; <span class="hl-s">"\n"</span>;   <span class="hl-c">// :: 强制点名 → 全局的 100</span>
+}</pre>
+</div>
+<div class="out-wrap">
+  <div class="cap">输出</div>
+<pre>7
+100</pre>
+</div>
+
+<p>类里的成员名和全局名撞了也一样，用 <code>::</code> 表示「全局的那个」：</p>
+
+<div class="code-wrap">
+  <div class="bar"><span class="dot r"></span><span class="dot y"></span><span class="dot g"></span>
+    <span class="name">成员与全局同名</span><span class="cp">复制</span></div>
+<pre><span class="hl-k">int</span> size = 10;
+
+<span class="hl-k">class</span> Box {
+<span class="hl-k">public</span>:
+    <span class="hl-k">int</span> size = 20;
+    <span class="hl-k">int</span> total() {
+        <span class="hl-k">return</span> size + ::size;   <span class="hl-c">// 20 + 10</span>
+    }
+};
+
+<span class="hl-k">int</span> main() { std::cout &lt;&lt; Box().total() &lt;&lt; <span class="hl-s">"\n"</span>; }</pre>
+</div>
+<div class="out-wrap">
+  <div class="cap">输出</div>
+<pre>30</pre>
+</div>
+
+<div class="card warn">
+  <div class="card-t">别说 <code>using namespace std;</code> —— 你会失去 <code>::</code> 的保护</div>
+  <p>第 3 节讲过 <code>using namespace std;</code> 的代价。这里再补一条更具体的：</p>
+  <p>一旦写了它，<code>count</code> 到底是你的还是 <code>std::count</code> 就说不清了；
+  而 <b><code>::count</code> 永远指全局</b>，
+  <code>std::count</code> 永远指标准库 —— <b>只有老老实实写 <code>::</code>，名字才没有歧义</b>。</p>
+</div><h2 id="s4"><span class="n">4</span><code>std</code> 是什么</h2>
+
+<p>你已经见过很多次了：<code>std::cout</code>、
+<code>std::string</code>、<code>std::vector</code>。
+<b><code>std</code> 就是一个命名空间</b> ——
+而且是标准库的那个。</p>
+
+<div class="card key">
+  <div class="card-t">一句话</div>
+  <p><b><code>std</code> = 「standard（标准）」的缩写，
+  是 C++ 标准库所有东西所在的命名空间。</b></p>
+  <p>它不是关键字，就是个普通命名空间的名字，只不过<b>标准规定必须叫这个</b>。</p>
+</div>
+
+<p>所以那些写法的含义就清楚了：</p>
+
+<table>
+<thead><tr><th style="width:32%">写法</th><th>读作</th><th>是什么</th></tr></thead>
+<tbody>
+<tr><td class="c">std::cout</td><td>std 的 cout</td><td>标准库的输出流</td></tr>
+<tr><td class="c">std::string</td><td>std 的 string</td><td>标准库的字符串类型</td></tr>
+<tr><td class="c">std::vector&lt;int&gt;</td><td>std 的 vector</td>
+    <td>标准库的动态数组（09 讲学过）</td></tr>
+</tbody>
+</table>
+
+<div class="card warn">
+  <div class="card-t">为什么标准库要套一层 <code>std</code>？</div>
+  <p>因为它东西太多了 —— 上千个名字：<code>cout</code>、
+  <code>string</code>、<code>vector</code>、<code>sort</code>、
+  <code>max</code>、<code>swap</code>……</p>
+  <p>如果这些<b>直接摊在全局</b>，你自己的变量叫 <code>max</code>、
+  函数叫 <code>sort</code> 就会撞车。套一层之后，
+  <b>你的 <code>max</code> 和 <code>std::max</code> 可以同时存在</b>。</p>
+  <p>顺带一提：<code>std::</code> 后面还可以继续套，
+  比如 <code>std::chrono::seconds</code> —— 那是标准库内部的子命名空间。</p>
+</div>
+
+<!-- ============================================================ -->
+
+<!-- NAV-AUTO -->
+<a class="home-fab" href="../../index.html" title="返回教程总目录">返回 home</a>
+
+</div>
+
+</div>
+<!-- /NAV-AUTO -->
+<footer>
+UME 项目组内部教程 · Q01《std 与命名空间初步》<br>
+文中所有输出与报错，均使用 g++ 13.1.0（<code>-std=c++17</code>）实际编译运行核对；
+代码示例以 <b>Consolas</b> 等宽字体呈现。
+</footer>
+</main>
+</div>
+
+<script>
+/* 目录滚动高亮 */
+(function(){
+  const links = [...document.querySelectorAll('#toc a')];
+  const targets = links.map(a => document.querySelector(a.getAttribute('href'))).filter(Boolean);
+  const setOn = id => links.forEach(a => a.classList.toggle('on', a.getAttribute('href') === '#'+id));
+  const io = new IntersectionObserver(es => {
+    const vis = es.filter(e => e.isIntersecting)
+                  .sort((a,b) => a.boundingClientRect.top - b.boundingClientRect.top);
+    if (vis[0]) setOn(vis[0].target.id);
+  }, { rootMargin:'-8% 0px -72% 0px', threshold:0 });
+  targets.forEach(t => io.observe(t));
+})();
+
+/* 复制按钮 */
+(function(){
+  document.querySelectorAll('.code-wrap').forEach(box => {
+    const btn = box.querySelector('.cp');
+    const pre = box.querySelector('pre');
+    if (!btn || !pre) return;
+    btn.addEventListener('click', async () => {
+      const text = pre.textContent;
+      try { await navigator.clipboard.writeText(text); }
+      catch (e) {
+        const ta = document.createElement('textarea');
+        ta.value = text; document.body.appendChild(ta);
+        ta.select(); document.execCommand('copy'); ta.remove();
+      }
+      const old = btn.textContent;
+      btn.textContent = '已复制 ✓';
+      setTimeout(() => { btn.textContent = old; }, 1200);
+    });
+  });
+})();
+</script>
+<script>
+/* 移动端：生成「目录」按钮，点击呼出/收起侧滑目录 */
+(function(){
+  var toc = document.getElementById('toc');
+  if (!toc) return;
+  var btn = document.createElement('button');
+  btn.id = 'tocToggle';
+  btn.type = 'button';
+  btn.setAttribute('aria-controls','toc');
+  btn.textContent = '目录';
+  document.body.appendChild(btn);
+
+  function setOpen(on){
+    toc.classList.toggle('open', on);
+    document.body.classList.toggle('toc-open', on);
+    btn.setAttribute('aria-expanded', on ? 'true' : 'false');
+    btn.textContent = on ? '收起' : '目录';
+  }
+  btn.addEventListener('click', function(){
+    setOpen(!toc.classList.contains('open'));
+  });
+  toc.addEventListener('click', function(e){
+    if (e.target.closest('a')) setOpen(false);
+  });
+  document.addEventListener('click', function(e){
+    if (!toc.classList.contains('open')) return;
+    if (e.target === toc || toc.contains(e.target) || e.target === btn) return;
+    setOpen(false);
+  });
+  document.addEventListener('keydown', function(e){
+    if (e.key === 'Escape') setOpen(false);
+  });
+  function sync(){ if (window.innerWidth > 980) setOpen(false); }
+  window.addEventListener('resize', sync);
+  sync();
+})();
+</script>
+<script src="assets/series-common.js"></script>
+</body>
+</html>

@@ -33,18 +33,18 @@ HERE = os.path.dirname(os.path.abspath(__file__))
 T = r"E:\QKMansion\CSX10\w\UME\SharingGroup\tutorials"
 
 PAGES = [
-    dict(body="_r01_body.html", out="r01-font-design-metrics.html",
+    dict(body="_r01_body.html", out="r01.html",
          num="R01", title="字体设计里的几个基本概念",
          sub="了解即可，不必深究", css="r01_font_design_metrics.css",
          foot="UME 项目组内部教程 · R01《字体设计里的几个基本概念》<br>\n"
               "示意图片来自公开的字体度量说明图；文字说明由项目组整理。"),
-    dict(body="_r02_body.html", out="r02-bubble-sort.html",
+    dict(body="_r02_body.html", out="r02.html",
          num="R02", title="冒泡排序与算法复杂度",
          sub="从「把一排数字排好」说起", css="r02_bubble_sort.css",
          foot="UME 项目组内部教程 · R02《冒泡排序与算法复杂度》<br>\n"
               "文中所有输出与报错，均使用 g++ 13.1.0（<code>-std=c++17</code>）"
               "实际编译运行核对；代码示例以 <b>Consolas</b> 等宽字体呈现。"),
-    dict(body="_r03_body.html", out="r03-collation.html",
+    dict(body="_r03_body.html", out="r03.html",
          num="R03", title="字典序、自然序与 QCollator",
          sub="字符串怎么比大小，中文怎么排才对", css="r03_collation.css",
          foot="UME 项目组内部教程 · R03《字典序、自然序与 QCollator》<br>\n"

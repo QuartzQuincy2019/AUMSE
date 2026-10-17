@@ -71,7 +71,7 @@ def fix_names(dry):
 # 2. T02 删掉「教程到这里就结束了」整张卡
 # =====================================================================
 def fix_t02(dry):
-    p = os.path.join(T, "t02-unicode-and-encoding.html")
+    p = os.path.join(T, "t02.html")
     t = io.open(p, encoding="utf-8").read()
     key = '<div class="card note">\n  <div class="card-t">教程到这里就结束了'
     i = t.find(key)
@@ -160,7 +160,7 @@ T03_LINK = """
 <div class="see-also">
   <div class="hd">延伸阅读</div>
   <ul>
-    <li><a href="r01-font-design-metrics.html">R01 · 字体设计里的几个基本概念</a>
+    <li><a href="r01.html">R01 · 字体设计里的几个基本概念</a>
       <span class="why">—— 本篇量出来的 ascender / descender / x 字高 / 行高，
       在那一篇里讲清了各自的定义与相互关系。看完就知道这些数字为什么必须实测。</span></li>
   </ul>
@@ -169,7 +169,7 @@ T03_LINK = """
 
 
 def fix_t03(dry):
-    p = os.path.join(T, "t03-font-file-anatomy.html")
+    p = os.path.join(T, "t03.html")
     t = io.open(p, encoding="utf-8").read()
     if 'class="see-also"' in t:
         print("  T03：已有延伸阅读块，跳过")

@@ -26,7 +26,7 @@ ASSETS = os.path.join(TUT, "assets")
 FE = [
     ("fe-01.html",     "FE-01",     "HTML 入门与标签语法",           "所写即所得、注释、空格无效性",              False),
     ("fe-02.html",     "FE-02",     "HTML 常用标签",                "p / i / strong / span / ul / div / form / table / a / title", False),
-    ("fe-03-F01.html", "FE-03-F01", "十六进制颜色模型、HSV 与 Alpha", "十六进制颜色模型、Alpha 通道",              True),
+    ("r04.html", "FE-03-F01", "十六进制颜色模型、HSV 与 Alpha", "十六进制颜色模型、Alpha 通道",              True),
     ("fe-03.html",     "FE-03",     "CSS 入门",                     "字体、背景色、字体色、装饰、阴影、cursor",   False),
     ("fe-04.html",     "FE-04",     "CSS 选择器语法",                "标签/类/id、后代、属性限定、伪类",          False),
     ("fe-05.html",     "FE-05",     "Display 与盒模型尺寸",          "block / inline-block / inline、边框、阴影、宽高", False),

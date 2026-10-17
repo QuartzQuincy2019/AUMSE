@@ -20,7 +20,7 @@ except Exception:
     pass
 
 REPO = r"E:\QKMansion\CSX10\w\UME"
-OUT = os.path.join(REPO, "SharingGroup", "tutorials", "t01-mongolian-script-intro.html")
+OUT = os.path.join(REPO, "SharingGroup", "tutorials", "t01.html")
 
 BODY = r"""<h1>初识回鹘蒙文</h1>
 <p class="sub-title">UME 项目组内部教程 · 理论系列 T01 · 在写代码之前，先认识这门文字</p>

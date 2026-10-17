@@ -174,9 +174,9 @@ def main():
     toc = "\n".join('  <a href="#%s">%s · %s</a>' % (hid, num, title.strip())
                     for hid, num, title in heads)
     html = (HEAD.format(toc=toc) + BODY.rstrip() + "\n\n" + TAIL)
-    p = os.path.join(T, "q02-references.html")
+    p = os.path.join(T, "q02.html")
     io.open(p, "w", encoding="utf-8", newline="").write(html)
-    print("  ✓ q02-references.html  %d 节  目录 %d 条  %d B"
+    print("  ✓ q02.html  %d 节  目录 %d 条  %d B"
           % (len(ids), len(heads), len(html)))
     print()
     for hid, num, title in heads:

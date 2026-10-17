@@ -57,10 +57,10 @@ SERIES_LANG = {
 }
 PAGE_LANG = {
     # E02 是批处理（.bat），与 E 系列默认的 C++ 不同
-    "e02-batch-and-cmd.html": "Shell",
+    "e02.html": "Shell",
     # R01 只讲字体度量（EM Square / x 字高 / 行高），一个编程语言例子都没有；
     # 它讲的东西正是 CSS 关心的，所以归 CSS（与首页卡片一致）。
-    "r01-font-design-metrics.html": "CSS",
+    "r01.html": "CSS",
 }
 LANG_CLS = {"HTML": "html", "CSS": "css", "JS": "js",
             "C++": "cpp", "C": "c", "Shell": "sh", "Python": "py"}
@@ -130,9 +130,9 @@ def main():
         import series_data as S
         print()
         print("  自检：LANG_OF 共 %d 条" % len(S.LANG_OF))
-        for k in ("t01-mongolian-script-intro.html", "f03-compile-and-link.html",
-                  "r01-font-design-metrics.html", "e02-batch-and-cmd.html",
-                  "q07-homework1.html", "fe-09.html", "fe-03-F01.html"):
+        for k in ("t01.html", "f03.html",
+                  "r01.html", "e02.html",
+                  "q07.html", "fe-09.html", "r04.html"):
             print("      %-36s %s" % (k, S.LANG_OF.get(k, "** 缺 **")))
 
 

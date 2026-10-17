@@ -1,0 +1,1248 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>E02 · 批处理与命令提示符进阶</title>
+<link rel="stylesheet" href="assets/genelayout.css">
+<link rel="stylesheet" href="assets/e02.css">
+<link rel="stylesheet" href="assets/series-theme.css">
+<link rel="stylesheet" href="assets/tg_L.css">
+<link rel="stylesheet" href="assets/tg_D.css">
+
+</head>
+<body class="eseries" data-series="E">
+<div id="shell">
+
+<nav id="toc">
+  <h5>目录</h5>
+  <a href="#s1">1 · 这一篇讲什么</a>
+  <a href="#s2">2 · 批处理（.bat）初步</a>
+  <a href="#s2a" class="sub">2.1 第一个 .bat</a>
+  <a href="#s2b" class="sub">2.2 编码：中文为什么会变问号</a>
+  <a href="#s2c" class="sub">2.3 双击 与 命令行 的区别</a>
+  <a href="#s3">3 · 批处理语法</a>
+  <a href="#s3a" class="sub">3.1 注释与输出</a>
+  <a href="#s3b" class="sub">3.2 变量与四种写法</a>
+  <a href="#s3c" class="sub">3.3 参数与 %~dp0</a>
+  <a href="#s3d" class="sub">3.4 if 与 for</a>
+  <a href="#s4">4 · 两个必踩的坑</a>
+  <a href="#s4a" class="sub">4.1 变量在括号里不更新</a>
+  <a href="#s4b" class="sub">4.2 判断上一步是否成功</a>
+  <a href="#s5">5 · 调用外部工具</a>
+  <a href="#s5a" class="sub">5.1 node</a>
+  <a href="#s5b" class="sub">5.2 npm</a>
+  <a href="#s5c" class="sub">5.3 python</a>
+  <a href="#s5d" class="sub">5.4 别忘了 call</a>
+  <a href="#s6">6 · 完整例子：一键检查环境</a>
+  <a href="#s7">7 · 常见错误</a>
+  <a href="#s8">8 · 一页速查</a>
+</nav>
+
+<main>
+<h1>批处理与命令提示符进阶</h1>
+<p class="sub-title">UME 项目组内部教程 · E02（Extra） · 让命令行替你干活</p>
+<p><span class="lang sh">Shell</span> <span class="tag b">本讲：把命令写成文件</span>
+</p>
+
+<div class="card note">
+  <div class="card-t">这一篇解决什么</div>
+  <p>08-F01 讲的是「一条一条敲命令」。可是要<b>重复做同一串操作</b>时，
+  一条条敲就太笨了 —— 而且容易漏、容易敲错。</p>
+  <p>这一篇讲怎么把命令<b>写进一个文件，一键重跑</b>，
+  也就是<b>批处理（batch）</b>。顺带讲怎么在批处理里调用
+  项目会用到的三样工具：<b>node、npm、python</b>。</p>
+  <p>文中所有命令与批处理行为，均在本机（Windows 11 · cmd）实际运行核对。</p>
+</div>
+
+<!-- ============================================================ -->
+<h2 id="s1"><span class="n">1</span>这一篇讲什么</h2>
+
+<table>
+<thead><tr><th style="width:30%">内容</th><th>解决什么问题</th><th style="width:16%">难度</th></tr></thead>
+<tbody>
+<tr><td><b>批处理初步</b></td><td>把一串命令写进 <code>.bat</code>，一键运行</td><td><span class="tag g">入门</span></td></tr>
+<tr><td><b>批处理语法</b></td><td>变量、参数、判断、循环</td><td><span class="tag y">中等</span></td></tr>
+<tr><td><b>两个必踩的坑</b></td>
+    <td>变量在括号里不更新、怎么判断上一步成功</td><td><span class="tag r">关键</span></td></tr>
+<tr><td><b>调用 node / npm / python</b></td>
+    <td>把这三样工具接进脚本</td><td><span class="tag g">入门</span></td></tr>
+</tbody>
+</table>
+
+<div class="card tip">
+  <div class="card-t">为什么项目里值得学</div>
+  <p>项目里总有这些事要做：<b>清掉旧的编译产物、重新编译、跑一遍检查、启动程序</b>。
+  每次都手敲一遍，迟早会漏某步。</p>
+  <p>写成 <code>build.bat</code> 之后，<b>新来的同事双击一下就能跑</b>，
+  不用看一长串配置说明 —— 这本身就是最好的一份文档。</p>
+</div>
+
+<!-- ============================================================ -->
+<h2 id="s2"><span class="n">2</span>批处理（.bat）初步</h2>
+
+<p><b>批处理文件</b>就是以 <code>.bat</code> 结尾的纯文本文件，
+里面一行写一条 cmd 命令。双击或敲它的名字，cmd 就会<b>从上到下一行行执行</b>。</p>
+
+<div class="bflow">
+  <div class="r"><span class="k">第一行</span><span class="v">通常写 <code>@echo off</code> —— 关掉「把命令自己也打印出来」</span></div>
+  <div class="r"><span class="k">中间</span><span class="v">就是你在 cmd 里会敲的那些命令，一行一条</span></div>
+  <div class="r"><span class="k">最后</span><span class="v">常用 <code>pause</code> 停一下，好让你看清输出</span></div>
+</div>
+
+<h3 id="s2a">2.1 第一个 .bat</h3>
+
+<p>用记事本新建一个文件，写上三行，另存为 <code>hello.bat</code>：</p>
+
+<div class="code-wrap"><div class="bar"><span class="dot r"></span><span class="dot y"></span><span class="dot g"></span><span class="name">hello.bat</span><span class="cp">复制</span></div><pre>@echo off
+chcp 65001 &gt;nul
+echo 你好，这是第一个批处理文件
+pause</pre></div>
+
+<div class="term">
+  <div class="tbar"><span class="d r"></span><span class="d y"></span><span class="d g"></span>
+    <span>双击运行的结果</span></div>
+<pre><span class="out">你好，这是第一个批处理文件</span>
+<span class="out">请按任意键继续. . .</span></pre>
+</div>
+
+<p>逐行看：</p>
+<table>
+<thead><tr><th style="width:34%">这一行</th><th>作用</th></tr></thead>
+<tbody>
+<tr><td class="c">@echo off</td>
+    <td><b>别把命令本身也打印出来</b>。
+      不加的话每行命令都会先显示一遍，输出全是噪音。<code>@</code> 是让这一行自己也不显示</td></tr>
+<tr><td class="c">chcp 65001 &gt;nul</td>
+    <td>把本窗口切到 UTF-8，<b>中文才不会变问号</b>（见 2.2）</td></tr>
+<tr><td class="c">echo 你好…</td><td>打印一行字</td></tr>
+<tr><td class="c">pause</td>
+    <td>停住等按键。不加的话窗口一闪就关了，<b>看不到输出</b></td></tr>
+</tbody>
+</table>
+
+<div class="card warn">
+  <div class="card-t">新手第一个坑：窗口一闪而过</div>
+  <p>双击 <code>.bat</code>，如果它很快跑完，窗口会<b>立刻关闭</b> ——
+  你根本来不及看清输出，更别说看报错了。</p>
+  <p><b>两种应对</b>：</p>
+  <ul>
+    <li>脚本最后加一行 <code>pause</code>（调试时最常用）</li>
+    <li>或者<b>不要双击</b>，而是从命令行里敲它的名字运行 ——
+      这样输出会留在当前窗口里，还能往上翻</li>
+  </ul>
+</div>
+
+<h3 id="s2b">2.2 编码：中文为什么会变问号</h3>
+
+<p>这是一个<b>必定会遇到</b>的问题。先看现象：一个存了中文的 <code>.bat</code>，
+运行后中文变成了一串问号 <code>???</code> 或者乱码。</p>
+
+<div class="card key">
+  <div class="card-t">成因</div>
+  <p>批处理文件里的中文是<b>按字节存的</b>，而 cmd 默认用
+  <b>GBK（代码页 936）</b>去读它。</p>
+  <p>如果文件存成 <b>UTF-8</b>，cmd 却按 GBK 解释，
+  字节就对不上了 —— 于是显示成 <code>???</code>。</p>
+  <p>反过来，如果文件存成 <b>GBK</b>，在别的地方（比如某些编辑器、
+  Git、跨平台工具）又会乱码。</p>
+</div>
+
+<p>实测两种方案，结论很明确：</p>
+
+<div class="term">
+  <div class="tbar"><span class="d r"></span><span class="d y"></span><span class="d g"></span>
+    <span>方案 A：文件存 UTF-8 + 脚本里切 chcp 65001 ✅</span></div>
+<pre><span class="pr">D:\Path\To&gt;</span><span class="cmd">demo.bat</span>
+<span class="out">项目名: UME</span>
+<span class="out">中文可以正常显示</span></pre>
+</div>
+
+<div class="term">
+  <div class="tbar"><span class="d r"></span><span class="d y"></span><span class="d g"></span>
+    <span>方案 B：文件存 GBK + 不写 chcp ❌（换环境就出问题）</span></div>
+<pre><span class="pr">D:\Path\To&gt;</span><span class="cmd">demo.bat</span>
+<span class="err">��Ŀ��: UME</span>
+<span class="err">���Ŀ���������ʾ</span></pre>
+</div>
+
+<div class="card key">
+  <div class="card-t">结论：统一用「UTF-8 无 BOM + 脚本开头 chcp 65001」</div>
+  <div class="code-wrap" style="margin-top:10px"><div class="bar"><span class="dot r"></span><span class="dot y"></span><span class="dot g"></span><span class="name">每个 .bat 的开头两行</span><span class="cp">复制</span></div><pre>@echo off
+chcp 65001 &gt;nul</pre></div>
+  <p><code>&gt;nul</code> 是「把 chcp 自己那行输出丢掉」，免得屏幕上多一句
+  <code>Active code page: 65001</code>。</p>
+  <p><b>另外注意：一定要存成「UTF-8 无 BOM」</b>。带 BOM 的话，
+  文件开头会多出三个看不见的字节，第一行命令会直接解析失败。</p>
+</div>
+
+<h3 id="s2c">2.3 双击 与 命令行 的区别</h3>
+
+<p>同一个 <code>.bat</code>，双击和从命令行运行<b>有两处不同</b>，都会咬人。</p>
+
+<table>
+<thead><tr><th style="width:20%"></th><th>双击运行</th><th>从命令行运行</th></tr></thead>
+<tbody>
+<tr><td><b>工作目录</b></td>
+    <td>脚本所在目录</td>
+    <td><b>你敲命令时所在的目录</b></td></tr>
+<tr><td><b>跑完之后</b></td>
+    <td><span class="tag r">窗口关闭</span> 看不到输出</td>
+    <td><span class="tag g">留在窗口里</span> 能翻、能复制</td></tr>
+</tbody>
+</table>
+
+<p>第一行那个差异，正是 08-F02 讲过的「相对路径相对于 CWD」问题。
+<b>无论怎么运行都得到同一个结果</b>的标准做法，是在脚本开头把目录钉死：</p>
+
+<div class="code-wrap"><div class="bar"><span class="dot r"></span><span class="dot y"></span><span class="dot g"></span><span class="name">钉死工作目录</span><span class="cp">复制</span></div><pre>@echo off
+chcp 65001 &gt;nul
+<span class="hl-c">rem %~dp0 是「本脚本所在目录」（见 3.3）</span>
+<span class="hl-k">cd</span> /d <span class="hl-s">"%~dp0"</span>
+
+<span class="hl-c">rem 从这里开始，所有相对路径都以脚本目录为基准</span>
+<span class="hl-f">echo</span> 当前目录: %CD%</pre></div>
+
+<div class="card tip">
+  <div class="card-t">建议：开发时一律从命令行运行</div>
+  <p>在脚本目录的地址栏输入 <code>cmd</code> 回车，
+  然后敲 <code>脚本名.bat</code>。<b>输出留在窗口里，报错看得见，还能往上翻。</b></p>
+  <p>等到脚本稳定了，再考虑加 <code>pause</code> 给别人双击用。</p>
+</div>
+
+<!-- ============================================================ -->
+<h2 id="s3"><span class="n">3</span>批处理语法</h2>
+
+<h3 id="s3a">3.1 注释与输出</h3>
+
+<div class="code-wrap"><div class="bar"><span class="dot r"></span><span class="dot y"></span><span class="dot g"></span><span class="name">注释与几种输出</span><span class="cp">复制</span></div><pre><span class="hl-c">rem 这是注释（rem = remark）</span>
+<span class="hl-c">:: 这也是注释，但只在行首有效</span>
+
+<span class="hl-f">echo</span> 普通一行
+<span class="hl-f">echo.</span>                        <span class="hl-c">rem 输出一个空行（注意那个点，不能省）</span>
+<span class="hl-f">echo</span> ====================
+<span class="hl-f">echo</span> <span class="hl-s">正在编译...</span></pre></div>
+
+<table>
+<thead><tr><th style="width:30%">写法</th><th>说明</th></tr></thead>
+<tbody>
+<tr><td class="c">rem 注释</td><td>最稳妥的注释，哪里都能用</td></tr>
+<tr><td class="c">:: 注释</td><td>更短，但<b>只能在行首</b>；写在 <code>for</code>/<code>if</code> 括号里可能出错</td></tr>
+<tr><td class="c">echo.</td><td>输出空行。<b>那个点不能省</b> ——
+  光写 <code>echo</code> 会打印「echo 是开还是关」</td></tr>
+<tr><td class="c">echo off / on</td><td>临时关掉 / 打开命令回显</td></tr>
+</tbody>
+</table>
+
+<h4>输出重定向</h4>
+<div class="code-wrap"><div class="bar"><span class="dot r"></span><span class="dot y"></span><span class="dot g"></span><span class="name">把输出写进文件</span><span class="cp">复制</span></div><pre><span class="hl-f">echo</span> first &gt; out.txt        <span class="hl-c">rem &gt;  覆盖写入（原内容没了）</span>
+<span class="hl-f">echo</span> second &gt;&gt; out.txt      <span class="hl-c">rem &gt;&gt; 追加到末尾</span>
+<span class="hl-f">type</span> out.txt               <span class="hl-c">rem 打印文件内容</span>
+
+<span class="hl-c">rem 把错误信息也一起收进文件（2&gt;&amp;1 = 把错误流并到正常流）</span>
+<span class="hl-f">gcc</span> main.c -o main.exe &gt; build.log 2&gt;&amp;1</pre></div>
+
+<div class="out-wrap"><div class="cap">运行结果（out.txt 内容）</div><pre>first
+second</pre></div>
+
+<table>
+<thead><tr><th style="width:20%">写法</th><th>作用</th></tr></thead>
+<tbody>
+<tr><td class="c">&gt;</td><td>覆盖写入文件</td></tr>
+<tr><td class="c">&gt;&gt;</td><td>追加到文件末尾</td></tr>
+<tr><td class="c">&gt;nul</td><td>丢掉输出（<code>nul</code> 是 Windows 的「黑洞设备」）</td></tr>
+<tr><td class="c">2&gt;&amp;1</td><td><b>把错误输出也合并进来</b> —— 日志里两个都要才完整</td></tr>
+</tbody>
+</table>
+
+<h3 id="s3b">3.2 变量与四种写法</h3>
+
+<p>这里有件事必须先说清：<b>批处理的 <code>%</code> 写法有好几种，
+含义完全不同</b>，混起来是最大的困惑来源。</p>
+
+<div class="code-wrap"><div class="bar"><span class="dot r"></span><span class="dot y"></span><span class="dot g"></span><span class="name">定义与使用变量</span><span class="cp">复制</span></div><pre><span class="hl-c">rem 定义：set 名字=值   （等号两边不要留空格！）</span>
+<span class="hl-f">set</span> NAME=UME
+<span class="hl-f">set</span> BUILD_DIR=build
+
+<span class="hl-c">rem 使用：%名字%</span>
+<span class="hl-f">echo</span> 项目名: %NAME%
+<span class="hl-f">echo</span> 输出到: %BUILD_DIR%\app.exe
+
+<span class="hl-c">rem 算术：set /a</span>
+<span class="hl-f">set</span> /a COUNT=3*4+1
+<span class="hl-f">echo</span> COUNT=%COUNT%          <span class="hl-c">rem 13</span>
+
+<span class="hl-c">rem 删除变量</span>
+<span class="hl-f">set</span> NAME=</pre></div>
+
+<div class="out-wrap"><div class="cap">运行结果</div><pre>项目名: UME
+输出到: build\app.exe
+COUNT=13</pre></div>
+
+<div class="card warn">
+  <div class="card-t"><code>set NAME = UME</code> 是错的</div>
+  <p><b>等号两边不能有空格。</b>写了空格，你得到的是一个名字叫
+  <code>NAME&nbsp;</code>（带尾随空格）的变量，而 <code>%NAME%</code> 取不到。</p>
+  <p>这类错误不报错、只是「值怎么是空的」，特别难查。
+  <b>记住：<code>set 名字=值</code>，紧挨着写。</b></p>
+</div>
+
+<h4>四种 <code>%</code> 写法对照</h4>
+<table>
+<thead><tr><th style="width:22%">写法</th><th style="width:30%">含义</th><th>例子</th></tr></thead>
+<tbody>
+<tr><td class="c">%NAME%</td><td>你 <code>set</code> 的变量</td><td class="c">%BUILD_DIR%</td></tr>
+<tr><td class="c">%PATH%</td><td><b>系统环境变量</b>（08-F02 讲过）</td><td class="c">%TEMP%</td></tr>
+<tr><td class="c">%1 %2 %*</td><td><b>命令行参数</b>（见 3.3）</td><td class="c">build.bat release</td></tr>
+<tr><td class="c">%%f</td><td><b>for 循环变量</b>（见 3.4）</td><td class="c">for %%f in (*.c) do …</td></tr>
+</tbody>
+</table>
+
+<div class="card key">
+  <div class="card-t">为什么 for 里要写两个 <code>%</code></div>
+  <p>在<b>命令行直接敲</b>时写一个：<code>for %f in (*.c) do echo %f</code>。</p>
+  <p>在 <b>.bat 文件里</b>要写两个：<code>for %%f in (*.c) do echo %%f</code>。</p>
+  <p>原因是批处理文件本身要用 <code>%</code> 表示参数（<code>%1</code>），
+  所以循环变量得用 <code>%%</code> 来区分。<b>写脚本时永远用两个。</b></p>
+</div>
+
+<h3 id="s3c">3.3 参数与 %~dp0</h3>
+
+<p>批处理也能收命令行参数，写法和 C 的 <code>argv</code> 是一回事。</p>
+
+<div class="code-wrap"><div class="bar"><span class="dot r"></span><span class="dot y"></span><span class="dot g"></span><span class="name">收参数</span><span class="cp">复制</span></div><pre>@echo off
+chcp 65001 &gt;nul
+
+<span class="hl-f">echo</span> 收到 <span class="hl-k">%#</span> 个参数    <span class="hl-c">rem 见下方说明</span>
+<span class="hl-f">echo</span> 第 1 个: %1
+<span class="hl-f">echo</span> 第 2 个: %2
+<span class="hl-f">echo</span> 全部   : %*
+<span class="hl-f">echo</span> 脚本目录: %~dp0</pre></div>
+
+<table>
+<thead><tr><th style="width:18%">写法</th><th>含义</th><th style="width:34%">实测值（参数为 build）</th></tr></thead>
+<tbody>
+<tr><td class="c">%1</td><td>第 1 个参数</td><td class="c">build</td></tr>
+<tr><td class="c">%2</td><td>第 2 个参数</td><td class="c">（没传就是空）</td></tr>
+<tr><td class="c">%*</td><td><b>所有参数，原样一串</b></td><td class="c">build</td></tr>
+<tr><td class="c">%0</td><td>脚本自身的路径</td><td class="c">D:\Path\To\demo.bat</td></tr>
+<tr><td class="c">%~dp0</td><td><b>脚本所在目录</b>（带结尾反斜杠）</td><td class="c">D:\Path\To\</td></tr>
+</tbody>
+</table>
+
+<div class="card tip">
+  <div class="card-t">参数个数怎么取</div>
+  <p>批处理<b>没有 <code>%#</code> 这种直接写法</b>。要数个数得绕一下：</p>
+  <div class="code-wrap" style="margin-top:10px"><div class="bar"><span class="dot r"></span><span class="dot y"></span><span class="dot g"></span><span class="name">数参数个数</span><span class="cp">复制</span></div><pre><span class="hl-f">set</span> N=0
+<span class="hl-k">for</span> %%a <span class="hl-k">in</span> (%*) <span class="hl-k">do</span> <span class="hl-f">set</span> /a N+=1
+<span class="hl-f">echo</span> 参数个数: %N%</pre></div>
+  <p>不过大多数脚本并不需要数个数，<b>直接判断关键参数在不在</b>就够了：</p>
+  <div class="code-wrap" style="margin-top:10px"><div class="bar"><span class="dot r"></span><span class="dot y"></span><span class="dot g"></span><span class="name">更实用的做法</span><span class="cp">复制</span></div><pre><span class="hl-k">if</span> <span class="hl-s">"%1"</span>==<span class="hl-s">"clean"</span> <span class="hl-f">echo</span> 准备清理
+<span class="hl-k">if</span> <span class="hl-s">"%1"</span>==<span class="hl-s">""</span>      <span class="hl-f">echo</span> 没给参数，按默认来</pre></div>
+</div>
+
+<h4><code>%~dp0</code> 与 %CD% 的区别</h4>
+<div class="code-wrap"><div class="bar"><span class="dot r"></span><span class="dot y"></span><span class="dot g"></span><span class="name">为什么用 %~dp0 而不是 %CD%</span><span class="cp">复制</span></div><pre><span class="hl-c">rem 用户可能在任意目录下调用这个脚本：</span>
+<span class="hl-c">rem   D:\&gt; Path\To\project\build.bat</span>
+
+<span class="hl-f">echo</span> %CD%        <span class="hl-c">rem D:\            ← 你敲命令的地方</span>
+<span class="hl-f">echo</span> %~dp0       <span class="hl-c">rem D:\Path\To\project\   ← 脚本所在处</span>
+
+<span class="hl-c">rem 所以脚本开头一定要这样钉住：</span>
+<span class="hl-k">cd</span> /d <span class="hl-s">"%~dp0"</span></pre></div>
+
+<p><code>%~dp0</code> 这几个字母拆开看更好记：</p>
+<table>
+<thead><tr><th style="width:16%">字母</th><th>来自</th><th>含义</th></tr></thead>
+<tbody>
+<tr><td class="c">%0</td><td>第 0 个参数</td><td>脚本自己</td></tr>
+<tr><td class="c">~</td><td>—</td><td>「把引号去掉并做修饰」</td></tr>
+<tr><td class="c">d</td><td><b>d</b>rive</td><td>取<b>盘符</b>与路径部分（去掉文件名）</td></tr>
+<tr><td class="c">p</td><td><b>p</b>ath</td><td>取<b>路径</b>（不含文件名）</td></tr>
+</tbody>
+</table>
+
+<h3 id="s3d">3.4 if 与 for</h3>
+
+<h4>if：判断</h4>
+<div class="code-wrap"><div class="bar"><span class="dot r"></span><span class="dot y"></span><span class="dot g"></span><span class="name">几种 if 写法</span><span class="cp">复制</span></div><pre><span class="hl-c">rem ① 比较字符串（注意两边都要引号，防止空参数炸掉语法）</span>
+<span class="hl-k">if</span> <span class="hl-s">"%1"</span>==<span class="hl-s">"build"</span> (
+    <span class="hl-f">echo</span> 开始编译
+) <span class="hl-k">else</span> (
+    <span class="hl-f">echo</span> 未知参数: %1
+)
+
+<span class="hl-c">rem ② 文件/目录是否存在</span>
+<span class="hl-k">if</span> <span class="hl-k">exist</span> build\app.exe <span class="hl-f">echo</span> 程序已经编译过
+<span class="hl-k">if</span> <span class="hl-k">not exist</span> src <span class="hl-f">echo</span> 找不到 src 目录
+
+<span class="hl-c">rem ③ 变量是否为空 / 是否已定义</span>
+<span class="hl-k">if</span> <span class="hl-s">"%NAME%"</span>==<span class="hl-s">""</span> <span class="hl-f">echo</span> NAME 是空的
+<span class="hl-k">if</span> <span class="hl-k">defined</span> NAME <span class="hl-f">echo</span> NAME 有值
+
+<span class="hl-c">rem ④ 上一步是否成功（见 4.2，最常用）</span>
+<span class="hl-k">if</span> %ERRORLEVEL% <span class="hl-k">neq</span> <span class="hl-n">0</span> <span class="hl-f">echo</span> 出错了</pre></div>
+
+<div class="card warn">
+  <div class="card-t">引号不能省：<code>if %1==build</code> 会炸</div>
+  <p>如果用户没传参数，<code>%1</code> 是空的，那一行就变成
+  <code>if ==build</code> —— <b>语法错误，脚本直接崩</b>。</p>
+  <p>写成 <code>if "%1"=="build"</code> 之后，空参数时变成
+  <code>if ""=="build"</code>，语法合法、判断为假，安全通过。</p>
+  <p><b>规则：批处理里比较字符串，两边一律加引号。</b></p>
+</div>
+
+<h4>for：循环</h4>
+<div class="code-wrap"><div class="bar"><span class="dot r"></span><span class="dot y"></span><span class="dot g"></span><span class="name">三种常用 for</span><span class="cp">复制</span></div><pre><span class="hl-c">rem ① 遍历一组值</span>
+<span class="hl-k">for</span> %%f <span class="hl-k">in</span> (a.c b.c c.c) <span class="hl-k">do</span> <span class="hl-f">echo</span> 文件: %%f
+
+<span class="hl-c">rem ② 遍历通配符匹配到的文件（编译所有 .c 最常用）</span>
+<span class="hl-k">for</span> %%f <span class="hl-k">in</span> (*.c) <span class="hl-k">do</span> (
+    <span class="hl-f">echo</span> 正在编译 %%f
+    <span class="hl-f">gcc</span> -std=c99 -c <span class="hl-s">"%%f"</span> -o <span class="hl-s">"%%~nf.o"</span>
+)
+
+<span class="hl-c">rem ③ for /f ：逐行读文件或读命令输出</span>
+<span class="hl-k">for</span> /f <span class="hl-s">"delims="</span> %%L <span class="hl-k">in</span> (list.txt) <span class="hl-k">do</span> <span class="hl-f">echo</span> 读到一行: %%L
+
+<span class="hl-c">rem 读某个命令的输出（这里列出所有 .c 文件）</span>
+<span class="hl-k">for</span> /f %%L <span class="hl-k">in</span> (<span class="hl-s">'dir /b *.c'</span>) <span class="hl-k">do</span> <span class="hl-f">echo</span> %%L</pre></div>
+
+<div class="out-wrap"><div class="cap">运行结果（第一种）</div><pre>文件: a.c
+文件: b.c
+文件: c.c</pre></div>
+
+<p>第二种里出现的 <code>%%~nf</code> 是「取文件名、去掉扩展名」：</p>
+<table>
+<thead><tr><th style="width:22%">写法</th><th>对 <code>src\main.c</code> 得到</th></tr></thead>
+<tbody>
+<tr><td class="c">%%f</td><td class="c">src\main.c</td></tr>
+<tr><td class="c">%%~nf</td><td class="c">main&nbsp;&nbsp;<span class="tag b">去掉扩展名</span></td></tr>
+<tr><td class="c">%%~xf</td><td class="c">.c&nbsp;&nbsp;<span class="tag b">只要扩展名</span></td></tr>
+<tr><td class="c">%%~dpf</td><td class="c">D:\Path\To\src\&nbsp;&nbsp;<span class="tag b">所在目录</span></td></tr>
+</tbody>
+</table>
+
+<!-- ============================================================ -->
+<h2 id="s4"><span class="n">4</span>两个必踩的坑</h2>
+
+<p>这两个坑几乎每个人都会踩一次，而且<b>报错信息都很误导</b>。提前知道能省很多时间。</p>
+
+<h3 id="s4a">4.1 变量在括号里不更新</h3>
+
+<p>先看现象。这个脚本想在循环里数数：</p>
+
+<div class="code-wrap"><div class="bar"><span class="dot r"></span><span class="dot y"></span><span class="dot g"></span><span class="name">看起来没问题的写法</span><span class="cp">复制</span></div><pre>@echo off
+chcp 65001 &gt;nul
+
+<span class="hl-f">set</span> N=0
+<span class="hl-k">for</span> %%f <span class="hl-k">in</span> (a b c) <span class="hl-k">do</span> (
+    <span class="hl-f">set</span> /a N+=1
+    <span class="hl-f">echo</span> 第 %N% 个
+)
+<span class="hl-f">echo</span> 一共 %N% 个</pre></div>
+
+<div class="out-wrap"><div class="cap">运行结果 —— 全错了</div><pre>第 0 个
+第 0 个
+第 0 个
+一共 3 个</pre></div>
+
+<p>循环里明明加了 3 次，打印出来却一直是 <code>0</code>；
+可循环外面那个 <code>一共 3 个</code> 又<b>是对的</b>。为什么？</p>
+
+<div class="card key">
+  <div class="card-t">原因：整个括号块被当成「一行」先读完了</div>
+  <p>cmd 读到一个 <code>( ... )</code> 块时，会<b>先把整块读进来，
+  并在读的时候就把 <code>%N%</code> 全部替换成当前值</b>，
+  然后再执行。</p>
+  <p>读的那一刻 <code>N=0</code>，所以三个 <code>%N%</code> 全被换成了 <code>0</code>，
+  <b>后面怎么加都不影响已经替换好的文本</b>。</p>
+  <p>而循环外那行是单独一条命令，执行到它时才替换，此时 <code>N</code> 已经是 3。</p>
+</div>
+
+<p><b>解法：用「延迟展开」。</b>开头开一下，然后把 <code>%N%</code> 写成 <code>!N!</code>：</p>
+
+<div class="code-wrap"><div class="bar"><span class="dot r"></span><span class="dot y"></span><span class="dot g"></span><span class="name">正确写法</span><span class="cp">复制</span></div><pre>@echo off
+chcp 65001 &gt;nul
+<span class="hl-f">setlocal</span> enabledelayedexpansion      <span class="hl-c">rem ① 打开延迟展开</span>
+
+<span class="hl-f">set</span> N=0
+<span class="hl-k">for</span> %%f <span class="hl-k">in</span> (a b c) <span class="hl-k">do</span> (
+    <span class="hl-f">set</span> /a N+=1
+    <span class="hl-f">echo</span> 第 !N! 个                  <span class="hl-c">rem ② 用 ! 而不是 %</span>
+)
+<span class="hl-f">echo</span> 一共 !N! 个
+
+<span class="hl-f">endlocal</span>                          <span class="hl-c">rem 收尾，还原设置</span></pre></div>
+
+<div class="out-wrap"><div class="cap">运行结果</div><pre>第 1 个
+第 2 个
+第 3 个
+一共 3 个</pre></div>
+
+<div class="mnemonic">
+  <b>口诀：括号里要「读一次看一次」的变量，就用 <code>!变量!</code>。</b><br>
+  括号外用 <code>%变量%</code>、括号内用 <code>!变量!</code> —— 这是最省心的记法。
+</div>
+
+<div class="card tip">
+  <div class="card-t">这个坑也影响 <code>%ERRORLEVEL%</code></div>
+  <p>同一个道理：在括号里用 <code>%ERRORLEVEL%</code> 拿到的是
+  <b>进括号之前</b>的值，是「旧的」。</p>
+  <p>想知道括号里某条命令的结果，就得用 <code>!ERRORLEVEL!</code>。
+  不过更常用的做法是下面 4.2 的写法 —— 把判断放在括号外。</p>
+</div>
+
+<h3 id="s4b">4.2 判断上一步是否成功</h3>
+
+<p>脚本的关键用途之一是「<b>编译失败就别继续了</b>」。
+这就需要拿到上一条命令的<b>退出码</b>。</p>
+
+<div class="card key">
+  <div class="card-t">约定：0 = 成功，非 0 = 失败</div>
+  <p>这条约定和 C 的 <code>main</code> 返回值完全一致 ——
+  <code>return 0;</code> 表示正常结束。</p>
+  <p>退出码存在 <code>%ERRORLEVEL%</code> 里，<b>每条命令执行后都会更新</b>。</p>
+</div>
+
+<h4>写法一：<code>&&</code> 与 <code>||</code>（最简）</h4>
+
+<div class="code-wrap"><div class="bar"><span class="dot r"></span><span class="dot y"></span><span class="dot g"></span><span class="name">短路写法</span><span class="cp">复制</span></div><pre><span class="hl-c">rem &amp;&amp; ：前面成功才执行后面</span>
+<span class="hl-f">gcc</span> main.c -o main.exe &amp;&amp; <span class="hl-f">echo</span> 编译成功
+
+<span class="hl-c">rem || ：前面失败才执行后面</span>
+<span class="hl-f">gcc</span> main.c -o main.exe || <span class="hl-f">echo</span> 编译失败
+
+<span class="hl-c">rem 三个连起来：成功就运行，失败就提示并中止</span>
+<span class="hl-f">gcc</span> main.c -o main.exe &amp;&amp; main.exe || <span class="hl-k">exit</span> /b 1</pre></div>
+
+<div class="out-wrap"><div class="cap">运行结果</div><pre>[OK] 成功时执行
+[OK] 失败时执行</pre></div>
+
+<p>这两个符号和 C 里的 <code>&amp;&amp;</code> / <code>||</code> <b>含义完全一样</b>
+（M01里讲过短路求值），所以很好记。</p>
+
+<h4>写法二：<code>if %ERRORLEVEL% neq 0</code>（最清楚）</h4>
+
+<div class="code-wrap"><div class="bar"><span class="dot r"></span><span class="dot y"></span><span class="dot g"></span><span class="name">显式判断并中止</span><span class="cp">复制</span></div><pre><span class="hl-f">gcc</span> main.c -o main.exe
+
+<span class="hl-k">if</span> %ERRORLEVEL% <span class="hl-k">neq</span> <span class="hl-n">0</span> (
+    <span class="hl-f">echo</span> 编译失败，中止
+    <span class="hl-k">exit</span> /b 1                <span class="hl-c">rem /b = 只退出脚本，不关窗口</span>
+)
+<span class="hl-f">echo</span> 编译通过，继续下一步</pre></div>
+
+<table>
+<thead><tr><th style="width:22%">比较符</th><th>含义</th></tr></thead>
+<tbody>
+<tr><td class="c">equ</td><td>等于（equal）</td></tr>
+<tr><td class="c">neq</td><td>不等于（not equal）</td></tr>
+<tr><td class="c">lss / leq</td><td>小于 / 小于等于</td></tr>
+<tr><td class="c">gtr / geq</td><td>大于 / 大于等于</td></tr>
+</tbody>
+</table>
+
+<div class="card warn">
+  <div class="card-t"><code>if errorlevel 1</code> 的意思不是「等于 1」</div>
+  <p>它是<b>「大于等于 1」</b>：</p>
+  <div class="code-wrap" style="margin-top:10px"><div class="bar"><span class="dot r"></span><span class="dot y"></span><span class="dot g"></span><span class="name">对比</span><span class="cp">复制</span></div><pre><span class="hl-k">if</span> <span class="hl-k">errorlevel</span> <span class="hl-n">1</span>  <span class="hl-f">echo</span> 成立  <span class="hl-c">rem ERRORLEVEL 是 5 时也成立！</span>
+<span class="hl-k">if</span> %ERRORLEVEL% <span class="hl-k">neq</span> <span class="hl-n">0</span> <span class="hl-f">echo</span> 成立  <span class="hl-c">rem 这个才是「非 0 即失败」</span></pre></div>
+  <p>所以<b>想判断「有没有失败」，用 <code>if %ERRORLEVEL% neq 0</code></b>，
+  语义最清楚，也不会误读。</p>
+</div>
+
+<h4><code>exit /b</code> 与 <code>exit</code> 的区别</h4>
+<table>
+<thead><tr><th style="width:26%">写法</th><th>效果</th></tr></thead>
+<tbody>
+<tr><td class="c">exit /b 1</td>
+    <td><b>退出当前脚本</b>，返回码 1。窗口留着 —— <b>脚本里要用这个</b></td></tr>
+<tr><td class="c">exit</td>
+    <td><b>关掉整个 cmd 窗口</b>。双击运行时看着像「闪退」，别在脚本里用</td></tr>
+</tbody>
+</table>
+
+<!-- ============================================================ -->
+<h2 id="s5"><span class="n">5</span>调用外部工具</h2>
+
+<p>批处理本身能做的事有限。真正干活靠的是<b>调用别的程序</b> ——
+写法和在 cmd 里敲完全一样，直接写上去就行。</p>
+
+<div class="tools3">
+  <div class="c n">
+    <div class="h">node</div>
+    <div class="note">
+      跑 JavaScript 的运行时<br>
+      <b>直接执行 .js 文件</b><br>
+      常用来写小工具、处理数据
+    </div>
+  </div>
+  <div class="c b">
+    <div class="h">npm</div>
+    <div class="note">
+      node 的<b>包管理器</b><br>
+      装依赖、跑项目里定义的脚本<br>
+      本质是个 <code>.cmd</code> 批处理
+    </div>
+  </div>
+  <div class="c p">
+    <div class="h">python</div>
+    <div class="note">
+      跑 Python<br>
+      <b>直接执行 .py 文件</b><br>
+      常用来做数据分析、批量处理
+    </div>
+  </div>
+</div>
+
+<div class="card tip">
+  <div class="card-t">先确认它们能用</div>
+  <div class="term" style="margin-top:10px">
+    <div class="tbar"><span class="d r"></span><span class="d y"></span><span class="d g"></span>
+      <span>验证三件套是否就绪</span></div>
+<pre><span class="pr">D:\&gt;</span><span class="cmd">node --version</span>
+<span class="out">v24.16.0</span>
+<span class="pr">D:\&gt;</span><span class="cmd">npm --version</span>
+<span class="out">11.13.0</span>
+<span class="pr">D:\&gt;</span><span class="cmd">python --version</span>
+<span class="out">Python 3.14.6</span>
+<span class="warn">（版本号不重要，能打印出来就说明 PATH 配好了）</span></pre>
+  </div>
+</div>
+
+<h3 id="s5a">5.1 node</h3>
+
+<p><code>node</code> 后面跟一个 <code>.js</code> 文件就能跑。先写一个最小的：</p>
+
+<div class="code-wrap"><div class="bar"><span class="dot r"></span><span class="dot y"></span><span class="dot g"></span><span class="name">hello.js</span><span class="cp">复制</span></div><pre>console.log("Hello from Node.js");
+console.log("Node 版本:", process.version);
+console.log("当前目录:", process.cwd());
+console.log("参数:", process.argv.slice(2));</pre></div>
+
+<div class="term">
+  <div class="tbar"><span class="d r"></span><span class="d y"></span><span class="d g"></span>
+    <span>运行</span></div>
+<pre><span class="pr">D:\Path\To&gt;</span><span class="cmd">node hello.js alpha beta</span>
+<span class="out">Hello from Node.js</span>
+<span class="out">Node 版本: v24.16.0</span>
+<span class="out">当前目录: D:\Path\To</span>
+<span class="out">参数: [ 'alpha', 'beta' ]</span></pre>
+</div>
+
+<table>
+<thead><tr><th style="width:34%">写法</th><th>作用</th></tr></thead>
+<tbody>
+<tr><td class="c">node 文件.js</td><td>运行一个脚本文件</td></tr>
+<tr><td class="c">node 文件.js a b</td><td>带参数运行，脚本里用 <code>process.argv</code> 取</td></tr>
+<tr><td class="c">node -e "代码"</td><td><b>直接执行一行</b>，不建文件。适合快速算个东西</td></tr>
+<tr><td class="c">node</td><td>进入交互模式（REPL），敲一行执行一行，<code>.exit</code> 退出</td></tr>
+</tbody>
+</table>
+
+<div class="term">
+  <div class="tbar"><span class="d r"></span><span class="d y"></span><span class="d g"></span>
+    <span>-e 直接算一行</span></div>
+<pre><span class="pr">D:\&gt;</span><span class="cmd">node -e "console.log(1+2)"</span>
+<span class="out">3</span></pre>
+</div>
+
+<div class="card key">
+  <div class="card-t">node 里取三样「环境信息」</div>
+  <div class="code-wrap" style="margin-top:10px"><div class="bar"><span class="dot r"></span><span class="dot y"></span><span class="dot g"></span><span class="name">对应的写法</span><span class="cp">复制</span></div><pre>process.argv.slice(2)      <span class="hl-c">// 命令行参数（去掉 node 和文件名）</span>
+process.cwd()              <span class="hl-c">// 当前工作目录（= cmd 里的 %CD%）</span>
+process.env.UME_ROOT       <span class="hl-c">// 读环境变量（= cmd 里的 %UME_ROOT%）</span>
+process.exitCode = 1       <span class="hl-c">// 设置退出码，供批处理判断</span></pre></div>
+  <p>最后一行很重要：<b>它和批处理的 <code>%ERRORLEVEL%</code> 是同一个东西</b>。
+  node 脚本想告诉批处理「我失败了」，就设 <code>process.exitCode = 1</code>。</p>
+</div>
+
+<h3 id="s5b">5.2 npm</h3>
+
+<p><b>npm</b> 是 node 的包管理器，但它有个更有用的功能：
+<b>把常用命令写进 <code>package.json</code>，用 <code>npm run 名字</code> 调用</b>。</p>
+
+<h4>先造一个项目</h4>
+<div class="term">
+  <div class="tbar"><span class="d r"></span><span class="d y"></span><span class="d g"></span>
+    <span>npm init -y 生成 package.json</span></div>
+<pre><span class="pr">D:\Path\To\demo&gt;</span><span class="cmd">npm init -y</span>
+<span class="out">Wrote to D:\Path\To\demo\package.json:</span>
+<span class="out">{</span>
+<span class="out">  "name": "demo",</span>
+<span class="out">  "version": "1.0.0",</span>
+<span class="out">  "main": "index.js",</span>
+<span class="out">  "scripts": {</span>
+<span class="out">    "test": "echo \"Error: no test specified\" &amp;&amp; exit 1"</span>
+<span class="out">  },</span>
+<span class="out">  "license": "ISC"</span>
+<span class="out">}</span></pre>
+</div>
+
+<p><code>-y</code> 是「所有问题都用默认答案」。生成的 <code>package.json</code>
+就是这个项目的「说明书」。</p>
+
+<h4>核心用法：<code>scripts</code></h4>
+<div class="code-wrap"><div class="bar"><span class="dot r"></span><span class="dot y"></span><span class="dot g"></span><span class="name">package.json（节选）</span><span class="cp">复制</span></div><pre>{
+  "name": "ume-demo",
+  "version": "1.0.0",
+  "scripts": {
+    "hello": "node -e \"console.log('hello from npm script')\"",
+    "build": "echo building...",
+    "check": "node check.js"
+  }
+}</pre></div>
+
+<div class="term">
+  <div class="tbar"><span class="d r"></span><span class="d y"></span><span class="d g"></span>
+    <span>npm run 名字</span></div>
+<pre><span class="pr">D:\Path\To\demo&gt;</span><span class="cmd">npm run hello</span>
+
+<span class="out">&gt; ume-demo@1.0.0 hello</span>
+<span class="out">&gt; node -e "console.log('hello from npm script')"</span>
+
+<span class="out">hello from npm script</span>
+
+<span class="pr">D:\Path\To\demo&gt;</span><span class="cmd">npm run</span>
+<span class="out">Scripts available in ume-demo@1.0.0 via `npm run`:</span>
+<span class="out">  hello</span>
+<span class="out">    node -e "console.log('hello from npm script')"</span>
+<span class="out">  build</span>
+<span class="out">    echo building...</span>
+<span class="out">  check</span>
+<span class="out">    node check.js</span></pre>
+</div>
+
+<p><b>注意最后那个 <code>npm run</code>（不带名字）会列出所有可用脚本</b> ——
+拿到一个陌生项目时，这是最先该敲的命令。</p>
+
+<h4>常用 npm 命令</h4>
+<table>
+<thead><tr><th style="width:36%">命令</th><th>作用</th></tr></thead>
+<tbody>
+<tr><td class="c">npm init -y</td><td>生成 <code>package.json</code></td></tr>
+<tr><td class="c">npm run</td><td><b>列出所有脚本</b></td></tr>
+<tr><td class="c">npm run 名字</td><td>执行某个脚本</td></tr>
+<tr><td class="c">npm install</td><td>按 <code>package.json</code> 装好全部依赖</td></tr>
+<tr><td class="c">npm install 包名</td><td>装一个新包</td></tr>
+<tr><td class="c">npm ls</td><td>看看装了什么</td></tr>
+<tr><td class="c">npm config get registry</td><td>看用的是哪个下载源</td></tr>
+</tbody>
+</table>
+
+<div class="term">
+  <div class="tbar"><span class="d r"></span><span class="d y"></span><span class="d g"></span>
+    <span>npm ls 与 npm config（本机实测）</span></div>
+<pre><span class="pr">D:\Path\To\demo&gt;</span><span class="cmd">npm ls</span>
+<span class="out">ume-demo@1.0.0 D:\Path\To\demo</span>
+<span class="out">`-- (empty)</span>
+
+<span class="pr">D:\Path\To\demo&gt;</span><span class="cmd">npm config get registry</span>
+<span class="out">https://registry.npmmirror.com</span>
+<span class="warn">（国内常用镜像源；默认官方源是 registry.npmjs.org）</span>
+
+<span class="pr">D:\Path\To\demo&gt;</span><span class="cmd">npm config get prefix</span>
+<span class="out">D:\nodejs\node_global</span>
+<span class="warn">（npm install -g 装的全局包会放这里）</span></pre>
+</div>
+
+<div class="card warn">
+  <div class="card-t">为什么 <code>npm</code> 能当命令用</div>
+  <p>因为 <code>npm</code> 本身就是个 <b>批处理文件</b>
+  （安装目录里能找到 <code>npm.cmd</code>）。</p>
+  <p>这顺带解释了一个常见报错：如果你写脚本时<b>写成 <code>npm.bat</code> 并调用它，
+  可能报权限或递归错误</b>。在批处理里调用 npm 要写成 <code>call npm run build</code>
+  （<code>call</code> 的作用见 5.4）。</p>
+</div>
+
+<h3 id="s5c">5.3 python</h3>
+
+<p>用法和 node 几乎对称：</p>
+
+<div class="code-wrap"><div class="bar"><span class="dot r"></span><span class="dot y"></span><span class="dot g"></span><span class="name">hello.py</span><span class="cp">复制</span></div><pre>import sys
+
+print("Hello from Python")
+print("Python 版本:", sys.version.split()[0])
+print("参数:", sys.argv[1:])</pre></div>
+
+<div class="term">
+  <div class="tbar"><span class="d r"></span><span class="d y"></span><span class="d g"></span>
+    <span>运行</span></div>
+<pre><span class="pr">D:\Path\To&gt;</span><span class="cmd">python hello.py alpha beta</span>
+<span class="out">Hello from Python</span>
+<span class="out">Python 版本: 3.14.6</span>
+<span class="out">参数: ['alpha', 'beta']</span>
+
+<span class="pr">D:\Path\To&gt;</span><span class="cmd">python -c "print(sum(range(1,101)))"</span>
+<span class="out">5050</span></pre>
+</div>
+
+<table>
+<thead><tr><th style="width:36%">写法</th><th>作用</th></tr></thead>
+<tbody>
+<tr><td class="c">python 文件.py</td><td>运行一个脚本文件</td></tr>
+<tr><td class="c">python 文件.py a b</td><td>带参数运行，脚本里用 <code>sys.argv</code> 取</td></tr>
+<tr><td class="c">python -c "代码"</td><td><b>直接执行一行</b></td></tr>
+<tr><td class="c">python</td><td>进入交互模式，<code>exit()</code> 退出</td></tr>
+<tr><td class="c">python -m 模块名</td><td>把模块当程序跑，见下</td></tr>
+</tbody>
+</table>
+
+<h4>python 里取三样「环境信息」</h4>
+<div class="code-wrap"><div class="bar"><span class="dot r"></span><span class="dot y"></span><span class="dot g"></span><span class="name">对应的写法</span><span class="cp">复制</span></div><pre>import sys, os
+
+sys.argv[1:]               <span class="hl-c"># 命令行参数（第 0 个是脚本名，所以要切掉）</span>
+os.getcwd()                <span class="hl-c"># 当前工作目录（= cmd 里的 %CD%）</span>
+os.environ.get("UME_ROOT") <span class="hl-c"># 读环境变量（= cmd 里的 %UME_ROOT%）</span>
+sys.exit(1)                <span class="hl-c"># 退出码 1，供批处理判断</span></pre></div>
+
+<div class="card warn">
+  <div class="card-t">python 在 cmd 里输出中文会乱码 —— 这是个真坑</div>
+  <p>同一个脚本，node 输出中文正常，<b>python 却打印出乱码</b>。
+  原因是 python 判断「输出到控制台」时会按 Windows 的默认编码走，而不是 UTF-8。</p>
+  <p>实测三种解法，<b>推荐前两种</b>：</p>
+
+  <h4 style="margin:12px 0 6px">解法 A：脚本里自己声明（最稳）</h4>
+  <div class="code-wrap"><div class="bar"><span class="dot r"></span><span class="dot y"></span><span class="dot g"></span><span class="name">写在脚本开头</span><span class="cp">复制</span></div><pre>import sys
+sys.stdout.reconfigure(encoding="utf-8")
+
+print("中文测试 OK")</pre></div>
+  <div class="out-wrap"><div class="cap">运行结果</div><pre>中文测试 OK</pre></div>
+
+  <h4 style="margin:12px 0 6px">解法 B：批处理里设环境变量（不改脚本）</h4>
+  <div class="code-wrap"><div class="bar"><span class="dot r"></span><span class="dot y"></span><span class="dot g"></span><span class="name">批处理里加一行</span><span class="cp">复制</span></div><pre><span class="hl-k">set</span> PYTHONIOENCODING=utf-8
+<span class="hl-f">python</span> report.py</pre></div>
+
+  <h4 style="margin:12px 0 6px">解法 C：走命令行参数</h4>
+  <div class="code-wrap"><div class="bar"><span class="dot r"></span><span class="dot y"></span><span class="dot g"></span><span class="name">只影响这一次运行</span><span class="cp">复制</span></div><pre><span class="hl-f">python</span> -X utf8 report.py</pre></div>
+
+  <p><b>注意解法 B 里 <code>set</code> 之后不要留尾随空格</b> ——
+  否则 python 会直接拒绝启动：</p>
+  <div class="out-wrap"><div class="cap">实测：值里带了空格就会这样</div><pre>Fatal Python error: preconfig_init_utf8_mode: invalid PYTHONUTF8 environment variable value</pre></div>
+</div>
+
+<h4><code>python -m</code> 有什么用</h4>
+<p><code>-m</code> 是「把某个模块当程序运行」。两个很实用的：</p>
+
+<div class="code-wrap"><div class="bar"><span class="dot r"></span><span class="dot y"></span><span class="dot g"></span><span class="name">常用 -m</span><span class="cp">复制</span></div><pre><span class="hl-c"># 装包（比直接敲 pip 更可靠，一定是当前这个 python 的 pip）</span>
+<span class="hl-f">python</span> -m pip install requests
+
+<span class="hl-c"># 建虚拟环境：给项目一个独立的包目录，不和系统混</span>
+<span class="hl-f">python</span> -m venv .venv
+
+<span class="hl-c"># 在某个目录起一个临时网页服务器（用来预览 UME.html 很方便）</span>
+<span class="hl-f">python</span> -m http.server 8000</pre></div>
+
+<div class="card tip">
+  <div class="card-t">为什么推荐 <code>python -m pip</code></div>
+  <p>如果机器上装了多个 python，直接敲 <code>pip</code> 可能装到<b>另一个</b> python 里去，
+  于是「明明装了却 import 不到」。</p>
+  <p>写 <code>python -m pip</code> 就<b>锁定了正在用的这个 python</b>，不会搞错。</p>
+</div>
+
+<h3 id="s5d">5.4 在批处理里调用它们：别忘了 <code>call</code></h3>
+
+<div class="card key">
+  <div class="card-t">一条关键规则</div>
+  <p>在批处理里调用<b>另一个 <code>.bat</code> / <code>.cmd</code></b>（<code>npm</code> 就是），
+  必须加 <code>call</code>：</p>
+  <div class="code-wrap" style="margin-top:10px"><div class="bar"><span class="dot r"></span><span class="dot y"></span><span class="dot g"></span><span class="name">对比</span><span class="cp">复制</span></div><pre><span class="hl-c">rem ❌ 不加 call：控制权交给 npm 后就不回来了，后面的都不执行</span>
+<span class="hl-f">npm</span> run build
+<span class="hl-f">echo</span> 这行不会被执行
+
+<span class="hl-c">rem ✅ 加 call：执行完回来继续</span>
+<span class="hl-k">call</span> <span class="hl-f">npm</span> run build
+<span class="hl-f">echo</span> 这行会执行</pre></div>
+  <p><b>原因</b>：不加 <code>call</code> 时，cmd 会把控制权<b>整个交给</b>被调用的批处理，
+  自己那行之后的内容就不再执行了。<code>call</code> 的意思是「去执行一下，然后回来」。</p>
+</div>
+
+<p><code>node.exe</code> 和 <code>python.exe</code> 是<b>可执行程序</b>（不是批处理），
+所以<b>不需要 <code>call</code></b>：</p>
+
+<div class="code-wrap"><div class="bar"><span class="dot r"></span><span class="dot y"></span><span class="dot g"></span><span class="name">对照</span><span class="cp">复制</span></div><pre><span class="hl-f">node</span> build.js            <span class="hl-c">rem ✅ 不用 call（node 是 exe）</span>
+<span class="hl-f">python</span> report.py         <span class="hl-c">rem ✅ 不用 call（python 是 exe）</span>
+<span class="hl-k">call</span> <span class="hl-f">npm</span> run build       <span class="hl-c">rem ✅ 要 call（npm 是 .cmd）</span>
+<span class="hl-k">call</span> other.bat           <span class="hl-c">rem ✅ 要 call（另一个批处理）</span></pre></div>
+
+<!-- ============================================================ -->
+<h2 id="s6"><span class="n">6</span>完整例子：一键检查环境</h2>
+
+<p>把前面所有东西合起来写一个实用脚本：
+<b>检查项目需要的工具是否都装好、版本对不对</b>。</p>
+
+<div class="code-wrap"><div class="bar"><span class="dot r"></span><span class="dot y"></span><span class="dot g"></span><span class="name">check_env.bat</span><span class="cp">复制</span></div><pre>@echo off
+chcp 65001 &gt;nul
+setlocal enabledelayedexpansion
+
+<span class="hl-c">rem ① 把工作目录钉在脚本所在处，后面相对路径才有准</span>
+<span class="hl-k">cd</span> /d <span class="hl-s">"%~dp0"</span>
+<span class="hl-f">echo</span> === UME 环境检查 ===
+<span class="hl-f">echo</span> 项目目录: %CD%
+<span class="hl-f">echo.</span>
+
+<span class="hl-c">rem ② 用一个变量累计失败次数</span>
+<span class="hl-f">set</span> FAIL=0
+
+<span class="hl-c">rem ③ 检查四个工具（where 找不到就返回非 0）</span>
+<span class="hl-k">for</span> %%T <span class="hl-k">in</span> (gcc node npm python) <span class="hl-k">do</span> (
+    <span class="hl-f">where</span> %%T &gt;nul 2&gt;&amp;1
+    <span class="hl-k">if</span> !ERRORLEVEL! <span class="hl-k">equ</span> <span class="hl-n">0</span> (
+        <span class="hl-k">for</span> /f <span class="hl-s">"delims="</span> %%P <span class="hl-k">in</span> (<span class="hl-s">'where %%T'</span>) <span class="hl-k">do</span> (
+            <span class="hl-f">echo</span> [OK]   %%T  -^&gt; %%P
+            <span class="hl-k">goto</span> :next_%%T
+        )
+    )
+    <span class="hl-f">echo</span> [缺失] %%T  请检查 PATH
+    <span class="hl-f">set</span> /a FAIL+=1
+    :next_%%T
+)
+
+<span class="hl-f">echo.</span>
+<span class="hl-k">if</span> !FAIL! <span class="hl-k">gtr</span> <span class="hl-n">0</span> (
+    <span class="hl-f">echo</span> 检查未通过：有 !FAIL! 个工具没找到
+    <span class="hl-k">exit</span> /b 1
+)
+<span class="hl-f">echo</span> 检查通过，可以开始编译
+<span class="hl-k">exit</span> /b 0</pre></div>
+
+<div class="term">
+  <div class="tbar"><span class="d r"></span><span class="d y"></span><span class="d g"></span>
+    <span>运行结果</span></div>
+<pre><span class="pr">D:\Path\To\project&gt;</span><span class="cmd">check_env.bat</span>
+<span class="out">=== UME 环境检查 ===</span>
+<span class="out">项目目录: D:\Path\To\project</span>
+<span class="out"></span>
+<span class="out">[OK]   gcc    -&gt; D:\Qt\Tools\mingw1310_64\bin\gcc.exe</span>
+<span class="out">[OK]   node   -&gt; D:\nodejs\node.exe</span>
+<span class="out">[OK]   npm    -&gt; D:\nodejs\npm.cmd</span>
+<span class="out">[OK]   python -&gt; C:\Users\Your_Username\AppData\Local\Python\bin\python.exe</span>
+<span class="out"></span>
+<span class="out">检查通过，可以开始编译</span>
+
+<span class="pr">D:\Path\To\project&gt;</span><span class="cmd">echo %ERRORLEVEL%</span>
+<span class="out">0</span></pre>
+</div>
+
+<p>这个脚本用到了本篇几乎所有知识点：</p>
+<table>
+<thead><tr><th style="width:34%">用到的</th><th>在哪</th></tr></thead>
+<tbody>
+<tr><td><code>@echo off</code> + <code>chcp 65001</code></td><td>开头固定两行（2.1 / 2.2）</td></tr>
+<tr><td><code>cd /d "%~dp0"</code></td><td>钉住工作目录（2.3 / 3.3）</td></tr>
+<tr><td><code>setlocal enabledelayedexpansion</code></td><td>为了在括号里用 <code>!FAIL!</code>（4.1）</td></tr>
+<tr><td><code>for %%T in (...)</code></td><td>遍历四个工具（3.4）</td></tr>
+<tr><td><code>!ERRORLEVEL!</code></td><td>括号内取退出码（4.1 / 4.2）</td></tr>
+<tr><td><code>where</code></td><td>查工具装在哪（F01 讲过）</td></tr>
+<tr><td><code>for /f</code></td><td>读 <code>where</code> 的输出（3.4）</td></tr>
+<tr><td><code>exit /b 数字</code></td><td>把结果作为退出码返回（4.2）</td></tr>
+</tbody>
+</table>
+
+<div class="card tip">
+  <div class="card-t">这个脚本怎么改进</div>
+  <p>实际的 <code>for</code> 里用 <code>goto</code> 跳标签是有点取巧的写法
+  （为了避免打印多行）。更简单的做法是只检查存在性，不打印路径：</p>
+  <div class="code-wrap" style="margin-top:10px"><div class="bar"><span class="dot r"></span><span class="dot y"></span><span class="dot g"></span><span class="name">更简洁的版本</span><span class="cp">复制</span></div><pre><span class="hl-k">for</span> %%T <span class="hl-k">in</span> (gcc node npm python) <span class="hl-k">do</span> (
+    <span class="hl-f">where</span> %%T &gt;nul 2&gt;&amp;1
+    <span class="hl-k">if</span> !ERRORLEVEL! <span class="hl-k">equ</span> <span class="hl-n">0</span> (<span class="hl-f">echo</span> [OK]   %%T) <span class="hl-k">else</span> (
+        <span class="hl-f">echo</span> [缺失] %%T
+        <span class="hl-f">set</span> /a FAIL+=1
+    )
+)</pre></div>
+  <p><b>够用就好</b> —— 脚本是给自己省事的，不必追求写得像正式程序。</p>
+</div>
+
+<h4>顺带：把它接进一键构建</h4>
+<div class="code-wrap"><div class="bar"><span class="dot r"></span><span class="dot y"></span><span class="dot g"></span><span class="name">build.bat</span><span class="cp">复制</span></div><pre>@echo off
+chcp 65001 &gt;nul
+<span class="hl-k">cd</span> /d <span class="hl-s">"%~dp0"</span>
+
+<span class="hl-c">rem ① 先检查环境，不通过就别往下走</span>
+<span class="hl-k">call</span> check_env.bat || <span class="hl-k">exit</span> /b 1
+
+<span class="hl-c">rem ② 清理旧产物</span>
+<span class="hl-k">if</span> <span class="hl-k">exist</span> build <span class="hl-f">rd</span> /s /q build
+<span class="hl-f">mkdir</span> build
+
+<span class="hl-c">rem ③ 编译每一个 .c 文件</span>
+<span class="hl-f">echo</span> 正在编译...
+<span class="hl-k">for</span> %%f <span class="hl-k">in</span> (src\*.c) <span class="hl-k">do</span> (
+    <span class="hl-f">gcc</span> -std=c99 -c <span class="hl-s">"%%f"</span> -o <span class="hl-s">"build\%%~nf.o"</span>
+    <span class="hl-k">if</span> !ERRORLEVEL! <span class="hl-k">neq</span> <span class="hl-n">0</span> (
+        <span class="hl-f">echo</span> 编译失败: %%f
+        <span class="hl-k">exit</span> /b 1
+    )
+)
+
+<span class="hl-c">rem ④ 链接</span>
+<span class="hl-f">gcc</span> build\*.o -o build\app.exe || <span class="hl-k">exit</span> /b 1
+
+<span class="hl-f">echo.</span>
+<span class="hl-f">echo</span> 构建完成: build\app.exe
+<span class="hl-k">exit</span> /b 0</pre></div>
+
+<p>注意 ③ 里面用了 <code>!ERRORLEVEL!</code> —— 因为在 <code>for</code> 的括号里，
+用 <code>%ERRORLEVEL%</code> 会拿到旧值（4.1 那个坑）。
+所以这个脚本开头也得有 <code>setlocal enabledelayedexpansion</code>。</p>
+
+<!-- ============================================================ -->
+<h2 id="s7"><span class="n">7</span>常见错误</h2>
+
+<h4>错误 1 · 中文变问号</h4>
+<div class="code-wrap"><div class="bar"><span class="dot r"></span><span class="dot y"></span><span class="dot g"></span><span class="name">对比</span><span class="cp">复制</span></div><pre><span class="hl-c">rem ❌ 存了中文却没切代码页</span>
+@echo off
+<span class="hl-f">echo</span> 开始编译
+
+<span class="hl-c">rem ✅ 第二行固定加上</span>
+@echo off
+chcp 65001 &gt;nul
+<span class="hl-f">echo</span> 开始编译</pre></div>
+<p>并确认文件另存为 <b>UTF-8 无 BOM</b>。</p>
+
+<h4>错误 2 · <code>set</code> 等号旁边留了空格</h4>
+<div class="code-wrap"><div class="bar"><span class="dot r"></span><span class="dot y"></span><span class="dot g"></span><span class="name">对比</span><span class="cp">复制</span></div><pre><span class="hl-f">set</span> NAME = UME        <span class="hl-c">rem ❌ 定义出的是 "NAME "，%NAME% 取不到</span>
+<span class="hl-f">set</span> NAME=UME          <span class="hl-c">rem ✅ 紧挨着写</span></pre></div>
+
+<h4>错误 3 · 括号里用 <code>%变量%</code></h4>
+<div class="code-wrap"><div class="bar"><span class="dot r"></span><span class="dot y"></span><span class="dot g"></span><span class="name">对比</span><span class="cp">复制</span></div><pre><span class="hl-k">for</span> %%f <span class="hl-k">in</span> (a b c) <span class="hl-k">do</span> (
+    <span class="hl-f">set</span> /a N+=1
+    <span class="hl-f">echo</span> %N%          <span class="hl-c">rem ❌ 永远是进括号前的值</span>
+    <span class="hl-f">echo</span> !N!          <span class="hl-c">rem ✅ 需要 enabledelayedexpansion</span>
+)</pre></div>
+
+<h4>错误 4 · 比较字符串没加引号</h4>
+<div class="code-wrap"><div class="bar"><span class="dot r"></span><span class="dot y"></span><span class="dot g"></span><span class="name">对比</span><span class="cp">复制</span></div><pre><span class="hl-k">if</span> %1==build <span class="hl-f">echo</span> hi     <span class="hl-c">rem ❌ 没传参数时语法错误，脚本崩</span>
+<span class="hl-k">if</span> <span class="hl-s">"%1"</span>==<span class="hl-s">"build"</span> <span class="hl-f">echo</span> hi  <span class="hl-c">rem ✅</span></pre></div>
+
+<h4>错误 5 · 忘了 <code>call</code></h4>
+<div class="code-wrap"><div class="bar"><span class="dot r"></span><span class="dot y"></span><span class="dot g"></span><span class="name">对比</span><span class="cp">复制</span></div><pre><span class="hl-f">npm</span> run build         <span class="hl-c">rem ❌ 后面的命令不执行了</span>
+<span class="hl-f">echo</span> 不会到这里
+
+<span class="hl-k">call</span> <span class="hl-f">npm</span> run build    <span class="hl-c">rem ✅</span>
+<span class="hl-f">echo</span> 会到这里</pre></div>
+
+<h4>错误 6 · 用 <code>exit</code> 而不是 <code>exit /b</code></h4>
+<div class="code-wrap"><div class="bar"><span class="dot r"></span><span class="dot y"></span><span class="dot g"></span><span class="name">对比</span><span class="cp">复制</span></div><pre><span class="hl-k">exit</span> <span class="hl-n">1</span>            <span class="hl-c">rem ❌ 把整个 cmd 窗口关了，双击时像「闪退」</span>
+<span class="hl-k">exit</span> /b <span class="hl-n">1</span>         <span class="hl-c">rem ✅ 只结束当前脚本并返回码 1</span></pre></div>
+
+<h4>错误 7 · 双击运行却没 <code>pause</code></h4>
+<div class="code-wrap"><div class="bar"><span class="dot r"></span><span class="dot y"></span><span class="dot g"></span><span class="name">对比</span><span class="cp">复制</span></div><pre><span class="hl-c">rem ❌ 双击后窗口一闪就没了，看不到任何输出</span>
+@echo off
+<span class="hl-f">echo</span> 做完了
+
+<span class="hl-c">rem ✅ 给别人双击的脚本，最后加一行</span>
+@echo off
+<span class="hl-f">echo</span> 做完了
+<span class="hl-f">pause</span></pre></div>
+
+<h4>错误 8 · python 输出中文乱码</h4>
+<div class="code-wrap"><div class="bar"><span class="dot r"></span><span class="dot y"></span><span class="dot g"></span><span class="name">对比</span><span class="cp">复制</span></div><pre><span class="hl-f">print</span>(<span class="hl-s">"中文"</span>)                       <span class="hl-c">rem ⚠ 在 cmd 里可能乱码</span>
+
+<span class="hl-k">import</span> sys
+sys.stdout.<span class="hl-f">reconfigure</span>(encoding=<span class="hl-s">"utf-8"</span>)   <span class="hl-c">rem ✅ 或设 PYTHONIOENCODING=utf-8</span>
+<span class="hl-f">print</span>(<span class="hl-s">"中文"</span>)</pre></div>
+
+<!-- ============================================================ -->
+<h2 id="s8"><span class="n">8</span>一页速查</h2>
+
+<h4>批处理骨架（照抄即可）</h4>
+<div class="code-wrap"><div class="bar"><span class="dot r"></span><span class="dot y"></span><span class="dot g"></span><span class="name">每个 .bat 都建议这样开头</span><span class="cp">复制</span></div><pre>@echo off
+chcp 65001 &gt;nul
+setlocal enabledelayedexpansion
+<span class="hl-k">cd</span> /d <span class="hl-s">"%~dp0"</span>
+
+<span class="hl-c">rem ... 你的命令 ...</span>
+
+<span class="hl-f">endlocal</span>
+<span class="hl-k">exit</span> /b 0</pre></div>
+
+<h4>语法速查</h4>
+<table>
+<thead><tr><th style="width:40%">想做的事</th><th>写法</th></tr></thead>
+<tbody>
+<tr><td>关掉命令回显</td><td class="c">@echo off</td></tr>
+<tr><td>切 UTF-8</td><td class="c">chcp 65001 &gt;nul</td></tr>
+<tr><td>注释</td><td class="c">rem 注释</td></tr>
+<tr><td>输出空行</td><td class="c">echo.</td></tr>
+<tr><td>定义变量</td><td class="c">set NAME=值</td></tr>
+<tr><td>用变量（括号外）</td><td class="c">%NAME%</td></tr>
+<tr><td>用变量（括号内）</td><td class="c">!NAME!</td></tr>
+<tr><td>算术</td><td class="c">set /a N=3*4+1</td></tr>
+<tr><td>开延迟展开</td><td class="c">setlocal enabledelayedexpansion</td></tr>
+<tr><td>算完收尾</td><td class="c">endlocal</td></tr>
+<tr><td>钉住脚本目录</td><td class="c">cd /d "%~dp0"</td></tr>
+<tr><td>第 1 个参数</td><td class="c">%1&nbsp;&nbsp;/&nbsp;&nbsp;全部 @ %*</td></tr>
+<tr><td>脚本所在目录</td><td class="c">%~dp0</td></tr>
+<tr><td>字符串比较</td><td class="c">if "%1"=="build" ( … ) else ( … )</td></tr>
+<tr><td>文件是否存在</td><td class="c">if exist build\app.exe …</td></tr>
+<tr><td>变量是否有值</td><td class="c">if defined NAME …</td></tr>
+<tr><td>失败就中止</td><td class="c">if %ERRORLEVEL% neq 0 exit /b 1</td></tr>
+<tr><td>成功才继续</td><td class="c">命令 &amp;&amp; 下一步</td></tr>
+<tr><td>失败才执行</td><td class="c">命令 || 报错</td></tr>
+<tr><td>循环一组值</td><td class="c">for %%f in (a b c) do …</td></tr>
+<tr><td>循环文件</td><td class="c">for %%f in (*.c) do …</td></tr>
+<tr><td>逐行读</td><td class="c">for /f "delims=" %%L in (file.txt) do …</td></tr>
+<tr><td>调用别的批处理</td><td class="c">call other.bat</td></tr>
+<tr><td>结束脚本（留窗口）</td><td class="c">exit /b 0</td></tr>
+<tr><td>覆盖 / 追加输出</td><td class="c">&gt; file&nbsp;&nbsp;/&nbsp;&nbsp;&gt;&gt; file</td></tr>
+<tr><td>合并错误输出</td><td class="c">命令 &gt; log.txt 2&gt;&amp;1</td></tr>
+<tr><td>丢掉输出</td><td class="c">&gt;nul</td></tr>
+<tr><td>暂停等按键</td><td class="c">pause</td></tr>
+</tbody>
+</table>
+
+<h4>三件套速查</h4>
+<table>
+<thead><tr><th style="width:32%">想做的事</th><th>写法</th></tr></thead>
+<tbody>
+<tr><td>跑 node 脚本</td><td class="c">node 文件.js 参数</td></tr>
+<tr><td>node 直接算一行</td><td class="c">node -e "代码"</td></tr>
+<tr><td>node 取参数 / 目录 / 环境变量</td>
+    <td class="c">process.argv / process.cwd() / process.env.X</td></tr>
+<tr><td>node 报告失败</td><td class="c">process.exitCode = 1</td></tr>
+<tr><td>建 npm 项目</td><td class="c">npm init -y</td></tr>
+<tr><td><b>看有哪些脚本</b></td><td class="c">npm run</td></tr>
+<tr><td>跑某个脚本</td><td class="c">npm run 名字</td></tr>
+<tr><td>装依赖</td><td class="c">npm install</td></tr>
+<tr><td>跑 python 脚本</td><td class="c">python 文件.py 参数</td></tr>
+<tr><td>python 直接算一行</td><td class="c">python -c "代码"</td></tr>
+<tr><td>python 取参数 / 目录 / 环境变量</td>
+    <td class="c">sys.argv / os.getcwd() / os.environ</td></tr>
+<tr><td>python 报告失败</td><td class="c">sys.exit(1)</td></tr>
+<tr><td>python 输出中文不乱码</td>
+    <td class="c">sys.stdout.reconfigure(encoding="utf-8")</td></tr>
+<tr><td>装包（推荐）</td><td class="c">python -m pip install 包名</td></tr>
+<tr><td>建虚拟环境</td><td class="c">python -m venv .venv</td></tr>
+<tr><td>起临时网页服务器</td><td class="c">python -m http.server 8000</td></tr>
+<tr><td>调用 npm（批处理里）</td><td class="c"><b>call</b> npm run build</td></tr>
+</tbody>
+</table>
+
+<div class="card key">
+  <div class="card-t">这一篇要记住的六句话</div>
+  <ol>
+    <li><b>批处理 = 把命令写进 <code>.bat</code>，从上到下一行行执行。</b></li>
+    <li><b>开头固定两行：<code>@echo off</code> + <code>chcp 65001 &gt;nul</code></b>，
+      文件存 UTF-8 无 BOM，中文才正常。</li>
+    <li><b>用 <code>cd /d "%~dp0"</code> 钉住工作目录</b>，
+      这样双击和命令行运行结果一致。</li>
+    <li><b>括号里要用 <code>!变量!</code></b>（先开
+      <code>setlocal enabledelayedexpansion</code>），
+      用 <code>%变量%</code> 拿到的是旧值。</li>
+    <li><b>判断成败用 <code>if %ERRORLEVEL% neq 0</code> 或 <code>&amp;&amp;</code> / <code>||</code></b>；
+      脚本里结束用 <code>exit /b</code>，别用 <code>exit</code>。</li>
+    <li><b>在批处理里调用 npm 要写 <code>call npm …</code></b>；
+      node / python 是 exe，不用 call。</li>
+  </ol>
+</div>
+
+<div class="card note">
+  <div class="card-t">下一步</div>
+  <p>到这里，命令行这条线就完整了：</p>
+  <table style="margin:8px 0 0">
+  <thead><tr><th style="width:26%">文档</th><th>讲了什么</th></tr></thead>
+  <tbody>
+  <tr><td>08-F01</td><td>命令提示符初步：怎么打开、基本命令</td></tr>
+  <tr><td>08-F02</td><td>相对路径与环境变量宏</td></tr>
+  <tr><td>08-F03</td><td>编译与链接、头文件与库</td></tr>
+  <tr><td><b>08-E02</b></td><td><b>批处理进阶：把命令写成脚本，接上 node / npm / python</b></td></tr>
+  </tbody></table>
+  <p style="margin-top:10px">建议做一件事：<b>把项目里你重复敲过三次以上的那串命令，
+  写成一个 <code>.bat</code>。</b>这是学会批处理最快的方式。</p>
+</div>
+
+
+
+<!-- NAV-AUTO -->
+<a class="home-fab" href="../../index.html" title="返回教程总目录">返回 home</a>
+
+</div>
+
+</div>
+<!-- /NAV-AUTO -->
+<footer>
+UME 项目组内部教程 · 08-E02（Extra）《批处理与命令提示符进阶》<br>
+文中所有命令、批处理行为与版本号，均在本机（Windows 11 · cmd · node v24.16.0 · npm 11.13.0 · Python 3.14.6）实际运行核对；<br>
+其中 <code>gcc</code> 编译步骤使用 gcc 13.1.0 实际编译核对。
+代码示例均以 <b>Consolas</b> 等宽字体呈现。
+</footer>
+</main>
+</div>
+
+<script>
+/* 目录滚动高亮 */
+(function(){
+  const links = [...document.querySelectorAll('#toc a')];
+  const targets = links.map(a => document.querySelector(a.getAttribute('href'))).filter(Boolean);
+  const setOn = id => links.forEach(a => a.classList.toggle('on', a.getAttribute('href') === '#'+id));
+  const io = new IntersectionObserver(es => {
+    const vis = es.filter(e => e.isIntersecting)
+                  .sort((a,b) => a.boundingClientRect.top - b.boundingClientRect.top);
+    if (vis[0]) setOn(vis[0].target.id);
+  }, { rootMargin:'-8% 0px -72% 0px', threshold:0 });
+  targets.forEach(t => io.observe(t));
+})();
+
+/* 复制按钮 */
+(function(){
+  document.querySelectorAll('.code-wrap').forEach(box => {
+    const btn = box.querySelector('.cp');
+    const pre = box.querySelector('pre');
+    if (!btn || !pre) return;
+    btn.addEventListener('click', async () => {
+      const text = pre.textContent;
+      try { await navigator.clipboard.writeText(text); }
+      catch (e) {
+        const ta = document.createElement('textarea');
+        ta.value = text; document.body.appendChild(ta);
+        ta.select(); document.execCommand('copy'); ta.remove();
+      }
+      const old = btn.textContent;
+      btn.textContent = '已复制 ✓';
+      setTimeout(() => { btn.textContent = old; }, 1200);
+    });
+  });
+})();
+</script>
+<script>
+/* 移动端：生成「目录」按钮，点击呼出/收起侧滑目录 */
+(function(){
+  var toc = document.getElementById('toc');
+  if (!toc) return;
+  var btn = document.createElement('button');
+  btn.id = 'tocToggle';
+  btn.type = 'button';
+  btn.setAttribute('aria-controls','toc');
+  btn.textContent = '目录';
+  document.body.appendChild(btn);
+
+  function setOpen(on){
+    toc.classList.toggle('open', on);
+    document.body.classList.toggle('toc-open', on);
+    btn.setAttribute('aria-expanded', on ? 'true' : 'false');
+    btn.textContent = on ? '收起' : '目录';
+  }
+  btn.addEventListener('click', function(){
+    setOpen(!toc.classList.contains('open'));
+  });
+  /* 点目录里的链接后自动收起；点遮罩（#toc 之外的区域）也收起 */
+  toc.addEventListener('click', function(e){
+    if (e.target.closest('a')) setOpen(false);
+  });
+  document.addEventListener('click', function(e){
+    if (!toc.classList.contains('open')) return;
+    if (e.target === toc || toc.contains(e.target) || e.target === btn) return;
+    setOpen(false);
+  });
+  document.addEventListener('keydown', function(e){
+    if (e.key === 'Escape') setOpen(false);
+  });
+  /* 窄屏进入页面时默认收起，宽屏则清掉状态 */
+  function sync(){ if (window.innerWidth > 980) setOpen(false); }
+  window.addEventListener('resize', sync);
+  sync();
+})();
+</script>
+<script src="assets/series-common.js"></script>
+</body>
+</html>

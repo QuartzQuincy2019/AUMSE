@@ -19,7 +19,7 @@ Q02 那一篇我写了个专用脚本，E03 又要一份几乎一样的 —— �
         --title "语法糖" --css e03_syntactic_sugar.css \
         --subtitle "语法糖：arr[i] 与 arr[i][j] 背后的东西" \
         --tags "要求 C++|从数组下标说起" \
-        --file e03-syntactic-sugar.html [--star]
+        --file e03.html [--star]
 """
 import argparse
 import io

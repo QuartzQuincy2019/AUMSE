@@ -40,28 +40,28 @@ FE = os.path.join(A, "fe-data.js")
 
 # 非 FE 各篇的编号前缀 → 系列 key
 #   t01… → T ，f01… → F ，m01… → M ，r01… → R ，q01… → Q ，e01… → E
-# 注意 fe-03-F01.html 属于 FE，不能按 f 开头算成 F。
+# 注意 r04.html 属于 FE，不能按 f 开头算成 F。
 HELPER = """
   /* 「全部系列」的篇数**现算**，不写死。
      写死的代价：系列一长就没人想起来改 —— 之前这里一直显示
      Q（1 篇）/ E（2 篇）/ FE（8 篇），全是旧的。
-     规则：看文件名前缀；fe- 开头的一律算 FE（fe-03-F01.html 也是 FE），
+     规则：看文件名前缀；fe- 开头的一律算 FE（r04.html 也是 FE），
      其余按第一个字母对应系列。 */
   var SERIES_FILES = [
-    't01-mongolian-script-intro.html','t02-unicode-and-encoding.html',
-    't03-font-file-anatomy.html',
-    'f01-command-prompt.html','f02-paths-and-env.html',
-    'f03-compile-and-link.html',
-    'm01-c-arrays.html','m02-c-functions.html','m03-c-types.html',
-    'm04-c-pointers.html','m05-memory.html','m06-class-struct.html',
-    'm07-scope.html','m08-c-strings.html','m09-vector-and-array.html',
-    'r01-font-design-metrics.html','r02-bubble-sort.html',
-    'r03-collation.html',
-    'q01-std-and-namespace.html','q02-references.html',
-    'q03-pointers-to-objects.html','q04-interfaces.html',
-    'e01-recursion.html','e02-batch-and-cmd.html',
-    'e03-syntactic-sugar.html',
-    'fe-01.html','fe-02.html','fe-03-F01.html','fe-03.html','fe-04.html',
+    't01.html','t02.html',
+    't03.html',
+    'f01.html','f02.html',
+    'f03.html',
+    'm01.html','m02.html','m03.html',
+    'm04.html','m05.html','m06.html',
+    'm07.html','m08.html','m09.html',
+    'r01.html','r02.html',
+    'r03.html',
+    'q01.html','q02.html',
+    'q03.html','q04.html',
+    'e01.html','e02.html',
+    'e03.html',
+    'fe-01.html','fe-02.html','r04.html','fe-03.html','fe-04.html',
     'fe-05.html','fe-06.html','fe-07.html','fe-08.html'
   ];
 

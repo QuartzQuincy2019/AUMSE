@@ -16,7 +16,7 @@ except Exception:
     pass
 
 REPO = r"E:\QKMansion\CSX10\w\UME"
-OUT = os.path.join(REPO, "SharingGroup", "tutorials", "t03-font-file-anatomy.html")
+OUT = os.path.join(REPO, "SharingGroup", "tutorials", "t03.html")
 
 BODY = r"""<h1>字体文件结构大揭秘</h1>
 <p class="sub-title">UME 项目组内部教程 · 理论系列 T03 · 深入到字体文件内部</p>

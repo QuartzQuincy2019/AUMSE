@@ -25,9 +25,9 @@ except Exception:
 
 T = r"E:\QKMansion\CSX10\w\UME\SharingGroup\tutorials"
 
-FILES = ["t01-mongolian-script-intro.html",
-         "t02-unicode-and-encoding.html",
-         "t03-font-file-anatomy.html"]
+FILES = ["t01.html",
+         "t02.html",
+         "t03.html"]
 
 THEME_LINK = '<link rel="stylesheet" href="assets/t-theme.css">'
 COMMON_JS = '<script src="assets/t-common.js"></script>'

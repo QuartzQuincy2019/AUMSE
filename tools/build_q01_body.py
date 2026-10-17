@@ -45,7 +45,7 @@ SNAP = os.path.join(R, "tools", "_q01_orig_snapshot.html")
 if not os.path.exists(SNAP):
     raise SystemExit("  !! 缺少快照 %s\n"
                      "     用 git show HEAD:SharingGroup/tutorials/"
-                     "q01-std-and-namespace.html 生成它" % SNAP)
+                     "q01.html 生成它" % SNAP)
 
 src = io.open(SNAP, encoding="utf-8").read()
 mi = src.index("<main>")

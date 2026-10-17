@@ -65,7 +65,7 @@ def main():
     for f in sorted(os.listdir(T)):
         # fe-01 … fe-08，外加 fe-03-F01 —— 它也是 FE 系列的一篇。
         # 第一版只写了 fe-0[1-7]，把它漏了（正则里的 [1-7] 后面
-        # 直接跟 \.html，而 fe-03-F01.html 中间还有 -F01）。
+        # 直接跟 \.html，而 r04.html 中间还有 -F01）。
         if not re.match(r"^fe-0[1-8](-F\d+)?\.html$", f):
             continue
         if f == "fe-08.html":

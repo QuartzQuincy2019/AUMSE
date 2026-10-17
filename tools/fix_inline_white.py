@@ -5,7 +5,7 @@
 这正是「用户报一个、我补一个」最容易漏掉的一类。
 
 实测 5 处：
-  t02-unicode-and-encoding.html  x4   流程图的节点（.pipeline 的子 div）
+  t02.html  x4   流程图的节点（.pipeline 的子 div）
   fe-07.html                     x1
 
 修法：内联的 #fff 改成 var(--sfc)。

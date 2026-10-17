@@ -764,6 +764,6 @@ a:hover { <span class="hl-k">color</span>: <span class="hl-n">#1f6feb</span>; } 
 </div>"""
 
 if __name__ == "__main__":
-    print(build("fe-03-F01.html", "FE-03-F01", "十六进制颜色模型、HSV 与 Alpha",
+    print(build("r04.html", "FE-03-F01", "十六进制颜色模型、HSV 与 Alpha",
                 BODY3F1, TOC3F1))
     print(build("fe-03.html", "FE-03", "CSS 入门", BODY03, TOC03))

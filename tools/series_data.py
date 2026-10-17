@@ -125,85 +125,92 @@ PAGE_ORDER = ORDER + ["FE"]
 # ---------------------------------------------------------------- 篇目表
 # (当前文件名, 新文件名, 系列, 新编号, 标题, 一句话说明, 星标)
 PAGES = [
+    # 第一个字段是磁盘上的当前文件名，第二个是目标文件名 —— 两者现已相等，
+    # 因为短名重构已经落盘。短名规则：<编号小写>.html（M01 → m01.html，
+    # 与 FE 的 fe-NN 一致）。加篇目时直接按这个规则起名。
+
     # ---- M：课本主线（原 01~09）----
-    ("01-c-arrays.html",              "m01-c-arrays.html",
+    ("m01.html", "m01.html",
      "M", "M01", "数组初步", "一排数据怎么存、怎么遍历", False),
-    ("02-c-functions.html",           "m02-c-functions.html",
+    ("m02.html", "m02.html",
      "M", "M02", "函数初步", "重复的代码怎么打包复用", False),
-    ("03-c-types.html",               "m03-c-types.html",
+    ("m03.html", "m03.html",
      "M", "M03", "类型概论", "数据在内存里占多宽、怎么解释", False),
-    ("04-c-pointers.html",            "m04-c-pointers.html",
+    ("m04.html", "m04.html",
      "M", "M04", "指针初步", "地址是什么、怎么顺着地址改数据", False),
-    ("05-memory.html",                "m05-memory.html",
+    ("m05.html", "m05.html",
      "M", "M05", "静态、动态内存与内存安全初步", "内存从哪来、怎么还、怎么不崩", False),
-    ("06-class-struct.html",          "m06-class-struct.html",
+    ("m06.html", "m06.html",
      "M", "M06", "类、结构体", "数据和行为怎么打包、怎么保护", False),
-    ("07-scope.html",                 "m07-scope.html",
+    ("m07.html", "m07.html",
      "M", "M07", "作用域、全局与局部变量", "一个名字能被谁看见、活多久", False),
-    ("08-c-strings.html",             "m08-c-strings.html",
+    ("m08.html", "m08.html",
      "M", "M08", "C 风格字符串", "一串文字怎么存、\\0 为什么重要", False),
-    ("09-vector-and-array.html",      "m09-vector-and-array.html",
+    ("m09.html", "m09.html",
      "M", "M09", "vector 和 array", "重点：vector", False),
 
     # ---- Q：C++ 与 Qt ----
-    ("10-std-and-namespace.html",     "q01-std-and-namespace.html",
+    ("q01.html", "q01.html",
      "Q", "Q01", "std 与命名空间初步", "从这里进入 C++：std:: 是什么、using 该不该用", False),
-    ("q02-references.html",             "q02-references.html",
+    ("q02.html", "q02.html",
      "Q", "Q02", "C++ 的引用", "重点：引用是什么、与指针的关系", True),
-    ("q03-pointers-to-objects.html",  "q03-pointers-to-objects.html",
+    ("q03.html", "q03.html",
      "Q", "Q03", "指针进阶：指向对象的指针与引用", "按引用传递的必要性；传递指针与传递引用的分工", True),
-    ("q04-interfaces.html",        "q04-interfaces.html",
+    ("q04.html", "q04.html",
      "Q", "Q04", "接口", "接口的定义与常见用途；Actor 的 public 区", True),
-    ("q05-open-closed.html",      "q05-open-closed.html",
+    ("q05.html", "q05.html",
      "Q", "Q05", "开闭原则", "为什么不能什么都塞进一个类；耦合的代价与拆分方向", True),
-    ("q06-components.html",      "q06-components.html",
+    ("q06.html", "q06.html",
      "Q", "Q06", "组件化编程与解耦合", "什么叫耦合、高耦合的代价、组件化的三条准则", True),
-    ("q07-homework1.html",      "q07-homework1.html",
+    ("q07.html", "q07.html",
      "Q", "Q07", "代码复用性和扩展性", "从一道作业题看：数据与逻辑分开、给反复出现的东西一个类型", True),
 
     # ---- E：补充练习 ----
-    ("08-e01-recursion.html",         "e01-recursion.html",
+    ("e01.html", "e01.html",
      "E", "E01", "递归", "函数自己调用自己", False),
-    ("08-e02-batch-and-cmd.html",     "e02-batch-and-cmd.html",
+    ("e02.html", "e02.html",
      "E", "E02", "批处理与命令提示符进阶", "把命令写成 .bat 一键重跑，接上 node / npm / python", False),
-    ("e03-syntactic-sugar.html",      "e03-syntactic-sugar.html",
+    ("e03.html", "e03.html",
      "E", "E03", "语法糖", "arr[i] 与 arr[i][j] 背后的东西；跨语言的概念", False),
 
     # ---- F：文件操作基础 ----
-    ("08-f01-command-prompt.html",    "f01-command-prompt.html",
+    ("f01.html", "f01.html",
      "F", "F01", "命令提示符（cmd）初步", "重点：常用命令（含 npm install）", True),
-    ("08-f02-paths-and-env.html",     "f02-paths-and-env.html",
+    ("f02.html", "f02.html",
      "F", "F02", "相对文件路径与宏", "重点：相对路径、宏的广义定义", True),
-    ("08-f03-compile-and-link.html",  "f03-compile-and-link.html",
+    ("f03.html", "f03.html",
      "F", "F03", "编译与链接、头文件与库", "重点：cpp→exe / 编译期与运行时 / 头文件与库；静态库为选修", True),
 
     # ---- T：核心理论 ----
-    ("t01-mongolian-script-intro.html", "t01-mongolian-script-intro.html",
+    ("t01.html", "t01.html",
      "T", "T01", "初识回鹘蒙文", "拉丁转写 / 字形·连字·连写 / 连写文字系统 / 联合蒙文转写", True),
-    ("t02-unicode-and-encoding.html",   "t02-unicode-and-encoding.html",
+    ("t02.html", "t02.html",
      "T", "T02", "Unicode 和编码", "重点：Unicode 的定义、编码与变长编码规则", True),
-    ("t03-font-file-anatomy.html",      "t03-font-file-anatomy.html",
+    ("t03.html", "t03.html",
      "T", "T03", "字体文件结构大揭秘", "基于 Noto Sans Mongolian：表结构 / GSUB / 字形名里的音节", True),
 
     # ---- R：相关信息与理论 ----
     # R01 定位是「背景知识，了解即可」，所以不标重点；
-    # R03 是 R 系列里最实用的一篇（字典序 / 自然序 / 中文排序），标重点。
-    ("r01-font-design-metrics.html",    "r01-font-design-metrics.html",
+    # R03 是 R 系列里最实用的一篇（字典序 / 自然序 / 中文排序），标重点；
+    # R04 原为 FE-03-F01（十六进制颜色模型），改归 R 系列。
+    ("r01.html", "r01.html",
      "R", "R01", "字体设计里的几个基本概念",
      "EM Square / 基线 / 上下悬线 / 大写字高与 x 字高；了解即可", False),
-    ("r02-bubble-sort.html",            "r02-bubble-sort.html",
+    ("r02.html", "r02.html",
      "R", "R02", "冒泡排序与算法复杂度",
      "从「把一排数字排好」引入：冒泡及其两次优化 / O(n²) 与 O(n log n)", False),
-    ("r03-collation.html",              "r03-collation.html",
+    ("r03.html", "r03.html",
      "R", "R03", "字典序、自然序与 QCollator",
      "重点：字符串怎么比大小 / 中文为什么排不对 / QCollator 拼音序与自然序", True),
+    ("r04.html", "r04.html",
+     "R", "R04", "十六进制颜色模型、HSV 与 Alpha",
+     "重点：十六进制颜色模型、Alpha 通道", True),
 ]
 
 # ---------------------------------------------------------------- 前端系列
 FE_PAGES = [
     ("fe-01.html",     "FE-01",     "HTML 入门与标签语法",            "所写即所得、注释、空格无效性",              ["HTML"], False),
     ("fe-02.html",     "FE-02",     "HTML 常用标签",                 "p / i / strong / span / ul / div / form / table / a", ["HTML"], False),
-    ("fe-03-F01.html", "FE-03-F01", "十六进制颜色模型、HSV 与 Alpha", "重点：十六进制颜色模型、Alpha 通道",         ["CSS"],  True),
     ("fe-03.html",     "FE-03",     "CSS 入门",                      "字体、背景色、字体色、装饰、阴影、cursor",   ["CSS"],  False),
     ("fe-04.html",     "FE-04",     "CSS 选择器语法",                 "标签/类/id、后代、属性限定、伪类、伪元素", ["CSS"], False),
     ("fe-05.html",     "FE-05",     "Display 与盒模型尺寸",           "block / inline-block / inline、边框、阴影、宽高", ["CSS"], False),
@@ -286,16 +293,18 @@ SERIES_LANG = {
 # 若做成追加，想「拿掉系列默认语言」就没法表达了。
 PAGE_LANG = {
     # M09 讲 vector / array —— 那是 C++ 标准库，不是 C
-    "m09-vector-and-array.html": ["C++"],
+    "m09.html": ["C++"],
     # E02 是批处理（.bat），与 E 系列默认的 C++ 不同
-    "e02-batch-and-cmd.html": ["Shell"],
+    "e02.html": ["Shell"],
     # R01 只讲字体度量（EM Square / x 字高 / 行高），一个编程语言例子都没有；
     # 它讲的东西正是 CSS 关心的，所以归 CSS（与首页卡片一致）。
-    "r01-font-design-metrics.html": ["CSS"],
+    "r01.html": ["CSS"],
     # R03 讲蒙古文排序，正文用的是 Qt 的 QString 相关接口
-    "r03-collation.html": ["Qt"],
+    "r03.html": ["Qt"],
     # FE-09 同时是 Qt 与 JS：DOM 那半是 JS，与 Qt 对照那半是 Qt
     "fe-09.html": ["Qt", "JS"],
+    # R04 原 FE-03-F01：讲颜色模型，语言标识是 CSS
+    "r04.html": ["CSS"],
 }
 LANG_CLS = {"HTML": "html", "CSS": "css", "JS": "js",
             "C++": "cpp", "C": "c", "Shell": "sh", "Python": "py",

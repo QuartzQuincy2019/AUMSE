@@ -172,7 +172,7 @@ def insert_before(src, marker, snippet):
 
 def main():
     # ================= T02 =================
-    p2 = os.path.join(T, "t02-unicode-and-encoding.html")
+    p2 = os.path.join(T, "t02.html")
     t = io.open(p2, encoding="utf-8").read()
 
     if "demo-bytes" in t:

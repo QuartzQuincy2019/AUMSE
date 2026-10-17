@@ -51,5 +51,5 @@ picker_intro = """<h2 id="s7"><span class="n">7</span>颜色拾取器</h2>
 
 body = body.replace(marker, picker_intro, 1)
 
-print(build("fe-03-F01.html", "FE-03-F01", "十六进制颜色模型、HSV 与 Alpha",
+print(build("r04.html", "FE-03-F01", "十六进制颜色模型、HSV 与 Alpha",
             body, toc, with_picker=True))

@@ -25,9 +25,9 @@ def chk(cond, msg):
 
 
 print("1. 示例名字已换成抽象的")
-q3 = io.open(os.path.join(A, "..", "q03-pointers-to-objects.html"),
+q3 = io.open(os.path.join(A, "..", "q03.html"),
              encoding="utf-8").read()
-q4 = io.open(os.path.join(T, "q04-interfaces.html"), encoding="utf-8").read()
+q4 = io.open(os.path.join(T, "q04.html"), encoding="utf-8").read()
 old_names = ["灰羽", "小灰", "北境"]
 for f, t in (("q03", q3), ("q04", q4)):
     left = [n for n in old_names if n in t]
@@ -39,7 +39,7 @@ chk("University of Naiwa" in q3 and "University of Naiwa" in q4,
 
 print()
 print("2. T02 的收尾卡已删")
-t02 = io.open(os.path.join(T, "t02-unicode-and-encoding.html"),
+t02 = io.open(os.path.join(T, "t02.html"),
               encoding="utf-8").read()
 chk("教程到这里就结束了" not in t02, "T02 里没有「教程到这里就结束了」")
 chk("七讲正文" not in t02, "T02 里那张回顾卡已整张删除")
@@ -58,10 +58,10 @@ for f in ("series-common.js", "fe-data.js"):
 
 print()
 print("4. T03 的 R01 延伸链接 + 样式")
-t03 = io.open(os.path.join(T, "t03-font-file-anatomy.html"),
+t03 = io.open(os.path.join(T, "t03.html"),
               encoding="utf-8").read()
 chk('class="see-also"' in t03, "T03 有 .see-also 块")
-chk('href="r01-font-design-metrics.html"' in t03, "T03 链到 R01")
+chk('href="r01.html"' in t03, "T03 链到 R01")
 gl = io.open(os.path.join(A, "genelayout.css"), encoding="utf-8").read()
 chk(".see-also{" in gl, "genelayout.css 有 .see-also 样式")
 chk(".see-also a{" in gl, "样式里有 .see-also a")

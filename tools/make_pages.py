@@ -50,11 +50,11 @@ FE = [(a, b, c, d, e, f) for a, b, c, d, e, f in FE_PAGES]
 SERIES_LANG = {"T": "HTML", "F": "Shell", "M": "C++",
                "Q": "C++", "R": "C++", "E": "C++"}
 PAGE_LANG = {
-    "e02-batch-and-cmd.html": "Shell",
+    "e02.html": "Shell",
     # R01 讲的是字体度量（EM Square / x 字高 / 行高），里面一个编程语言例子
     # 都没有 —— 归到 R 系列的默认 C++ 会误导。它讲的东西是 CSS 关心的，
     # 而且教程页自己的语言徽章也是 CSS，这里必须与之一致。
-    "r01-font-design-metrics.html": "CSS",
+    "r01.html": "CSS",
 }
 
 
@@ -347,7 +347,7 @@ STYLE = STYLE.replace(
 
 
 CARD_BG = {
-    "q07-homework1.html": "SharingGroup/tutorials/assets/第04次作业第1题.png",
+    "q07.html": "SharingGroup/tutorials/assets/第04次作业第1题.png",
 }
 
 

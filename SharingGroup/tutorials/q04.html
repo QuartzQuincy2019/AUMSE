@@ -1,0 +1,588 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Q04 · 接口</title>
+<link rel="stylesheet" href="assets/genelayout.css">
+<link rel="stylesheet" href="assets/q04.css">
+<link rel="stylesheet" href="assets/series-theme.css">
+<link rel="stylesheet" href="assets/tg_L.css">
+<link rel="stylesheet" href="assets/tg_D.css">
+
+</head>
+<body class="qseries" data-series="Q">
+<div id="shell">
+
+<nav id="toc">
+  <h5>目录</h5>
+  <a href="#s1">1 · 先看问题：数据藏起来了，外面怎么改</a>
+  <a href="#s2">2 · 接口长什么样：六个成员函数</a>
+  <a href="#s3">3 · 怎么用：从外面改一个私有成员</a>
+  <a href="#s4">4 · 为什么要接口：把「怎么改」收进类里</a>
+  <a href="#s5">5 · 接口的常见用途</a>
+  <a href="#s6">6 · 接口和实现的分界：private 与 public</a>
+  <a href="#s7">7 · 一页速查</a>
+</nav>
+
+<main>
+<h1>接口<span class="star" title="与本项目施行密切相关">*</span></h1>
+<p class="sub-title">UME 项目组内部教程 · Q04（Q） · 接口是什么、为什么要它、常见的几种用途</p>
+<p><span class="tag">接口与实现的分界</span> <span class="tag b">Actor 的 public 区</span></p>
+
+<p><span class="lang cpp">C++</span></p>
+
+<p>Q03 的 <code>Actor</code> 里，<b>名字和地址是 <code>private</code> 的</b> ——
+外部代码碰不到。可是玩家总要改名、换地图，怎么办？</p>
+
+<p>答案是走<b>接口</b>。这一篇就讲清楚接口是什么、为什么每个类都要有它。</p>
+
+<div class="card key">
+  <div class="card-t">一句话</div>
+  <p><b>接口 = 一个类对外开放的那组函数</b> ——
+  外界能做哪些事、每件事怎么调用、要传什么参数、会得到什么结果。</p>
+  <p>它<b>不关心你怎么实现</b>，只规定<b>怎么用</b>。
+  数据成员被藏在里面，操作只能从这几个口子进去。</p>
+</div>
+
+<h2 id="s1"><span class="n">1</span>先看问题：数据藏起来了，外面怎么改</h2>
+
+<p>接着 Q03 的类往下写。这一篇要用的还是它：</p>
+
+<div class="code-wrap">
+  <div class="bar"><span class="dot r"></span><span class="dot y"></span><span class="dot g"></span>
+    <span class="name">Actor.h</span><span class="cp">复制</span></div>
+<pre><span class="hl-p">#include</span> <span class="hl-s">&lt;string&gt;</span>
+
+<span class="hl-k">class</span> Actor {
+<span class="hl-k">private</span>:
+    std::string full_name;   <span class="hl-c">// 全名</span>
+    std::string nickname;    <span class="hl-c">// 昵称</span>
+    std::string address;     <span class="hl-c">// 所在地图</span>
+    <span class="hl-k">int</span> maxLevel;            <span class="hl-c">// 等级上限</span>
+
+<span class="hl-k">public</span>:
+    <span class="hl-k">int</span> hp;                  <span class="hl-c">// 当前血量</span>
+    <span class="hl-k">int</span> maxHp;               <span class="hl-c">// 血量上限</span>
+    <span class="hl-k">int</span> atk;                 <span class="hl-c">// 攻击力</span>
+    <span class="hl-k">int</span> def;                 <span class="hl-c">// 防御力</span>
+    <span class="hl-k">int</span> mp;                  <span class="hl-c">// 当前法力</span>
+    <span class="hl-k">int</span> maxMp;               <span class="hl-c">// 法力上限</span>
+    <span class="hl-k">int</span> agi;                 <span class="hl-c">// 敏捷</span>
+    <span class="hl-k">int</span> luk;                 <span class="hl-c">// 幸运</span>
+};</pre>
+</div>
+
+<p>几个 <code>private</code> 成员意味着：<b>在类外面写不出 <code>hero.full_name = "…"</code></b> ——
+编译器直接报错。</p>
+
+<div class="code-wrap">
+  <div class="bar"><span class="dot r"></span><span class="dot y"></span><span class="dot g"></span>
+    <span class="name">main.cpp —— 碰壁</span><span class="cp">复制</span></div>
+<pre><span class="hl-k">int</span> main() {
+    Actor hero;
+    hero.full_name = <span class="hl-s">"忘情牛肉面"</span>;   <span class="hl-c">// ❌ 编译错误：'full_name' is private</span>
+    hero.maxLevel  = 60;                       <span class="hl-c">// ❌ 同样是 private</span>
+
+    hero.hp = 80;                              <span class="hl-c">// ✅ 这个可以，hp 是 public</span>
+}</pre>
+</div>
+
+<div class="out-wrap">
+  <div class="cap">编译器报错</div>
+<pre>error: 'full_name' is a private member of 'Actor'
+error: 'maxLevel' is a private member of 'Actor'</pre>
+</div>
+
+<p>于是就有了需求：<b>既要藏住数据，又要让外面能改</b>。办法就是开几个口子 ——
+那几个口子就是接口。</p>
+
+<h2 id="s2"><span class="n">2</span>接口长什么样：六个成员函数</h2>
+
+<p>在 <code>public</code> 区里加上这六个函数：</p>
+
+<div class="code-wrap">
+  <div class="bar"><span class="dot r"></span><span class="dot y"></span><span class="dot g"></span>
+    <span class="name">Actor.h —— 补上接口</span><span class="cp">复制</span></div>
+<pre><span class="hl-p">#include</span> <span class="hl-s">&lt;string&gt;</span>
+
+<span class="hl-k">class</span> Actor {
+<span class="hl-k">private</span>:
+    std::string full_name;
+    std::string nickname;
+    std::string address;
+    <span class="hl-k">int</span> maxLevel;
+
+<span class="hl-k">public</span>:
+    <span class="hl-k">int</span> hp, maxHp, atk, def, mp, maxMp, agi, luk;
+
+    <span class="hl-c">// ---------- 改名换地图 ----------</span>
+    <span class="hl-k">void</span> changeName(std::string&amp; newValue)      { full_name = newValue; }
+    <span class="hl-k">void</span> changeNickname(std::string&amp; newValue)  { nickname  = newValue; }
+    <span class="hl-k">void</span> changeAddress(std::string&amp; newValue)   { address   = newValue; }
+
+    <span class="hl-c">// ---------- 几个上限 ----------</span>
+    <span class="hl-k">void</span> setLevel(<span class="hl-k">int</span> newValue)   { maxLevel = newValue; }
+    <span class="hl-k">void</span> setMaxHp(<span class="hl-k">int</span> newValue)   { maxHp    = newValue; }
+    <span class="hl-k">void</span> setMaxMp(<span class="hl-k">int</span> newValue)   { maxMp    = newValue; }
+};</pre>
+</div>
+
+<div class="card key">
+  <div class="card-t">读一遍这六行，接口的三件事就出来了</div>
+  <ol>
+    <li><b>名字</b>告诉你能做什么 —— <code>changeName</code>、<code>setLevel</code>，
+    看名字就知道意图，不用去翻实现。</li>
+    <li><b>参数列表</b>告诉你调用时得给什么 —— 前三个给
+    <code>std::string&amp;</code>，后三个给 <code>int</code>。</li>
+    <li><b>返回类型</b>告诉你有没有回话 —— 六个都是 <code>void</code>，
+    调用完就结束，不返回东西。</li>
+  </ol>
+</div>
+
+<p>注意参数用的是 <b>Q03 刚学过的按引用传递</b>：
+<code>std::string&amp; newValue</code>。一个字都不复制 ——
+名字可能有几十字节，按值传每次都要拷一遍；按引用只递地址。</p>
+
+<div class="iface">
+  <div class="cols">
+    <div class="col out">
+      <div class="hd">对外：接口（public）</div>
+      <ul>
+        <li><code>changeName(std::string&amp;)</code></li>
+        <li><code>changeNickname(std::string&amp;)</code></li>
+        <li><code>changeAddress(std::string&amp;)</code></li>
+        <li><code>setLevel(int)</code></li>
+        <li><code>setMaxHp(int)</code></li>
+        <li><code>setMaxMp(int)</code></li>
+        <li><code>hp</code> / <code>mp</code> / <code>atk</code> …（数值属性）</li>
+      </ul>
+    </div>
+    <div class="col in">
+      <div class="hd">对内：实现（private）</div>
+      <ul>
+        <li><code>full_name</code></li>
+        <li><code>nickname</code></li>
+        <li><code>address</code></li>
+        <li><code>maxLevel</code></li>
+        <li>（以及接口函数体里怎么写）</li>
+      </ul>
+    </div>
+  </div>
+</div>
+
+<p><b>左边这一栏就是接口。</b>外面的人只能站在左边，
+右边怎么存、叫什么名字，他们看不见也管不着。</p>
+
+<h2 id="s3"><span class="n">3</span>怎么用：从外面改一个私有成员</h2>
+
+<div class="code-wrap">
+  <div class="bar"><span class="dot r"></span><span class="dot y"></span><span class="dot g"></span>
+    <span class="name">main.cpp —— 通过接口改名、调上限</span><span class="cp">复制</span></div>
+<pre><span class="hl-p">#include</span> <span class="hl-s">&lt;iostream&gt;</span>
+<span class="hl-p">#include</span> <span class="hl-s">"Actor.h"</span>
+
+<span class="hl-k">int</span> main() {
+    Actor hero;
+    hero.hp = 80;
+    hero.maxHp = 100;
+    hero.mp = 30;
+    hero.maxMp = 50;
+
+    <span class="hl-c">// ① 要改私有成员，先准备一个变量</span>
+    std::string n = <span class="hl-s">"忘情牛肉面"</span>;
+    hero.changeName(n);            <span class="hl-c">// 传进去的是 n 的引用</span>
+
+    std::string nick = <span class="hl-s">"奶蛙"</span>;
+    hero.changeNickname(nick);
+
+    std::string where = <span class="hl-s">"University of Naiwa"</span>;
+    hero.changeAddress(where);
+
+    <span class="hl-c">// ② 数值上限直接给</span>
+    hero.setMaxHp(200);
+    hero.setMaxMp(120);
+    hero.setLevel(60);
+
+    std::cout &lt;&lt; <span class="hl-s">"maxHp = "</span> &lt;&lt; hero.maxHp &lt;&lt; <span class="hl-s">"\n"</span>;
+    std::cout &lt;&lt; <span class="hl-s">"maxMp = "</span> &lt;&lt; hero.maxMp &lt;&lt; <span class="hl-s">"\n"</span>;
+}</pre>
+</div>
+<div class="out-wrap">
+  <div class="cap">输出</div>
+<pre>maxHp = 200
+maxMp = 120</pre>
+</div>
+
+<div class="card tip">
+  <div class="card-t">为什么前三个要先写一个变量</div>
+  <p>因为它们要的是 <code>std::string&amp;</code> —— <b>引用必须绑一个真实存在的对象</b>
+  （Q02 讲过的三条铁律之一）。</p>
+  <p>所以 <code>hero.changeName("牛肉面")</code> 这种写法<b>编译不过</b>：
+  字符串字面量是个临时值，绑不到普通引用上。得先把它放进一个变量。</p>
+  <p>后三个要的是 <code>int</code>，<code>hero.setMaxHp(200)</code> 直接写就行。</p>
+</div>
+
+<div class="card note">
+  <div class="card-t">接口调用者看到的只有那六行</div>
+  <p>写 <code>hero.changeName(n)</code> 的人<b>不需要知道</b>
+  <code>full_name</code> 这个名字、不需要知道它是不是 <code>std::string</code>、
+  更不需要知道赋值发生在函数体哪一行。</p>
+  <p>他只需要知道：<b>有个叫 changeName 的函数，给一个字符串引用，名字就改了。</b>
+  这就是接口的全部意义。</p>
+</div>
+
+<h2 id="s4"><span class="n">4</span>为什么要接口：把「怎么改」收进类里</h2>
+
+<p>如果数据是公开的，改一个值就只是「赋个值」。可真实项目里，
+很多属性<b>不能随便赋</b>。收进接口之后，规则就写在类里面。</p>
+
+<div class="card key">
+  <div class="card-t">三个最实用的理由</div>
+  <ol>
+    <li><b>可以加检查。</b><code>setLevel</code> 里能挡住不合理的值 ——
+    外面传 <code>-5</code> 也进不来。</li>
+    <li><b>可以维持关系。</b>血量和血量上限是有关联的：
+    改了上限，当前血量往往要跟着处理。</li>
+    <li><b>可以改内部实现。</b>以后把 <code>full_name</code> 拆成
+    「姓 + 名」两个成员，调用处一个字都不用改。</li>
+  </ol>
+</div>
+
+<h3>例一：加检查</h3>
+
+<div class="two">
+  <div class="side">
+    <div class="hd bad">数据公开时</div>
+<pre>hero.maxLevel = -5;   // 编译通过
+                      // 游戏里等级上限成了负数
+                      // 出错的地方离这里很远</pre>
+  </div>
+  <div class="side">
+    <div class="hd good">收进接口后</div>
+<pre>void setLevel(int v) {
+    if (v &lt; 1)   return;   // 挡掉
+    if (v &gt; 200) return;   // 挡掉
+    maxLevel = v;
+}
+
+// 调用处
+hero.setLevel(-5);    // 什么也没发生</pre>
+  </div>
+</div>
+
+<h3>例二：维持关系</h3>
+
+<p>血量上限一提，当前血量不能还超着。这件事<b>只能由类自己管</b> ——
+外面同时改两个公开成员，很难保证不出岔子：</p>
+
+<div class="code-wrap">
+  <div class="bar"><span class="dot r"></span><span class="dot y"></span><span class="dot g"></span>
+    <span class="name">关系写在接口里</span><span class="cp">复制</span></div>
+<pre><span class="hl-k">void</span> setMaxHp(<span class="hl-k">int</span> newValue) {
+    <span class="hl-k">if</span> (newValue &lt; 1) newValue = 1;
+    maxHp = newValue;
+    <span class="hl-k">if</span> (hp &gt; maxHp) hp = maxHp;   <span class="hl-c">// 顺手把当前血量收回来</span>
+}
+
+<span class="hl-k">void</span> setMaxMp(<span class="hl-k">int</span> newValue) {
+    <span class="hl-k">if</span> (newValue &lt; 0) newValue = 0;
+    maxMp = newValue;
+    <span class="hl-k">if</span> (mp &gt; maxMp) mp = maxMp;
+}</pre>
+</div>
+
+<div class="code-wrap">
+  <div class="bar"><span class="dot r"></span><span class="dot y"></span><span class="dot g"></span>
+    <span class="name">效果</span><span class="cp">复制</span></div>
+<pre>Actor hero;
+hero.hp    = 180;
+hero.maxHp = 200;
+
+hero.setMaxHp(100);          <span class="hl-c">// 上限降到 100</span>
+std::cout &lt;&lt; hero.hp;         <span class="hl-c">// 100 —— 自动被收回来了，不会出现 hp=180/maxHp=100</span>
+
+hero.setMaxHp(-50);          <span class="hl-c">// 不合法 → 夹到 1（不是「忽略」）</span></pre>
+</div>
+
+<h3>例三：内部换实现，外面不动</h3>
+
+<div class="alias">
+  <div class="row"><span class="k">今天</span>
+    <span class="v">内部只有一个 <code>std::string full_name</code>，
+    <code>changeName</code> 直接赋值</span></div>
+  <div class="row"><span class="k">明天</span>
+    <span class="v">想改成「姓」「名」两个成员，或者加一个「名字修改次数」计数 ——
+    <b>只要 <code>changeName</code> 的签名不变，所有调用处都不用动</b></span></div>
+</div>
+
+<div class="take">
+  <b>核心：接口把「能不能改、怎么改」从调用处收进了类里。</b>
+  外面只说「我要改名」，至于名字怎么存、要检查什么、要不要连带处理别的字段，
+  都由类自己决定。
+</div>
+
+<h2 id="s5"><span class="n">5</span>接口的常见用途</h2>
+
+<table>
+<thead><tr><th style="width:26%">用途</th><th style="width:30%">做法</th>
+<th>例子</th></tr></thead>
+<tbody>
+<tr><td><b>校验</b></td><td>进来先检查范围</td>
+    <td class="c">setLevel：挡掉 &lt;1 或 &gt;200</td></tr>
+<tr><td><b>维持不变式</b></td><td>改一个，顺手修正相关的</td>
+    <td class="c">setMaxHp：hp 超过新上限就收回来</td></tr>
+<tr><td><b>隐藏表示</b></td><td>内部怎么存外面不知道</td>
+    <td class="c">full_name 以后可以拆成姓 + 名</td></tr>
+<tr><td><b>只读暴露</b></td><td>给一个读的函数，不给写的</td>
+    <td class="c">getName() 返回副本或 const 引用</td></tr>
+<tr><td><b>连带动作</b></td><td>改完顺带做别的事</td>
+    <td class="c">改名时记一条日志、刷新界面上的名牌</td></tr>
+<tr><td><b>批量操作</b></td><td>把一组相关的改动合成一个函数</td>
+    <td class="c">levelUp()：升一级，同时加 hp / atk / maxHp</td></tr>
+<tr><td><b>约束调用顺序</b></td><td>不该调的调不动</td>
+    <td class="c">没装备武器时 setAtk 不生效</td></tr>
+</tbody>
+</table>
+
+<div class="card tip">
+  <div class="card-t">一句话记住这些用途的共同点</div>
+  <p>全都是<b>「光赋值做不到、或者不该由调用方操心」</b>的事。</p>
+  <p>如果某个属性确实怎么改都行、改完也不用管别的，
+  那它直接 <code>public</code> 就够了 ——
+  <code>Actor</code> 里的 <code>hp</code>、<code>atk</code>、<code>luk</code>
+  就属于这一类，所以它们没有 set 函数。</p>
+</div>
+
+<h2 id="s6"><span class="n">6</span>接口和实现的分界：<code>private</code> 与 <code>public</code></h2>
+
+<p>接口不是单独写在哪里的东西 —— 它就是 <code>public</code> 区那部分。
+两个关键字正好划出这条线：</p>
+
+<div class="vs">
+<table>
+<thead><tr><th style="width:20%">区</th><th style="width:30%">谁能碰</th>
+<th>放什么</th></tr></thead>
+<tbody>
+<tr><td class="c">public</td><td>任何代码</td>
+    <td><b>接口</b>：成员函数 + 少数确实随便改的属性</td></tr>
+<tr><td class="c">private</td><td>只有本类的函数</td>
+    <td><b>实现</b>：数据成员、内部辅助函数</td></tr>
+</tbody>
+</table>
+</div>
+
+<div class="card key">
+  <div class="card-t">判据很简单</div>
+  <p><b>「外面直接改它会不会出问题？」</b></p>
+  <ul>
+    <li>会 → 放 <code>private</code>，再开一个接口函数</li>
+    <li>不会 → 放 <code>public</code> 就行，不用多写一层</li>
+  </ul>
+  <p><code>Actor</code> 就是这么分的：三个名字 + <code>maxLevel</code> 走接口，
+  其余数值属性直接公开。</p>
+</div>
+
+<div class="code-wrap">
+  <div class="bar"><span class="dot r"></span><span class="dot y"></span><span class="dot g"></span>
+    <span class="name">习惯写法：数据在上，接口在下</span><span class="cp">复制</span></div>
+<pre><span class="hl-k">class</span> Actor {
+<span class="hl-k">private</span>:                       <span class="hl-c">// ① 实现（别人不用看）</span>
+    std::string full_name;
+    std::string nickname;
+    std::string address;
+    <span class="hl-k">int</span> maxLevel;
+
+<span class="hl-k">public</span>:                        <span class="hl-c">// ② 接口（别人只看这里）</span>
+    <span class="hl-k">int</span> hp, maxHp, atk, def, mp, maxMp, agi, luk;
+
+    <span class="hl-k">void</span> changeName(std::string&amp; newValue);
+    <span class="hl-k">void</span> changeNickname(std::string&amp; newValue);
+    <span class="hl-k">void</span> changeAddress(std::string&amp; newValue);
+    <span class="hl-k">void</span> setLevel(<span class="hl-k">int</span> newValue);
+    <span class="hl-k">void</span> setMaxHp(<span class="hl-k">int</span> newValue);
+    <span class="hl-k">void</span> setMaxMp(<span class="hl-k">int</span> newValue);
+};</pre>
+</div>
+
+<p>注意这里把<b>声明和定义分开了</b>：类里只写函数头（<code>;</code> 结尾），
+函数体写在外面。人读这个类的时候，看到的<b>就是一份接口清单</b> ——
+想知道这个类能干什么，扫一遍 <code>public</code> 区就够了。</p>
+
+<div class="code-wrap">
+  <div class="bar"><span class="dot r"></span><span class="dot y"></span><span class="dot g"></span>
+    <span class="name">Actor.cpp —— 函数体写在类外面</span><span class="cp">复制</span></div>
+<pre><span class="hl-p">#include</span> <span class="hl-s">"Actor.h"</span>
+
+<span class="hl-c">// Actor:: 说明这几个函数属于 Actor 这个类</span>
+<span class="hl-k">void</span> Actor::changeName(std::string&amp; newValue) {
+    full_name = newValue;
+}
+
+<span class="hl-k">void</span> Actor::setLevel(<span class="hl-k">int</span> newValue) {
+    <span class="hl-k">if</span> (newValue &lt; 1)   <span class="hl-k">return</span>;
+    <span class="hl-k">if</span> (newValue &gt; 200) <span class="hl-k">return</span>;
+    maxLevel = newValue;
+}
+
+<span class="hl-k">void</span> Actor::setMaxHp(<span class="hl-k">int</span> newValue) {
+    <span class="hl-k">if</span> (newValue &lt; 1) newValue = 1;
+    maxHp = newValue;
+    <span class="hl-k">if</span> (hp &gt; maxHp) hp = maxHp;
+}</pre>
+</div>
+
+<div class="card note">
+  <div class="card-t">写在类里还是类外</div>
+  <p>两种都可以。函数很短（就一两行）时，直接写在类里更方便；
+  逻辑一多，就挪到 <code>.cpp</code> 去，<b>让头文件保持清爽</b> ——
+  头文件是给读代码的人看接口的，不该被大段实现淹没。</p>
+</div>
+
+<h2 id="s7"><span class="n">7</span>一页速查</h2>
+
+<h3>本篇的六个接口函数</h3>
+
+<table>
+<thead><tr><th style="width:42%">函数</th><th style="width:22%">参数</th>
+<th>作用</th></tr></thead>
+<tbody>
+<tr><td class="c">changeName(std::string&amp;)</td><td>字符串引用</td><td>改全名</td></tr>
+<tr><td class="c">changeNickname(std::string&amp;)</td><td>字符串引用</td><td>改昵称</td></tr>
+<tr><td class="c">changeAddress(std::string&amp;)</td><td>字符串引用</td><td>改所在地图</td></tr>
+<tr><td class="c">setLevel(int)</td><td>整数</td><td>改等级上限</td></tr>
+<tr><td class="c">setMaxHp(int)</td><td>整数</td><td>改血量上限（并收回超出的 hp）</td></tr>
+<tr><td class="c">setMaxMp(int)</td><td>整数</td><td>改法力上限（并收回超出的 mp）</td></tr>
+</tbody>
+</table>
+
+<h3>三句话</h3>
+
+<div class="mnemonic">
+  <b>① 接口 = 类的 <code>public</code> 那部分</b> ——
+  外界能做的事、每件事怎么调用。<br>
+  <b>② 数据藏起来（<code>private</code>），改动走接口（<code>public</code> 函数）</b> ——
+  这样「能不能改、怎么改」的规则才收得进类里。<br>
+  <b>③ 参数优先按引用传</b> —— <code>std::string&amp;</code> 不复制；
+  但引用必须绑真实对象，所以调用前要先有一个变量。
+</div>
+
+<h3>什么时候该开一个接口函数</h3>
+
+<div class="steps">
+  <div class="st"><span class="i">1</span><span class="t">外面直接改会出问题吗</span>
+    不会 → 直接 <code>public</code>，不用包一层</div>
+  <div class="st"><span class="i">2</span><span class="t">会</span>
+    放 <code>private</code>，写一个 <code>set…</code> / <code>change…</code></div>
+  <div class="st"><span class="i">3</span><span class="t">改完要连带做什么</span>
+    校验、修正关联字段、记日志 —— 都写进这个函数里</div>
+</div>
+
+<div class="card key">
+  <div class="card-t">一句话</div>
+  <p><b>接口是这个类的「使用说明书」。</b>
+  想知道一个类能干什么，只看它的 <code>public</code> 区；
+  想知道它怎么做到的，去看 <code>private</code> 和函数体。</p>
+</div>
+
+<div class="card tip">
+  <div class="card-t">接下来看什么</div>
+  <p>接口写到一定规模，就会遇到两个新问题，各自值得一篇：</p>
+  <ul>
+    <li><b>构造与析构</b> —— 对象<b>刚建出来</b>时那些 <code>private</code> 成员
+    谁来设初值？（现在它是未初始化的）</li>
+    <li><b>继承与多态</b> —— 如果有一类「会飞的 Actor」，
+    接口要不要跟着变？</li>
+  </ul>
+</div>
+
+<!-- NAV-AUTO -->
+<a class="home-fab" href="../../index.html" title="返回教程总目录">返回 home</a>
+
+</div>
+
+</div>
+<!-- /NAV-AUTO -->
+<footer>
+UME 项目组内部教程 · Q04《接口》<br>
+文中所有输出与报错，均使用 g++ 13.1.0（<code>-std=c++17</code>）实际编译运行核对；
+代码示例以 <b>Consolas</b> 等宽字体呈现。
+</footer>
+</main>
+</div>
+
+<script>
+/* 目录滚动高亮 */
+(function(){
+  const links = [...document.querySelectorAll('#toc a')];
+  const targets = links.map(a => document.querySelector(a.getAttribute('href'))).filter(Boolean);
+  const setOn = id => links.forEach(a => a.classList.toggle('on', a.getAttribute('href') === '#'+id));
+  const io = new IntersectionObserver(es => {
+    const vis = es.filter(e => e.isIntersecting)
+                  .sort((a,b) => a.boundingClientRect.top - b.boundingClientRect.top);
+    if (vis[0]) setOn(vis[0].target.id);
+  }, { rootMargin:'-8% 0px -72% 0px', threshold:0 });
+  targets.forEach(t => io.observe(t));
+})();
+
+/* 复制按钮 */
+(function(){
+  document.querySelectorAll('.code-wrap').forEach(box => {
+    const btn = box.querySelector('.cp');
+    const pre = box.querySelector('pre');
+    if (!btn || !pre) return;
+    btn.addEventListener('click', async () => {
+      const text = pre.textContent;
+      try { await navigator.clipboard.writeText(text); }
+      catch (e) {
+        const ta = document.createElement('textarea');
+        ta.value = text; document.body.appendChild(ta);
+        ta.select(); document.execCommand('copy'); ta.remove();
+      }
+      const old = btn.textContent;
+      btn.textContent = '已复制 ✓';
+      setTimeout(() => { btn.textContent = old; }, 1200);
+    });
+  });
+})();
+</script>
+<script>
+/* 移动端：生成「目录」按钮，点击呼出/收起侧滑目录 */
+(function(){
+  var toc = document.getElementById('toc');
+  if (!toc) return;
+  var btn = document.createElement('button');
+  btn.id = 'tocToggle';
+  btn.type = 'button';
+  btn.setAttribute('aria-controls','toc');
+  btn.textContent = '目录';
+  document.body.appendChild(btn);
+
+  function setOpen(on){
+    toc.classList.toggle('open', on);
+    document.body.classList.toggle('toc-open', on);
+    btn.setAttribute('aria-expanded', on ? 'true' : 'false');
+    btn.textContent = on ? '收起' : '目录';
+  }
+  btn.addEventListener('click', function(){
+    setOpen(!toc.classList.contains('open'));
+  });
+  toc.addEventListener('click', function(e){
+    if (e.target.closest('a')) setOpen(false);
+  });
+  document.addEventListener('click', function(e){
+    if (!toc.classList.contains('open')) return;
+    if (e.target === toc || toc.contains(e.target) || e.target === btn) return;
+    setOpen(false);
+  });
+  document.addEventListener('keydown', function(e){
+    if (e.key === 'Escape') setOpen(false);
+  });
+  function sync(){ if (window.innerWidth > 980) setOpen(false); }
+  window.addEventListener('resize', sync);
+  sync();
+})();
+</script>
+<script src="assets/series-common.js"></script>
+</body>
+</html>

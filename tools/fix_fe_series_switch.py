@@ -22,7 +22,7 @@ SERIES + ORDER + PAGES 是两套数据，抄的时候 R 还没写，留了 null�
     ORDER    展示顺序
     SERIES_FILES  现有篇目（用来数篇数、取首篇做跳转目标）
 渲染时按 ORDER 遍历，篇数为 0 才出 ss-empty。
-这样 R 会自动指到 r01-font-design-metrics.html，以后任何系列
+这样 R 会自动指到 r01.html，以后任何系列
 只要 SERIES_FILES 里有篇目就不会再灰。
 
 用法：
@@ -64,24 +64,24 @@ NEW_DATA = """  /* ---------- 系列定义（与 assets/series-common.js 逐字�
   /* 现存的篇目（除 FE 自己，FE 那份在页面数据 P.series 里）。
      用来数篇数、并取每个系列的首篇作为跳转目标。 */
   var SERIES_FILES = [
-    't01-mongolian-script-intro.html','t02-unicode-and-encoding.html',
-    't03-font-file-anatomy.html',
-    'f01-command-prompt.html','f02-paths-and-env.html',
-    'f03-compile-and-link.html',
-    'm01-c-arrays.html','m02-c-functions.html','m03-c-types.html',
-    'm04-c-pointers.html','m05-memory.html','m06-class-struct.html',
-    'm07-scope.html','m08-c-strings.html','m09-vector-and-array.html',
-    'r01-font-design-metrics.html','r02-bubble-sort.html',
-    'r03-collation.html',
-    'q01-std-and-namespace.html','q02-references.html',
-    'q03-pointers-to-objects.html','q04-interfaces.html',
-    'e01-recursion.html','e02-batch-and-cmd.html',
-    'e03-syntactic-sugar.html',
-    'fe-01.html','fe-02.html','fe-03-F01.html','fe-03.html','fe-04.html',
+    't01.html','t02.html',
+    't03.html',
+    'f01.html','f02.html',
+    'f03.html',
+    'm01.html','m02.html','m03.html',
+    'm04.html','m05.html','m06.html',
+    'm07.html','m08.html','m09.html',
+    'r01.html','r02.html',
+    'r03.html',
+    'q01.html','q02.html',
+    'q03.html','q04.html',
+    'e01.html','e02.html',
+    'e03.html',
+    'fe-01.html','fe-02.html','r04.html','fe-03.html','fe-04.html',
     'fe-05.html','fe-06.html','fe-07.html','fe-08.html'
   ];
 
-  /* fe- 开头的一律算 FE（fe-03-F01.html 也是 FE），其余按首字母。 */
+  /* fe- 开头的一律算 FE（r04.html 也是 FE），其余按首字母。 */
   function seriesKeyOf(file) {
     if (/^fe-/.test(file)) return 'FE';
     return file.charAt(0).toUpperCase();

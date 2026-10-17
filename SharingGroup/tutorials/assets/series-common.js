@@ -40,49 +40,49 @@
   /* ---------- 篇目表 ---------- */
   var PAGES = [
     /* ---- T：T 系列 · 核心理论和底层逻辑 ---- */
-    { f: 't01-mongolian-script-intro.html', n: 'T01',       t: '初识回鹘蒙文', s: 'T' },
-    { f: 't02-unicode-and-encoding.html',   n: 'T02',       t: 'Unicode 和编码', s: 'T' },
-    { f: 't03-font-file-anatomy.html',      n: 'T03',       t: '字体文件结构大揭秘', s: 'T' },
+    { f: 't01.html',                        n: 'T01',       t: '初识回鹘蒙文', s: 'T' },
+    { f: 't02.html',                        n: 'T02',       t: 'Unicode 和编码', s: 'T' },
+    { f: 't03.html',                        n: 'T03',       t: '字体文件结构大揭秘', s: 'T' },
 
     /* ---- F：F 系列 · 文件操作基础 ---- */
-    { f: 'f01-command-prompt.html',         n: 'F01',       t: '命令提示符（cmd）初步', s: 'F' },
-    { f: 'f02-paths-and-env.html',          n: 'F02',       t: '相对文件路径与宏', s: 'F' },
-    { f: 'f03-compile-and-link.html',       n: 'F03',       t: '编译与链接、头文件与库', s: 'F' },
+    { f: 'f01.html',                        n: 'F01',       t: '命令提示符（cmd）初步', s: 'F' },
+    { f: 'f02.html',                        n: 'F02',       t: '相对文件路径与宏', s: 'F' },
+    { f: 'f03.html',                        n: 'F03',       t: '编译与链接、头文件与库', s: 'F' },
 
     /* ---- M：M 系列 · 课本内容速成与补充 ---- */
-    { f: 'm01-c-arrays.html',               n: 'M01',       t: '数组初步', s: 'M' },
-    { f: 'm02-c-functions.html',            n: 'M02',       t: '函数初步', s: 'M' },
-    { f: 'm03-c-types.html',                n: 'M03',       t: '类型概论', s: 'M' },
-    { f: 'm04-c-pointers.html',             n: 'M04',       t: '指针初步', s: 'M' },
-    { f: 'm05-memory.html',                 n: 'M05',       t: '静态、动态内存与内存安全初步', s: 'M' },
-    { f: 'm06-class-struct.html',           n: 'M06',       t: '类、结构体', s: 'M' },
-    { f: 'm07-scope.html',                  n: 'M07',       t: '作用域、全局与局部变量', s: 'M' },
-    { f: 'm08-c-strings.html',              n: 'M08',       t: 'C 风格字符串', s: 'M' },
-    { f: 'm09-vector-and-array.html',       n: 'M09',       t: 'vector 和 array', s: 'M' },
+    { f: 'm01.html',                        n: 'M01',       t: '数组初步', s: 'M' },
+    { f: 'm02.html',                        n: 'M02',       t: '函数初步', s: 'M' },
+    { f: 'm03.html',                        n: 'M03',       t: '类型概论', s: 'M' },
+    { f: 'm04.html',                        n: 'M04',       t: '指针初步', s: 'M' },
+    { f: 'm05.html',                        n: 'M05',       t: '静态、动态内存与内存安全初步', s: 'M' },
+    { f: 'm06.html',                        n: 'M06',       t: '类、结构体', s: 'M' },
+    { f: 'm07.html',                        n: 'M07',       t: '作用域、全局与局部变量', s: 'M' },
+    { f: 'm08.html',                        n: 'M08',       t: 'C 风格字符串', s: 'M' },
+    { f: 'm09.html',                        n: 'M09',       t: 'vector 和 array', s: 'M' },
 
     /* ---- R：R 系列 · 相关信息与理论 ---- */
-    { f: 'r01-font-design-metrics.html',    n: 'R01',       t: '字体设计里的几个基本概念', s: 'R' },
-    { f: 'r02-bubble-sort.html',            n: 'R02',       t: '冒泡排序与算法复杂度', s: 'R' },
-    { f: 'r03-collation.html',              n: 'R03',       t: '字典序、自然序与 QCollator', s: 'R' },
+    { f: 'r01.html',                        n: 'R01',       t: '字体设计里的几个基本概念', s: 'R' },
+    { f: 'r02.html',                        n: 'R02',       t: '冒泡排序与算法复杂度', s: 'R' },
+    { f: 'r03.html',                        n: 'R03',       t: '字典序、自然序与 QCollator', s: 'R' },
+    { f: 'r04.html',                        n: 'R04',       t: '十六进制颜色模型、HSV 与 Alpha', s: 'R' },
 
     /* ---- Q：Q 系列 · C++ 开发事项和 Qt 基础 ---- */
-    { f: 'q01-std-and-namespace.html',      n: 'Q01',       t: 'std 与命名空间初步', s: 'Q' },
-    { f: 'q02-references.html',             n: 'Q02',       t: 'C++ 的引用', s: 'Q' },
-    { f: 'q03-pointers-to-objects.html',    n: 'Q03',       t: '指针进阶：指向对象的指针与引用', s: 'Q' },
-    { f: 'q04-interfaces.html',             n: 'Q04',       t: '接口', s: 'Q' },
-    { f: 'q05-open-closed.html',            n: 'Q05',       t: '开闭原则', s: 'Q' },
-    { f: 'q06-components.html',             n: 'Q06',       t: '组件化编程与解耦合', s: 'Q' },
-    { f: 'q07-homework1.html',              n: 'Q07',       t: '代码复用性和扩展性', s: 'Q' },
+    { f: 'q01.html',                        n: 'Q01',       t: 'std 与命名空间初步', s: 'Q' },
+    { f: 'q02.html',                        n: 'Q02',       t: 'C++ 的引用', s: 'Q' },
+    { f: 'q03.html',                        n: 'Q03',       t: '指针进阶：指向对象的指针与引用', s: 'Q' },
+    { f: 'q04.html',                        n: 'Q04',       t: '接口', s: 'Q' },
+    { f: 'q05.html',                        n: 'Q05',       t: '开闭原则', s: 'Q' },
+    { f: 'q06.html',                        n: 'Q06',       t: '组件化编程与解耦合', s: 'Q' },
+    { f: 'q07.html',                        n: 'Q07',       t: '代码复用性和扩展性', s: 'Q' },
 
     /* ---- E：E 系列 · 补充练习与进阶 ---- */
-    { f: 'e01-recursion.html',              n: 'E01',       t: '递归', s: 'E' },
-    { f: 'e02-batch-and-cmd.html',          n: 'E02',       t: '批处理与命令提示符进阶', s: 'E' },
-    { f: 'e03-syntactic-sugar.html',        n: 'E03',       t: '语法糖', s: 'E' },
+    { f: 'e01.html',                        n: 'E01',       t: '递归', s: 'E' },
+    { f: 'e02.html',                        n: 'E02',       t: '批处理与命令提示符进阶', s: 'E' },
+    { f: 'e03.html',                        n: 'E03',       t: '语法糖', s: 'E' },
 
     /* ---- FE：FE 系列 · 前端基础 ---- */
     { f: 'fe-01.html',                      n: 'FE-01',     t: 'HTML 入门与标签语法', s: 'FE' },
     { f: 'fe-02.html',                      n: 'FE-02',     t: 'HTML 常用标签', s: 'FE' },
-    { f: 'fe-03-F01.html',                  n: 'FE-03-F01', t: '十六进制颜色模型、HSV 与 Alpha', s: 'FE' },
     { f: 'fe-03.html',                      n: 'FE-03',     t: 'CSS 入门', s: 'FE' },
     { f: 'fe-04.html',                      n: 'FE-04',     t: 'CSS 选择器语法', s: 'FE' },
     { f: 'fe-05.html',                      n: 'FE-05',     t: 'Display 与盒模型尺寸', s: 'FE' },

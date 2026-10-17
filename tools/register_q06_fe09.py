@@ -23,7 +23,7 @@ T = os.path.join(R, "SharingGroup", "tutorials")
 A = os.path.join(T, "assets")
 TOOLS = os.path.join(R, "tools")
 
-Q6_FN, Q6_NUM, Q6_TITLE = "q06-components.html", "Q06", "组件化编程与解耦合"
+Q6_FN, Q6_NUM, Q6_TITLE = "q06.html", "Q06", "组件化编程与解耦合"
 Q6_DESC = "什么叫耦合、高耦合的代价、组件化的三条准则"
 
 
@@ -50,7 +50,7 @@ def main():
         new = ('    ("%s",      "%s",\n'
                '     "Q", "%s", "%s", "%s", True),'
                % (Q6_FN, Q6_FN, Q6_NUM, Q6_TITLE, Q6_DESC))
-        out = insert_after(t.split("\n"), '"q05-open-closed.html",', new)
+        out = insert_after(t.split("\n"), '"q05.html",', new)
         if out is None:
             print("  !! 1. series_data.py 找不到 q05 锚点")
         else:
@@ -66,7 +66,7 @@ def main():
         print("  2. series-common.js 已有 Q06")
     else:
         new = "    { f: '%s', n: '%s', t: '%s', s: 'Q' }," % (Q6_FN, Q6_NUM, Q6_TITLE)
-        out = insert_after(t.split("\n"), "f: 'q05-open-closed.html'", new)
+        out = insert_after(t.split("\n"), "f: 'q05.html'", new)
         if out is None:
             print("  !! 2. series-common.js 找不到 q05 锚点")
         else:
@@ -81,7 +81,7 @@ def main():
     if "'%s'" % Q6_FN in t:
         print("  3. fe-data.js 已有 Q06")
     else:
-        old = "'q05-open-closed.html',"
+        old = "'q05.html',"
         if old not in t:
             print("  !! 3. fe-data.js 找不到 q05 锚点")
         else:
@@ -97,7 +97,7 @@ def main():
     if Q6_FN in t:
         print("  4. add_lang_badges.py 已有 Q06")
     else:
-        old = '    "%s": ("C++", "cpp"),' % "q05-open-closed.html"
+        old = '    "%s": ("C++", "cpp"),' % "q05.html"
         if old not in t:
             print("  !! 4. add_lang_badges.py 找不到 q05 锚点")
         else:
@@ -120,7 +120,7 @@ def main():
         n += 1
         if not dry:
             io.open(p, "w", encoding="utf-8", newline="").write(t)
-    elif 'q06-components.html' in t and '"JS", True)' in t:
+    elif 'q06.html' in t and '"JS", True)' in t:
         print("  5. FE-09 已是星标")
     else:
         print("  !! 5. series_data.py 里 fe-09 那行未匹配")

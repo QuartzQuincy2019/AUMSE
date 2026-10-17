@@ -28,29 +28,29 @@ except Exception:
 TUT = r"E:\QKMansion\CSX10\w\UME\SharingGroup\tutorials"
 
 PLAN = {
-    "f02-paths-and-env.html": {
+    "f02.html": {
         "keys": ["1绝对路径与相对路径", "8另一种宏"],
     },
-    "t02-unicode-and-encoding.html": {
+    "t02.html": {
         "keys": ["2码位：字符的编号", "3UTF-8 的字节规律",
                  "3.5 为什么设计成变长", "5三种 UTF 编码"],
     },
-    "f01-command-prompt.html": {
+    "f01.html": {
         "keys": ["4最该先会的几条命令"],
     },
-    "f03-compile-and-link.html": {
+    "f03.html": {
         "keys": ["1从源码到程序的三步", "3编译：各自翻译", "4链接：拼起来",
                  "5头文件为什么存在", "7库：静态库与动态库"],
         "optional": ["8手把手"],
     },
-    "m09-vector-and-array.html": {
+    "m09.html": {
         "keys": ["2vector：会自己长大的数组", "3常用操作", "4size 与 capacity"],
     },
     "fe-06.html": {
         "keys": ["2writing-mode 是什么", "3vertical-lr：竖向排版",
                  "5word-break 与换行控制"],
     },
-    "fe-03-F01.html": {
+    "r04.html": {
         "keys": ["2十六进制 RGB", "5Alpha 通道"],
     },
     "fe-04.html": {

@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 """把两篇提升进理论系列：
-     09-e03-unicode-and-encoding.html   → t02-unicode-and-encoding.html   （09-E03 → T02）
-     08-f04-font-file-anatomy.html      → t03-font-file-anatomy.html      （08-F04 → T03）
+     09-e03-unicode-and-encoding.html   → t02.html   （09-E03 → T02）
+     08-f04-font-file-anatomy.html      → t03.html      （08-F04 → T03）
 
 同时改掉：
   · 两个 html 文件自己的 <link> 与内部标题
@@ -34,8 +34,8 @@ A = os.path.join(T, "assets")
 
 # 文件名映射（长的先替换，避免前缀冲突）
 FILE_MAP = [
-    ("09-e03-unicode-and-encoding.html", "t02-unicode-and-encoding.html"),
-    ("08-f04-font-file-anatomy.html",    "t03-font-file-anatomy.html"),
+    ("09-e03-unicode-and-encoding.html", "t02.html"),
+    ("08-f04-font-file-anatomy.html",    "t03.html"),
 ]
 CSS_MAP = [
     ("09_e03_unicode_and_encoding.css", "t02_unicode_and_encoding.css"),

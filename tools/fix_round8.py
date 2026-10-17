@@ -61,8 +61,8 @@ else:
 # ------------------------------------------------- ② T 篇挂上 series-theme
 LINK = '<link rel="stylesheet" href="assets/series-theme.css">'
 n = 0
-for f in ("t01-mongolian-script-intro.html", "t02-unicode-and-encoding.html",
-          "t03-font-file-anatomy.html"):
+for f in ("t01.html", "t02.html",
+          "t03.html"):
     p = os.path.join(TUT, f)
     t = io.open(p, encoding="utf-8").read()
     if "series-theme.css" in t:

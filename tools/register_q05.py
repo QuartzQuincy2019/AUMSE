@@ -14,7 +14,7 @@ sys.stdout.reconfigure(encoding="utf-8", errors="replace")
 R = r"E:\QKMansion\CSX10\w\UME"
 T = os.path.join(R, "SharingGroup", "tutorials")
 
-FN = "q05-open-closed.html"
+FN = "q05.html"
 NUM, TITLE = "Q05", "开闭原则"
 
 
@@ -47,7 +47,7 @@ def main():
         new = ('    ("%s",      "%s",\n'
                '     "Q", "%s", "%s", "为什么不能什么都塞进一个类；耦合的代价与拆分方向", True),'
                % (FN, FN, NUM, TITLE))
-        out = insert_after(lines, '"q04-interfaces.html",', new)
+        out = insert_after(lines, '"q04.html",', new)
         if out is None:
             print("  !! 1. series_data.py 找不到 q04 锚点")
         else:
@@ -63,7 +63,7 @@ def main():
     else:
         lines = t.split("\n")
         new = ("    { f: '%s', n: '%s', t: '%s', s: 'Q' }," % (FN, NUM, TITLE))
-        out = insert_after(lines, "f: 'q04-interfaces.html'", new)
+        out = insert_after(lines, "f: 'q04.html'", new)
         if out is None:
             print("  !! 2. series-common.js 找不到 q04 锚点")
         else:
@@ -79,7 +79,7 @@ def main():
     if "'%s'" % FN in t:
         print("  3. fe-data.js 已有 Q05")
     else:
-        old = "'q04-interfaces.html',"
+        old = "'q04.html',"
         if old not in t:
             print("  !! 3. fe-data.js 找不到 q04 锚点")
         else:
@@ -94,7 +94,7 @@ def main():
     if FN in t:
         print("  4. add_lang_badges.py 已有 Q05")
     else:
-        old = '    "q04-interfaces.html": ("C++", "cpp"),'
+        old = '    "q04.html": ("C++", "cpp"),'
         if old not in t:
             print("  !! 4. add_lang_badges.py 找不到锚点")
         else:

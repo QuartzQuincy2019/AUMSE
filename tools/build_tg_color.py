@@ -24,7 +24,7 @@
 
 用法：
     python build_tg_color.py --dry
-    python build_tg_color.py --only m02-c-functions.html
+    python build_tg_color.py --only m02.html
     python build_tg_color.py
 """
 import io
