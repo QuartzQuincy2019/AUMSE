@@ -119,12 +119,19 @@ a.card.star:hover{background:linear-gradient(96deg,#fffdf5,#fbe9c4)}
    遮罩**留在 CSS 里**，不要写进行内：行内自定义属性会盖住 :hover 规则
    （行内优先级高于样式表），那样 hover 永远不生效 —— 之前就是这样。
    两个主题都给出基础值；mono 变体用白（浅）/ 黑（暗）。 */
-/* 这里把 .has-bg 写两遍，是为了把优先级抬到 (0,3,1)。
-   原因：暗色里 a.card.star{background:...}（简写）排在后面，
-   与 a.card.has-bg 优先级相同 —— 后写的会把 background-image
-   重置成只剩那层渐变，图就没了（实测：暗色下 Q07 的
-   background-image 只有 1 层）。写两遍即可稳压，不必用 !important。 */
-a.card.has-bg.has-bg{background-image:var(--card-veil),var(--bg-img);
+/* ⚠ 这里 .has-bg 故意写三遍，把优先级抬到 (0,4,1)。
+   为什么：卡片自身的底色是 ackground: **简写**，而简写会把
+   background-image 一起重置。暗色块里这些简写排在后面：
+       a.card.star            (0,2,1)
+       a.card:hover           (0,2,1)
+       a.card.star:hover      (0,3,1)   ← 常态与 hover 都栽在这里
+   写两遍只到 (0,3,1)，与 .star:hover **打平**、靠顺序输；
+   写三遍到 (0,4,1)，压过全部简写，与顺序无关。
+   实测（CSS.forcePseudoState 强制 hover）：
+       修前 暗色 Q07 hover → background-image 只剩 1 层（图消失）
+       修后 暗色 Q07 hover → 2 层（渐变 + 图）
+   不要清理成一遍两遍，会复发。 */
+a.card.has-bg.has-bg.has-bg{background-image:var(--card-veil),var(--bg-img);
   background-repeat:no-repeat,no-repeat;
   background-position:center,center;
   background-size:cover,cover}
