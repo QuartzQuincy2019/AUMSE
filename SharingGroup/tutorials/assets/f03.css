@@ -443,3 +443,48 @@ body.fseries .cpp-note pre .hl-p{color:#7ee7ff}/* ---- 行内 code：浅底上�
 /* 行内的小按钮图标：和文字基线对齐，不撑行高 */
 .btn-ico{width:31px;height:30px;vertical-align:-8px;margin:0 2px;
   image-rendering:pixelated;background:#fff;border-radius:5px}
+
+/* 「编译信息」截图很宽（2502×897），整幅显示会压到几百像素高、
+   文字全糊。这里放宽容器并允许点击放大，正文里只作整体印象，
+   细节靠下面那张逐项解读的表。 */
+.fig .fig-wide{width:100%;height:auto;background:#fff;border-radius:8px}
+.fig .fig-zoom{cursor:zoom-in}
+.fig .fig-link{display:block;line-height:0}
+.fig .fig-link img{cursor:zoom-in}
+.fig .fig-link:hover img{outline:2px solid var(--s-main);outline-offset:2px}
+
+/* =====================================================================
+   宽图：窄屏支持（2026-10 补）
+   ---------------------------------------------------------------------
+   两张截图原宽 2502 / 2522 px。原来 width:100% 在手机上会被压到
+   380 px 左右，字全糊成一团。
+   改成「横向滚动容器 + min-width 保底」：
+     · 宽屏（正文列约 864px）  → 图占满，不出现滚动条
+     · 窄屏                    → 图保持 860px，在容器内左右滑动
+   另外窄屏多给一行「左右滑动」提示；宽屏不显示。
+   ================================================================== */
+.fig .fig-scroll{overflow-x:auto;overflow-y:hidden;-webkit-overflow-scrolling:touch;
+  border-radius:8px;background:transparent;padding:0;margin:0 auto;max-width:100%}
+.fig .fig-scroll img.fig-wide{width:100%;min-width:860px;height:auto;display:block;
+  border-radius:8px;background:transparent}
+.fig .fig-swipe{display:none;margin-top:8px;font-size:12px;line-height:1.6;
+  color:var(--fg-3);text-align:center}
+@media (max-width:980px){
+  .fig{padding:12px 12px 10px}
+  .fig .fig-swipe{display:block}
+  .fig .fig-cap{font-size:13px}
+}
+@media (max-width:560px){
+  .fig{padding:10px 10px 8px;border-radius:10px}
+  .fig .fig-scroll img.fig-wide{min-width:760px}
+}
+
+/* =====================================================================
+   目录分组（一、三步原理 / 二、库与实操 / 三、进阶与排错）
+   ================================================================== */
+#toc .toc-g{margin:14px 0 5px;padding:0 10px 5px;font:700 12px/1.6 var(--sans);
+  letter-spacing:.05em;color:var(--fg-3);border-bottom:1px dashed var(--line)}
+#toc .toc-g:first-of-type{margin-top:4px}
+@media (max-width:980px){
+  #toc .toc-g{font-size:13px;margin-top:16px;padding-left:11px}
+}

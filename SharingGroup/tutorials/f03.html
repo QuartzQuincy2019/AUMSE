@@ -16,25 +16,30 @@
 
 <nav id="toc">
   <h5>目录</h5>
+  <div class="toc-g">一、三步原理</div>
   <a href="#s1">1 · 从源码到程序的三步</a>
-  <a href="#s2">2 · 预处理：<code>#include</code> 做了什么</a>
-  <a href="#s3">3 · 编译：各自翻译</a>
-  <a href="#s4">4 · 链接：拼起来</a>
-  <a href="#s5">5 · 头文件为什么存在</a>
-  <a href="#s6">6 · 三种错误怎么分</a>
-  <a href="#s7">7 · 库：静态库与动态库</a>
-  <a href="#s8">8 · 手把手：用 VS 2026 做静态库</a>
-  <a href="#s8a" class="sub">8.1 建解决方案与静态库工程</a>
-  <a href="#s8b" class="sub">8.2 写头文件与实现</a>
-  <a href="#s8c" class="sub">8.3 右键「生成」到底做了什么</a>
-  <a href="#s8d" class="sub">8.4 建控制台工程并使用它</a>
-  <a href="#s8e" class="sub">8.5 让它能找到库：三步配置</a>
-  <a href="#s8f" class="sub">8.6 运行与验证</a>
-  <a href="#s9">9 · <code>inline</code> 到底解决什么</a>
-  <a href="#s9a" class="sub">9.1 冲突从哪来</a>
-  <a href="#s9b" class="sub">9.2 实测那个报错</a>
-  <a href="#s9c" class="sub">9.3 inline 的三层含义</a>
-  <a href="#s10">10 · 常见错误</a>
+  <a href="#s2">2 · 谁在执行这三步：gcc、MinGW、MSVC</a>
+  <a href="#s3">3 · 预处理：<code>#include</code> 做了什么</a>
+  <a href="#s4">4 · 编译：各自翻译</a>
+  <a href="#s5">5 · 链接：拼起来</a>
+  <a href="#s6">6 · 头文件为什么存在</a>
+  <a href="#s7">7 · 三种错误怎么分</a>
+  <a href="#s7a" class="sub">7.1 看两条真实输出：错误与警告</a>
+  <div class="toc-g">二、库与实操</div>
+  <a href="#s8">8 · 库：静态库与动态库</a>
+  <a href="#s9">9 · 手把手：用 VS 2026 做静态库</a>
+  <a href="#s9a" class="sub">9.1 建解决方案与静态库工程</a>
+  <a href="#s9b" class="sub">9.2 写头文件与实现</a>
+  <a href="#s9c" class="sub">9.3 右键「生成」到底做了什么</a>
+  <a href="#s9d" class="sub">9.4 建控制台工程并使用它</a>
+  <a href="#s9e" class="sub">9.5 让它能找到库：三步配置</a>
+  <a href="#s9f" class="sub">9.6 运行与验证</a>
+  <div class="toc-g">三、进阶与排错</div>
+  <a href="#s10">10 · <code>inline</code> 到底解决什么</a>
+  <a href="#s10a" class="sub">10.1 冲突从哪来</a>
+  <a href="#s10b" class="sub">10.2 实测那个报错</a>
+  <a href="#s10c" class="sub">10.3 inline 的三层含义</a>
+  <a href="#s11">11 · 常见错误</a>
 </nav>
 
 <main>
@@ -49,7 +54,7 @@
   <b>分成哪三步、每步会报什么错</b> —— 搞清楚这个，
   编译报错就不再是天书，而是「一眼能定位」的信息。
   后半篇更会手把手带你做一遍<b>静态库</b>。</p>
-  <p>第 1~6 节用 gcc 讲清原理，第 7 节起改用 <b>Visual Studio 2026</b>
+  <p>第 3~7 节用 gcc 讲清原理，第 9 节起改用 <b>Visual Studio 2026</b>
   实操（含一份完整的手把手静态库教程）。文中的报错、产物路径与命令输出，
   都是实际跑出来的。</p>
 </div>
@@ -93,12 +98,167 @@
 <p>平时一句 <code>gcc main.c -o main.exe</code> 就把三步都做完了。
 但<b>报错发生在哪一步，含义完全不同</b> —— 这就是本篇的核心。</p>
 
+<!-- ============================================================ -->
+<h2 id="s2"><span class="n">2</span>谁在执行这三步：gcc、MinGW、MSVC</h2>
+
+<p>三步不会自己发生 —— 有一个程序在替你执行。这个程序统称<b>编译器</b>。
+但在 Windows 上你会同时听到三个名字，很容易混着叫。先把它们分清，
+以后装环境、换工具、看报错，才不会一头雾水。</p>
+
+<h3>gcc 是什么</h3>
+
+<p><b>gcc</b> 是 <b>GNU Compiler Collection</b>（GNU 编译器集合）的缩写，
+它是一整套编译器的名字。日常打交道的两个入口是：</p>
+
+<table>
+<thead><tr><th style="width:16%">名字</th><th style="width:22%">管什么</th>
+  <th>什么时候用它</th></tr></thead>
+<tbody>
+<tr><td class="c"><code>gcc</code></td><td class="c">C 语言</td>
+    <td>写 <code>.c</code> 时用。它<b>不会</b>自动帮你链上 C++ 标准库</td></tr>
+<tr><td class="c"><code>g++</code></td><td class="c">C++</td>
+    <td>写 <code>.cpp</code> 时用。它在 gcc 的基础上多做了 C++ 那一部分</td></tr>
+</tbody>
+</table>
+
+<p>它<b>就是一个可执行文件</b>，躺在磁盘某个目录里，名字叫
+<code>gcc.exe</code> / <code>g++.exe</code>。
+你在终端敲 <code>gcc main.c -o main.exe</code>，敲的就是它 ——
+并不是什么咒语，只是「把参数交给这个程序去干活」。</p>
+
+<div class="card note">
+  <div class="card-t">一个常见坑：文件叫 .c 还是 .cpp</div>
+  <p>同一份代码，文件名是 <code>.c</code> 时用 <code>gcc</code>，
+  是 <code>.cpp</code> 时用 <code>g++</code>。用错了通常不是干脆地报错，
+  而是<b>链接时找不到 C++ 的那几个符号</b> —— 报错信息会很莫名其妙。
+  所以先看扩展名，再决定敲哪个。</p>
+</div>
+
+<h3>MinGW 是什么</h3>
+
+<p>gcc 原本是 Linux / Unix 上的东西。要在 Windows 上用它，
+就得有人把它移植过来 —— <b>MinGW</b>（Minimalist GNU for Windows，
+Windows 上的极简 GNU 工具集）就是这份移植。</p>
+
+<p>它把 gcc / g++ 连同 Windows 需要的那些运行库打包在一起。
+装好 MinGW 之后，它的 <code>bin</code> 目录下就躺着
+<code>gcc.exe</code>、<code>g++.exe</code> —— 正是上一小节说的那两个文件。
+现在常见的是它的 64 位分支，叫 <b>MinGW-w64</b>。</p>
+
+<div class="mnemonic">
+  <b>一句话记住关系：</b><br>
+  <b>gcc 是编译器本身</b>；<b>MinGW 是把 gcc 搬到 Windows 上的那份打包</b>。<br>
+  说「我用 MinGW 编译」，意思就是「我在 Windows 上用的是 gcc」。
+</div>
+
+<h3>MSVC 是什么</h3>
+
+<p><b>MSVC</b>（Microsoft Visual C++）是微软的编译器，
+随 <b>Visual Studio</b> 一起安装，命令行里的名字叫 <code>cl.exe</code>。</p>
+
+<p>它<b>不是 gcc</b>，两者互不相干。由此带来一个很实际的后果：
+<b>同一份代码，用 MinGW 编可能过，用 MSVC 编可能报错</b> —— 反过来也一样。
+不是谁做错了，而是两家在细节规矩上并不完全一致。</p>
+
+<table>
+<thead><tr><th style="width:18%"></th><th style="width:38%">gcc / g++</th>
+  <th>MSVC</th></tr></thead>
+<tbody>
+<tr><td><b>全名</b></td><td>GNU Compiler Collection</td><td>Microsoft Visual C++</td></tr>
+<tr><td><b>可执行文件</b></td><td class="c"><code>gcc.exe</code> / <code>g++.exe</code></td>
+    <td class="c"><code>cl.exe</code></td></tr>
+<tr><td><b>怎么拿到</b></td><td>装 MinGW（或 MinGW-w64）</td>
+    <td>装 Visual Studio</td></tr>
+<tr><td><b>报错长相</b></td><td class="c"><code>error: expected ';' before ...</code></td>
+    <td class="c"><code>error C2143: 语法错误</code></td></tr>
+<tr><td><b>本篇哪里用</b></td><td>第 3~7 节，讲原理</td><td>第 9 节起，实操静态库</td></tr>
+</tbody>
+</table>
+
+<p>报错长相不同，但<b>说的是同一件事</b>。看报错时先分清是哪一家的措辞，
+再对号入座 —— 第 7 节会专门讲这件事。</p>
+
 <div class="card tip">
-  <div class="card-t">本节用 gcc 讲原理，第 8 节用 Visual Studio 实操</div>
-  <p>原理是<b>通用的</b>，不分编译器。为了讲得干净，前面几节用
-  <code>gcc</code> 这一行命令把三步「摊开」给你看。</p>
-  <p>但<b>实际动手请用 Visual Studio 2026</b> ——
-  第 8 节会一步步做一遍。两者的对应关系是：</p>
+  <div class="card-t">那 小熊猫CPP 用的是哪一个？</div>
+  <p>用的是 <b>MinGW</b>（具体是 MinGW-w64 + GCC 11.5.0）。
+  而且它自己就把这件事写在你脸上 —— 见下一小节的截图。
+  所以你在它里面看到的报错，长得和第 4 节那些 gcc 报错一样。</p>
+</div>
+
+<h3>一次真实的编译，它把全过程都打印出来了</h3>
+
+<p>在 小熊猫CPP 里点一次「编译」，下方那块「编译信息」会输出这样一段。
+上面是源码，下面是它自己的交代：</p>
+
+<div class="fig">
+  <div class="fig-scroll">
+  <a class="fig-link" href="assets/编译信息.png" target="_blank" rel="noopener"
+     title="点开看原尺寸">
+    <img class="fig-wide" src="assets/编译信息.png"
+         alt="小熊猫CPP 的编译信息：上方是源码，下方依次是文件名、编译器配置、实际执行的命令、编译结果">
+  </a>
+  </div>
+  <div class="fig-swipe">← 图片较宽，可左右滑动查看 →</div>
+  <div class="fig-cap">小熊猫CPP 的「编译信息」输出。<b>这一篇后面要讲的东西，
+  它差不多一次全写在这里了</b> —— 下面只挑对现在有用的几行看。
+  截图很宽，<b>想看清原字可点开放大</b>（或者直接看下面那张表，要点都摘出来了）。</div>
+</div>
+
+<p>逐条读，挑重点：</p>
+
+<table>
+<thead><tr><th style="width:31%">它写的是</th><th>是什么意思</th></tr></thead>
+<tbody>
+<tr><td class="c"><code>编译器配置: MinGW-w64 GCC 11.5.0 64-bit Debug</code></td>
+    <td>上一小节那三个名字，这里出现了两个：<b>MinGW-w64</b>（打包）
+    和 <b>GCC 11.5.0</b>（编译器本身及其版本）。
+    64-bit 指目标程序是 64 位；Debug 是「调试配置」——
+    生成的程序带着调试信息，方便设断点。</td></tr>
+<tr><td class="c"><code>C++编译器: D:/RedPanda-Cpp/mingw64/bin/g++.exe</code></td>
+    <td>印证了「gcc 就是一个可执行文件」：<code>g++.exe</code> 实实在在地躺在
+    <code>mingw64/bin</code> 目录下。注意它选的是 <b>g++</b> 而不是 gcc ——
+    因为源文件叫 <code>untitled1.cpp</code>。</td></tr>
+<tr><td class="c"><code>命令: g++.exe … -o …untitled1.exe</code></td>
+    <td><b>这一条最值得看。</b><code>-o</code> 后面直接就是 <code>.exe</code>，
+    中间<b>没有</b> <code>.i</code>、也<b>没有</b> <code>.o</code> ——
+    说明这一条命令把第 1 节那三步<b>一口气全做完了</b>。
+    第 4、5 节会故意把它们拆开敲，才看得见中间产物。</td></tr>
+<tr><td class="c"><code>-Wall</code></td>
+    <td>把常用的<b>警告</b>全打开。不加它，很多问题它一声不吭。</td></tr>
+<tr><td class="c"><code>-Werror=return-type</code></td>
+    <td>「该返回却没返回」这件事，从<b>警告</b>升级成<b>错误</b>，
+    不让你带着它继续往下走。第 7 节讲错误与警告的分界。</td></tr>
+<tr><td class="c"><code>-Werror=vla</code></td>
+    <td>变长数组（vla）同样升级成错误。这一条正好呼应 M01 的结论：
+    <b>方括号里的长度必须是确定的数，不可以是变量</b>。</td></tr>
+<tr><td class="c"><code>-Wl,--stack,12582912</code></td>
+    <td><code>-Wl,</code> 的意思是「后面这些不是给编译器，是转交给<b>链接器</b>的」。
+    这里要求把栈设成 12582912 字节 = <b>12 MB</b>。
+    从这一个参数就能看出编译与链接是两件事 —— 第 5 节讲。</td></tr>
+<tr><td class="c"><code>错误数: 0</code> / <code>警告数: 0</code></td>
+    <td>两件事分开数。所以「没报错」和「没问题」不是一回事 ——
+    警告数不为 0 时，程序照样能生成。</td></tr>
+<tr><td class="c"><code>输出文件大小: 107.46 KiB</code></td>
+    <td>源码才 5 行，生成的 exe 却有 107 KiB。多出来的是<b>链接</b>时
+    拼进去的启动代码和标准库 —— 正是第 5 节的内容。</td></tr>
+</tbody>
+</table>
+
+<div class="card key">
+  <div class="card-t">这块信息为什么值得看一眼</div>
+  <p>很多人点完「编译」，只看一眼「成功」就关掉了。
+  但这一小块里其实写着<b>谁在编、用什么参数编、有没有警告、产物在哪</b> ——
+  真出问题时，这四样恰好就是最先要看的东西。</p>
+</div>
+
+<h3>同一件事，gcc 与 Visual Studio 2026 两种做法</h3>
+
+<p>原理是<b>通用的</b>，不分编译器。本讲第 3~7 节用 <code>gcc</code> 这一行命令
+把三步「摊开」，第 9 节起改用 <b>Visual Studio 2026</b> 一步步做。
+两者的对应关系是：</p>
+
+<div class="card tip">
+  <div class="card-t">对照表</div>
   <table style="margin:8px 0 0">
   <thead><tr><th style="width:22%">阶段</th><th style="width:30%">命令行（gcc）</th>
     <th>Visual Studio 2026</th></tr></thead>
@@ -124,7 +284,7 @@
 </div>
 
 <!-- ============================================================ -->
-<h2 id="s2"><span class="n">2</span>预处理：<code>#include</code> 做了什么</h2>
+<h2 id="s3"><span class="n">3</span>预处理：<code>#include</code> 做了什么</h2>
 
 <p><code>#include</code> <b>不是「引用」，而是「把那个文件的内容原样粘到这里」</b>。</p>
 
@@ -169,7 +329,7 @@
 先检查路径、拼写、有没有把目录加进搜索路径（<code>-I</code>）。</p>
 
 <!-- ============================================================ -->
-<h2 id="s3" class="key-h key-h key-h key-h"><span class="key-mark" title="重点内容">★</span><span class="n">3</span>编译：各自翻译</h2>
+<h2 id="s4" class="key-h key-h key-h key-h"><span class="key-mark" title="重点内容">★</span><span class="n">4</span>编译：各自翻译</h2>
 
 <p>这一步把 C++ 变成机器指令，但<b>只处理一个文件</b>。
 输出是 <code>.o</code>（目标文件）：里面机器指令写好了，
@@ -202,7 +362,7 @@
 <b>编译器能精确指到列号</b>，照着改就行。</p>
 
 <!-- ============================================================ -->
-<h2 id="s4" class="key-h key-h key-h key-h"><span class="key-mark" title="重点内容">★</span><span class="n">4</span>链接：拼起来</h2>
+<h2 id="s5" class="key-h key-h key-h key-h"><span class="key-mark" title="重点内容">★</span><span class="n">5</span>链接：拼起来</h2>
 
 <p>把多个 <code>.o</code> 和用到的库拼成一个 exe，同时<b>把地址填好</b>。</p>
 
@@ -242,14 +402,14 @@ collect2.exe: error: ld returned 1 exit status</pre></div>
 <tr><td>声明在 <code>namespace</code> <span class="cpp-badge">C++</span> 里，定义不在（或反过来）</td>
     <td>名字必须完全一致，包括命名空间</td></tr>
 <tr><td>忘了链接某个库</td>
-    <td>加 <code>-l</code> 参数，见第 7 节</td></tr>
+    <td>加 <code>-l</code> 参数，见第 8 节</td></tr>
 <tr><td>C++ 与 C 混编时没写 <code>extern "C"</code></td>
     <td>C++ 会对函数名做「名字修饰」，C 不会 —— 链接时名字对不上</td></tr>
 </tbody>
 </table>
 
 <!-- ============================================================ -->
-<h2 id="s5" class="key-h key-h key-h key-h"><span class="key-mark" title="重点内容">★</span><span class="n">5</span>头文件为什么存在</h2>
+<h2 id="s6" class="key-h key-h key-h key-h"><span class="key-mark" title="重点内容">★</span><span class="n">6</span>头文件为什么存在</h2>
 
 <p>既然 <code>#include</code> 就是粘贴，那为什么不直接把代码都写一个文件里？</p>
 
@@ -317,7 +477,7 @@ collect2.exe: error: ld returned 1 exit status</pre></div>
   <p>「头文件里放函数体」有一个合法的例外：<b>给函数加 <code>inline</code></b>。
   但 <code>inline</code> 是 <b>C++</b> 的关键字，<b>C 里没有</b>。</p>
   <p>它为什么能解决重复定义、以及它另外两层含义，
-  在<b>第 9 节</b>专门讲。这里先知道「有这么个东西」就够了。</p>
+  在<b>第 10 节</b>专门讲。这里先知道「有这么个东西」就够了。</p>
 </div>
 
 <div class="code-wrap"><div class="bar"><span class="dot r"></span><span class="dot y"></span><span class="dot g"></span><span class="name">对比</span><span class="cpp-badge">C++</span><span class="cp">复制</span></div><pre><span class="hl-c">/* tools.h */</span>
@@ -345,7 +505,7 @@ collect2.exe: error: ld returned 1 exit status</pre></div>
 <b>两种任选一种，但每个头文件都必须有。</b></p>
 
 <!-- ============================================================ -->
-<h2 id="s6"><span class="n">6</span>三种错误怎么分</h2>
+<h2 id="s7"><span class="n">7</span>三种错误怎么分</h2>
 
 <p>这一节是全篇最实用的部分。看报错信息里的关键字，就能判断问题在哪一步：</p>
 
@@ -377,10 +537,102 @@ collect2.exe: error: ld returned 1 exit status</pre></div>
   </ol>
 </div>
 
-<!-- ============================================================ -->
-<h2 id="s7" class="key-h key-h key-h key-h"><span class="key-mark" title="重点内容">★</span><span class="n">7</span>库：静态库与动态库</h2>
 
-<p>第 4 节说过：链接就是把多个 <code>.o</code> / <code>.obj</code> 拼起来。
+<h3 id="s7a">7.1 看两条真实输出：错误与警告</h3>
+
+<p>上面那张表是「怎么从关键字判断阶段」。再来看一个真实的例子 ——
+它把好几件事一次讲清了：</p>
+
+<div class="fig">
+  <div class="fig-scroll">
+    <a class="fig-link" href="assets/编译错误.png" target="_blank" rel="noopener"
+       title="点开看原尺寸">
+      <img class="fig-wide" src="assets/编译错误.png"
+           alt="小熊猫CPP 的编译错误输出：第 5 行 int arr[n] 被标红，下方列出两条 [错误]/[警告] 与 some warnings being treated as errors">
+    </a>
+  </div>
+  <div class="fig-swipe">← 图片较宽，可左右滑动查看 →</div>
+  <div class="fig-cap">一段很短的代码，编译器给出的<b>两条</b>输出。
+  <b>想看清原字可点开放大。</b></div>
+</div>
+
+<p>代码只有 5 行有用：</p>
+
+<div class="code-wrap"><div class="bar"><span class="dot r"></span><span class="dot y"></span>
+<span class="dot g"></span><span class="name">会报错的那 5 行</span><span class="cp">复制</span></div><pre><span class="hl-k">int</span> <span class="hl-f">main</span>(){
+    <span class="hl-k">int</span> n = <span class="hl-n">0</span>;
+    <span class="hl-f">scanf</span>(<span class="hl-s">"%d"</span>, <span class="arw">&amp;</span>n);
+    <span class="hl-k">int</span> arr[n];   <span class="hl-c">/* ← 长度是个变量 */</span>
+    <span class="hl-k">return</span> <span class="hl-n">0</span>;
+}</pre></div>
+
+<p>它错在哪？<b>方括号里的 <code>n</code> 是个变量</b>。
+这正是 M01 讲过的结论：<b>长度必须是确定的数，不可以是变量</b>。
+而这里的 <code>n</code> 要等到程序跑起来、读到用户输入才知道，
+编译器在写代码阶段根本定不下来 —— 于是报错。</p>
+
+<p>把图片下半部分那张表拆开看：</p>
+
+<table>
+<thead><tr><th style="width:22%">它写的</th><th>怎么读</th></tr></thead>
+<tbody>
+<tr><td class="c"><code>In function 'int main()':</code></td>
+    <td>先给上下文：<b>下面这些都在 <code>main</code> 里</b>。
+    别忽略这一行，函数一多它就能省你几分钟。</td></tr>
+<tr><td class="c"><code>untitled1.cpp</code><br><code>5</code> <code>13</code></td>
+    <td>文件名 + <b>行 5、列 13</b>。精确到列，
+    所以光标能一按就跳到那个位置 —— 照着改就行。</td></tr>
+<tr><td class="c"><code>[错误] variable length array<br>'arr' is used [-Werror=vla]</code></td>
+    <td>正式的说法：<b>用了变长数组</b>。
+    方括号里的 <code>[-Werror=vla]</code> 是关键 ——
+    它说明这条本来是 <code>-Wvla</code> 那条<b>警告</b>，
+    因为 §2 截图里那个 <code>-Werror=vla</code>，被<b>升级成了错误</b>。
+    <b>没有那个参数，它会是一条警告，程序照样生成。</b></td></tr>
+<tr><td class="c"><code>[警告] unused variable 'arr'<br>[-Wunused-variable]</code></td>
+    <td>同一行、同一列，还挂着<b>第二条</b> —— 警告。
+    因为 <code>arr</code> 定义完之后一次都没用过。
+    <b>一行代码可以同时踩好几个坑</b>，而它们分属「错误」和「警告」两类。</td></tr>
+<tr><td class="c"><code>cc1plus.exe</code><br><code>some warnings being treated as errors</code></td>
+    <td>这一条的「文件名」不是你的文件，而是编译器内部的一个程序
+    （<code>cc1plus</code> 就是 gcc 里真正做 C++ 编译的那一步）。
+    它直译过来是<b>「有些警告被当成错误处理了」</b> ——
+    对上一行那个 <code>-Werror</code> 的字面解释。</td></tr>
+</tbody>
+</table>
+
+<div class="card key">
+  <div class="card-t">这张图值得记住的三件事</div>
+  <ol>
+    <li><b>错误和警告是分开数的。</b>同一行可以既有错误又有警告 ——
+    错误挡住你，警告不会。有警告的程序照样能生成、能跑。</li>
+    <li><b><code>-Werror=xxx</code> 能把某类警告变成错误。</b>
+    这是团队故意设的：与其让你忽略，不如直接拦住。
+    §2 的截图里就开着 <code>-Werror=vla</code> 和
+    <code>-Werror=return-type</code>。</li>
+    <li><b>报错信息里的「文件」不一定是你的文件。</b>
+    看到 <code>cc1plus.exe</code> 这种名字，说明消息来自编译器内部，
+    通常是在总结全局情况（比如「有些警告被当成错误」）。</li>
+  </ol>
+</div>
+
+<div class="card note">
+  <div class="card-t">那「变长数组」到底能不能用？</div>
+  <p>换个编译器、把 <code>-Werror=vla</code> 去掉，它可能只是一条警告、能编过。
+  但<b>本讲统一按「不可以」来讲</b>，理由有两条：</p>
+  <ul>
+    <li>它不是 C++ 标准的一部分 —— 这次能过，换个环境就未必；</li>
+    <li>长度在运行前就能定下来的话，就该写死或用常量 ——
+    <b>写得死一点，编译器才能替你检查</b>（M01 就是这个意思）。</li>
+  </ul>
+  <p>长度真的要等运行时才知道（比如读文件、用户输入），
+  用 <a href="m09.html">M09《vector 和 array》</a> 里的
+  <code>vector</code> —— 那才是正经做法。</p>
+</div>
+
+<!-- ============================================================ -->
+<h2 id="s8" class="key-h key-h key-h key-h"><span class="key-mark" title="重点内容">★</span><span class="n">8</span>库：静态库与动态库</h2>
+
+<p>第 5 节说过：链接就是把多个 <code>.o</code> / <code>.obj</code> 拼起来。
 但如果有一堆功能<b>很多项目都要用</b>，总不能每次都把源码拷一遍。
 把编译好的目标文件<b>打包</b>起来，就是<b>库</b>。</p>
 
@@ -426,11 +678,11 @@ collect2.exe: error: ld returned 1 exit status</pre></div>
   </tbody></table>
   <p style="margin-top:10px"><b>两个都要给对，缺一个都编不出来。</b>
   而且报错发生在<b>不同阶段</b>：少了头文件是编译错，少了 lib 是链接错 ——
-  正好用上第 6 节那张「三种错误怎么分」的表。</p>
+  正好用上第 7 节那张「三种错误怎么分」的表。</p>
 </div>
 
 <!-- ============================================================ -->
-<h2 id="s8"><span class="key-hint">纯选修，可跳过</span><span class="n">8</span>手把手：用 VS 2026 做静态库</h2>
+<h2 id="s9"><span class="key-hint">纯选修，可跳过</span><span class="n">9</span>手把手：用 VS 2026 做静态库</h2>
 
 <div class="card note">
   <div class="card-t">这一节做什么</div>
@@ -441,7 +693,7 @@ collect2.exe: error: ld returned 1 exit status</pre></div>
   <b>Visual Studio Community 2026</b>（18.10.3 · MSVC 14.51.36231）实际生成核对。</p>
 </div>
 
-<h3 id="s8a">8.1 建解决方案与静态库工程</h3>
+<h3 id="s9a">9.1 建解决方案与静态库工程</h3>
 
 <h4>① 新建项目</h4>
 <p>打开 VS → <b>创建新项目</b>。在搜索框里输入 <code>静态库</code>，
@@ -468,7 +720,7 @@ collect2.exe: error: ld returned 1 exit status</pre></div>
   <div class="card-t">「将解决方案和项目放在同一目录中」为什么建议不勾</div>
   <p>勾上之后 <code>.sln</code> 和 <code>.vcxproj</code> 混在同一层，
   文件一多就乱。<b>不勾</b>的话 .sln 在外、每个项目一个子文件夹 ——
-  这正是第 8.5 节里 <code>$(SolutionDir)</code> 和 <code>$(ProjectDir)</code>
+  这正是第 9.5 节里 <code>$(SolutionDir)</code> 和 <code>$(ProjectDir)</code>
   不一样的原因。</p>
 </div>
 
@@ -486,7 +738,7 @@ collect2.exe: error: ld returned 1 exit status</pre></div>
 <p>在<b>解决方案资源管理器</b>里右键 <code>UmeMath.cpp</code> → <b>删除</b>。
 （删的是工程里的引用，磁盘上的文件也会一并删掉。）</p>
 
-<h3 id="s8b">8.2 写头文件与实现</h3>
+<h3 id="s9b">9.2 写头文件与实现</h3>
 
 <p>右键项目 → <b>添加 → 新建项</b>，建两个文件：</p>
 
@@ -498,14 +750,14 @@ collect2.exe: error: ld returned 1 exit status</pre></div>
 </tbody>
 </table>
 
-<div class="code-wrap"><div class="bar"><span class="dot r"></span><span class="dot y"></span><span class="dot g"></span><span class="name">ume_math.h —— 对外公开的头文件</span><span class="cpp-badge">C++</span><span class="cp">复制</span></div><pre><span class="hl-p">#pragma once</span>          <span class="hl-c">// 防止被重复包含（第 5 节讲过）</span>
+<div class="code-wrap"><div class="bar"><span class="dot r"></span><span class="dot y"></span><span class="dot g"></span><span class="name">ume_math.h —— 对外公开的头文件</span><span class="cpp-badge">C++</span><span class="cp">复制</span></div><pre><span class="hl-p">#pragma once</span>          <span class="hl-c">// 防止被重复包含（第 6 节讲过）</span>
 
 <span class="hl-c">// ① 只写声明：实现在 ume_math.cpp 里</span>
 <span class="hl-k">int</span>  <span class="hl-f">ume_add</span>(<span class="hl-k">int</span> a, <span class="hl-k">int</span> b);
 <span class="hl-k">int</span>  <span class="hl-f">ume_mul</span>(<span class="hl-k">int</span> a, <span class="hl-k">int</span> b);
 <span class="hl-k">int</span>  <span class="hl-f">ume_clamp</span>(<span class="hl-k">int</span> v, <span class="hl-k">int</span> lo, <span class="hl-k">int</span> hi);
 
-<span class="hl-c">// ② 写在头文件里的函数，必须加 inline（第 9 节详解）</span>
+<span class="hl-c">// ② 写在头文件里的函数，必须加 inline（第 10 节详解）</span>
 <span class="hl-k">inline</span> <span class="hl-k">int</span> <span class="hl-f">ume_max</span>(<span class="hl-k">int</span> a, <span class="hl-k">int</span> b) {
     <span class="hl-k">return</span> (a &gt; b) ? a : b;
 }
@@ -563,7 +815,7 @@ ume_math.h(10,5): error C2059: 语法错误:"return"</pre></div>
   </ol>
 </div>
 
-<h3 id="s8c">8.3 右键「生成」到底做了什么</h3>
+<h3 id="s9c">9.3 右键「生成」到底做了什么</h3>
 
 <p>这是你问的那个操作。在<b>解决方案资源管理器</b>里，
 <b>右键点项目名 <code>UmeMath</code></b>，菜单里能看到这一组：</p>
@@ -604,7 +856,7 @@ ume_math.h(10,5): error C2059: 语法错误:"return"</pre></div>
   <p>但你改了<b>附加包含目录、附加依赖项</b>这类设置时，
   源文件一个字节都没动 —— 于是「生成」认为<b>无事可做</b>，
   旧产物照旧，问题看起来「没解决」。</p>
-  <p><b>所以在第 8.5 节改完库配置后，请用「重新生成」。</b></p>
+  <p><b>所以在第 9.5 节改完库配置后，请用「重新生成」。</b></p>
 </div>
 
 <h4>点「生成」之后，看哪里</h4>
@@ -629,7 +881,7 @@ ume_math.h(10,5): error C2059: 语法错误:"return"</pre></div>
 
 <p>注意 <code>-&gt;</code> 后面那个路径：它在
 <code>&lt;解决方案目录&gt;\x64\Debug\</code> 下 ——
-这正是第 8.5 节要用到的位置，也是 F02 第 8 节讲的
+这正是第 9.5 节要用到的位置，也是 F02 第 8 节讲的
 <code>$(SolutionDir)$(Platform)\$(Configuration)\</code> 展开结果。</p>
 
 <div class="card key">
@@ -644,7 +896,7 @@ TargetPath        = [D:\Path\To\UME\x64\Debug\UmeMath.lib]</pre></div>
   <b>只差这一个下拉框。</b></p>
 </div>
 
-<h3 id="s8d">8.4 建控制台工程并使用它</h3>
+<h3 id="s9d">9.4 建控制台工程并使用它</h3>
 
 <h4>① 加一个新项目到同一个解决方案</h4>
 <p><b>右键解决方案</b>（最上面那个 <code>UME</code>）→
@@ -712,7 +964,7 @@ fatal error LNK1120: 2 个无法解析的外部命令</pre></div>
   </tbody></table>
 </div>
 
-<h3 id="s8e">8.5 让它能找到库：三步配置</h3>
+<h3 id="s9e">9.5 让它能找到库：三步配置</h3>
 
 <p>三步都在 <b>App 项目</b>的属性里（<b>右键 App → 属性</b>）。
 注意属性页顶部有 <b>配置</b> 和 <b>平台</b> 两个下拉框，
@@ -791,7 +1043,7 @@ VS 还提供了一条<b>自动化</b>的路：</p>
   仍然报 <code>LNK1104</code>。补上 ③ 之后一次通过。）</p>
 </div>
 
-<h3 id="s8f">8.6 运行与验证</h3>
+<h3 id="s9f">9.6 运行与验证</h3>
 
 <p>改完配置后<b>务必「重新生成」</b>（8.3 讲过原因）。
 成功时输出窗口末尾是这样：</p>
@@ -851,15 +1103,15 @@ kUmeVersion        = 2026</pre></div>
 </div>
 
 <!-- ============================================================ -->
-<h2 id="s9"><span class="n">9</span><code>inline</code> 到底解决什么</h2>
+<h2 id="s10"><span class="n">10</span><code>inline</code> 到底解决什么</h2>
 
 <p>8.2 里我在头文件里写了 <code>inline int ume_max(...)</code>，
 还写了一行 <code>inline const int kUmeVersion</code>。
 现在说清<b>为什么非加不可</b> —— 这是做静态库时绕不过去的一个点。</p>
 
-<h3 id="s9a">9.1 冲突从哪来</h3>
+<h3 id="s10a">10.1 冲突从哪来</h3>
 
-<p>先回顾第 5 节的两条规则，它们<b>直接打架</b>：</p>
+<p>先回顾第 6 节的两条规则，它们<b>直接打架</b>：</p>
 
 <div class="cards2" style="display:grid;grid-template-columns:1fr 1fr;gap:13px;margin:16px 0">
   <div class="card key" style="margin:0">
@@ -885,7 +1137,7 @@ kUmeVersion        = 2026</pre></div>
 
 <span class="hl-c">// 链接时：两个 .obj 里都有 ume_max → 冲突</span></pre></div>
 
-<h3 id="s9b">9.2 实测那个报错</h3>
+<h3 id="s10b">10.2 实测那个报错</h3>
 
 <p>我把 <code>inline</code> 去掉、并且让<b>两个 <code>.cpp</code> 都包含这个头文件</b>，
 重新生成，得到的是这个（本机实测原文）：</p>
@@ -929,7 +1181,7 @@ D:\...\x64\Debug\App.exe : fatal error LNK1169:
   搜索时用修饰名更准。</p>
 </div>
 
-<h3 id="s9c">9.3 inline 的三层含义</h3>
+<h3 id="s10c">10.3 inline 的三层含义</h3>
 
 <p>「inline」这个词直译是「在行内」，但它<b>在现代 C++ 里主要不是那个意思</b>。
 搞清这三层就不容易混了。</p>
@@ -1028,7 +1280,7 @@ D:\...\x64\Debug\App.exe : fatal error LNK1169:
 </div>
 
 <!-- ============================================================ -->
-<h2 id="s10"><span class="n">10</span>常见错误</h2>
+<h2 id="s11"><span class="n">11</span>常见错误</h2>
 
 <h4>错误 1 · 头文件里有函数体却忘了 inline</h4>
 <div class="code-wrap"><div class="bar"><span class="dot r"></span><span class="dot y"></span><span class="dot g"></span><span class="name">对比</span><span class="cpp-badge">C++</span><span class="cp">复制</span></div><pre><span class="hl-c">// ❌ 被两个 .cpp 包含就报 LNK2005</span>
