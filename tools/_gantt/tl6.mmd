@@ -1,0 +1,10 @@
+%% Q11 §8 图：死锁 —— 两条都停在「等」，右边再也没有「继续」
+gantt
+  dateFormat HH:mm:ss
+  axisFormat %S
+  tickInterval 1second
+  section 两条都卡住
+  线程 1 持有 m1 :active, s1, 00:00:00, 00:00:02
+  线程 2 持有 m2 :active, s2, 00:00:00, 00:00:02
+  线程 1 等 m2（永远等不到） :crit, s3, 00:00:02, 00:00:10
+  线程 2 等 m1（永远等不到） :crit, s4, 00:00:02, 00:00:10

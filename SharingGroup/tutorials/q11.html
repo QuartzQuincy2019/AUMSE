@@ -107,6 +107,12 @@
 <p>也就是 24 个逻辑核。<b>只要同时活跃的线程超过这个数，就一定有人在排队</b>，
 而排队就意味着切换。</p>
 
+<div class="tlfig">
+  <img class="tll" src="assets/q11-tl1-light.svg" alt="甘特图：线程 A 在 0–4、线程 B 在 4–9、线程 A 又在 9–12 占用 CPU">
+  <img class="tld" src="assets/q11-tl1-dark.svg" alt="甘特图：线程 A 在 0–4、线程 B 在 4–9、线程 A 又在 9–12 占用 CPU">
+  <p class="tlcap"><b>任何时刻只有一条线程真正占着 CPU。</b>线程 A 在时间片 0–3 跑，4 起换成线程 B，9 又换回来 —— 「同时」是靠这样来回换出来的，不是两条真的一起在算。</p>
+</div>
+
 <h3>什么时候会切</h3>
 
 <table>
@@ -120,6 +126,12 @@
     <td><code>std::this_thread::yield()</code>：我暂时没活，先让别人跑</td></tr>
 </tbody>
 </table>
+
+<div class="tlfig">
+  <img class="tll" src="assets/q11-tl2-light.svg" alt="甘特图：执行—切换—执行—切换—执行，橙红色是切换本身">
+  <img class="tld" src="assets/q11-tl2-dark.svg" alt="甘特图：执行—切换—执行—切换—执行，橙红色是切换本身">
+  <p class="tlcap">中间那两条橙红色窄块就是<b>切换本身</b>：保存现场 → 挑人 → 恢复现场。这段时间没有任何计算产出。线程开得越多，这种空隙越密，总时间反而可能更长。</p>
+</div>
 
 <div class="card warn">
   <div class="card-t">切换不是免费的</div>
@@ -204,6 +216,12 @@
 
 <p>反过来说：<b>如果一件事本来就是串行的，或者量小得几十毫秒就跑完，
 多线程只会带来麻烦，不会带来收益。</b></p>
+
+<div class="tlfig">
+  <img class="tll" src="assets/q11-tl3-light.svg" alt="甘特图：单线程一整条 vs 八条线程一小段">
+  <img class="tld" src="assets/q11-tl3-dark.svg" alt="甘特图：单线程一整条 vs 八条线程一小段">
+  <p class="tlcap"><b>示意图，不是实测。</b>同一批计算，一条线程顺着做完；切成几份交给多个核，墙钟时间大致按份数缩短。这就是第 4 节说「算得太多」才值得多线程的理由。</p>
+</div>
 
 <div class="card warn">
   <div class="card-t">多线程的代价是真实的</div>
@@ -306,6 +324,12 @@ std::vector&lt;std::thread&gt; ts;
   <p>下面这个最小实验就是最典型的一种竞态：<b>多个线程对一个变量做「读—改—写」</b>。</p>
 </div>
 
+<div class="tlfig">
+  <img class="tll" src="assets/q11-tl4-light.svg" alt="甘特图：线程 A 读、线程 B 读、线程 A 写、线程 B 写">
+  <img class="tld" src="assets/q11-tl4-dark.svg" alt="甘特图：线程 A 读、线程 B 读、线程 A 写、线程 B 写">
+  <p class="tlcap">两条线程都<b>在对方写回之前读到了 100</b>，各自加 1 得到 101，然后先后写回 101 —— <b>加了两次，值只涨了 1。</b>第二次写回把第一次覆盖掉了。</p>
+</div>
+
 <p>8 个线程，每个把同一个计数器加 5 万次，应该得到 40 万：</p>
 
 <div class="code-wrap"><div class="bar"><span class="dot r"></span><span class="dot y"></span><span class="dot g"></span><span class="name">不加锁</span><span class="cp">复制</span></div><pre><span class="hl-k">const</span> <span class="hl-k">int</span> N = <span class="hl-n">8</span>, M = <span class="hl-n">50000</span>;
@@ -396,6 +420,13 @@ ts.emplace_back([&amp;] {
 
 <div class="out-wrap"><div class="cap">运行结果（已核对）</div><pre>lock_guard: total = 2000000</pre></div>
 
+<div class="tlfig">
+  <img class="tll" src="assets/q11-tl5-light.svg" alt="甘特图：线程 B 等锁，线程 A 在临界区，之后线程 B 才进">
+  <img class="tld" src="assets/q11-tl5-dark.svg" alt="甘特图：线程 B 等锁，线程 A 在临界区，之后线程 B 才进">
+  <p class="tlcap">加了锁之后，两段临界区<b>完全不重叠</b>：B 在等锁的整段时间里进不来，A 退出（<code>g</code> 析构）的那一刻 B 才拿到。这就是「串行化」在时间轴上的样子。</p>
+</div>
+
+
 <p>200 万，一分不差。</p>
 
 <div class="card key">
@@ -477,6 +508,13 @@ lock(m1);   /* 等 m1 */</pre>
 C++17 的 <code>std::scoped_lock</code> 就是干这个的：</p>
 
 <div class="out-wrap"><div class="cap">运行结果（已核对：8 线程 × 2000 次，没有卡死）</div><pre>scoped_lock : a=16000 b=16000</pre></div>
+
+<div class="tlfig">
+  <img class="tll" src="assets/q11-tl6-light.svg" alt="甘特图：两条线程各持有锁后互相等待，右边再无进展">
+  <img class="tld" src="assets/q11-tl6-dark.svg" alt="甘特图：两条线程各持有锁后互相等待，右边再无进展">
+  <p class="tlcap">两条线程各拿到一把锁，然后都在等对方手里那把。<b>横条右边没有任何「继续」的块</b> —— 不是变慢，是永远不动了。死锁不报错、不崩溃，只是程序不再前进。</p>
+</div>
+
 
 <!-- ============================================================ -->
 <h2 id="s9"><span class="n">9</span>不必加锁的场合：单变量原子操作</h2>
@@ -617,6 +655,8 @@ UME 项目组内部教程 · Q11《线程与互斥锁》<br>
 文中所有输出与报错，均使用 <b>MSVC 14.51</b>（x64）实际编译运行核对；
 不加锁那一组的数字每次运行都不同，文中注明为「已核对」的那次仅供参考；
 抽卡概率模型按约定不在本篇展开；上下文切换一节只引用核数一个实测值。
+六张甘特图由 mermaid 11.17.2 离线渲染成静态 SVG（源文本见
+<code>tools/_gantt/</code>），页面运行时不加载任何脚本。
 代码示例以 <b>Consolas</b> 等宽字体呈现。
 </footer>
 </main>

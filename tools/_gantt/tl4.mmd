@@ -1,0 +1,13 @@
+%% Q11 §6 图：竞态的「读—改—写」交错
+%% 两条线程都在对方写回之前读到了 100，各自加 1 得到 101，然后先后写回。
+%% 标签刻意写短：每条只有 1 格宽，放不下长句时 mermaid 会把标签挪到条外，
+%% 而它给 active 任务加的 .activeText{fill:#fff!important} 会让条外文字变白 —— 隐形。
+gantt
+  dateFormat HH:mm:ss
+  axisFormat %S
+  tickInterval 1second
+  section 按时间从上往下
+  A 读 100 :active, s1, 00:00:00, 00:00:01
+  B 读 100 :active, s2, 00:00:02, 00:00:03
+  A 写 101 :crit, s3, 00:00:04, 00:00:05
+  B 写 101 :crit, s4, 00:00:05, 00:00:06

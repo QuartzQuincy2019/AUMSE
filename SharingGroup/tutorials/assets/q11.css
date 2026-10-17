@@ -344,3 +344,29 @@
    不需要那么大。限一下宽度并居中，让「题目 → 图 → 说明」三块比例协调。 */
 .q07-fig{max-width:560px;margin:18px auto}
 .q07-fig img{width:100%;height:auto;display:block}
+
+/* =====================================================================
+   甘特图（mermaid 预渲染成静态 SVG）
+   ---------------------------------------------------------------------
+   · 明暗两套图各一张，用 prefers-color-scheme 切换；隐藏的那张是
+     display:none，不会被读屏软件读到。
+   · SVG 本身没有背景，所以直接坐在卡片的 --bg-soft 上，两个主题都不打架。
+   · 窄屏：容器横向滚动，图保底 560px，不压成看不清。
+   ================================================================== */
+.tlfig{margin:18px 0 22px;padding:12px 12px 8px;border:1px solid var(--line);
+  border-radius:12px;background:var(--bg-soft);overflow-x:auto}
+.tlfig img{display:block;width:100%;min-width:560px;height:auto;margin:0 auto}
+.tlfig .tld{display:none}
+.tlfig .tlcap{margin:8px 0 2px;font-size:12.5px;line-height:1.75;color:var(--fg-3)}
+.tlfig .tlcap b{color:var(--fg-2)}
+.tlfig .tlcap code{font-size:12px}
+
+@media (prefers-color-scheme: dark){
+  .tlfig .tll{display:none}
+  .tlfig .tld{display:block}
+}
+
+@media (max-width:980px){
+  .tlfig{padding:10px 10px 6px;border-radius:10px}
+  .tlfig img{min-width:520px}
+}

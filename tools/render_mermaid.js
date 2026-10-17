@@ -16,8 +16,8 @@
        默认端口 9790；会自己拉起 headless Edge，渲染完自动关掉。
 
    依赖
-       mermaid：C:\Users\lenovo\.dsh\profiles\desktop\node_modules\mermaid
-                （11.17.2；这是**写文档时**的依赖，不是页面的依赖）
+       mermaid：tools/vendor/mermaid/（11.17.2，随项目携带，含 LICENSE）
+                **写文档时**的依赖，不是页面的依赖
        Edge   ：C:\Program Files (x86)\Microsoft\Edge\Application\msedge.exe
 
    注意
@@ -34,7 +34,9 @@ const { spawn } = require('child_process');
 const ROOT = 'E:/QKMansion/CSX10/w/UME';
 const MMD = path.join(ROOT, 'tools/_m10_diagram.mmd');
 const OUT = path.join(ROOT, 'SharingGroup/tutorials/assets');
-const MERMAID = 'C:/Users/lenovo/.dsh/profiles/desktop/node_modules/mermaid/dist/mermaid.min.js';
+/* mermaid 随项目携带，见 tools/vendor/mermaid/（含 LICENSE 与版本说明）。
+   以前这里指向本机全局安装的路径，换台机器就跑不了。 */
+const MERMAID = path.join(ROOT, 'tools/vendor/mermaid/mermaid.min.js');
 const EDGE = 'C:/Program Files (x86)/Microsoft/Edge/Application/msedge.exe';
 const PORT = Number(process.argv[2] || 9790);
 

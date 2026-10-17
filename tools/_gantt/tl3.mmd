@@ -1,0 +1,8 @@
+%% Q11 §4 图：单线程 vs 多线程（示意，不是实测）
+gantt
+  dateFormat HH:mm:ss
+  axisFormat %S
+  tickInterval 1second
+  section 同一批计算
+  单线程：一份一份做 :active, s1, 00:00:00, 00:00:08
+  8 条线程各干一份 :active, s2, 00:00:00, 00:00:01

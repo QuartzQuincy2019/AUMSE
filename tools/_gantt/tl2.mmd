@@ -1,0 +1,12 @@
+%% Q11 §2 图二：上下文切换本身的空隙
+%% 橙红色窄条 = 保存现场 → 挑人 → 恢复现场，这段时间没有计算产出。
+gantt
+  dateFormat HH:mm:ss
+  axisFormat %S
+  tickInterval 1second
+  section 时间线
+  线程 A 执行 :active, s1, 00:00:00, 00:00:03
+  上下文切换 :crit, s2, 00:00:03, 00:00:04
+  线程 B 执行 :active, s3, 00:00:04, 00:00:07
+  上下文切换 :crit, s4, 00:00:07, 00:00:08
+  线程 A 执行 :active, s5, 00:00:08, 00:00:10

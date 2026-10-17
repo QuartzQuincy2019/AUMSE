@@ -1,0 +1,9 @@
+%% Q11 §7 图：加锁之后，两段临界区完全不重叠
+gantt
+  dateFormat HH:mm:ss
+  axisFormat %S
+  tickInterval 1second
+  section 同一把锁
+  线程 B 等锁（进不来） :done, s1, 00:00:01, 00:00:05
+  线程 A 在临界区 :active, s2, 00:00:02, 00:00:05
+  线程 B 进临界区 :active, s3, 00:00:05, 00:00:07

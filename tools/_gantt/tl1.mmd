@@ -1,0 +1,15 @@
+%% Q11 §2 图一：单核上两条线程轮流用 CPU
+%%
+%% 为什么用 HH:mm:ss 而不是 dateFormat X：
+%%   实测 dateFormat X 下 mermaid 会忽略 start，把每一行都从 0 画起，
+%%   四条任务变成 0..1 / 0..3 / 0..5 / 0..6，全是错的。
+%%   换成真实时间格式后 start/end 都正确解析。
+%% 0..12 是等距的时间片编号，不是真实秒数。
+gantt
+  dateFormat HH:mm:ss
+  axisFormat %S
+  tickInterval 1second
+  section CPU 交给谁
+  线程 A 在跑 :active, s1, 00:00:00, 00:00:04
+  线程 B 在跑 :active, s2, 00:00:04, 00:00:09
+  线程 A 又跑一次 :active, s3, 00:00:09, 00:00:12
