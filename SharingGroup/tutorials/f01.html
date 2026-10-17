@@ -20,8 +20,9 @@
   <a href="#s2">2 · 怎么打开</a>
   <a href="#s3">3 · 基本约定</a>
   <a href="#s4">4 · 最该先会的几条命令</a>
-  <a href="#s5">5 · 一个完整流程</a>
-  <a href="#s6">6 · 常见问题</a>
+  <a href="#s5">5 · 顺带会一件事：用 <code>npm</code> 装个库</a>
+  <a href="#s6">6 · 一个完整流程</a>
+  <a href="#s7">7 · 常见问题</a>
 </nav>
 
 <main>
@@ -236,7 +237,133 @@ where python</div>
 </div>
 
 <!-- ============================================================ -->
-<h2 id="s5"><span class="n">5</span>一个完整流程</h2>
+<h2 id="s5"><span class="n">5</span>顺带会一件事：用 <code>npm</code> 装个库</h2>
+
+<p>前面讲的都是「在本机跑自己的程序」。还有一件几乎天天要做的事：
+<b>把别人写好的库下载到当前目录</b>。做这件事的工具叫 <code>npm</code>，
+装了 Node.js 就自带它，不用另外装。</p>
+
+<p>先确认它能用（顺便复习第 4 节的「运行程序」）：</p>
+
+<div class="term">
+  <div class="tbar"><span class="d r"></span><span class="d y"></span><span class="d g"></span>
+    <span>确认 node 和 npm 都在</span></div>
+<pre><span class="pr">C:\proj&gt;</span><span class="cmd">node -v</span>
+<span class="out">v24.21.0</span>
+<span class="pr">C:\proj&gt;</span><span class="cmd">npm -v</span>
+<span class="out">11.13.0</span></pre>
+</div>
+
+<p>两条都能报出版本号，就说明 <code>PATH</code> 里能找到它们。</p>
+
+<h4>例子：装 mermaid</h4>
+
+<p><b>mermaid</b> 是个「用文字画图」的库：写几行文本，它给你画成流程图。
+假设我们的页面要用它，先把它装到当前目录 —— 就一句：</p>
+
+<div class="term">
+  <div class="tbar"><span class="d r"></span><span class="d y"></span><span class="d g"></span>
+    <span>装一个库</span></div>
+<pre><span class="pr">C:\proj&gt;</span><span class="cmd">npm install mermaid</span>
+<span class="warn">（联网下载，等一会儿；成功时会显示 added N packages）</span></pre>
+</div>
+
+<p><code>npm install</code> ＋ 库名，没有别的。</p>
+
+<div class="card key">
+  <div class="card-t">它一定装在「当前目录」</div>
+  <p><code>npm</code> 只看你<b>现在站在哪个目录</b> —— 在 <code>C:\proj&gt;</code>
+  敲就装进 <code>C:\proj</code>；忘了 <code>cd</code>、在用户目录里敲，
+  就装到用户目录去了。</p>
+  <p>所以第 3 节那个 <code>cd</code> 是真有用：
+  <b>装之前先看清提示符里的路径。</b></p>
+</div>
+
+<h4>敲完之后，目录里多了三样东西</h4>
+
+<table>
+<thead><tr><th style="width:30%">多出来的</th><th>是什么</th></tr></thead>
+<tbody>
+<tr><td class="c"><code>node_modules\</code></td>
+    <td>库本体，以及这个库自己依赖的其它库，全堆在这里。
+    <b>别手改，也别提交进 Git。</b></td></tr>
+<tr><td class="c"><code>package.json</code></td>
+    <td>一张清单：这个项目要哪些库、各要什么版本。</td></tr>
+<tr><td class="c"><code>package-lock.json</code></td>
+    <td>更精确的账：每个库<b>实际装上的具体版本</b>。
+    有了它，别人照你的清单装，装出来的东西和你一模一样。</td></tr>
+</tbody>
+</table>
+
+<p>用第 4 节的 <code>dir /b</code> 就能看到：</p>
+
+<div class="term">
+  <div class="tbar"><span class="d r"></span><span class="d y"></span><span class="d g"></span>
+    <span>装完看一眼</span></div>
+<pre><span class="pr">C:\proj&gt;</span><span class="cmd">dir /b</span>
+<span class="out">node_modules</span>
+<span class="out">package-lock.json</span>
+<span class="out">package.json</span></pre>
+</div>
+
+<div class="card note">
+  <div class="card-t">这一节哪些是实机核对过的</div>
+  <p>本机<b>没有外网</b>，所以 <code>npm install mermaid</code> 那一条的
+  <b>下载输出</b>没有实机跑出来。下面这些是<b>实际验证过</b>的：</p>
+  <ul>
+    <li><code>node -v</code> → <code>v24.21.0</code>；<code>npm -v</code> →
+      <code>11.13.0</code>（所以上面那两行输出是真的）</li>
+    <li>在一个<b>空目录</b>里执行 <code>npm install &lt;包名&gt;</code>，
+      确实会<b>自动生成</b> <code>package.json</code>、<code>package-lock.json</code>
+      和 <code>node_modules\</code> —— 连 <code>package.json</code> 都是它替你建的
+      （用本地文件夹当「包」实测，不联网也能看出这三个文件的生成）</li>
+    <li><code>npm config get registry</code> → <code>https://registry.npmmirror.com</code>
+      （本机用的是国内镜像源；下载慢或连不上时，可以先查这一项）</li>
+  </ul>
+</div>
+
+<h4>装完在哪、怎么用</h4>
+
+<p>库的成品文件在 <code>node_modules\</code> 里那一层。以 mermaid 为例，
+成品放在 <code>dist</code> 子目录下（不同版本文件名可能不同，进去看一眼就知道）。
+页面里直接引它：</p>
+
+<div class="code-wrap"><div class="bar"><span class="dot r"></span><span class="dot y"></span>
+<span class="dot g"></span><span class="name">像引普通 .js 一样引它</span>
+<span class="cp">复制</span></div><pre><span class="hl-t">&lt;script</span> <span class="hl-a">src</span>=<span class="hl-s">"node_modules/mermaid/dist/mermaid.min.js"</span><span class="hl-t">&gt;&lt;/script&gt;</span></pre></div>
+
+<p>「怎么用它画图」是 FE 系列的事，这里只要知道
+<b>装完在哪、怎么引</b>就够了。</p>
+
+<h4>另外两条会用到</h4>
+
+<div class="term">
+  <div class="tbar"><span class="d r"></span><span class="d y"></span><span class="d g"></span>
+    <span>卸掉 / 看装了哪些</span></div>
+<pre><span class="pr">C:\proj&gt;</span><span class="cmd">npm list --depth=0</span>
+<span class="out">proj@ C:\proj</span>
+<span class="out">└── mermaid@&lt;版本号&gt;</span>
+
+<span class="pr">C:\proj&gt;</span><span class="cmd">npm uninstall mermaid</span>
+<span class="warn">（卸掉：node_modules 里那一份会删掉，package.json 也同步改）</span></pre>
+</div>
+
+<div class="card warn">
+  <div class="card-t">三个容易踩的坑</div>
+  <ol>
+    <li><b>装错地方。</b>前面说过：<code>npm</code> 只看当前目录。
+    敲之前先看一眼提示符里的路径。</li>
+    <li><b>把 <code>node_modules\</code> 提交进 Git。</b>它动辄几万个文件。
+    项目根目录放一个 <code>.gitignore</code>，写一行
+    <code>node_modules/</code> 就好。</li>
+    <li><b>拿到别人的项目时，不用去拷 <code>node_modules\</code>。</b>
+    在项目根目录（有 <code>package.json</code> 的那一层）敲一次
+    <b>不带库名的</b> <code>npm install</code>，它会照清单把东西全装好。</li>
+  </ol>
+</div>
+
+<!-- ============================================================ -->
+<h2 id="s6"><span class="n">6</span>一个完整流程</h2>
 
 <p>把上面的命令串起来：<b>进到一个 C 源文件所在目录，编译它，再运行。</b></p>
 
@@ -289,7 +416,7 @@ where python</div>
 </div>
 
 <!-- ============================================================ -->
-<h2 id="s6"><span class="n">6</span>常见问题</h2>
+<h2 id="s7"><span class="n">7</span>常见问题</h2>
 
 <h4>「不是内部或外部命令」怎么办</h4>
 <p>三种原因，按顺序排查：</p>
@@ -352,7 +479,9 @@ where python</div>
 <!-- /NAV-AUTO -->
 <footer>
 UME 项目组内部教程 · F01（File）《命令提示符（cmd）初步》<br>
-命令在 Windows 11 的 cmd 中实际验证；<code>gcc</code> 编译步骤亦已实际编译核对。代码示例以 <b>Consolas</b> 等宽字体呈现。
+命令在 Windows 11 的 cmd 中实际验证；<code>gcc</code> 编译步骤亦已实际编译核对。
+第 5 节 <code>npm</code> 部分核对了版本号与「装完生成哪些文件」，本机无外网，
+联网下载的输出未实机核对。代码示例以 <b>Consolas</b> 等宽字体呈现。
 </footer>
 </main>
 </div>
