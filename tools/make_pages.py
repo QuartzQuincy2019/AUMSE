@@ -135,6 +135,14 @@ a.card.star:hover{background:linear-gradient(96deg,#fffdf5,#fbe9c4)}
    收到 62% 后，文字稳定落在不透明区里，右侧留给图。 */
 a.card.has-bg .tt,
 a.card.has-bg .ds{max-width:62%}
+/* 特化适配：优先级要压过下面那条基础规则（它是 (0,5,1)），
+   所以这里再叠一个类 → (0,6,1)。 */
+a.card.has-bg.has-bg.has-bg.fit-logo{
+  background-size:cover,52% auto;
+  background-position:center,right 10px center}
+a.card.has-bg.has-bg.has-bg.fit-soft{
+  background-size:cover,130% auto}
+
 a.card.has-bg.has-bg.has-bg{background-image:var(--card-veil),var(--bg-img);
   background-repeat:no-repeat,no-repeat;
   /* 第一层遮罩居中；第二层图靠左对齐，并放大到 160% 宽 ——
@@ -429,6 +437,17 @@ CARD_BG = {
 # 这个表只留作「需要手工覆盖」的口子，正常情况下应为空。
 CARD_VEIL = {}
 
+# 背景图的适配方式。不写就是默认（160% 宽 + 靠左，适合主体居中的照片/插画）。
+#   "logo" 横长的标志/横幅：整图完整露出、靠右
+#   "soft" 仍是放大，但倍率降到 130%，主体显得小一点
+CARD_FIT = {
+    "f01.html": "logo",   # CMD COMMAND 横幅
+    "f04.html": "logo",   # CMake 标志
+    "r03.html": "soft",   # HSV 锥体
+    "q07.html": "soft",   # 作业题干里的圆与方框
+    "q11.html": "soft",   # 原神角色
+}
+
 
 def pack(items):
     """items 里第 5 项现在是 [(显示名, class), …]。
@@ -452,6 +471,8 @@ def pack(items):
             #   非重点卡底色是 --bg-soft → mono（浅色白 / 暗色 body 底色）
             # 手工覆盖只走 CARD_VEIL。
             rec["veil"] = CARD_VEIL.get(a) or ("default" if f else "mono")
+            if a in CARD_FIT:
+                rec["fit"] = CARD_FIT[a]
         out.append(rec)
     return out
 

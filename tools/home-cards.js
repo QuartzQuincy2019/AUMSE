@@ -57,7 +57,8 @@
          另外基图用 cover 铺满，四边不留缝，遮罩两端不透明是为了
          让左侧标题压实在实底上看得清。 */
       a.style.setProperty('--bg-img', "url('" + c.bg + "')");
-      a.className += ' has-bg' + (c.veil === 'mono' ? ' mono' : '');
+      a.className += ' has-bg' + (c.veil === 'mono' ? ' mono' : '')
+                   + (c.fit ? ' fit-' + c.fit : '');
     }
 
     a.appendChild(el('span', 'no', c.num));
