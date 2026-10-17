@@ -422,3 +422,24 @@ body.fseries .cpp-note pre .hl-p{color:#7ee7ff}/* ---- 行内 code：浅底上�
     overflow-wrap:anywhere !important;
     word-break:break-word !important;
   }/* 输入框 / 终端区同理 */.code-wrap pre code,.out-wrap pre code{white-space:pre-wrap !important}/* 行内 code 不要被长串撑破 */code,td.c,th.c{overflow-wrap:anywhere;word-break:break-word}}
+
+/* =====================================================================
+   配图（F03）
+   ---------------------------------------------------------------------
+   两张按钮截图都很小（77×32 / 31×30），按 2 倍显示并像素化，
+   否则在高分屏上会糊成一团。
+   截图本身是浅色的，暗色模式下给它们垫一块白底 —— 否则页面里会出现
+   一块突兀的亮斑。
+   ================================================================== */
+.fig{margin:20px 0 24px;padding:16px 18px 14px;border:1px solid var(--line);
+  border-radius:12px;background:var(--surface);text-align:center}
+.fig img{display:inline-block;max-width:100%;height:auto;
+  image-rendering:pixelated;background:#fff;border-radius:8px;padding:6px}
+.fig .fig-btn{width:154px;height:64px}
+.fig .fig-cap{margin-top:12px;font-size:13.5px;line-height:1.8;
+  color:var(--fg-2);text-align:left}
+.fig .fig-cap b{color:var(--fg)}
+
+/* 行内的小按钮图标：和文字基线对齐，不撑行高 */
+.btn-ico{width:31px;height:30px;vertical-align:-8px;margin:0 2px;
+  image-rendering:pixelated;background:#fff;border-radius:5px}

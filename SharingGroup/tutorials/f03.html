@@ -54,6 +54,15 @@
   都是实际跑出来的。</p>
 </div>
 
+
+<div class="fig">
+  <img class="fig-btn" src="assets/小熊猫CPP_编译与运行按钮.png"
+       alt="小熊猫CPP 工具栏：左边彩色方块是「编译」按钮，右边绿色三角是「运行」按钮">
+  <div class="fig-cap">平时练习用的 <b>小熊猫CPP</b> 里，工具栏上并排两个按钮：
+  <b>左边彩色方块＝编译</b>，<b>右边绿色三角＝运行</b>。
+  这一篇要讲的，就是「编译」这一个按钮背后，到底替你做了什么。</div>
+</div>
+
 <!-- ============================================================ -->
 <h2 id="s1" class="key-h key-h key-h key-h"><span class="key-mark" title="重点内容">★</span><span class="n">1</span>从源码到程序的三步</h2>
 
@@ -165,6 +174,11 @@
 <p>这一步把 C++ 变成机器指令，但<b>只处理一个文件</b>。
 输出是 <code>.o</code>（目标文件）：里面机器指令写好了，
 但「调用了别人的函数」这些地址<b>还空着</b>。</p>
+
+<p>在 小熊猫CPP 里，这一步就是点工具栏上那个彩色方块按钮 ——
+<img class="btn-ico" src="assets/编译.bmp" alt="编译按钮" width="31" height="30">。
+它<b>只编译、不运行</b>，所以你不会看到任何运行结果，
+得到的只可能是一句「成功」，或者一条报错。</p>
 
 <div class="term">
   <div class="tbar"><span class="d r"></span><span class="d y"></span><span class="d g"></span>
