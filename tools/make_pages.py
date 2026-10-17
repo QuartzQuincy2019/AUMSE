@@ -131,26 +131,33 @@ a.card.star:hover{background:linear-gradient(96deg,#fffdf5,#fbe9c4)}
        修前 暗色 Q07 hover → background-image 只剩 1 层（图消失）
        修后 暗色 Q07 hover → 2 层（渐变 + 图）
    不要清理成一遍两遍，会复发。 */
+/* 文字收在左区：只挪遮罩窗口不够 —— 说明文字那几行仍会横穿到右半边的图上。
+   收到 62% 后，文字稳定落在不透明区里，右侧留给图。 */
+a.card.has-bg .tt,
+a.card.has-bg .ds{max-width:62%}
 a.card.has-bg.has-bg.has-bg{background-image:var(--card-veil),var(--bg-img);
   background-repeat:no-repeat,no-repeat;
-  background-position:center,center;
-  background-size:cover,cover}
+  /* 第一层遮罩居中；第二层图靠左对齐，并放大到 160% 宽 ——
+     于是图的中心落在卡片宽度的 80%，正好在右侧装饰带里。
+     只写 cover 做不到这件事：图按宽度铺满时没有横向溢出，
+     background-position 的横向值不起作用。 */
+  background-position:center,left center;
+  background-size:cover,160% auto}
+/* 窗口在右侧：左侧 0–60% 是实底（文字区），自 60% 起渐隐，
+   到最右侧只剩一层薄纱，图就在这儿当装饰。 */
 a.card.has-bg{--card-veil:linear-gradient(100deg,
-  rgba(255,253,245,1) 0%, rgba(255,253,245,1) 16%,
-  rgba(255,253,245,.58) 46%, rgba(253,243,220,.58) 54%,
-  rgba(253,243,220,1) 84%, rgba(253,243,220,1) 100%)}
+  rgba(255,253,245,1) 0%, rgba(255,253,245,1) 60%,
+  rgba(253,243,220,.46) 78%, rgba(253,243,220,.30) 100%)}
 a.card.has-bg.mono{--card-veil:linear-gradient(100deg,
-  rgba(255,255,255,1) 0%, rgba(255,255,255,1) 16%,
-  rgba(255,255,255,.58) 46%, rgba(255,255,255,.58) 54%,
-  rgba(255,255,255,1) 84%, rgba(255,255,255,1) 100%)}
+  rgba(255,255,255,1) 0%, rgba(255,255,255,1) 60%,
+  rgba(255,255,255,.46) 78%, rgba(255,255,255,.30) 100%)}
+/* hover：窗口往左松一点、右侧再透一点，图会"亮"起来一些 */
 a.card.has-bg:hover{--card-veil:linear-gradient(100deg,
-  rgba(255,253,245,1) 0%, rgba(255,253,245,.99) 16%,
-  rgba(255,253,245,.50) 46%, rgba(251,233,196,.50) 54%,
-  rgba(251,233,196,.96) 84%, rgba(251,233,196,1) 100%)}
+  rgba(255,253,245,1) 0%, rgba(255,253,245,1) 54%,
+  rgba(251,233,196,.40) 76%, rgba(251,233,196,.22) 100%)}
 a.card.has-bg.mono:hover{--card-veil:linear-gradient(100deg,
-  rgba(255,255,255,1) 0%, rgba(255,255,255,.99) 16%,
-  rgba(255,255,255,.50) 46%, rgba(255,255,255,.50) 54%,
-  rgba(255,255,255,.96) 84%, rgba(255,255,255,1) 100%)}
+  rgba(255,255,255,1) 0%, rgba(255,255,255,1) 54%,
+  rgba(255,255,255,.40) 76%, rgba(255,255,255,.22) 100%)}
 /* 带图卡片的文字阴影：让标题与说明从背景图里分离出来。
    只作用于 .has-bg —— 普通卡片底色干净，加阴影反而发虚。
 
@@ -263,24 +270,19 @@ a.card .sb{display:inline-block;margin-top:8px;font:700 10.5px/1.8 var(--sans);
   a.card.star{border-left-color:var(--gold);
     background:linear-gradient(96deg,#241d0c,#2b2210)}
   a.card.star:hover{background:linear-gradient(96deg,#2b2210,#3a2d10)}
+  /* 暗色同样把窗口放到右侧；mono 仍用 body 底色 #15171c，不是纯黑。 */
   a.card.has-bg{--card-veil:linear-gradient(100deg,
-    rgba(36,29,12,1) 0%, rgba(36,29,12,1) 16%,
-    rgba(36,29,12,.62) 46%, rgba(43,34,16,.62) 54%,
-    rgba(43,34,16,1) 84%, rgba(43,34,16,1) 100%)}
-  /* mono（Q11）在暗色下用 **body 背景色 #15171c**，不是纯黑 ——
-     纯黑会在页面里切出一块明显更暗的矩形。 */
+    rgba(36,29,12,1) 0%, rgba(36,29,12,1) 60%,
+    rgba(43,34,16,.50) 78%, rgba(43,34,16,.34) 100%)}
   a.card.has-bg.mono{--card-veil:linear-gradient(100deg,
-    rgba(21,23,28,1) 0%, rgba(21,23,28,1) 16%,
-    rgba(21,23,28,.62) 46%, rgba(21,23,28,.62) 54%,
-    rgba(21,23,28,1) 84%, rgba(21,23,28,1) 100%)}
+    rgba(21,23,28,1) 0%, rgba(21,23,28,1) 60%,
+    rgba(21,23,28,.50) 78%, rgba(21,23,28,.34) 100%)}
   a.card.has-bg:hover{--card-veil:linear-gradient(100deg,
-    rgba(43,34,16,1) 0%, rgba(43,34,16,.99) 16%,
-    rgba(43,34,16,.54) 46%, rgba(58,45,16,.54) 54%,
-    rgba(58,45,16,.98) 84%, rgba(58,45,16,1) 100%)}
+    rgba(43,34,16,1) 0%, rgba(43,34,16,1) 54%,
+    rgba(58,45,16,.44) 76%, rgba(58,45,16,.26) 100%)}
   a.card.has-bg.mono:hover{--card-veil:linear-gradient(100deg,
-    rgba(21,23,28,1) 0%, rgba(21,23,28,.99) 16%,
-    rgba(21,23,28,.54) 46%, rgba(21,23,28,.54) 54%,
-    rgba(21,23,28,.98) 84%, rgba(21,23,28,1) 100%)}
+    rgba(21,23,28,1) 0%, rgba(21,23,28,1) 54%,
+    rgba(21,23,28,.44) 76%, rgba(21,23,28,.26) 100%)}
   /* 暗色：同样收紧，颜色用近黑 + 深褐（不是纯黑） */
   a.card.has-bg .tt,
   a.card.has-bg .ds{text-shadow:
