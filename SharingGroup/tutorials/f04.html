@@ -17,15 +17,16 @@
 <nav id="toc">
   <h5>目录</h5>
   <a href="#s1">1 · 一条四层流水线</a>
-  <a href="#s2">2 · 项目描述：CMakeLists.txt 与 .pro</a>
-  <a href="#s3">3 · 生成器：CMake 与 qmake</a>
-  <a href="#s4">4 · 构建文件：三种名字，一种内容</a>
-  <a href="#s5">5 · 构建引擎：Ninja、GNU Make、MSBuild</a>
-  <a href="#s6">6 · 编译器驱动：g++ 与 cl.exe</a>
-  <a href="#s7">7 · 等价关系总表</a>
-  <a href="#s8">8 · 流程控制：一次构建到底怎么走</a>
-  <a href="#s9">9 · 常见错误</a>
-  <a href="#s10">10 · 一页速查</a>
+  <a href="#s2">2 · 为什么要有这些东西：只有编译器行不行</a>
+  <a href="#s3">3 · 项目描述：CMakeLists.txt 与 .pro</a>
+  <a href="#s4">4 · 生成器：CMake 与 qmake</a>
+  <a href="#s5">5 · 构建文件：三种名字，一种内容</a>
+  <a href="#s6">6 · 构建引擎：Ninja、GNU Make、MSBuild</a>
+  <a href="#s7">7 · 编译器驱动：g++ 与 cl.exe</a>
+  <a href="#s8">8 · 等价关系总表</a>
+  <a href="#s9">9 · 流程控制：一次构建到底怎么走</a>
+  <a href="#s10">10 · 常见错误</a>
+  <a href="#s11">11 · 一页速查</a>
 </nav>
 
 <main>
@@ -90,7 +91,108 @@ Ninja、GNU Make、MSBuild。别怕，它们其实只是<b>同一条流水线上
 上表把项目描述也算进来，所以是 5 行。两种数法都对，看你要不要把它当岗位。</p>
 
 <!-- ============================================================ -->
-<h2 id="s2"><span class="n">2</span>项目描述：CMakeLists.txt 与 .pro</h2>
+<h2 id="s2"><span class="n">2</span>为什么要有这些东西：只有编译器行不行</h2>
+
+<p>看完那张四层图，正常的第一反应是：<b>至于吗？</b></p>
+
+<p>先把话说清楚：<b>只有编译器也能编，而且真能编。</b>
+上一篇（F03）里我们就这么干过 —— 两条命令，两个 <code>.cpp</code> 变成一个 exe：</p>
+
+<div class="out-wrap"><div class="cap">只有编译器（F03 的做法，已核对）</div><pre>&gt; cl /nologo /EHsc /std:c++17 /c main.cpp widget.cpp
+&gt; link /nologo main.obj widget.obj /out:app.exe
+&gt; app.exe
+title = UME</pre></div>
+
+<p>那为什么真实项目还要在上面堆四层？
+因为<b>手工敲命令有三件事，人做不到、但机器可以</b>。</p>
+
+<h3>做不到 ①：记住依赖关系</h3>
+
+<p>改一行 <code>widget.h</code>，哪些 <code>.cpp</code> 需要重编？<b>凡是 include 它的都要</b>。</p>
+
+<p>我们只动了 <code>widget.h</code>（<b>一个 .cpp 都没改</b>），再构建一次：</p>
+
+<div class="out-wrap"><div class="cap">实机执行（只 touch 了 widget.h）</div><pre>&gt; ninja -C b
+[1/3] Building CXX object CMakeFiles/demo.dir/main.cpp.obj
+[2/3] Building CXX object CMakeFiles/demo.dir/widget.cpp.obj
+[3/3] Linking CXX executable demo.exe</pre></div>
+
+<p><b>两个 .cpp 都重编了</b>，因为两个都 <code>#include "widget.h"</code>。
+两个文件还好记；二十个文件、三层嵌套的 include 呢？
+<b>这张图人脑存不下，构建文件存得下。</b></p>
+
+<h3>做不到 ②：一份描述，多个平台</h3>
+
+<p>同一份源码，Windows 上要 <code>cl.exe</code>，Linux 上要 <code>g++</code>，
+参数、后缀、库名全不一样。没有「生成器」这一层，就得
+<b>为每个平台各维护一套命令</b>，而且它们会慢慢走歪。</p>
+
+<p>有了生成器，你只写一份项目描述，换平台只是换一个 <code>-G</code>：</p>
+
+<div class="out-wrap"><div class="cap">同一份 CMakeLists.txt（第 3 节会细讲）</div><pre>cmake -B b -G Ninja              → build.ninja
+cmake -B b -G "MinGW Makefiles"  → Makefile
+cmake -B b -G "Visual Studio …"  → .sln + .vcxproj</pre></div>
+
+<h3>做不到 ③：让 IDE 也读懂</h3>
+
+<p>人能读 Makefile，但 Visual Studio 要的是「解决方案 / 项目 / 配置 / 平台」
+这整套概念 —— 它要拿这些去画配置面板、做跳转、下断点。
+所以才有 <code>.vcxproj</code> 这种 XML。这不是重复劳动，
+是<b>给不同读者看的同一种信息</b>：给人看一份，给 IDE 看一份。</p>
+
+<h3>每一层到底替你省了什么</h3>
+
+<table>
+<thead><tr><th style="width:18%">层</th><th style="width:40%">没有它，你得手工做</th>
+<th>它替你做的</th></tr></thead>
+<tbody>
+<tr><td><b>项目描述</b></td>
+    <td>把「有哪些文件、编成什么、用哪个标准」记在脑子里 / 每次现敲</td>
+    <td>把这份知识<b>写成文件</b>，能进版本库、能被别人复用</td></tr>
+<tr><td><b>生成器</b></td>
+    <td>为每个平台、每种 IDE 各写一套命令</td>
+    <td>一份描述 → 多种后端</td></tr>
+<tr><td><b>构建文件</b></td>
+    <td>自己记「谁依赖谁、改了什么要重编什么」</td>
+    <td>把依赖图<b>写成机器可读的表</b></td></tr>
+<tr><td><b>构建引擎</b></td>
+    <td>按正确顺序、逐个文件敲命令（还不敢并行）</td>
+    <td>按图调度，只重做该重做的，能并行</td></tr>
+<tr><td><b>编译器驱动</b></td>
+    <td>——</td>
+    <td>这个本来就得你自己敲，它就是干活的</td></tr>
+</tbody>
+</table>
+
+<div class="card key">
+  <div class="card-t">这些层不是「编译器的一部分」</div>
+  <p>它们是<b>规模变大之后，把重复劳动沉淀成文件</b>的结果。</p>
+  <p>项目小的时候，这些层确实只是负担；项目一大，它们省下的是
+  <b>每次改一个头文件都要猜「该重编哪些」</b>的那种时间 —— 以及猜错的代价。</p>
+</div>
+
+<h3>那什么时候真的只需要编译器</h3>
+
+<ul>
+  <li><b>单文件、几十行</b>：验证一个语法、试一段库函数 ——
+  直接 <code>g++ x.cpp -o x</code> 最快，写 CMakeLists 反而是浪费。</li>
+  <li><b>两三个文件、一次性的小实验</b>：像 F03 那个 <code>main.cpp</code> +
+  <code>widget.cpp</code> + <code>widget.h</code>，两条命令搞定。</li>
+  <li><b>不打算长期维护、不跨平台</b>的临时程序。</li>
+</ul>
+
+<p>一旦越过这条线 —— 文件多了、要给别人编、要上 CI、要跨平台 ——
+<b>手工命令就开始还债了</b>。债的形式是：忘了重编某个文件、
+在自己机器上能编别人机器上不能、换个编译器全量报错。</p>
+
+<div class="card tip">
+  <div class="card-t">所以上一篇为什么先教手敲</div>
+  <p>F03 让你直接用 <code>cl</code> / <code>g++</code>，不是为了复古，是因为
+  <b>不知道最底下那层在干什么，用 CMake 报错时你连该看哪一层都不知道</b>。</p>
+  <p>先会最底层，再学自动调度 —— 顺序不能反。</p>
+</div>
+
+<h2 id="s3"><span class="n">3</span>项目描述：CMakeLists.txt 与 .pro</h2>
 
 <p>这是唯一<b>由人写</b>的一层。它只回答三个问题：
 <b>源码有哪些、产物叫什么、用什么标准编</b>。</p>
@@ -131,7 +233,7 @@ HEADERS += widget.h</pre></div>
 </div>
 
 <!-- ============================================================ -->
-<h2 id="s3"><span class="n">3</span>生成器：CMake 与 qmake</h2>
+<h2 id="s4"><span class="n">4</span>生成器：CMake 与 qmake</h2>
 
 <p>生成器的活只有一件：<b>读项目描述，写构建文件。</b>
 它<b>不编译</b>，也<b>不链接</b> —— 跑完你只会在目录里多出一堆文件。</p>
@@ -197,7 +299,7 @@ Info: creating stash file .qmake.stash
 </table>
 
 <!-- ============================================================ -->
-<h2 id="s4"><span class="n">4</span>构建文件：三种名字，一种内容</h2>
+<h2 id="s5"><span class="n">5</span>构建文件：三种名字，一种内容</h2>
 
 <p>这一层是<b>中间物</b>，不长在源码树里（一般放在 <code>b-xxx/</code> 这种构建目录），
 你可以整目录删掉重建 —— 因为它们<b>不是手写的，是可再生的</b>。</p>
@@ -226,7 +328,7 @@ Info: creating stash file .qmake.stash
 </div>
 
 <!-- ============================================================ -->
-<h2 id="s5"><span class="n">5</span>构建引擎：Ninja、GNU Make、MSBuild</h2>
+<h2 id="s6"><span class="n">6</span>构建引擎：Ninja、GNU Make、MSBuild</h2>
 
 <p>引擎读构建文件，<b>决定哪些目标过期了</b>，然后逐条执行命令。
 你平时敲的「生成 / 构建 / Build」按钮，按的就是这一层。</p>
@@ -264,7 +366,7 @@ ninja: Entering directory `b-ninja'
 </div>
 
 <!-- ============================================================ -->
-<h2 id="s6"><span class="n">6</span>编译器驱动：g++ 与 cl.exe</h2>
+<h2 id="s7"><span class="n">7</span>编译器驱动：g++ 与 cl.exe</h2>
 
 <p>流水线的最底下才是真正的编译器。上面前两种引擎都调 <code>g++</code>
 （因为 <code>-G` 选的是 MinGW 系），MSBuild 调 <code>cl.exe</code>。</p>
@@ -283,7 +385,7 @@ demoq.exe  （qmake + MSBuild，14,848 B）   title = UME</pre></div>
 </div>
 
 <!-- ============================================================ -->
-<h2 id="s7"><span class="n">7</span>等价关系总表</h2>
+<h2 id="s8"><span class="n">8</span>等价关系总表</h2>
 
 <p>把四层摊平成一张表，「谁和谁是同一个岗位」就一目了然了：</p>
 
@@ -312,7 +414,7 @@ demoq.exe  （qmake + MSBuild，14,848 B）   title = UME</pre></div>
 </div>
 
 <!-- ============================================================ -->
-<h2 id="s8"><span class="n">8</span>流程控制：一次构建到底怎么走</h2>
+<h2 id="s9"><span class="n">9</span>流程控制：一次构建到底怎么走</h2>
 
 <h3>从零开始</h3>
 
@@ -352,7 +454,7 @@ demoq.exe  （qmake + MSBuild，14,848 B）   title = UME</pre></div>
 </div>
 
 <!-- ============================================================ -->
-<h2 id="s9"><span class="n">9</span>常见错误</h2>
+<h2 id="s10"><span class="n">10</span>常见错误</h2>
 
 <h3>错误 1 · 以为 <code>cmake .</code> 就等于编译</h3>
 
@@ -389,7 +491,7 @@ demoq.exe  （qmake + MSBuild，14,848 B）   title = UME</pre></div>
 <p>意思是：目录在，但它<b>没有登记到 Visual Studio Installer</b> 的实例列表里，
 CMake 不认。这种情况下换用 <code>-G Ninja</code> + <code>cl</code>，
 或者干脆走 qmake <code>-tp vc</code> 生成 <code>.vcxproj</code> 再交给 MSBuild
-—— 本文第 3 节就是这么绕过去的。</p>
+—— 本文第 4 节就是这么绕过去的。</p>
 
 <h3>错误 5 · 混用编译器</h3>
 
@@ -407,7 +509,7 @@ CMake 不认。这种情况下换用 <code>-G Ninja</code> + <code>cl</code>，
 </table>
 
 <!-- ============================================================ -->
-<h2 id="s10"><span class="n">10</span>一页速查</h2>
+<h2 id="s11"><span class="n">11</span>一页速查</h2>
 
 <table>
 <thead><tr><th style="width:22%">你想干的事</th><th>命令 / 结论</th></tr></thead>
