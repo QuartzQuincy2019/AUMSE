@@ -94,6 +94,15 @@ tbody th .cp{display:block;font-family:var(--mono);font-size:10px;
 #vowelTable th:first-child,#fvsTable th:first-child{width:104px}
 #vowelTable td,#fvsTable td{width:auto}
 
+/* 矩阵表头也放字形：最上行与最左列的单字要能看到它自己长什么样，
+   否则只有 A / E / I 这些拉丁名，看不出对应哪个字形 */
+.hglyph{font-size:24px;line-height:1.15;display:block;margin:0 auto}
+thead th .hglyph{margin:2px auto 5px}
+.hname{display:block;font-size:12px;line-height:1.4}
+#vowelTable tbody th{text-align:center}
+#vowelTable tbody th .hglyph{margin:2px auto 4px}
+#vowelTable thead th{padding:6px 4px}
+
 .ipt{width:100%;min-height:88px;font-family:var(--mono);font-size:14px;
   border:1px solid var(--line-2);border-radius:8px;padding:10px 12px;
   background:var(--bg-soft);color:var(--fg);resize:vertical;line-height:1.7}
@@ -168,6 +177,9 @@ tbody th .cp{display:block;font-family:var(--mono);font-size:10px;
   <p class="lead">
     同一个元音码位，后接 <code>FVS</code> 可以指定用哪一种字形变体。
     词中的 a / e 常常同形，靠的就是这一列区分。
+    <b>如果某一格的 FVS 自己画出了方框占位符</b>，说明这支字体没有把它当成
+    变体选择符「吃掉」，而是照常画了字形 —— 那也是需要记录的信息，
+    换字体时对比一下就知道是不是字体行为。
   </p>
   <table id="fvsTable"></table>
 
@@ -293,6 +305,11 @@ function cell(str, cpText, markKey, markLabel){
   return d;
 }
 
+/* 表头里的单字字形：与矩阵单元格同一个上下文，方便对照 */
+function glyphHtml(cp){
+  return '<span class="gl hglyph" lang="mn-Mong">' + CTX[state.ctx](ch(cp)) + "</span>";
+}
+
 /* ---------------- ① 位置形态 ---------------- */
 function buildPos(){
   const T = document.getElementById("posTable");
@@ -344,8 +361,10 @@ function buildVowel(){
   hr.appendChild(c0);
   VOWELS.forEach(v => {
     const th = document.createElement("th");
-    th.innerHTML = v[1] + '<span style="display:block;font-family:var(--mono);'
-      + 'font-size:9.5px;color:var(--fg-3);font-weight:400">U+' + hex(v[0]) + "</span>";
+    th.title = v[1] + "　U+" + hex(v[0]);
+    th.innerHTML = glyphHtml(v[0])
+      + '<span class="hname">' + v[1] + "</span>"
+      + '<span class="cp">U+' + hex(v[0]) + "</span>";
     hr.appendChild(th);
   });
   thead.appendChild(hr);
@@ -355,7 +374,10 @@ function buildVowel(){
   VOWELS.forEach(a => {
     const tr = document.createElement("tr");
     const th = document.createElement("th");
-    th.innerHTML = a[1] + '<span class="cp">U+' + hex(a[0]) + "</span>";
+    th.title = a[1] + "　U+" + hex(a[0]);
+    th.innerHTML = glyphHtml(a[0])
+      + '<span class="hname">' + a[1] + "</span>"
+      + '<span class="cp">U+' + hex(a[0]) + "</span>";
     tr.appendChild(th);
     VOWELS.forEach(b => {
       const td = cell(CTX[state.ctx](ch(a[0]) + ch(b[0])),
