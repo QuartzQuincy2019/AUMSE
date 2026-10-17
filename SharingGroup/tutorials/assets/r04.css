@@ -304,7 +304,65 @@
   letter-spacing:.02em;border-bottom:1px solid var(--line-2);
   background:var(--bg-soft);color:var(--fg-2)}
 .two .side pre{margin:0;padding:11px 13px;overflow:auto;
-  font-family:var(--mono);font-size:13px;line-height:1.72}
+  font-family:"DejaVu Serif IPA",var(--mono),monospace;
+  font-size:13px;line-height:1.72}
 .two .side pre code{background:none;color:inherit}
 
 @media (max-width:720px){.two{grid-template-columns:1fr}}
+
+/* =====================================================================
+   R04 专属：音标统一用 DejaVu Serif 呈现
+   ---------------------------------------------------------------------
+   字体来源：DejaVu Serif 2.35（SIL / Bitstream Vera 许可，见同目录 LICENSE-DejaVu.txt）
+   文件：assets/fonts/DejaVuSerif.ttf（379,740 B）
+
+   为什么分两层
+     .ipa 这一层是精确包出来的音标槽位，整段都用 DejaVu Serif ——
+     包括 /e/ [p] 里那些 ASCII 字母，因为它们在音标语境里也是符号。
+
+     @font-face 这一层带 unicode-range，只接管 IPA 区块的码位。
+     挂在 main 上兜底：<pre> 里的 ASCII 图必须保持等宽（DejaVu Serif 是比例
+     字体，整体套用会把对齐冲掉），但里面的音标字符仍然要换成 DejaVu。
+     unicode-range 让浏览器只在这些码位上使用本字体，其余照旧。
+   ================================================================== */
+/* ① 全量：.ipa 槽位与 SVG 文本要的是这个家族名，
+      没有它，浏览器会去找**系统**里装的 "DejaVu Serif" —— 找不到就静默
+      回退到 Consolas，看起来像生效了，其实一个字都没换。 */
+@font-face{
+  font-family:"DejaVu Serif";
+  src:url("fonts/DejaVuSerif.ttf") format("truetype");
+  font-weight:400;font-style:normal;font-display:swap;
+}
+
+/* ② 只接管音标码位：给 <pre> 等必须保持等宽的容器兜底，
+      中文与 ASCII 仍走原来的字体 */
+@font-face{
+  font-family:"DejaVu Serif IPA";
+  src:url("fonts/DejaVuSerif.ttf") format("truetype");
+  font-weight:400;font-style:normal;font-display:swap;
+  unicode-range:U+0250-02AF, U+02B0-02FF, U+0300-036F,
+                U+1D00-1D7F, U+1D80-1DBF, U+A700-A71F, U+02E5-02E9;
+}
+
+main{font-family:"DejaVu Serif IPA","Microsoft YaHei","PingFang SC",
+  "Hiragino Sans GB",system-ui,sans-serif}
+
+/* code / pre 自己设了等宽字体，不继承 main，得单独把带 unicode-range 的
+   那一层挂上去：ASCII 仍走 Consolas，只有音标码位换成 DejaVu Serif，
+   这样 <pre> 里那些靠空格对齐的 ASCII 图不会被比例字体冲散。 */
+main code, main pre, main td.c, main th.c{
+  font-family:"DejaVu Serif IPA",var(--mono),monospace}
+
+.ipa{font-family:"DejaVu Serif","DejaVu Serif IPA",var(--mono),monospace;
+  font-size:1.04em;letter-spacing:.01em}
+.ipa code,.ipa b{font-family:inherit}
+
+/* 舌位图里的 i e ɛ u o a 也走 DejaVu Serif */
+.vw text{font-family:"DejaVu Serif","DejaVu Serif IPA",serif}
+
+/* 兜底：页面上所有 <pre> 都挂上带 unicode-range 的音标字体。
+   .out-wrap pre / .code-wrap pre 各有自己的 font-family 规则，
+   优先级高于 main pre，所以这里逐个点名，保证 pre 里的音标字符
+   也换成 DejaVu Serif，而 ASCII 仍走等宽、对齐不变。 */
+.out-wrap pre,.code-wrap pre,.two .side pre,main pre,pre{
+  font-family:"DejaVu Serif IPA",var(--mono),monospace}
