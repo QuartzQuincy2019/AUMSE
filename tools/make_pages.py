@@ -151,6 +151,15 @@ a.card.has-bg.mono:hover{--card-veil:linear-gradient(100deg,
   rgba(255,255,255,1) 0%, rgba(255,255,255,.99) 16%,
   rgba(255,255,255,.50) 46%, rgba(255,255,255,.50) 54%,
   rgba(255,255,255,.96) 84%, rgba(255,255,255,1) 100%)}
+/* 带图卡片的文字光晕：让标题与说明从背景图里分离出来。
+   只作用于 .has-bg —— 普通卡片底色干净，加阴影反而发虚。
+   三层阴影由近到远，颜色与卡片底色同色（浅色白 / 暗色黑），
+   既有分离度，又不会在图上糊出一圈死白。 */
+a.card.has-bg .tt,
+a.card.has-bg .ds{text-shadow:
+  0 1px 2px rgba(255,255,255,.96),
+  0 0 7px rgba(255,255,255,.92),
+  0 0 15px rgba(255,255,255,.78)}
 a.card .sb{display:inline-block;margin-top:8px;font:700 10.5px/1.8 var(--sans);
   letter-spacing:.04em;color:#fff;background:var(--gold);
   border-radius:999px;padding:0 9px}
@@ -270,6 +279,12 @@ a.card .sb{display:inline-block;margin-top:8px;font:700 10.5px/1.8 var(--sans);
     rgba(21,23,28,1) 0%, rgba(21,23,28,.99) 16%,
     rgba(21,23,28,.54) 46%, rgba(21,23,28,.54) 54%,
     rgba(21,23,28,.98) 84%, rgba(21,23,28,1) 100%)}
+  /* 暗色：文字是浅色，光晕换成黑色 */
+  a.card.has-bg .tt,
+  a.card.has-bg .ds{text-shadow:
+    0 1px 2px rgba(0,0,0,.96),
+    0 0 7px rgba(0,0,0,.92),
+    0 0 15px rgba(0,0,0,.80)}
   .k-c,.k-M{background:#1b2740;color:#a9c8f5;border-color:#2e4265}
   .k-cpp{background:#241d38;color:#c9b0ff;border-color:#3d3160}
   .k-extra{background:#2c2415;color:#e6c078;border-color:#4a3c1c}
@@ -394,6 +409,7 @@ CARD_BG = {
     "e02.html": "SharingGroup/tutorials/assets/cmd_advanced.png",
     "r01.html": "SharingGroup/tutorials/assets/EM_Square.webp",
     "r03.html": "SharingGroup/tutorials/assets/HSV_Model.webp",
+    "t01.html": "SharingGroup/tutorials/assets/first_journey_to_Uyghur_Mongolian.jpg",
 }
 
 # 遮罩配色。没写的用「重点卡」的暖黄；写 "mono" 的用白（浅色）/ 黑（暗色）。
