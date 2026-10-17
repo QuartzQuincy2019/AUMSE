@@ -276,11 +276,13 @@ thead th .hglyph{margin:2px auto 5px}
   <h2><span class="n">3</span>借词辅音<span class="tag-l">阿礼嘎礼字母</span></h2>
   <p class="lead">
     鲍培表第二栏的 f k h lh dz ts zh ch sh rh 是<b>借词辅音</b>，
-    为转写汉语、藏语、梵语借词而设。传统写法是<b>「基字 + 小 h」（ᠾ U+183E）</b> ——
-    那个小 h 在字形里表现为基字<b>下方</b>的一笔钩：
-    <code>z+h → 1841</code>、<code>č+h → 1842</code>、<code>l+h → 1840</code>、
-    <code>r+h → 183F</code>。
-    <b>sh 没有预组合码位</b>，只能写成 <code>1831 183E</code> 这样的序列。
+    为转写汉语、藏语、梵语借词而设。
+    其中 <b>zh / ch / sh / rh 四个是「基字 + 下加的 r」（ᠷ <code>U+1837</code>）</b> ——
+    字形上看就是基字下面再接一笔 r 的转角：
+    <code>183D 1837</code>、<code>1834 1837</code>、<code>1831 1837</code>、<code>183F 1837</code>。
+    <b>lh 例外</b>，它是「l + 小 h」（<code>U+1840</code>）。
+    注意别拿预组合的 <code>1841 ZHI</code>／<code>1842 CHI</code>／<code>183F ZRA</code>
+    当这四个字 —— 它们都比手写稿<b>少了下面那笔 r</b>。
   </p>
   <div class="tscroll"><table id="loanTable"></table></div>
 
@@ -349,17 +351,18 @@ const VOWELS = [
 
 /* 借词辅音（阿礼嘎礼字母）：鲍培表里的第二栏。
    构造原则是「基字 + 小 h（U+183E）」，有的有预组合码位，有的是序列。 */
+const R = 0x1837;   /* 下加的 r */
 const LOANS = [
-  [[0x1839],           "f",  "FA"],
-  [[0x183A],           "k",  "KA"],
-  [[0x183B],           "h",  "KHA"],
-  [[0x1840],           "lh", "LHA = l + 小 h"],
-  [[0x183D],           "dz", "ZA"],
-  [[0x183C],           "ts", "TSA"],
-  [[0x1841],           "zh", "ZHI = z + 小 h"],
-  [[0x1842],           "ch", "CHI = č + 小 h"],
-  [[0x1831, 0x183E],   "sh", "š + 小 h（无预组合）"],
-  [[0x183F],           "rh", "ZRA（r 的阿礼嘎礼形）"]
+  [[0x1839],        "f",  "FA"],
+  [[0x183A],        "k",  "KA"],
+  [[0x183B],        "h",  "KHA"],
+  [[0x1840],        "lh", "LHA = l + 小 h"],
+  [[0x183D],        "dz", "ZA"],
+  [[0x183C],        "ts", "TSA"],
+  [[0x183D, R],     "zh", "z + 下加 r"],
+  [[0x1834, R],     "ch", "č + 下加 r"],
+  [[0x1831, R],     "sh", "š + 下加 r"],
+  [[0x183F, R],     "rh", "Ʒ + 下加 r"]
 ];
 
 const CONS = [
