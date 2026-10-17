@@ -50,61 +50,14 @@
     a.target = '_blank';
     a.rel = 'noopener';
 
-    /* 可选：给某张卡片垫一张题干图（c.bg 是相对首页的图片路径）。
-
-       叠加关系：**图在下，卡片底色在上**。
-         第一层 linear-gradient —— 卡片**本来的重点底色**
-           （亮色 #fffdf5→#fdf3dc / 暗色 #241d0c→#2b2210），
-           **两端不透明、中间半透明**；
-         第二层 url(…) —— 题干图，按高度居中铺。
-
-       为什么渐变是「两端实、中间透」
-         图用 cover 铺满（见下），四边都不留缝，所以渐变不必再去盖缝；
-         两端保持不透明，是为了让**标题与说明文字所在的左侧**压在实底上、
-         看得清；中间半透明，图才透出来当背景。
-         渐变的颜色与卡片底色**完全一致**，所以不透明处与普通重点卡片
-         毫无差别，看不出这里藏了一层遮罩。
-
-       两层都用 background-image 而不是 background 简写，这样 CSS 里
-       a.card 的 background-color 仍然生效。
-       hover 由 make_pages.py 的 .has-bg 规则接管：它只改 --card-veil，
-       不动 background-image —— 否则图那一层会被一起丢掉。 */
     if (c.bg) {
-      var gm = window.matchMedia
-        && window.matchMedia('(prefers-color-scheme: dark)').matches;
-      var veil = gm
-        ? 'linear-gradient(100deg,'
-          + ' rgba(36,29,12,1) 0%, rgba(36,29,12,1) 16%,'
-          + ' rgba(36,29,12,.62) 46%, rgba(43,34,16,.62) 54%,'
-          + ' rgba(43,34,16,1) 84%, rgba(43,34,16,1) 100%)'
-        : 'linear-gradient(100deg,'
-          + ' rgba(255,253,245,1) 0%, rgba(255,253,245,1) 16%,'
-          + ' rgba(255,253,245,.58) 46%, rgba(253,243,220,.58) 54%,'
-          + ' rgba(253,243,220,1) 84%, rgba(253,243,220,1) 100%)';
-      /* 把「底色遮罩」的那层渐变放进自定义属性 --card-veil。
-         这样 hover 时只换这一个变量即可，**不用重写整个 background-image**
-         —— 重写 background-image 会把第二层的图一起丢掉
-         （第一版就是这么错的：hover 一上，图整个消失）。 */
-      a.style.setProperty('--card-veil', veil);
-      a.style.backgroundImage = 'var(--card-veil)' + ", url('" + c.bg + "')";
-      a.style.backgroundRepeat = 'no-repeat, no-repeat';
-      a.style.backgroundPosition = 'center, center';
-      // 保持宽高比，按**高度**铺满（auto 100%）。
-      // 图 797x666 接近正方，卡片 348x202 很扁，所以定标后图宽约 239px，
-      // 左右各留约 54px。留白能接受，是因为 —— 
-      //   **这张图的底色是纯白**（实测 84% 的像素是 #ffffff），
-      //   而下面把卡片的 background-color 也设成 #fff，
-      //   于是那条「缝」与图自身的底色同色，肉眼看不出来。
-      // 这样既不改比例、也不裁切，四个塔都在画面里。
-      // cover = 保持比例放大，直到**有一方铺满**，另一方超出并被裁掉。
-      // 这正是「铺满高和宽」的本意 —— 不是同时铺满，而是
-      // 「一方满、另一方超出也没关系」。超出的部分正好把接缝顶出去，
-      // 所以四个方向都不会留边，也不需要靠底色去盖缝。
-      a.style.backgroundSize = 'cover, cover';
-      // 不需要再设 backgroundColor —— cover 已经把四边盖满，
-      // 没有缝要补。
-
-      a.className += ' has-bg';
+      /* 只把「图」通过 --bg-img 交给 CSS；**遮罩（--card-veil）留在样式表里**。
+         早期版本把遮罩也写进行内，结果样式表的 .has-bg:hover 改不动它
+         —— 行内声明优先级更高，hover 一直没生效。
+         另外基图用 cover 铺满，四边不留缝，遮罩两端不透明是为了
+         让左侧标题压实在实底上看得清。 */
+      a.style.setProperty('--bg-img', "url('" + c.bg + "')");
+      a.className += ' has-bg' + (c.veil === 'mono' ? ' mono' : '');
     }
 
     a.appendChild(el('span', 'no', c.num));

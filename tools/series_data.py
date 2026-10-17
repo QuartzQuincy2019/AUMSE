@@ -182,8 +182,8 @@ PAGES = [
      "Q", "Q10", "智能指针",
      "重点：泄漏、重复释放、悬空指针怎么被挡掉；unique / shared / weak", True),
     ("q11.html", "q11.html",
-     "Q", "Q11", "互斥锁",
-     "重点：竞态、临界区、死锁；lock_guard / unique_lock / scoped_lock", True),
+     "Q", "Q11", "线程与互斥锁",
+     "从线程讲到锁：进程与线程、为什么要多线程、竞态与临界区", False),
 
     # ---- E：补充练习 ----
     ("e01.html", "e01.html",

@@ -1,50 +1,221 @@
-<p>这一篇讲<b>互斥锁</b>（<code>std::mutex</code>）。</p>
+<p>这一篇从<b>线程</b>讲起，最后落到<b>互斥锁</b>。</p>
 
-<p>和上一篇一样，重点不在「怎么加锁」，而在
-<b>它到底挡住了什么、以及加错了会出什么事</b>。
-所以先看一个能直接跑出错数的实验，再讲怎么修。</p>
+<p>顺序是有意的：<b>不理解线程为什么存在，就不会理解锁为什么必须存在。</b>
+所以前三节先讲清楚「线程是什么、和进程差在哪、什么时候值得用」，
+第四节给一个真实场景，然后再讲锁。</p>
+
+<!-- ============================================================ -->
+<h2 id="s1"><span class="n">1</span>线程的概念</h2>
+
+<p>到目前为止，我们写的程序都是<b>一条执行流</b>：从 <code>main</code> 进去，
+一行一行往下走，走完结束。这种程序叫单线程。</p>
+
+<p><b>线程</b>（thread）就是<b>程序内部的一条执行流</b>。
+一个进程里可以同时有多条线程，每条都在跑自己的一段代码。</p>
 
 <div class="card key">
   <div class="card-t">一句话</div>
-  <p><b>互斥锁保护的不是变量，是「一段代码同时只能有一个线程在里面」。</b>
-  你要保护哪些操作，就把这段代码锁起来。</p>
+  <p><b>线程 = 同一个程序里的并发执行流。</b></p>
+  <p>「并发」的意思是：<b>它们都在往前推进，看起来是同时的</b>
+  —— 在多核机器上确实是真的同时；核心不够时则由系统快速轮流切换。</p>
+</div>
+
+<h3>线程有什么、没有什么</h3>
+
+<table>
+<thead><tr><th style="width:26%"></th><th>说明</th></tr></thead>
+<tbody>
+<tr><td><b>各自拥有</b></td>
+    <td>调用栈（所以局部变量、函数返回地址是各自一份）、
+    寄存器现场（当前执行到哪一行）</td></tr>
+<tr><td><b>共享</b></td>
+    <td>地址空间里的<b>堆</b>、<b>全局变量</b>、<b>静态变量</b>、
+    打开的文件与网络连接</td></tr>
+</tbody>
+</table>
+
+<p>这张表的第二行，就是这一篇后面所有麻烦的来源：
+<b>两条线程看的是同一个 <code>int</code>，谁都能改它。</b></p>
+
+<!-- ============================================================ -->
+<h2 id="s2"><span class="n">2</span>线程与进程的区别</h2>
+
+<table>
+<thead><tr><th style="width:18%"></th><th style="width:40%">进程（process）</th><th>线程（thread）</th></tr></thead>
+<tbody>
+<tr><td><b>是什么</b></td>
+    <td>一个正在运行的程序实例</td>
+    <td>进程内部的一条执行流</td></tr>
+<tr><td><b>地址空间</b></td>
+    <td><b>各自独立</b>，互不可见</td>
+    <td><b>共享同一个</b></td></tr>
+<tr><td><b>创建 / 切换开销</b></td>
+    <td>贵（要分配地址空间、切换页表）</td>
+    <td><b>便宜</b>（同一个地址空间里换个栈和寄存器）</td></tr>
+<tr><td><b>互相通信</b></td>
+    <td>要走进程间通信：管道、共享内存、套接字……</td>
+    <td><b>直接读写同一个变量</b> —— 零成本</td></tr>
+<tr><td><b>隔离性</b></td>
+    <td><b>强</b>：一个进程崩了，通常不影响别人</td>
+    <td><b>没有</b>：一个线程崩了（比如野指针），
+    <b>整个进程一起完</b></td></tr>
+</tbody>
+</table>
+
+<div class="card key">
+  <div class="card-t">关键：线程的「便宜」和「危险」是同一件事</div>
+  <p>因为共享地址空间，线程之间传数据<b>不用任何协议</b> ——
+  这就是它快的原因。</p>
+  <p>但也正因为共享，<b>两条线程可以在同一瞬间改同一个变量</b>。
+  进程之间不会有这个问题（内存互相看不见），线程之间必然会有。</p>
+</div>
+
+<div class="card note">
+  <div class="card-t">那为什么不用多进程？</div>
+  <p>能不用就不用 —— 如果两个任务之间<b>几乎不需要共享数据</b>
+  （比如一个跑计算、一个只管画界面），多进程反而更安全。</p>
+  <p>但绝大多数程序里，各个任务要频繁看同一份数据（同一份角色状态、
+  同一个统计数组），走进程间通信会非常啰嗦。这时才用线程，
+  <b>并且必须自己承担同步的责任</b>。</p>
 </div>
 
 <!-- ============================================================ -->
-<h2 id="s1"><span class="n">1</span>竞态条件：非原子的读改写</h2>
+<h2 id="s3"><span class="n">3</span>多线程编程的必要性</h2>
 
-<p>8 个线程，每个把同一个计数器加 5 万次，最后应该得到 40 万。先不加锁跑一遍：</p>
+<p>「线程更便宜」本身不是理由。真正需要多线程的场合只有两类：</p>
 
-<div class="code-wrap"><div class="bar"><span class="dot r"></span><span class="dot y"></span><span class="dot g"></span><span class="name">不加锁</span><span class="cp">复制</span></div><pre><span class="hl-p">#include</span> <span class="hl-s">&lt;cstdio&gt;</span>
-<span class="hl-p">#include</span> <span class="hl-s">&lt;thread&gt;</span>
+<table>
+<thead><tr><th style="width:24%">场合</th><th style="width:30%">典型例子</th><th>为什么单线程不行</th></tr></thead>
+<tbody>
+<tr><td><b>算得太多</b><br>（CPU 密集）</td>
+    <td>大规模数值模拟、图像处理、物理计算</td>
+    <td>单线程只能用满<b>一个核</b>；现在的机器有 8 核、16 核，
+    剩下全是空的</td></tr>
+<tr><td><b>等得太久</b><br>（I/O 密集）</td>
+    <td>读大文件、等网络响应</td>
+    <td>等待期间那条线程是<b>闲着</b>的；如果它是唯一线程，
+    整个程序（包括界面）就卡住不动</td></tr>
+</tbody>
+</table>
+
+<p>反过来说：<b>如果一件事本来就是串行的，或者量小得几十毫秒就跑完，
+多线程只会带来麻烦，不会带来收益。</b></p>
+
+<div class="card warn">
+  <div class="card-t">多线程的代价是真实的</div>
+  <ul>
+    <li><b>竞态</b>：同一份数据被同时改，结果时对时错</li>
+    <li><b>死锁</b>：几个线程互相等，程序整体卡死</li>
+    <li><b>难调试</b>：问题不一定每次复现，日志顺序也不固定</li>
+  </ul>
+  <p>所以判断标准不是「能不能用多线程」，而是
+  <b>「这份工作值不值得承担这份复杂度」</b>。</p>
+</div>
+
+<!-- ============================================================ -->
+<h2 id="s4"><span class="n">4</span>一个真实的例子：Po 的抽卡统计</h2>
+
+<p>说个具体的事。</p>
+
+<p>《原神》玩家 <b>Po</b> 想搞清楚一个问题：
+<b>自己大概多少抽能出金？在哪一抽出金的概率最大？</b></p>
+
+<p>这个问题没有简单公式 —— 有保底、有软保底、概率还随抽数变化。
+所以 Po 用了一个最笨但最可靠的办法：<b>暴力模拟</b>。</p>
+
+<div class="card tip">
+  <div class="card-t">Po 的做法</div>
+  <ol>
+    <li>写一个函数 <code>simulateOneRun()</code>：模拟「一直抽，直到出金」，
+    返回<b>第几抽出金</b></li>
+    <li>把这个过程跑 <b>500 万次</b></li>
+    <li>用一个数组 <code>hit[n]</code> 记：第 <code>n</code> 抽出金出现了多少次</li>
+    <li>跑完看 <code>hit</code>：<b>最大的那一格就是概率最高的抽数</b></li>
+  </ol>
+  <p>500 万次，单线程跑一遍要等很久。<b>而这件事天然可以切成几份同时做</b>
+  —— 每一次模拟之间毫无关系。这就是第 3 节说的「CPU 密集」。</p>
+</div>
+
+<div class="card warn">
+  <div class="card-t">本篇不讲抽卡概率模型</div>
+  <p><code>simulateOneRun()</code> 里怎么算概率、怎么处理保底，
+  那是<b>数值模拟</b>的事，和「多线程」没有关系。本篇
+  <b>不给出它的实现</b>，只展示外面的多线程框架。</p>
+  <p>下面代码里它被当成一个黑盒：调一次，得到一个抽数。</p>
+</div>
+
+<h3>多线程那部分</h3>
+
+<p>把 500 万次切成 8 份，交给 8 个线程各跑一份：</p>
+
+<div class="code-wrap"><div class="bar"><span class="dot r"></span><span class="dot y"></span><span class="dot g"></span><span class="name">只有多线程框架，抽卡过程是黑盒</span><span class="cp">复制</span></div><pre><span class="hl-p">#include</span> <span class="hl-s">&lt;thread&gt;</span>
 <span class="hl-p">#include</span> <span class="hl-s">&lt;vector&gt;</span>
 
-<span class="hl-k">int</span> <span class="hl-f">main</span>() {
-    <span class="hl-k">const</span> <span class="hl-k">int</span> N = <span class="hl-n">8</span>, M = <span class="hl-n">50000</span>;
-    <span class="hl-k">long</span> <span class="hl-k">long</span> counter = <span class="hl-n">0</span>;
+<span class="hl-k">const</span> <span class="hl-k">int</span> RUNS     = <span class="hl-n">5000000</span>;   <span class="hl-c">/* 总共模拟 500 万次 */</span>
+<span class="hl-k">const</span> <span class="hl-k">int</span> THREADS  = <span class="hl-n">8</span>;         <span class="hl-c">/* 分给 8 个线程 */</span>
+<span class="hl-k">const</span> <span class="hl-k">int</span> MAX_PULLS = <span class="hl-n">180</span>;      <span class="hl-c">/* 最多 180 抽 */</span>
 
-    std::vector&lt;std::thread&gt; ts;
-    <span class="hl-k">for</span> (<span class="hl-k">int</span> i = <span class="hl-n">0</span>; i &lt; N; ++i)
-        ts.emplace_back([&amp;] { <span class="hl-k">for</span> (<span class="hl-k">int</span> k = <span class="hl-n">0</span>; k &lt; M; ++k) ++counter; });
-    <span class="hl-k">for</span> (<span class="hl-k">auto</span>&amp; t : ts) t.join();
+<span class="hl-c">/* hit[n] = 第 n 抽出金的次数 */</span>
+std::vector&lt;<span class="hl-k">long</span> <span class="hl-k">long</span>&gt; hit(MAX_PULLS + <span class="hl-n">1</span>, <span class="hl-n">0</span>);
 
-    std::printf(<span class="hl-s">"counter = %lld  (expect %lld)\n"</span>,
-                counter, (<span class="hl-k">long</span> <span class="hl-k">long</span>)N * M);
-    <span class="hl-k">return</span> <span class="hl-n">0</span>;
-}</pre></div>
+<span class="hl-k">const</span> <span class="hl-k">int</span> PER = RUNS / THREADS;
+
+std::vector&lt;std::thread&gt; ts;
+<span class="hl-k">for</span> (<span class="hl-k">int</span> t = <span class="hl-n">0</span>; t &lt; THREADS; ++t) {
+    ts.emplace_back([&amp;] {
+        <span class="hl-k">for</span> (<span class="hl-k">int</span> r = <span class="hl-n">0</span>; r &lt; PER; ++r) {
+            <span class="hl-k">int</span> n = <span class="hl-f">simulateOneRun</span>();   <span class="hl-c">/* 抽卡过程：本篇不展开 */</span>
+            ++hit[n];                       <span class="hl-c">/* ← 8 个线程同时写这里 */</span>
+        }
+    });
+}
+<span class="hl-k">for</span> (<span class="hl-k">auto</span>&amp; th : ts) th.<span class="hl-f">join</span>();     <span class="hl-c">/* 等所有线程跑完 */</span>
+
+<span class="hl-c">/* 跑完看 hit 里最大的那一格，就是 Po 想知道的答案 */</span></pre></div>
+
+<p>三个要点：</p>
+
+<div class="alias">
+  <div class="row"><span class="k"><code>[&amp;]</code> 捕获列表</span>
+    <span class="v">表示「按引用使用外面的变量」，所以线程里能直接读写
+    <code>hit</code> —— <b>也就埋下了隐患</b>。</span></div>
+  <div class="row"><span class="k"><code>PER</code> 把总量切开</span>
+    <span class="v">每个线程只跑自己那 62.5 万次，互不重叠，
+    所以「跑多少次」这部分不需要同步。</span></div>
+  <div class="row"><span class="k"><code>join()</code></span>
+    <span class="v">等这个线程结束。<b>不 <code>join</code> 就直接用结果</b>，
+    会读到还没算完的数据；而且线程对象析构时若还没结束，程序会直接终止。</span></div>
+</div>
+
+<p><b>问题就在 <code>++hit[n]</code> 这一行。</b>
+8 个线程在同时改同一个数组 —— 下一节说清楚为什么会出错。</p>
+
+<!-- ============================================================ -->
+<h2 id="s5"><span class="n">5</span>竞态条件：非原子的读改写</h2>
+
+<p>先看一个最小实验。8 个线程，每个把同一个计数器加 5 万次，应该得到 40 万：</p>
+
+<div class="code-wrap"><div class="bar"><span class="dot r"></span><span class="dot y"></span><span class="dot g"></span><span class="name">不加锁</span><span class="cp">复制</span></div><pre><span class="hl-k">const</span> <span class="hl-k">int</span> N = <span class="hl-n">8</span>, M = <span class="hl-n">50000</span>;
+<span class="hl-k">long</span> <span class="hl-k">long</span> counter = <span class="hl-n">0</span>;
+
+std::vector&lt;std::thread&gt; ts;
+<span class="hl-k">for</span> (<span class="hl-k">int</span> i = <span class="hl-n">0</span>; i &lt; N; ++i)
+    ts.emplace_back([&amp;] { <span class="hl-k">for</span> (<span class="hl-k">int</span> k = <span class="hl-n">0</span>; k &lt; M; ++k) ++counter; });
+<span class="hl-k">for</span> (<span class="hl-k">auto</span>&amp; t : ts) t.<span class="hl-f">join</span>();
+
+std::printf(<span class="hl-s">"counter = %lld  (expect %lld)\n"</span>,
+            counter, (<span class="hl-k">long</span> <span class="hl-k">long</span>)N * M);</pre></div>
 
 <div class="out-wrap"><div class="cap">运行结果（已核对）</div><pre>counter = 122439  (expect 400000)</pre></div>
 
 <div class="card warn">
   <div class="card-t">这个数字每次都不一样</div>
-  <p>我这台机器上跑过 <code>122439</code>、<code>122856</code>、<code>139002</code> 三个数，
+  <p>同一台机器上跑出过 <code>122439</code>、<code>122856</code>、<code>139002</code>，
   <b>每次都不相同</b>；极小概率下也可能碰巧得到 400000。
   <b>「跑一次是对的」不能证明没问题</b> —— 这正是竞态最麻烦的地方。</p>
 </div>
 
 <h3>为什么丢：<code>++counter</code> 不是一步</h3>
-
-<p>看起来是一个动作，机器层面是三步：</p>
 
 <div class="mnemonic">
   <b>① 读</b>：把 <code>counter</code> 的值读进寄存器<br>
@@ -65,116 +236,102 @@
     <span class="v"><b>加了两次，值只涨了 1</b> —— 丢掉一次更新</span></div>
 </div>
 
-<p>这叫<b>竞态条件</b>（race condition）：<b>结果取决于线程的调度顺序</b>，
-而调度顺序不是你决定的。</p>
+<h3>回到 Po 的程序：连总数都不对</h3>
+
+<p><code>++hit[n]</code> 是同一个毛病。把抽卡模型换成一个占位函数
+（均匀分布，只为演示线程部分），实测：</p>
+
+<div class="out-wrap"><div class="cap">运行结果（已核对）</div><pre>1) no lock   : total = 1858550   (expect 2000000)
+2) lock_guard: total = 2000000</pre></div>
+
+<p>200 万次模拟，<b>只统计到 185 万次</b> —— 丢了 14 万次记录。</p>
+
+<div class="card key">
+  <div class="card-t">对 Po 意味着什么</div>
+  <p>他算的是<b>概率分布</b>。总数少了 7%，说明有些「抽数」被漏记了，
+  而且<b>漏得不均匀</b> —— 哪一格被同时写得多，哪一格就漏得多。</p>
+  <p>结果就是：<b>峰值位置可能是错的</b>。他辛苦跑出来的结论，
+  建立在错误的数据上。<b>这就是竞态最坏的地方 —— 程序不崩、不报错，
+  只是悄悄给你一个错的答案。</b></p>
+</div>
 
 <!-- ============================================================ -->
-<h2 id="s2"><span class="n">2</span><code>std::mutex</code> 与 <code>lock_guard</code></h2>
+<h2 id="s6"><span class="n">6</span>互斥锁：<code>lock_guard</code> 与临界区</h2>
 
-<p><code>std::mutex</code> 只有两个动作：<code>lock()</code> 和
-<code>unlock()</code>。同一时刻只允许一个线程持有它，其余线程会<b>等</b>。</p>
+<p><code>std::mutex</code> 的作用：<b>同一时刻只允许一个线程进去</b>，
+其余线程在外等。</p>
 
-<p>但<b>不要手写 <code>lock()</code> / <code>unlock()</code></b> ——
-理由和上一篇完全一样：中途 <code>return</code> 或抛异常，<code>unlock()</code>
-就被跳过了，锁<b>永远不释放</b>，其他线程全部卡死。这种错误比数据错更糟，
-因为程序会「静默地不再前进」。</p>
+<p>但<b>不要手写 <code>lock()</code> / <code>unlock()</code></b>：
+中途 <code>return</code> 或抛异常就会跳过 <code>unlock()</code>，
+锁<b>永远不释放</b>，其他线程全部永久卡住 ——
+这种错误比数据错更糟，因为程序会「静默地不再前进」。</p>
 
-<p>正确做法是 RAII 的 <code>std::lock_guard</code>：<b>构造时加锁，析构时解锁。</b></p>
+<p>正确做法是 RAII 包装 <code>std::lock_guard</code>：
+<b>构造时加锁，析构时解锁。</b></p>
 
-<div class="code-wrap"><div class="bar"><span class="dot r"></span><span class="dot y"></span><span class="dot g"></span><span class="name">lock_guard：把解锁绑在析构上</span><span class="cp">复制</span></div><pre><span class="hl-p">#include</span> <span class="hl-s">&lt;mutex&gt;</span>
+<div class="code-wrap"><div class="bar"><span class="dot r"></span><span class="dot y"></span><span class="dot g"></span><span class="name">Po 的程序加锁之后</span><span class="cp">复制</span></div><pre>std::mutex m;
 
-std::mutex m;
+ts.emplace_back([&amp;] {
+    <span class="hl-k">for</span> (<span class="hl-k">int</span> r = <span class="hl-n">0</span>; r &lt; PER; ++r) {
+        <span class="hl-k">int</span> n = <span class="hl-f">simulateOneRun</span>();
+        {
+            std::lock_guard&lt;std::mutex&gt; g(m);   <span class="hl-c">/* 加锁 */</span>
+            ++hit[n];                            <span class="hl-c">/* 临界区：只有这一行 */</span>
+        }                                        <span class="hl-c">/* g 析构 → 自动解锁 */</span>
+    }
+});</pre></div>
 
-<span class="hl-c">/* 每个线程做： */</span>
-<span class="hl-k">for</span> (<span class="hl-k">int</span> k = <span class="hl-n">0</span>; k &lt; M; ++k) {
-    std::lock_guard&lt;std::mutex&gt; g(m);   <span class="hl-c">/* 加锁 */</span>
-    ++counter;                          <span class="hl-c">/* 临界区：只有一段 */</span>
-}                                       <span class="hl-c">/* g 析构 → 自动解锁 */</span></pre></div>
+<div class="out-wrap"><div class="cap">运行结果（已核对）</div><pre>lock_guard: total = 2000000</pre></div>
 
-<div class="out-wrap"><div class="cap">运行结果（已核对）</div><pre>2) lock_guard  : 400000</pre></div>
-
-<p>40 万，一分不差。</p>
+<p>200 万，一分不差。</p>
 
 <div class="card tip">
   <div class="card-t">临界区 = 被锁住的那几行</div>
   <p>从 <code>g</code> 构造到 <code>g</code> 析构之间的代码叫<b>临界区</b>。
   它<b>同时只能有一个线程</b>在里面 —— 这是「正确」的代价：
-  <b>并发被这一段串行化了</b>。所以临界区要尽量小，只包住真正需要保护的操作。</p>
+  <b>并发被这一段串行化了</b>。</p>
 </div>
 
-<!-- ============================================================ -->
-<h2 id="s3"><span class="n">3</span>临界区粒度：循环内与循环外</h2>
+<h3>临界区放多大：Po 这里的取舍</h3>
 
-<p>上面那个例子每加一次就加解一次锁，一共 40 万次。<b>能对，但很慢</b>。
-如果我们只是想让每个线程把自己的 5 万次加完，可以把锁放到循环外面：</p>
+<p>上面只锁了 <code>++hit[n]</code> 一行，<code>simulateOneRun()</code>
+在锁外 —— <b>这是对的</b>。因为模拟本身不碰共享数据，
+把 500 万次调用都锁起来，等于把多线程的好处全扔了。</p>
 
-<div class="code-wrap"><div class="bar"><span class="dot r"></span><span class="dot y"></span><span class="dot g"></span><span class="name">锁一次，包住整个循环</span><span class="cp">复制</span></div><pre>std::lock_guard&lt;std::mutex&gt; g(m);
-<span class="hl-k">for</span> (<span class="hl-k">int</span> k = <span class="hl-n">0</span>; k &lt; M; ++k) ++counter;</pre></div>
-
-<div class="out-wrap"><div class="cap">运行结果（已核对）</div><pre>3) lock once   : 400000</pre></div>
-
-<p>结果一样对，但<b>这两段的差别不在正确性，在并发度</b>：</p>
-
-<table>
-<thead><tr><th style="width:22%">锁的位置</th><th style="width:26%">临界区</th><th>效果</th></tr></thead>
-<tbody>
-<tr><td>循环<b>里</b>（每次一个）</td><td>一行 <code>++counter</code></td>
-    <td>8 个线程能交替进，但加解锁 40 万次，<b>大部分时间花在锁上</b></td></tr>
-<tr><td>循环<b>外</b>（锁一次）</td><td>整个 5 万次循环</td>
-    <td>加解锁只有 8 次，但<b>8 个线程变成完全串行</b>，
-    等于单线程跑 8 遍</td></tr>
-</tbody>
-</table>
+<div class="two">
+  <div class="side">
+    <div class="hd bad">❌ 锁太大</div>
+    <pre>{
+  std::lock_guard g(m);
+  int n = simulateOneRun();
+  ++hit[n];
+}
+/* 模拟本身耗时
+   → 8 个线程全在排队
+   → 和单线程一样慢 */</pre>
+  </div>
+  <div class="side">
+    <div class="hd good">✅ 只锁共享的一行</div>
+    <pre>int n = simulateOneRun();  /* 锁外并行 */
+{
+  std::lock_guard g(m);
+  ++hit[n];                /* 锁内一行 */
+}
+/* 模拟并行跑
+   → 真正用上了多个核 */</pre>
+  </div>
+</div>
 
 <div class="card note">
-  <div class="card-t">怎么选</div>
-  <p>看<b>循环体里有没有「必须一起完成」的约束</b>：</p>
-  <ul>
-    <li>如果每一次自增都是独立的，你只是想让总数对 →
-    <b>锁外面更好</b>（或者干脆用第 5 节的 <code>atomic</code>）。</li>
-    <li>如果循环里还有别的共享状态、而且中间不能让别的线程插进来 →
-    <b>只能锁外面</b>。</li>
-  </ul>
-  <p>反过来说：<b>锁外面的写法牺牲了全程并发</b>，如果那段代码要跑很久，
-  其他线程会一直等 —— 这时要考虑把工作拆开，而不是把锁放大。</p>
+  <div class="card-t">判断标准</div>
+  <p><b>临界区只放「会碰共享数据」的那几行；耗时的纯计算放在外面。</b></p>
+  <p>反例也要记住：如果几行操作<b>必须一起完成</b>
+  （比如「扣钱」和「加货」要同时成立），那它们必须在同一个临界区里
+  —— 拆开就会出错。</p>
 </div>
 
 <!-- ============================================================ -->
-<h2 id="s4"><span class="n">4</span><code>unique_lock</code>：需要手动控制的场合</h2>
-
-<p><code>lock_guard</code> 最简单，但它<b>不能中途解锁</b>，
-也不能「先构造、晚点再锁」。需要这些时用 <code>std::unique_lock</code>：</p>
-
-<table>
-<thead><tr><th style="width:24%"></th><th style="width:38%"><code>lock_guard</code></th><th><code>unique_lock</code></th></tr></thead>
-<tbody>
-<tr><td><b>构造即加锁</b></td><td>是</td><td>是（也可 <code>std::defer_lock</code> 先不加）</td></tr>
-<tr><td><b>中途 <code>unlock()</code></b></td><td><b>不行</b></td><td>可以</td></tr>
-<tr><td><b>能移动 / 传给函数</b></td><td>不行</td><td>可以</td></tr>
-<tr><td><b>开销</b></td><td>几乎没有</td><td>略大（要记「当前锁没锁」）</td></tr>
-</tbody>
-</table>
-
-<p><b>默认用 <code>lock_guard</code></b>；确实需要「锁一会儿、放开、再锁」时才换
-<code>unique_lock</code>。典型场景是条件变量、或者「锁内做一份快照，
-锁外慢慢处理」：</p>
-
-<div class="code-wrap"><div class="bar"><span class="dot r"></span><span class="dot y"></span><span class="dot g"></span><span class="name">锁内取快照，锁外处理</span><span class="cp">复制</span></div><pre>std::vector&lt;<span class="hl-k">int</span>&gt; snapshot;
-
-{
-    std::lock_guard&lt;std::mutex&gt; g(m);
-    snapshot = sharedList;          <span class="hl-c">/* 只复制，很快 */</span>
-}                                   <span class="hl-c">/* 这里就解锁了 */</span>
-
-<span class="hl-k">for</span> (<span class="hl-k">int</span> v : snapshot) {           <span class="hl-c">/* 耗时的处理在锁外做 */</span>
-    process(v);
-}</pre></div>
-
-<p>这个模式比「拿着锁跑完整个处理」好得多：<b>临界区只包含一次拷贝</b>，
-其余线程几乎不用等。</p>
-
-<!-- ============================================================ -->
-<h2 id="s5"><span class="n">5</span>两把锁：死锁与 <code>scoped_lock</code></h2>
+<h2 id="s7"><span class="n">7</span>两把锁：死锁与 <code>scoped_lock</code></h2>
 
 <p>需要同时锁两把锁时，<b>顺序不一致就会死锁</b>：</p>
 
@@ -204,21 +361,14 @@ lock(m1);   /* 等 m1 */</pre>
 <p>修法不是「小心保持顺序」（约定靠人守不住），而是<b>一次把两把都锁上</b>。
 C++17 的 <code>std::scoped_lock</code> 就是干这个的：</p>
 
-<div class="out-wrap"><div class="cap">运行结果（已核对：8 线程 × 2000 次，没有卡死）</div><pre>4) scoped_lock : a=16000 b=16000</pre></div>
-
-<div class="card warn">
-  <div class="card-t">为什么这里不能「先锁 m1 再锁 m2」</div>
-  <p>只要你写的是两次独立的 <code>lock</code>，中间就存在「已经拿着 m1、
-  还没拿到 m2」的状态。别的线程只要此时反向来一次，就能凑成环。</p>
-  <p><code>scoped_lock</code> 把「锁两把」变成一个<b>不可分割</b>的动作，
-  从结构上消掉了那个中间状态。</p>
-</div>
+<div class="out-wrap"><div class="cap">运行结果（已核对：8 线程 × 2000 次，没有卡死）</div><pre>scoped_lock : a=16000 b=16000</pre></div>
 
 <!-- ============================================================ -->
-<h2 id="s6"><span class="n">6</span>不必加锁的场合：单变量原子操作</h2>
+<h2 id="s8"><span class="n">8</span>不必加锁的场合：单变量原子操作</h2>
 
-<p>如果共享的只是<b>一个计数器</b>，锁是重武器：<code>std::atomic</code>
-就够了，而且没有「忘记解锁」的风险。</p>
+<p>Po 的统计数组要用锁（要保护的是「算下标 + 自增」这个组合）。
+但如果共享的只是<b>一个计数器</b>，锁就是重武器：
+<code>std::atomic</code> 更轻，而且没有「忘记解锁」的风险。</p>
 
 <div class="code-wrap"><div class="bar"><span class="dot r"></span><span class="dot y"></span><span class="dot g"></span><span class="name">atomic：单变量的原子操作</span><span class="cp">复制</span></div><pre><span class="hl-p">#include</span> <span class="hl-s">&lt;atomic&gt;</span>
 
@@ -226,17 +376,20 @@ std::atomic&lt;<span class="hl-k">long</span> <span class="hl-k">long</span>&gt;
 <span class="hl-c">/* 各线程里 */</span>
 ++counter;                       <span class="hl-c">/* 这是一步，不会丢更新 */</span></pre></div>
 
-<div class="out-wrap"><div class="cap">运行结果（已核对）</div><pre>5) atomic      : 400000</pre></div>
+<div class="out-wrap"><div class="cap">运行结果（已核对）</div><pre>atomic      : 400000</pre></div>
 
 <div class="card note">
   <div class="card-t">atomic 的边界</div>
   <p><code>atomic</code> 只保证<b>单个变量</b>的操作不可分割。
-  一旦你要保护的是<b>两个变量之间的一致性</b>（比如「扣钱」和「加货」必须一起成功），
+  一旦要保护的是<b>两个变量之间的一致性</b>（扣钱与加货必须一起成功），
   就必须用锁 —— <b>两行 atomic 加起来不是原子的</b>。</p>
+  <p>Po 的 <code>hit</code> 是个数组：<code>hit[n]</code> 的读改写虽然只针对一格，
+  但「先算下标、再自增」这组操作用锁表达更清楚。
+  <b>能用锁讲明白的地方，别为了省一点开销硬塞 atomic。</b></p>
 </div>
 
 <!-- ============================================================ -->
-<h2 id="s7"><span class="n">7</span>常见错误</h2>
+<h2 id="s9"><span class="n">9</span>常见错误</h2>
 
 <h3>错误 1 · 手写 <code>lock()</code> / <code>unlock()</code></h3>
 
@@ -245,48 +398,64 @@ std::atomic&lt;<span class="hl-k">long</span> <span class="hl-k">long</span>&gt;
 
 <h3>错误 2 · 只锁了一部分</h3>
 
-<div class="code-wrap"><div class="bar"><span class="dot r"></span><span class="dot y"></span><span class="dot g"></span><span class="name">读了两次，只锁了一次</span><span class="cp">复制</span></div><pre><span class="hl-c">/* ✗ 无效：锁只包住了一次读 */</span>
-{
-    std::lock_guard&lt;std::mutex&gt; g(m);
-    <span class="hl-k">if</span> (counter &gt; <span class="hl-n">0</span>) flag = <span class="hl-k">true</span>;
-}
-<span class="hl-c">/* 两行之间别的线程可能已经改了 counter，判断和取值不是一个整体 */</span></pre></div>
+<p>「检查再使用」是最典型的：两个操作分开加锁，中间就有缝。
+<b>凡是必须一起成立的读写，都要在同一把锁里。</b></p>
 
-<p><b>凡是「必须一起成立」的读和写，都要在同一把锁里。</b></p>
+<h3>错误 3 · 忘了 <code>join()</code></h3>
 
-<h3>错误 3 · 锁的粒度太大</h3>
+<div class="code-wrap"><div class="bar"><span class="dot r"></span><span class="dot y"></span><span class="dot g"></span><span class="name">没等线程结束就往下走</span><span class="cp">复制</span></div><pre>std::vector&lt;std::thread&gt; ts;
+<span class="hl-c">/* … 起线程 … */</span>
+<span class="hl-c">/* ✗ 少了 for (auto&amp; t : ts) t.join(); */</span>
 
-<p>在临界区里做耗时的事（读文件、打印、等网络），等于让所有线程排队等它。
-<b>临界区只放必要的几行；耗时的处理放到锁外</b>（第 4 节那个快照模式）。</p>
+<span class="hl-f">printResult</span>(hit);    <span class="hl-c">/* ← 统计还没算完，读到半成品 */</span></pre></div>
 
-<h3>错误 4 · 两把锁顺序不一致</h3>
+<p>更严重的是：<code>std::thread</code> 对象析构时如果线程还没结束，
+程序会<b>直接终止</b>。所以每个线程都要么 <code>join()</code>、
+要么 <code>detach()</code> —— 但 Po 这种「要等结果」的场景只能用 <code>join()</code>。</p>
 
-<p>就是第 5 节的死锁。用 <code>scoped_lock</code> 一次锁住，
-或者从设计上避免「同时需要两把锁」。</p>
+<h3>错误 4 · 以为「没加锁但也没出错」就是对的</h3>
 
-<h3>错误 5 · 以为「没加锁但也没出错」就是对的</h3>
-
-<p>竞态的表现就是<b>时对时错</b>。不加锁的版本跑一次得到 40 万，
+<p>竞态的表现就是<b>时对时错</b>。不加锁的版本跑一次得到正确总数，
 完全可能 —— 但代码依然是错的。</p>
 
+<h3>错误 5 · 两把锁顺序不一致</h3>
+
+<p>第 7 节的死锁。用 <code>scoped_lock</code> 一次锁住，
+或者从设计上避免「同时需要两把锁」。</p>
+
 <!-- ============================================================ -->
-<h2 id="s8"><span class="n">8</span>一页速查</h2>
+<h2 id="s10"><span class="n">10</span>一页速查</h2>
+
+<h4>概念</h4>
+
+<table>
+<thead><tr><th style="width:22%">概念</th><th>一句话</th></tr></thead>
+<tbody>
+<tr><td><b>线程</b></td><td>同一个程序里的并发执行流；有自己的栈，共享堆和全局变量</td></tr>
+<tr><td><b>进程</b></td><td>运行中的程序实例；地址空间独立，隔离强、通信贵</td></tr>
+<tr><td><b>竞态</b></td><td>结果取决于线程调度顺序；读改写不是原子操作就会丢更新</td></tr>
+<tr><td><b>临界区</b></td><td>被锁保护的那段代码，同时只能有一个线程在里面</td></tr>
+<tr><td><b>死锁</b></td><td>若干线程互相等对方持有的锁，谁都走不了</td></tr>
+</tbody>
+</table>
+
+<h4>写法</h4>
 
 <table>
 <thead><tr><th style="width:34%">想做的事</th><th>写法 / 结论</th></tr></thead>
 <tbody>
+<tr><td>起一个线程</td>
+    <td class="c"><code>std::thread t([&amp;]{ … });</code></td></tr>
+<tr><td>等线程结束</td>
+    <td class="c"><code>t.join();</code></td></tr>
 <tr><td>保护一段代码</td>
     <td class="c"><code>std::lock_guard&lt;std::mutex&gt; g(m);</code></td></tr>
-<tr><td>需要中途解锁 / 传给函数</td>
-    <td class="c"><code>std::unique_lock&lt;std::mutex&gt; g(m);</code></td></tr>
 <tr><td>同时锁两把</td>
     <td class="c"><code>std::scoped_lock g(m1, m2);</code></td></tr>
 <tr><td>只保护一个计数变量</td>
     <td class="c"><code>std::atomic&lt;int&gt; n{0};</code></td></tr>
 <tr><td>临界区该多大</td>
-    <td>只包住「必须一起成立」的几行；耗时处理放锁外</td></tr>
-<tr><td>锁的顺序</td>
-    <td>不要靠约定；要同时锁就用 <code>scoped_lock</code></td></tr>
+    <td>只包住碰共享数据的几行；耗时计算放锁外</td></tr>
 <tr><td>怎么确认真的修好了</td>
     <td>跑多次；一次对不算数（竞态时对时错）</td></tr>
 </tbody>
@@ -295,13 +464,12 @@ std::atomic&lt;<span class="hl-k">long</span> <span class="hl-k">long</span>&gt;
 <div class="card key">
   <div class="card-t">本讲要记住的四句话</div>
   <ol>
-    <li><b>竞态的来源是「看起来一步、实际三步」</b>：读、改、写中间被插队就丢更新。</li>
-    <li><b>锁保护的是「一段代码」，不是「一个变量」</b> ——
+    <li><b>线程共享地址空间</b> —— 这是它便宜的原因，也是所有麻烦的原因。</li>
+    <li><b>多线程只在「算得多」或「等得久」时值得</b>；否则是纯负担。</li>
+    <li><b>锁保护的是「一段代码」，不是「一个变量」</b>：
     凡是必须一起成立的读写，都要在同一把锁里。</li>
-    <li><b>用 RAII 包装，不手写 <code>lock</code> / <code>unlock</code></b>：
-    <code>lock_guard</code> 就是「把解锁绑在析构上」。</li>
-    <li><b>两把锁要用 <code>scoped_lock</code> 一次锁住</b>，
-    靠「保持顺序」的约定迟早会破。</li>
+    <li><b>用 RAII 包装，不手写 <code>lock</code> / <code>unlock</code></b>；
+    两把锁用 <code>scoped_lock</code> 一次锁住。</li>
   </ol>
 </div>
 
@@ -312,8 +480,8 @@ std::atomic&lt;<span class="hl-k">long</span> <span class="hl-k">long</span>&gt;
       <span class="why">—— 同一条 RAII 思路：
       <code>lock_guard</code> 和 <code>unique_ptr</code> 是同一个招式的两种用法。</span></li>
     <li><a href="m05.html">M05 · 静态、动态内存与内存安全初步</a>
-      <span class="why">—— 栈、堆与「谁负责释放」的基本概念；
-      锁的持有期也遵循同样的「谁拿到谁负责还」。</span></li>
+      <span class="why">—— 栈、堆与「谁负责释放」；
+      线程各自的栈也是在那里讲的。</span></li>
     <li><a href="m02.html">M02 · 函数初步</a>
       <span class="why">—— 临界区的边界就是作用域；
       <code>lock_guard</code> 靠「离开作用域就析构」工作。</span></li>
