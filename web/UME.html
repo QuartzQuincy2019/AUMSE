@@ -85,8 +85,13 @@ main{flex:1;display:flex;min-height:0}
   /* ⚠ 此处不要写 font-feature-settings —— 见 README 说明 */
 }
 #vtext.show{outline:1px dashed var(--accent-dim);outline-offset:6px}
-/* 预览字体切换：本机 Mongolian Baiti 排在前面，缺字时仍回退到内置字体 */
-#vtext.use-baiti{font-family:"Mongolian Baiti","UME Mongolian",serif}
+/* 预览字体切换：本机 Mongolian Baiti 排在前面，缺字时仍回退到内置字体。
+   Baiti 的字面明显比 Noto 小 —— 100px 下同一元音的墨迹高度约 70 : 79，
+   推进量还不到一半（Noto 0.92em vs Baiti 0.62em），同字号下看着「缩水」。
+   所以切到 Baiti 时把字号放大到 1.35 倍，让两种字体的观感大致齐平；
+   用户拖字号滑块时仍是按内置字体的大小在调。 */
+#vtext.use-baiti{font-family:"Mongolian Baiti","UME Mongolian",serif;
+  font-size:calc(var(--vfont-size) * 1.35)}
 .pane-head .vsel{color:var(--fg-dim);font-size:12px;display:flex;align-items:center;gap:5px}
 .pane-head .vsel select{padding:2px 6px;font-size:12px}
 .pane-head .vsel.unavailable{opacity:.62}

@@ -61,13 +61,18 @@ code{font-family:var(--mono);font-size:12px;background:var(--bg-code);
   direction:ltr;              /* 必须显式，否则继承 rtl 会让列序反转 */
   text-orientation:mixed;     /* 蒙文整块 vo=R，设 upright 会失去连写形态 */
   font-family:"UME Mongolian",serif;
-  font-size:34px;line-height:1;
+  /* 基准字号 × 字体缩放。Baiti 的字面明显比 Noto 小，
+     同字号下墨迹高度只有约 1/1.2，靠 --mn-scale 补回来。 */
+  font-size:calc(34px * var(--mn-scale,1));line-height:1;
   font-kerning:normal;font-variant-ligatures:normal;
   text-rendering:optimizeLegibility;
   display:inline-block;
 }
 body.h-mode .gl{writing-mode:horizontal-tb}
 body.use-baiti .gl{font-family:"Mongolian Baiti","UME Mongolian",serif}
+/* 100px 下墨迹高度实测：元音 A 79 vs 70、辅音 M 73 vs 58 ——
+   取 1.22 让两套字体的字面高度大致齐平（宽度差是 Baiti 本身的窄字形，不管） */
+body.use-baiti{--mn-scale:1.35}
 
 table{border-collapse:collapse;width:100%;font-size:13px}
 th,td{border:1px solid var(--line);padding:0;text-align:center;vertical-align:middle}
@@ -96,7 +101,7 @@ tbody th .cp{display:block;font-family:var(--mono);font-size:10px;
 
 /* 矩阵表头也放字形：最上行与最左列的单字要能看到它自己长什么样，
    否则只有 A / E / I 这些拉丁名，看不出对应哪个字形 */
-.hglyph{font-size:24px;line-height:1.15;display:block;margin:0 auto}
+.hglyph{font-size:calc(24px * var(--mn-scale,1));line-height:1.15;display:block;margin:0 auto}
 thead th .hglyph{margin:2px auto 5px}
 .hname{display:block;font-size:12px;line-height:1.4}
 #vowelTable tbody th{text-align:center}
@@ -109,7 +114,7 @@ thead th .hglyph{margin:2px auto 5px}
 .ipt:focus{outline:none;border-color:var(--blue);background:#fff}
 .out{margin-top:12px;border:1px solid var(--line);border-radius:10px;
   background:var(--bg-soft);padding:16px;min-height:130px;overflow:auto;text-align:center}
-.out .gl{font-size:54px}
+.out .gl{font-size:calc(54px * var(--mn-scale,1))}
 .cplist{margin-top:10px;font-family:var(--mono);font-size:12px;color:var(--fg-2);
   display:flex;flex-wrap:wrap;gap:4px}
 .cplist span{background:#fff;border:1px solid var(--line);border-radius:4px;padding:1px 5px}
