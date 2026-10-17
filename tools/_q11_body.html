@@ -38,7 +38,75 @@
 <b>两条线程看的是同一个 <code>int</code>，谁都能改它。</b></p>
 
 <!-- ============================================================ -->
-<h2 id="s2"><span class="n">2</span>线程与进程的区别</h2>
+<!-- ============================================================ -->
+<h2 id="s2"><span class="n">2</span>上下文切换</h2>
+
+<p>两条线程「同时在跑」，其实要分两种情况说：</p>
+
+<ul>
+  <li><b>核够多</b>：两条线程真的各占一个核，物理上同时执行。</li>
+  <li><b>核不够</b>（线程数多于核数，或者单核机器）：只能<b>轮流用</b> CPU。
+  看起来是同时，实际是<b>换得足够快</b>。</li>
+</ul>
+
+<p>这个「换」有个名字：<b>上下文切换</b>（context switch）。</p>
+
+<div class="card key">
+  <div class="card-t">概念 · 上下文切换</div>
+  <p><b>操作系统把 CPU 从一条线程交给另一条线程的过程。</b></p>
+  <p>一次切换要做四件事：</p>
+  <ol>
+    <li><b>保存</b>当前线程的现场：寄存器、栈指针，
+    以及「下一条该执行哪条指令」（程序计数器）</li>
+    <li><b>挑</b>出下一条要运行的线程</li>
+    <li><b>恢复</b>它上次保存的现场</li>
+    <li>从它<b>上次停下的地方</b>接着往下跑</li>
+  </ol>
+</div>
+
+<p>本机实测（MSVC 14.51）：</p>
+
+<div class="out-wrap"><div class="cap">运行结果（已核对）</div><pre>hardware_concurrency = 24</pre></div>
+
+<p>也就是 24 个逻辑核。<b>只要同时活跃的线程超过这个数，就一定有人在排队</b>，
+而排队就意味着切换。</p>
+
+<h3>什么时候会切</h3>
+
+<table>
+<thead><tr><th style="width:30%">时机</th><th>说明</th></tr></thead>
+<tbody>
+<tr><td><b>时间片用完</b></td>
+    <td>系统给每条线程一小段时间，用完就换人。<b>这不需要你同意</b>。</td></tr>
+<tr><td><b>等待</b></td>
+    <td>等锁、等 I/O、等条件变量时，线程没事可做，系统就把 CPU 让给别人</td></tr>
+<tr><td><b>主动让出</b></td>
+    <td><code>std::this_thread::yield()</code>：我暂时没活，先让别人跑</td></tr>
+</tbody>
+</table>
+
+<div class="card warn">
+  <div class="card-t">切换不是免费的</div>
+  <p>切换要进内核、要换栈、还会打乱 CPU 缓存。所以
+  <b>线程不是越多越好</b> —— 开几百条线程去做十几条线程能做完的事，
+  多出来的时间大量花在切换上，而不是计算上。</p>
+  <p>经验做法：<b>计算类任务开「核数上下」条线程</b>，就够了。</p>
+</div>
+
+<h3>为什么这件事决定了后面所有的麻烦</h3>
+
+<p>看第一节那张表：线程共享堆和全局变量。而上下文切换可以发生在
+<b>任意两条机器指令之间</b> —— 不是「一行代码」的边界，更不是你写代码时的
+某个自然的停顿点。</p>
+
+<p>于是 <code>++counter</code> 这种看起来一步的操作，完全可能在
+「读到值」和「写回值」<b>中间</b>被换下去；等它再被换回来时，
+那个值已经被别的线程改过了。<b>第 6 节的竞态，根子就在这里。</b></p>
+
+<p>既然打断是系统说了算，人管不住，那就只能约定：
+<b>某几行代码，同一时刻只让一条线程进来</b>。这就是第 7 节的临界区与锁。</p>
+
+<h2 id="s3"><span class="n">3</span>线程与进程的区别</h2>
 
 <table>
 <thead><tr><th style="width:18%"></th><th style="width:40%">进程（process）</th><th>线程（thread）</th></tr></thead>
@@ -80,7 +148,7 @@
 </div>
 
 <!-- ============================================================ -->
-<h2 id="s3"><span class="n">3</span>多线程编程的必要性</h2>
+<h2 id="s4"><span class="n">4</span>多线程编程的必要性</h2>
 
 <p>「线程更便宜」本身不是理由。真正需要多线程的场合只有两类：</p>
 
@@ -113,7 +181,7 @@
 </div>
 
 <!-- ============================================================ -->
-<h2 id="s4"><span class="n">4</span>一个真实的例子：Po 的抽卡统计</h2>
+<h2 id="s5"><span class="n">5</span>一个真实的例子：Po 的抽卡统计</h2>
 
 <p>说个具体的事。</p>
 
@@ -133,7 +201,7 @@
     <li>跑完看 <code>hit</code>：<b>最大的那一格就是概率最高的抽数</b></li>
   </ol>
   <p>500 万次，单线程跑一遍要等很久。<b>而这件事天然可以切成几份同时做</b>
-  —— 每一次模拟之间毫无关系。这就是第 3 节说的「CPU 密集」。</p>
+  —— 每一次模拟之间毫无关系。这就是第 4 节说的「CPU 密集」。</p>
 </div>
 
 <div class="card warn">
@@ -191,9 +259,18 @@ std::vector&lt;std::thread&gt; ts;
 8 个线程在同时改同一个数组 —— 下一节说清楚为什么会出错。</p>
 
 <!-- ============================================================ -->
-<h2 id="s5"><span class="n">5</span>竞态条件：非原子的读改写</h2>
+<h2 id="s6"><span class="n">6</span>竞态条件：非原子的读改写</h2>
 
-<p>先看一个最小实验。8 个线程，每个把同一个计数器加 5 万次，应该得到 40 万：</p>
+<div class="card key">
+  <div class="card-t">概念 · 竞态（race condition）</div>
+  <p><b>结果取决于线程的执行顺序</b> —— 谁先跑、谁后跑、在哪被上下文切换打断，
+  都会改变最终结果。</p>
+  <p>同一份代码、同样的输入，<b>可能这次对、下次错</b>，而且错的时候不报任何错。
+  这是它比崩溃更难查的根本原因。</p>
+  <p>下面这个最小实验就是最典型的一种竞态：<b>多个线程对一个变量做「读—改—写」</b>。</p>
+</div>
+
+<p>8 个线程，每个把同一个计数器加 5 万次，应该得到 40 万：</p>
 
 <div class="code-wrap"><div class="bar"><span class="dot r"></span><span class="dot y"></span><span class="dot g"></span><span class="name">不加锁</span><span class="cp">复制</span></div><pre><span class="hl-k">const</span> <span class="hl-k">int</span> N = <span class="hl-n">8</span>, M = <span class="hl-n">50000</span>;
 <span class="hl-k">long</span> <span class="hl-k">long</span> counter = <span class="hl-n">0</span>;
@@ -256,7 +333,7 @@ std::printf(<span class="hl-s">"counter = %lld  (expect %lld)\n"</span>,
 </div>
 
 <!-- ============================================================ -->
-<h2 id="s6"><span class="n">6</span>互斥锁：<code>lock_guard</code> 与临界区</h2>
+<h2 id="s7"><span class="n">7</span>互斥锁：临界区与 <code>lock_guard</code></h2>
 
 <p><code>std::mutex</code> 的作用：<b>同一时刻只允许一个线程进去</b>，
 其余线程在外等。</p>
@@ -285,11 +362,13 @@ ts.emplace_back([&amp;] {
 
 <p>200 万，一分不差。</p>
 
-<div class="card tip">
-  <div class="card-t">临界区 = 被锁住的那几行</div>
-  <p>从 <code>g</code> 构造到 <code>g</code> 析构之间的代码叫<b>临界区</b>。
-  它<b>同时只能有一个线程</b>在里面 —— 这是「正确」的代价：
-  <b>并发被这一段串行化了</b>。</p>
+<div class="card key">
+  <div class="card-t">概念 · 临界区（critical section）</div>
+  <p><b>一段访问共享数据的代码，它必须一次只让一条线程执行。</b></p>
+  <p>在这段代码里，从 <code>g</code> 构造到 <code>g</code> 析构之间，
+  别的线程进不来 —— 这是「正确」的代价：<b>这一段被串行化了</b>。</p>
+  <p>所以临界区的大小是个取舍：<b>太大了会损失并发，太小了会漏掉该保护的操作</b>。
+  判断标准只有一条 —— <b>哪些行必须「一起成立」</b>，它们就得在同一个临界区里。</p>
 </div>
 
 <h3>临界区放多大：Po 这里的取舍</h3>
@@ -331,7 +410,7 @@ ts.emplace_back([&amp;] {
 </div>
 
 <!-- ============================================================ -->
-<h2 id="s7"><span class="n">7</span>两把锁：死锁与 <code>scoped_lock</code></h2>
+<h2 id="s8"><span class="n">8</span>两把锁：死锁与 <code>scoped_lock</code></h2>
 
 <p>需要同时锁两把锁时，<b>顺序不一致就会死锁</b>：</p>
 
@@ -364,7 +443,7 @@ C++17 的 <code>std::scoped_lock</code> 就是干这个的：</p>
 <div class="out-wrap"><div class="cap">运行结果（已核对：8 线程 × 2000 次，没有卡死）</div><pre>scoped_lock : a=16000 b=16000</pre></div>
 
 <!-- ============================================================ -->
-<h2 id="s8"><span class="n">8</span>不必加锁的场合：单变量原子操作</h2>
+<h2 id="s9"><span class="n">9</span>不必加锁的场合：单变量原子操作</h2>
 
 <p>Po 的统计数组要用锁（要保护的是「算下标 + 自增」这个组合）。
 但如果共享的只是<b>一个计数器</b>，锁就是重武器：
@@ -389,7 +468,7 @@ std::atomic&lt;<span class="hl-k">long</span> <span class="hl-k">long</span>&gt;
 </div>
 
 <!-- ============================================================ -->
-<h2 id="s9"><span class="n">9</span>常见错误</h2>
+<h2 id="s10"><span class="n">10</span>常见错误</h2>
 
 <h3>错误 1 · 手写 <code>lock()</code> / <code>unlock()</code></h3>
 
@@ -420,11 +499,11 @@ std::atomic&lt;<span class="hl-k">long</span> <span class="hl-k">long</span>&gt;
 
 <h3>错误 5 · 两把锁顺序不一致</h3>
 
-<p>第 7 节的死锁。用 <code>scoped_lock</code> 一次锁住，
+<p>第 8 节的死锁。用 <code>scoped_lock</code> 一次锁住，
 或者从设计上避免「同时需要两把锁」。</p>
 
 <!-- ============================================================ -->
-<h2 id="s10"><span class="n">10</span>一页速查</h2>
+<h2 id="s11"><span class="n">11</span>一页速查</h2>
 
 <h4>概念</h4>
 
@@ -432,6 +511,8 @@ std::atomic&lt;<span class="hl-k">long</span> <span class="hl-k">long</span>&gt;
 <thead><tr><th style="width:22%">概念</th><th>一句话</th></tr></thead>
 <tbody>
 <tr><td><b>线程</b></td><td>同一个程序里的并发执行流；有自己的栈，共享堆和全局变量</td></tr>
+<tr><td><b>上下文切换</b></td><td>CPU 从一条线程换到另一条；保存现场、挑人、恢复现场。
+可以发生在任意两条指令之间</td></tr>
 <tr><td><b>进程</b></td><td>运行中的程序实例；地址空间独立，隔离强、通信贵</td></tr>
 <tr><td><b>竞态</b></td><td>结果取决于线程调度顺序；读改写不是原子操作就会丢更新</td></tr>
 <tr><td><b>临界区</b></td><td>被锁保护的那段代码，同时只能有一个线程在里面</td></tr>
