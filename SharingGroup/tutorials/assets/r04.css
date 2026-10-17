@@ -354,7 +354,7 @@ main code, main pre, main td.c, main th.c{
   font-family:"DejaVu Serif IPA",var(--mono),monospace}
 
 .ipa{font-family:"DejaVu Serif","DejaVu Serif IPA",var(--mono),monospace;
-  font-size:1.04em;letter-spacing:.01em}
+  font-size:1.04em}
 .ipa code,.ipa b{font-family:inherit}
 
 /* 舌位图里的 i e ɛ u o a 也走 DejaVu Serif */
