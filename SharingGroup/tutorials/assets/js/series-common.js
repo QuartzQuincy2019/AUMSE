@@ -102,6 +102,7 @@
     /* ---- A：A 系列 · 进阶 ---- */
     { f: 'a01.html',                        n: 'A01',       t: 'HarfBuzz 及其基础用法', s: 'A' },
     { f: 'a02.html',                        n: 'A02',       t: '如何利用 HarfBuzz 在 Qt 上绘制字形', s: 'A' },
+    { f: 'a03.html',                        n: 'A03',       t: '从 Notepad 到蒙文编辑器', s: 'A' },
   ];
 
   function currentFile() {

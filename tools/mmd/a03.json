@@ -1,0 +1,14 @@
+{
+  "loop": {
+    "title": "最朴素的渲染循环：擦 + 写",
+    "code": "flowchart TB\n  A[\"文本变了\"] --> B[\"算出哪块过期\"]\n  B --> C[\"用背景色涂掉那块（擦）\"]\n  C --> D[\"按新内容画上去（写）\"]\n  D --> E([\"屏幕正确\"])\n  E --> A\n  X[\"只写不擦\"] -.-> F[\"旧内容还在<br/>= 残影\"]\n  classDef ok fill:#fffdf6,stroke:#c8a03a,color:#1a1509\n  classDef bad fill:#f7efd8,stroke:#8a6410,color:#5f450a\n  class A,B,C,D ok\n  class X,F bad"
+  },
+  "dirty": {
+    "title": "脏矩形的生命周期",
+    "code": "flowchart LR\n  E[\"编辑发生\"] --> A[\"把过期区域<br/>加进清单\"]\n  A --> M[\"与已有的<br/>合并成包围盒\"]\n  M --> P{\"绘制帧<br/>到了吗\"}\n  P -->|\"没有\"| E\n  P -->|\"到了\"| R[\"只重画这个矩形\"]\n  R --> C[\"清空清单\"]\n  C --> W([\"等下一次编辑\"])\n  classDef core fill:#fffdf6,stroke:#c8a03a,color:#1a1509\n  class A,M,R,C core"
+  },
+  "flow": {
+    "title": "一次编辑的完整流程",
+    "code": "flowchart TB\n  U[\"用户按键\"] --> T[\"事务\"]\n  T --> K[\"钳制：对齐到簇边界\"]\n  T --> X[\"扩张：扩到整个词\"]\n  K --> S[\"① 存储：只改 1 个码位\"]\n  X --> S\n  S --> R[\"③④⑤⑥ 重算这一个词\"]\n  R --> D[\"脏矩形 = 旧 ∪ 新\"]\n  D --> P[\"重绘这一块；<br/>后续内容只平移原点\"]\n  classDef core fill:#fffdf6,stroke:#c8a03a,color:#1a1509\n  classDef edge fill:#f7efd8,stroke:#8a6410,color:#5f450a\n  class K,X,S,R,D core\n  class U,T,P edge"
+  }
+}

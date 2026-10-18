@@ -1,0 +1,548 @@
+<p><span class="lang cpp">C++</span> <span class="tag">Qt</span> <span class="tag">编辑器架构</span> <span class="tag b">增量渲染</span></p>
+
+<p>A01 讲整形，A02 讲落笔。两篇合起来解决了「一个字怎么画」。
+本篇往上走一层：<b>一整篇文档怎么画，以及改一个字之后怎么只重画该画的那一块</b>。</p>
+
+<div class="card note">
+  <div class="card-t">本篇的路子</div>
+  <p>不从术语开始 —— 从<b>最笨的编辑器</b>开始。</p>
+  <p>先看 Notepad 是怎么把字画在屏幕上的（第 1–5 节），
+  再看不做增量会付出什么代价（第 5–8 节），
+  最后才是蒙文特有的东西：簇、钳制、分段、映射、扩张（第 9–14 节）。</p>
+  <p><b>顺序很重要</b>：先有「擦和写」的直觉，才看得懂「增量」要解决什么；
+  先知道「重画整屏很贵」，才明白为什么需要那么多记账。</p>
+</div>
+
+<h2 id="s1"><span class="n">1</span>一个能用的编辑器只要三件事</h2>
+
+<p>Notepad 那一级的文本编辑器，骨架只有三个角色：</p>
+
+<table>
+<thead><tr><th style="width:16%">角色</th><th style="width:40%">回答什么问题</th><th>数据</th></tr></thead>
+<tbody>
+<tr><td><b>存储</b></td><td>文档里有哪些字符</td><td>一块字符数组</td></tr>
+<tr><td><b>排版</b></td><td>哪个字放在屏幕的哪个位置</td><td>行号 + 行内偏移</td></tr>
+<tr><td><b>绘制</b></td><td>把字形画成像素</td><td>调 GDI / Qt 的画字接口</td></tr>
+</tbody>
+</table>
+
+<p>没有属性表、没有撤销栈、没有缓存 —— 因为 Notepad 不需要。
+它的字体是全局的一种，格式根本不存在。</p>
+
+<figure class="fig">
+  <picture>
+    <source media="(prefers-color-scheme: dark)" srcset="assets/img/a03-loop-dark.svg">
+    <img src="assets/img/a03-loop-light.svg"
+         alt="渲染循环：文本变了 → 算出哪块过期 → 用背景色涂掉（擦）→ 按新内容画上去（写）→ 屏幕正确"
+         width="480" height="486" loading="lazy">
+  </picture>
+  <figcaption>图 1　所有编辑器共有的那个循环：擦 + 写</figcaption>
+</figure>
+
+<h2 id="s2"><span class="n">2</span>屏幕是有记忆的</h2>
+
+<p>这是本篇最重要的一句话，后面所有东西都从它推出来：</p>
+
+<div class="card key">
+  <div class="card-t">绘制不是「重新生成屏幕」，是「往已有的像素上盖」</div>
+  <p>你以为的：<code>屏幕 = 我这次画的东西</code><br>
+  实际的：<code>屏幕 = 上次画的 + 这次画的（叠在一起）</code></p>
+  <p>屏幕不会自己忘事。上一次画上去的像素，会一直待在那里，
+  直到有人<b>主动用背景色把它涂掉</b>。</p>
+</div>
+
+<p>所以「画」这个动作在那个循环里其实是两步：</p>
+
+<div class="mem">
+  <div class="slot"><b>擦</b>　用背景色涂掉一块矩形 —— 让那块回到「空白」</div>
+  <div class="slot">　　↓</div>
+  <div class="slot"><b>写</b>　把新的字形画上去</div>
+</div>
+
+<p>少掉「擦」这一步，就会出事。</p>
+
+<h2 id="s3"><span class="n">3</span>第一次残影</h2>
+
+<p>屏幕上画着一个蒙文词，五个字形：</p>
+
+<div class="screen"><span class="cap">删之前：屏幕上的像素</span>x:   0      31     68    107        161   185.6
+     ┌────┐ ┌────┐ ┌────┐ ┌──────┐  ┌────┐
+     │ ᠮ  │ │ ᠣ  │ │ ᠩ  │ │  ᠭᠣ  │  │ ᠯ  │
+     └────┘ └────┘ └────┘ └──────┘  └────┘</div>
+
+<p>用户删掉最后一个字母。整形结果变成四个字形，而且第 4 个字形<b>变窄了</b>
+（从「词中形」变成「词尾形」，53.62 → 44.92）。</p>
+
+<div class="screen"><span class="cap">只画新内容、不擦旧内容 —— 屏幕上会是这样</span>x:   0      31     68    107      152.4        185.6
+     ┌────┐ ┌────┐ ┌────┐ ┌────┐   ┌────┐
+     │ ᠮ  │ │ ᠣ  │ │ ᠩ  │ │ ᠭᠣ │   │ ᠯ  │   ← 旧的 ᠯ 没被擦掉
+     └────┘ └────┘ └────┘ └────┘   └────┘
+                          ↑ 152.4~161 这段旧墨迹也留着</div>
+
+<p>用户看到的是：<b>「删了，但那个字母还在」</b>。这就是残影。</p>
+
+<div class="card warn">
+  <div class="card-t">每个人都见过的一种残影</div>
+  <p>文本光标。光标从位置 A 移到位置 B，如果只画新光标、不擦旧光标，
+  屏幕上就会出现<b>两个光标</b>。老式远程桌面里那种「一排光标」就是这么来的。</p>
+</div>
+
+<h2 id="s4"><span class="n">4</span>脏矩形：把「该擦哪儿」记下来</h2>
+
+<p>既然擦是必须的，那就要知道<b>擦哪儿</b>。这个信息有个通用名字：</p>
+
+<div class="card key">
+  <div class="card-t">脏矩形（dirty rectangle）</div>
+  <p><b>脏</b> = 我在这块地方画过东西，但现在不敢保证它还是对的。<br>
+  <b>矩形</b> = 它是一块屏幕区域，用四个数表示：左、上、宽、高。</p>
+  <p>它是给绘制器的指令：<b>这块先清空，再重画</b>。</p>
+</div>
+
+<p>这不是 Office 的发明，是 GUI 的通用机制。Windows 的
+<code>WM_PAINT</code> 消息传给你的 <code>ps.rcPaint</code> 就是一个脏矩形 ——
+系统直接告诉你「这块过期了，你重画它」。</p>
+
+<figure class="fig">
+  <picture>
+    <source media="(prefers-color-scheme: dark)" srcset="assets/img/a03-dirty-dark.svg">
+    <img src="assets/img/a03-dirty-light.svg"
+         alt="脏矩形生命周期：编辑发生 → 加入清单 → 与已有合并 → 绘制帧到了才重画 → 清空"
+         width="1301" height="150" loading="lazy">
+  </picture>
+  <figcaption>图 2　脏矩形不是立刻画的，要攒到绘制帧才消费</figcaption>
+</figure>
+
+<h3>为什么要「攒」</h3>
+
+<p>用户连敲 5 个键，会产生 5 个脏矩形。如果每个键都立刻重画：</p>
+
+<div class="screen">键1  ▓
+键2  ▓
+键3  ▓▓
+键4   ▓
+键5   ▓
+     ↓ 绘制帧到了，合并成包围盒
+     ▓▓▓        ← 只重画一次</div>
+
+<p><b>合并 = 取它们的包围盒。</b>五次编辑，一次重绘。</p>
+
+<h2 id="s5"><span class="n">5</span>全量重画到底多贵</h2>
+
+<p>到这里为止都没问题 —— 只要文档小。文档一大，账就不一样了。</p>
+
+<table>
+<thead><tr><th style="width:26%">文档规模</th><th style="width:24%">每帧做什么</th><th>代价</th></tr></thead>
+<tbody>
+<tr><td>一屏几十行（Notepad）</td><td>重画可见区</td><td>不到 1 ms，随便画</td></tr>
+<tr><td>3000 段、60 万码位</td><td><b>全部重排</b></td><td>3000 × 200 µs ≈ <b>600 ms</b></td></tr>
+<tr><td>同上</td><td>只重排 1 段 + 平移</td><td>0.2 ms + 0.05 ms ≈ <b>0.25 ms</b></td></tr>
+</tbody>
+</table>
+
+<p>差三个数量级。600 ms 意味着<b>每敲一个键卡半秒</b>。</p>
+
+<div class="card note">
+  <div class="card-t">Notepad 为什么可以整屏重画</div>
+  <p>因为它一屏只有几十行、纯文本推进几乎免费，而且<b>没有整形</b>——
+  不需要问 HarfBuzz「这几个字合成哪个字形」。</p>
+  <p>一旦加上「格式」「蒙文连写」「竖排」「撤销」，每条便宜路都被堵死，
+  就不得不做增量。</p>
+</div>
+
+<h2 id="s6"><span class="n">6</span>缓存：什么能存，什么不能存</h2>
+
+<p>要增量，就得把上次算的结果<b>留着</b>。这份留着的东西叫缓存。</p>
+
+<div class="card key">
+  <div class="card-t">判断标准只有一条：能不能从真值重新算出来</div>
+  <table>
+  <thead><tr><th style="width:34%">东西</th><th style="width:22%">能重算吗</th><th>所以是</th></tr></thead>
+  <tbody>
+  <tr><td>文本、属性</td><td>不能（用户输入的唯一来源）</td><td><b>真值</b></td></tr>
+  <tr><td>字形序列</td><td>能（喂给 HarfBuzz 就有了）</td><td>缓存</td></tr>
+  <tr><td>每个字形的屏幕坐标</td><td>能（按 advance 累加）</td><td>缓存</td></tr>
+  <tr><td>簇边界的位置表</td><td>能（从布局里查）</td><td>缓存</td></tr>
+  </tbody>
+  </table>
+</div>
+
+<p><b>关键性质</b>：把所有缓存删掉，程序结果必须完全一样，只是变慢。
+做不到这一点，说明有东西被错当成了缓存。</p>
+
+<h2 id="s7"><span class="n">7</span>缓存按什么建键</h2>
+
+<p>这一条决定了缓存的命中率，也决定了「撤销要不要重算」。</p>
+
+<div class="code-wrap">
+  <div class="bar"><span>整形缓存的键</span><button class="cp">复制</button></div>
+<pre>键 = { 字体族, script, 语言, 方向, 特征集, <b>词文本</b> }
+值 = 5 个字形（字形号 + 推进量）
+
+注意：键里<b>没有</b>「文档偏移」这一项。</pre>
+</div>
+
+<p>因为它回答的问题是「这个词长什么样」，而不是「第 3000 号位置长什么样」。
+位置不在问题里，自然也不在答案里。</p>
+
+<table>
+<thead><tr><th style="width:38%">场景</th><th style="width:22%">位置</th><th>命中？</th></tr></thead>
+<tbody>
+<tr><td>在另一个位置输入同一个词</td><td>变了</td><td>✅ 命中</td></tr>
+<tr><td>删掉后撤销</td><td>回来了</td><td>✅ <b>命中，零整形开销</b></td></tr>
+<tr><td>文档里本来就有 200 处同一个词</td><td>各不相同</td><td>✅ 只存一条</td></tr>
+</tbody>
+</table>
+
+<div class="card warn">
+  <div class="card-t">反例：如果按位置建键</div>
+  <p>3000 行的文档，在第 1 行插入一个字符 —— 后面所有位置都变了，
+  <b>3000 条缓存全部失效</b>，整篇重排。</p>
+  <p>这叫<b>位置漂移</b>。任何按偏移量建的缓存，都会被「在前面插一个字」整体打穿。</p>
+</div>
+
+<h2 id="s8"><span class="n">8</span>局部坐标 + 原点</h2>
+
+<p>还有一个让「只重排一段」成立的前提：<b>不要存绝对坐标</b>。</p>
+
+<table>
+<thead><tr><th style="width:34%">存法</th><th>前面插入一个字符时</th></tr></thead>
+<tbody>
+<tr><td>每个字形存绝对 y</td><td>3000 段全部要改 → 等于全量重排</td></tr>
+<tr><td>每段存原点 + 段内局部坐标</td><td>只改原点偏移 → <b>一次加法</b></td></tr>
+</tbody>
+</table>
+
+<p>所以第 1 行插入一个字、行高增加 20px 之后：</p>
+
+<div class="screen">第 1 行     内部布局重排          + 高度 112 → 132
+第 2 行     内部布局不动，原点 y += 20
+第 3 行     内部布局不动，原点 y += 20
+...
+第 3000 行  内部布局不动，原点 y += 20</div>
+
+<p><b>2999 行的内部布局一个字节都不用动</b>，只是整体下移了 20px。
+「重排」只有一行，「平移」是全体 —— 而平移便宜到可以忽略。</p>
+
+<h2 id="s9"><span class="n">9</span>蒙文让这件事变难：簇</h2>
+
+<p>到这里，前面说的都是任何编辑器都有的东西。蒙文从这一节开始插进来。</p>
+
+<p>屏幕上那个词有 <b>6 个码位</b>，但只有 <b>5 个字形</b>：</p>
+
+<table>
+<thead><tr><th style="width:26%">字形</th><th style="width:16%">推进量</th><th style="width:18%">码位</th><th>说明</th></tr></thead>
+<tbody>
+<tr><td><code>u182E.M.init</code></td><td class="c">31.48</td><td class="c">0</td><td>词首</td></tr>
+<tr><td><code>u1823.O.medi</code></td><td class="c">36.67</td><td class="c">1</td><td>词中</td></tr>
+<tr><td><code>u1829.AG.medi</code></td><td class="c">39.30</td><td class="c">2</td><td>词中</td></tr>
+<tr><td><code>u182D_u1823.GO.medi</code></td><td class="c">53.62</td><td class="c"><b>3（吃掉 4）</b></td>
+    <td>GA + O 合成<b>一个</b>字形</td></tr>
+<tr><td><code>u182F.L.fina</code></td><td class="c">24.52</td><td class="c">5</td><td>词尾</td></tr>
+</tbody>
+</table>
+
+<div class="card key">
+  <div class="card-t">码位 4 是没有光标位置的</div>
+  <p>第 4 个字形占了<b>两个</b>码位（3 和 4）。所以码位 4 不是合法的插入点 ——
+  它在一个不可分的单位内部。</p>
+  <p>这个单位叫<b>簇</b>（cluster）。手册的定义是
+  「a sequence of codepoints that must be treated as an <b>indivisible unit</b>」。</p>
+</div>
+
+<p>于是编辑器多了一条硬规则：</p>
+
+<table>
+<thead><tr><th style="width:34%">命令</th><th>删多少</th></tr></thead>
+<tbody>
+<tr><td>退格</td><td><b>一簇</b>（可能是两个码位）</td></tr>
+<tr><td>方向键</td><td><b>一簇</b>（从 3 直接跳到 5，跳过 4）</td></tr>
+<tr><td>选区端点</td><td>只能落在簇边界上</td></tr>
+<tr><td>复制</td><td>簇对应的<b>原始码位</b>，不是字形</td></tr>
+</tbody>
+</table>
+
+<h2 id="s10"><span class="n">10</span>钳制：把编辑参数对齐到簇边界</h2>
+
+<div class="card key">
+  <div class="card-t">钳制（clamp）</div>
+  <p>把编辑位置<b>对齐到合法边界</b>。合法边界 = 簇边界。</p>
+  <p>它回答的问题：<b>这次改动改得对不对。</b></p>
+</div>
+
+<p>用户能给出的位置是任意的（鼠标点击、拖选、程序调用），但合法插入点只有簇边界。
+钳制就是那道校正 —— 而且它<b>往哪边钳取决于语义</b>：</p>
+
+<table>
+<thead><tr><th style="width:30%">操作</th><th>钳制方向</th></tr></thead>
+<tbody>
+<tr><td>点击定位</td><td>看点落在簇的前半还是后半</td></tr>
+<tr><td>退格</td><td>钳到簇的<b>起点</b></td></tr>
+<tr><td><code>Delete</code></td><td>钳到簇的<b>终点</b></td></tr>
+<tr><td>拖选</td><td>两端都外扩到簇边界（不能只选半个）</td></tr>
+</tbody>
+</table>
+
+<h3>不钳制会怎样：实测</h3>
+
+<p>假设实现偷懒，退格老实删一个码位 —— 从那个词里只删掉 <code>O</code>，
+留下 <code>GA</code> 后面直接跟 <code>L</code>：</p>
+
+<div class="out-wrap">
+  <div class="cap">整形结果（noto sans mongolian，64px）</div>
+<pre>u182E.M.init      31.48
+u1823.O.medi      36.67
+u1829.AG.medi     39.30
+u182D.G.medi      21.12
+nirugu.extend     10.75      ← 字体自己插进来的连接符
+u182F.L.fina      24.52
+总宽             163.84</pre>
+</div>
+
+<p>那个 <code>nirugu.extend</code> 是字体在 <code>GA</code> 和 <code>L</code> 之间
+<b>自己补的一个长连接符</b>。它看起来「还连着」，但文本已经变成一串谁也没打算写的字符。</p>
+
+<p>用户下次复制这段、或者换一支字体，问题就会暴露出来。</p>
+
+<h2 id="s11"><span class="n">11</span>分段：所有合法边界的唯一来源</h2>
+
+<div class="card key">
+  <div class="card-t">分段器（segmenter）</div>
+  <p>给定一段文本和属性表，输出<b>哪些位置是边界</b>：
+  簇边界、词边界、整形单元边界、绘制单元边界。</p>
+  <p>它是<b>唯一有权说「这里要断开」</b>的地方。别人只许读，不许自己算。</p>
+</div>
+
+<p>为什么必须唯一：如果整形自己判一次、绘制自己判一次、光标自己判一次，
+就会有三份边界，而且必然不一致。结果是<b>光标和文字差半个字</b> ——
+这是编辑器里最难查的一类 bug。</p>
+
+<h3>它的策略是「尽量不断」</h3>
+
+<p>切整形单元会切断整形上下文。实测：把一个词从不同位置切成两段分别整形：</p>
+
+<table>
+<thead><tr><th style="width:34%">怎么切</th><th style="width:18%">字形数</th><th>总推进</th></tr></thead>
+<tbody>
+<tr><td>整词一个 run</td><td class="c">5</td><td class="c"><b>11878</b></td></tr>
+<tr><td>在 3\|4 之间切</td><td class="c">6</td><td class="c">15405</td></tr>
+<tr><td>每码位一个 run</td><td class="c">6</td><td class="c"><b>19701（+66%）</b></td></tr>
+</tbody>
+</table>
+
+<p>最后一行说明：切到最后，连写全没了，宽度涨了三分之二。</p>
+
+<p>所以分段器的规则是：<b>整形属性不同才切，词内其他情况一律不切</b>。</p>
+
+<h2 id="s12"><span class="n">12</span>映射：两个方向的翻译</h2>
+
+<div class="card key">
+  <div class="card-t">映射器（mapper）</div>
+  <p>三个坐标系之间的双向翻译：<b>模型</b>（码位偏移）、<b>簇</b>（字素序号）、
+  <b>视觉</b>（行 + 像素）。</p>
+  <p>它回答两个方向的问题：<b>这个像素点是哪个字</b>（命中测试）和
+  <b>这个字画在哪儿</b>（光标几何）。</p>
+</div>
+
+<table>
+<thead><tr><th style="width:26%">方法</th><th style="width:22%">方向</th><th>用在哪</th></tr></thead>
+<tbody>
+<tr><td><code>hitTest(点)</code></td><td>像素 → 码位</td><td>鼠标点击、拖选</td></tr>
+<tr><td><code>caretRect(码位)</code></td><td>码位 → 像素</td><td>画光标、滚到光标处</td></tr>
+</tbody>
+</table>
+
+<p>两个方向必须<b>互逆</b>：任意落在字上的点，<code>hitTest</code> 之后再
+<code>caretRect</code>，必须回到附近。这是它唯一有效的验收测试。</p>
+
+<div class="card warn">
+  <div class="card-t">映射器绝不自己算布局</div>
+  <p>它必须去问排版器要几何。否则就会出现两套坐标，光标和文字错开 ——
+  看起来「差一点点」，查起来要命。</p>
+</div>
+
+<h2 id="s13"><span class="n">13</span>扩张：从「改了哪儿」到「重算多少」</h2>
+
+<div class="card key">
+  <div class="card-t">扩张（expand）</div>
+  <p>把<b>重算范围</b>从「改动的范围」放大到「整形上下文的范围」，也就是<b>整个词</b>。</p>
+  <p>它不改「改哪儿」，只改「算多少」。<b>往大处放。</b></p>
+</div>
+
+<h3>为什么必须放大：删末尾，前面的字会变</h3>
+
+<p>还是那个词，删掉最后一个码位（改动范围只有一个码位）：</p>
+
+<table>
+<thead><tr><th style="width:34%"></th><th style="width:22%">删之前</th><th>删之后</th></tr></thead>
+<tbody>
+<tr><td>倒数第二个字形</td><td><code>GO.medi</code> 宽 <b>53.62</b></td>
+    <td><code>GO.<b>fina</b></code> 宽 <b>44.92</b></td></tr>
+<tr><td>总宽</td><td class="c">185.59</td><td class="c">152.37</td></tr>
+</tbody>
+</table>
+
+<p><b>用户只删了末尾一个字母，倒数第二个字母的字形却变了</b> —— 因为它现在成了词尾。</p>
+
+<div class="card warn">
+  <div class="card-t">如果只按改动范围重算</div>
+  <p>只让最后一个字形失效：第 5 个字消失了，但第 4 个还是旧的 <code>medi</code>（宽度 53.62）。</p>
+  <p>屏幕上：<b>「删了一个字，但前一个字看起来怪怪的」</b>。
+  这种 bug 极难查，因为它是「差一点」而不是「明显坏了」。</p>
+</div>
+
+<h2 id="s14"><span class="n">14</span>三个范围，和脏矩形的正确算法</h2>
+
+<p>一次编辑会产生<b>三个不同的数字</b>，混用任何一个都会出问题：</p>
+
+<table>
+<thead><tr><th style="width:24%">范围</th><th style="width:24%">例子</th><th>用途</th></tr></thead>
+<tbody>
+<tr><td><b>改动范围</b></td><td>1 个码位</td><td>① 存储真的改了这么多</td></tr>
+<tr><td><b>重算范围</b></td><td>整个词</td><td>让 ③④⑤⑥ 作废重算</td></tr>
+<tr><td><b>脏矩形</b></td><td>一小块像素</td><td>让绘制器擦这块、重画这块</td></tr>
+</tbody>
+</table>
+
+<div class="card key">
+  <div class="card-t">脏矩形必须覆盖「旧 ∪ 新」</div>
+  <p>因为<b>旧内容必须被擦掉</b>。只按新内容算范围，旧内容多出来的那一截就会留在屏幕上。</p>
+  <p>那个词的例子里：</p>
+  <ul>
+    <li>新内容到 152.37 为止</li>
+    <li>旧内容到 185.59 为止</li>
+    <li>→ 脏矩形必须到 <b>185.59</b></li>
+  </ul>
+</div>
+
+<p>这就是为什么编辑器必须记住「上一帧画了什么」——
+不记就不知道该擦哪里。</p>
+
+<h2 id="s15"><span class="n">15</span>完整走查：3000 段文档删一个字母</h2>
+
+<figure class="fig">
+  <picture>
+    <source media="(prefers-color-scheme: dark)" srcset="assets/img/a03-flow-dark.svg">
+    <img src="assets/img/a03-flow-light.svg"
+         alt="一次编辑的完整流程：事务 → 钳制 → 扩张 → 存储只改 1 个码位 → 重算这个词 → 脏矩形 → 重绘 → 平移后续"
+         width="441" height="706" loading="lazy">
+  </picture>
+  <figcaption>图 3　一次编辑的完整流程</figcaption>
+</figure>
+
+<p>场景：一篇 3000 段、约 60 万码位的长文，视口可见 12 列。用户在第 1420 段中间删掉一个字母。</p>
+
+<div class="code-wrap">
+  <div class="bar"><span>逐个角色</span><button class="cp">复制</button></div>
+<pre>⑦ 光标    移到前一簇边界
+
+⑧ 事务
+   钳制    起点吸到簇边界         → 改 1 个码位
+   扩张    问分段要词边界          → 重算那个词
+   提交    revision + 1
+
+① 存储    60 万码位 → 59 万 9999
+② 属性表  不变
+
+③ 分段    重切那一个词
+④ 整形    旧词未命中 → 重算；缓存条目 +1（旧词留着不删）
+⑤ 排版    重排第 1420 段的 7 列
+           列数 7 → 7（没跨列）→ 后续段<b>不平移</b>
+⑥ 映射    重建这 7 列的映射
+
+脏矩形    可见区内只有 3 列 → 只重画 3 列
+⑨ 撤销    push 一条</pre>
+</div>
+
+<table>
+<thead><tr><th style="width:34%">项目</th><th style="width:22%">数量</th><th>说明</th></tr></thead>
+<tbody>
+<tr><td>重排的段</td><td>1</td><td>第 1420 段</td></tr>
+<tr><td>重排的列</td><td>7</td><td>段内全部</td></tr>
+<tr><td>重绘的列</td><td>3</td><td>只有可见的那些</td></tr>
+<tr><td>平移的段</td><td>0</td><td>没有跨列</td></tr>
+<tr><td>总代价</td><td>&lt; 2 ms</td><td>用户感觉不到</td></tr>
+</tbody>
+</table>
+
+<h3>如果敲字敲到跨列</h3>
+
+<p>继续输入，第 1420 段从 7 列变成 8 列：</p>
+
+<table>
+<thead><tr><th style="width:26%">动作</th><th style="width:20%">段数</th><th>每段代价</th></tr></thead>
+<tbody>
+<tr><td>重排</td><td class="c">1</td><td>200 µs → 0.2 ms</td></tr>
+<tr><td><b>平移</b></td><td class="c"><b>1580</b></td><td>30 ns → 0.05 ms</td></tr>
+</tbody>
+</table>
+
+<p>「只重排一段」和「后面 1580 段全要动」并不矛盾 ——
+动的只是原点，是一次加法。真要重排就是 316 ms，打字会一顿一顿。</p>
+
+<h3>撤销时会发生什么</h3>
+
+<p>用户按 Ctrl+Z，回到删之前。分段器重新切出<b>同一个词</b>，
+而它的整形结果<b>还在缓存里</b>（当初删的时候没删）：</p>
+
+<div class="out-wrap">
+  <div class="cap">撤销时的缓存查找</div>
+<pre>键 {NotoMongol, Mong, mn, ltr, "原来的词"}  → 命中
+整形开销：0</pre>
+</div>
+
+<p>这是「按内容建键」最直接的收益。</p>
+
+<h2 id="s16"><span class="n">16</span>十个角色是几样功能买来的</h2>
+
+<p>A 系列前面几篇反复出现「十个角色」，本篇讲清了其中一半的来历。把它们排成阶梯：</p>
+
+<table>
+<thead><tr><th style="width:34%">加了这个功能</th><th>必须多出的角色</th></tr></thead>
+<tbody>
+<tr><td>什么都不要（Notepad 级）</td><td><b>3 个</b>：存储、排版、绘制</td></tr>
+<tr><td>字符级格式</td><td>+ 属性表、分段器</td></tr>
+<tr><td>蒙文连写</td><td>+ 整形缓存</td></tr>
+<tr><td>竖排</td><td>排版器复杂化（旋转 + 断开规则）</td></tr>
+<tr><td>簇级编辑</td><td>+ 分段器、钳制</td></tr>
+<tr><td>撤销</td><td>+ 事务、撤销栈</td></tr>
+<tr><td>大文档不卡</td><td>+ 扩张、脏矩形、缓存</td></tr>
+<tr><td>命中测试</td><td>+ 映射器</td></tr>
+</tbody>
+</table>
+
+<div class="card key">
+  <div class="card-t">复杂度是买来的，不是爱好</div>
+  <p>反过来说：如果哪天决定不做某个功能，对应的角色就可以整个删掉。</p>
+  <p>比如不做字符级格式，属性表只剩一张默认值，分段器只剩 bidi 切分。</p>
+</div>
+
+<h3>一页速查</h3>
+
+<table>
+<thead><tr><th style="width:22%">概念</th><th style="width:30%">一句话</th><th>方向</th></tr></thead>
+<tbody>
+<tr><td><b>擦 + 写</b></td><td>屏幕有记忆，画之前必须先擦</td><td>—</td></tr>
+<tr><td><b>脏矩形</b></td><td>哪块像素过期了，要擦要重画</td><td>旧 ∪ 新</td></tr>
+<tr><td><b>缓存</b></td><td>能重算的结果，留下省时间</td><td>按<b>内容</b>建键</td></tr>
+<tr><td><b>局部坐标</b></td><td>段内存相对位置，全局靠原点加</td><td>不存绝对</td></tr>
+<tr><td><b>簇</b></td><td>不可分的单位，光标只能落边界</td><td>—</td></tr>
+<tr><td><b>钳制</b></td><td>把编辑参数对齐到簇边界</td><td><b>往小收</b></td></tr>
+<tr><td><b>分段</b></td><td>所有合法边界的唯一来源</td><td>只读地图</td></tr>
+<tr><td><b>映射</b></td><td>像素 ↔ 码位，双向</td><td>互逆</td></tr>
+<tr><td><b>扩张</b></td><td>把重算范围放大到整个词</td><td><b>往大放</b></td></tr>
+</tbody>
+</table>
+
+<div class="see-also">
+  <div class="card-t">想接着看</div>
+  <ul>
+    <li><a href="a01.html">A01 · HarfBuzz 及其基础用法</a>
+      <span class="why">—— 本篇的「词」是怎么变成「字形」的，全在那一篇。</span></li>
+    <li><a href="a02.html">A02 · 如何利用 HarfBuzz 在 Qt 上绘制字形</a>
+      <span class="why">—— 本篇只说「重画这一块」，那一篇讲这一块具体怎么画。</span></li>
+    <li><a href="q11.html">Q11 · 线程与互斥锁</a>
+      <span class="why">—— 整形缓存要被多个线程读，锁的粒度就在这一层定。</span></li>
+    <li><a href="fe-06.html">FE-06 · Writing Mode 与溢出滚动</a>
+      <span class="why">—— 浏览器里「擦和写」由合成器代劳，对照本篇能看到它替你做了多少。</span></li>
+  </ul>
+</div>

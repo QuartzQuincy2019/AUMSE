@@ -35,6 +35,16 @@
   src:url("../fonts/DejaVuSerif.ttf") format("truetype");
   font-weight:400;font-style:normal;font-display:swap;
 }
+/* 蒙文正文用的那支字体。
+   ⚠ 这里原来只在 [lang="mn-Mong"] 的 font-family 里写了 "UME Mongolian"，
+   却没有对应的 @font-face —— 于是它回退到 "Noto Sans Mongolian"（没装）、
+   再回退到 "Mongolian Baiti"（本机也没装），最后落到 serif，**显示成豆腐块**。
+   实测这台机器上 Windows/Fonts 里没有任何蒙文字体，所以必须自带。 */
+@font-face{
+  font-family:"UME Mongolian";
+  src:url("../fonts/NotoSansMongolian-Regular.ttf") format("truetype");
+  font-weight:400;font-style:normal;font-display:swap;
+}
 
 /* ---------- 1. 示意字符 ----------
    按**语言**分字体，不再用一个 .ipa 通吃：
