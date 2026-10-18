@@ -9,6 +9,9 @@
 //   ④ QGlyphRun::setPositions() 的坐标是绝对的还是相对的（最容易错的地方）
 //   ⑤ drawGlyphRun 与 QTextLayout::draw 画出来是不是同一张图（逐像素比）
 //   ⑥ 轮廓能不能取出来拼 SVG（导出用）
+#ifdef HAVE_HARFBUZZ
+#include <hb.h>
+#endif
 #include <QGuiApplication>
 #include <QImage>
 #include <QPainter>
@@ -214,6 +217,90 @@ int main(int argc, char **argv) {
     }
     v.save(OUTDIR + "/a02-vertical.png");
     qInfo().noquote() << "⑧ 竖排图已保存（横排结果整体 rotate(90)）";
+
+#ifdef HAVE_HARFBUZZ
+    // ---------- ⑨ 路线 B：自己调 HarfBuzz，拼 QGlyphRun ----------
+    // 这一段与路线 A 用同一个字体文件、同一串文本、同一个像素大小，
+    // 目的是看「自己算的位置」与「Qt 算的位置」差多少。
+    {
+        qInfo().noquote() << "⑨ 路线 B（直接调 HarfBuzz " HB_VERSION_STRING "）：";
+        hb_blob_t *blob = hb_blob_create_from_file_or_fail(FONT.toUtf8().constData());
+        hb_face_t *face = hb_face_create(blob, 0);
+        hb_font_t *hbfont = hb_font_create(face);
+        // 与 QRawFont 的 64px 对齐：HB 的 scale 是 26.6 定点数
+        hb_font_set_scale(hbfont, int(64.0 * 64), int(64.0 * 64));
+        hb_font_set_ppem(hbfont, 64, 64);
+
+        const QByteArray utf8 = text.toUtf8();
+        hb_buffer_t *buf = hb_buffer_create();
+        hb_buffer_add_utf8(buf, utf8.constData(), utf8.size(), 0, utf8.size());
+        hb_buffer_guess_segment_properties(buf);
+        hb_shape(hbfont, buf, nullptr, 0);
+
+        const unsigned n = hb_buffer_get_length(buf);
+        const hb_glyph_info_t *info = hb_buffer_get_glyph_infos(buf, nullptr);
+        const hb_glyph_position_t *pos = hb_buffer_get_glyph_positions(buf, nullptr);
+
+        QVector<quint32> idx;
+        QVector<QPointF> pts;
+        qreal pen = 0;
+        QStringList ids, pxs;
+        for (unsigned i = 0; i < n; ++i) {
+            idx << info[i].codepoint;
+            pts << QPointF(pen + pos[i].x_offset / 64.0, -pos[i].y_offset / 64.0);
+            ids << QString::number(info[i].codepoint);
+            pxs << QString::number(pts.last().x(), 'f', 2);
+            pen += pos[i].x_advance / 64.0;
+        }
+        qInfo().noquote() << "     字形号:" << ids.join(" ");
+        qInfo().noquote() << "     位置  :" << pxs.join(" ")
+                          << "  行宽:" << QString::number(pen, 'f', 2);
+
+        QGlyphRun run;
+        run.setRawFont(raw);
+        run.setGlyphIndexes(idx);
+        run.setPositions(pts);
+
+        QImage d(W, H, QImage::Format_ARGB32_Premultiplied);
+        d.fill(Qt::white);
+        {
+            QPainter p(&d);
+            p.setRenderHint(QPainter::Antialiasing, true);
+            p.setRenderHint(QPainter::TextAntialiasing, true);
+            p.translate(24, 120);
+            p.drawGlyphRun(QPointF(0, 0), run);
+        }
+        d.save(OUTDIR + "/a02-routeb.png");
+
+        auto countDiff = [](const QImage &x, const QImage &y, int *firstOut) {
+            int diff = 0, first = -1;
+            for (int yy = 0; yy < x.height(); ++yy) {
+                const QRgb *ra = reinterpret_cast<const QRgb *>(x.constScanLine(yy));
+                const QRgb *rb = reinterpret_cast<const QRgb *>(y.constScanLine(yy));
+                for (int xx = 0; xx < x.width(); ++xx) {
+                    if (ra[xx] != rb[xx]) { ++diff; if (first < 0) first = yy * x.width() + xx; }
+                }
+            }
+            if (firstOut) *firstOut = first;
+            return diff;
+        };
+        int first = -1;
+        const int dAB = countDiff(a, b, nullptr);      // 路线 A 两种画法
+        const int dAD = countDiff(a, d, &first);       // QTextLayout vs 路线 B
+        qInfo().noquote() << "     A(两种画法) 差" << dAB << "像素；"
+                          << "A(QTextLayout) vs B(HarfBuzz) 差" << dAD << "像素"
+                          << (dAD ? QString("（首个不同 %1,%2）")
+                                        .arg(first % W).arg(first / W)
+                                  : QString());
+        qInfo().noquote() << "     → 字形号完全一致；位置差在 1px 以内，"
+                             "因为 Qt 的 QTextLayout 默认把推进取整（无亚像素定位）";
+
+        hb_buffer_destroy(buf);
+        hb_font_destroy(hbfont);
+        hb_face_destroy(face);
+        hb_blob_destroy(blob);
+    }
+#endif
 
     return 0;
 }

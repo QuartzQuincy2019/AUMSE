@@ -209,22 +209,102 @@ for (const QGlyphRun&amp; gr : line.glyphRuns()) {
 
 <h2 id="s5"><span class="n">5</span>路线 B：自己调 HarfBuzz</h2>
 
-<p>要让程序直接 <code>#include &lt;hb.h&gt;</code> 并链接，得自己有一份
-HarfBuzz 库。Qt 只在 <code>include/QtHarfbuzz/</code> 下带了头文件，
-<b>不带可链接的库</b>（本机实测：<code>lib</code> 目录下没有任何 harfbuzz 库）。</p>
+<p>要让程序直接 <code>#include &lt;hb.h&gt;</code> 并链接，得<b>自己有一份库</b>。
+Qt 只在 <code>include/QtHarfbuzz/</code> 下带了头文件，<b>不带可链接的库</b> ——
+本机实测 <code>Qt/6.12.0/mingw_64/lib</code> 下没有任何 harfbuzz 库文件。</p>
 
 <div class="card note">
-  <div class="card-t">两条子路线</div>
+  <div class="card-t">三条路，按场景挑</div>
   <ul>
-    <li><b>从源码编一份</b>：HarfBuzz 是自包含的 C 库，CMake 一把过；
-    然后你的工程里就多一个 <code>harfbuzz::harfbuzz</code> 目标。</li>
-    <li><b>不链接</b>：把需要的量用别的方式拿到（例如本项目的
-    <code>report/</code> 是 Python + <code>uharfbuzz</code> 生成的）。
-    适合验证与对拍，不适合运行时。</li>
+    <li><b>从源码编一份</b>（本篇采用）：HarfBuzz 是自包含的 C 库，MinGW 下
+    编译只要二十几秒，装在一个前缀目录里即可。</li>
+    <li><b>不链接</b>：拿别的语言绑定做验证与对拍（本项目 <code>report/</code>
+    就是 Python + <code>uharfbuzz</code> 生成的）。</li>
+    <li><b>用 Qt 内部那份</b>：只在 Qt 源码树里可行，应用层拿不到，别打这个主意。</li>
   </ul>
 </div>
 
-<p>假设库里已经有了，从 <code>hb_</code> 的结果搬到 <code>QGlyphRun</code> 是这一段：</p>
+<h3>本机的安装记录</h3>
+
+<p>下面这四步是本机实际跑过的，可以直接照抄（路径换成你自己的）：</p>
+
+<div class="code-wrap">
+  <div class="bar"><span>安装 HarfBuzz 14.6.0（MinGW 13.1.0 / 静态库）</span><button class="cp">复制</button></div>
+<pre># ① 取源码（本机 HTTPS 不通，走 SSH 443）
+git clone --depth 1 ssh://git@ssh.github.com:443/harfbuzz/harfbuzz.git D:/libs/harfbuzz-src
+
+# ② 配置：静态库，关掉用不上的依赖
+cmake -S D:/libs/harfbuzz-src -B D:/libs/harfbuzz-build -G Ninja \
+      -DCMAKE_BUILD_TYPE=Release \
+      -DCMAKE_INSTALL_PREFIX=D:/libs/harfbuzz-mingw \
+      -DCMAKE_C_COMPILER=D:/Qt/Tools/mingw1310_64/bin/gcc.exe \
+      -DCMAKE_CXX_COMPILER=D:/Qt/Tools/mingw1310_64/bin/g++.exe \
+      -DBUILD_SHARED_LIBS=OFF \
+      -DHB_BUILD_UTILS=OFF -DHB_BUILD_SUBSET=OFF \
+      -DHB_HAVE_FREETYPE=OFF -DHB_HAVE_GLIB=OFF -DHB_HAVE_ICU=OFF
+
+# ③ 编译（第 84 个目标才是库本身，前面是生成代码）
+cmake --build D:/libs/harfbuzz-build
+
+# ④ 安装 → include/ + lib/ + lib/cmake/
+cmake --install D:/libs/harfbuzz-build</pre>
+</div>
+
+<div class="out-wrap">
+  <div class="cap">装完核对</div>
+<pre>D:\libs\harfbuzz-mingw\
+  include\harfbuzz\hb.h               1,606 B
+  lib\libharfbuzz.a               2,955,662 B
+  lib\cmake\harfbuzz\harfbuzzConfig.cmake
+
+HB_VERSION_STRING = "14.6.0"        ← 与 A01 用的 uharfbuzz 14.6.0 同版本</pre>
+</div>
+
+<p>手工编译时只要两个参数：</p>
+
+<div class="code-wrap">
+  <div class="bar"><span>链接</span><button class="cp">复制</button></div>
+<pre>g++ app.cpp -std=c++17 \
+    -I D:/libs/harfbuzz-mingw/include/harfbuzz \
+    -L D:/libs/harfbuzz-mingw/lib -lharfbuzz \
+    -o app.exe</pre>
+</div>
+
+<p>CMake 工程里更省事，直接让 <code>find_package</code> 去找那份 config：</p>
+
+<div class="code-wrap">
+  <div class="bar"><span>CMakeLists.txt</span><button class="cp">复制</button></div>
+<pre>list(APPEND CMAKE_PREFIX_PATH "D:/libs/harfbuzz-mingw")
+find_package(harfbuzz REQUIRED)
+target_link_libraries(app PRIVATE harfbuzz::harfbuzz)</pre>
+</div>
+
+<h3>实测：自己算出来的与 Qt 算出来的完全一致</h3>
+
+<p>同一个字体文件、同一串 <span lang="mn-Mong">ᠮᠣᠩᠭᠣᠯ</span>、同样 64px，
+两条路各算一遍：</p>
+
+<table>
+<thead><tr><th style="width:22%"></th><th style="width:44%">字形号</th><th>位置</th></tr></thead>
+<tbody>
+<tr><td><b>路线 A</b><br><code>QTextLayout</code></td>
+    <td class="c">1653 1202 1268 1584 1660</td>
+    <td class="c">0.0　31.0　68.0　107.0　161.0</td></tr>
+<tr><td><b>路线 B</b><br><code>hb_shape</code></td>
+    <td class="c"><b>1653 1202 1268 1584 1660</b></td>
+    <td class="c">0.00　31.48　68.16　107.45　161.08</td></tr>
+</tbody>
+</table>
+
+<div class="card key">
+  <div class="card-t">字形号一字不差，位置差在小数上</div>
+  <p>这再次证明 Qt 调的就是 HarfBuzz（A01 第 4 节那张换算表也指向同一结论）。
+  唯一的差别是：<b>Qt 把位置取整到了整像素</b>，HarfBuzz 给的是小数。</p>
+  <p>原因是 Qt 默认<b>关闭亚像素定位</b>（subpixel positioning）：它认为整像素落笔
+  更清晰，代价是字距有不到 1px 的抖动。这个差别画出来是什么样，见第 7 节。</p>
+</div>
+
+<p>从 <code>hb_</code> 的结果搬到 <code>QGlyphRun</code> 是这一段：</p>
 
 <div class="code-wrap">
   <div class="bar"><span>bridge.cpp —— HB 的输出搬进 QGlyphRun</span><button class="cp">复制</button></div>
@@ -292,6 +372,50 @@ painter.drawGlyphRun(QPointF(0, 0), run);</pre>
 
 <p>两张图肉眼就一样，逐像素比较也是 0 差异。这条验证的价值在于：
 <b>它可以当成回归测试</b> —— 以后改绘制代码，跑一次比较就知道有没有改坏。</p>
+
+<h3>再比一次：路线 A 对路线 B</h3>
+
+<p>把第 5 节「自己调 HarfBuzz」拼出的 <code>QGlyphRun</code> 也画一遍，
+三张图放一起比：</p>
+
+<div class="fig-row">
+  <figure class="fig">
+    <img src="assets/img/a02-textlayout.png" alt="QTextLayout 画出的结果"
+         width="420" height="260" loading="lazy">
+    <figcaption>① 路线 A：<code>QTextLayout</code></figcaption>
+  </figure>
+  <figure class="fig">
+    <img src="assets/img/a02-routeb.png" alt="自己调 HarfBuzz 拼 QGlyphRun 画出的结果"
+         width="420" height="260" loading="lazy">
+    <figcaption>② 路线 B：<code>hb_shape</code> 自己拼</figcaption>
+  </figure>
+</div>
+
+<div class="out-wrap">
+  <div class="cap">420×260 的画布，逐像素比较</div>
+<pre>A 的两种画法（layout.draw vs drawGlyphRun）      差 0 像素
+A（QTextLayout）  vs  B（自己调 HarfBuzz）        差 6234 像素（约 5.7%）</pre>
+</div>
+
+<div class="card key">
+  <div class="card-t">字形号一样，为什么还会差 6234 个像素</div>
+  <p>因为<b>落笔位置差在小数上</b>：HarfBuzz 给 31.48、68.16……，
+  Qt 给 31、68……。差不到 1px，但抗锯齿的边缘正好落在这些小数上，
+  于是整串字的灰度分布全变了。</p>
+  <p>两条结论：</p>
+  <ul>
+    <li><b>要逐像素一致</b>：把 B 的位置也取整
+    （<code>qRound(pen)</code>），或者给 Qt 打开亚像素定位。</li>
+    <li><b>要视觉一致就够</b>：两条路随便挑 —— 人眼分不出这两张图。</li>
+  </ul>
+</div>
+
+<div class="card tip">
+  <div class="card-t">这个差值是「对齐策略」，不是「算错了」</div>
+  <p>不要把 6234 当成 bug。它是两个引擎在<b>取整时机</b>上的不同选择：
+  Qt 在布局阶段就取整（累加整数），HarfBuzz 全程保留小数。</p>
+  <p>真要逐像素对齐，就在搬运时统一取整，别指望两边各自算出同一个数。</p>
+</div>
 
 <div class="card tip">
   <div class="card-t">怎么比</div>
