@@ -390,6 +390,35 @@ u182F.L.fina      24.52
   这种 bug 极难查，因为它是「差一点」而不是「明显坏了」。</p>
 </div>
 
+
+<div class="card note">
+  <div class="card-t">本篇用到的角色代号</div>
+  <p>后面几节会用到 <b>①~⑩</b> 这些圈号指代角色。第一次出现之前先列清楚：</p>
+  <table>
+  <thead><tr><th style="width:10%">代号</th><th style="width:26%">角色</th>
+  <th>一句话职责</th></tr></thead>
+  <tbody>
+  <tr><td class="c">①</td><td><b>存储</b> Store</td><td>保存码位序列</td></tr>
+  <tr><td class="c">②</td><td><b>属性表</b> Attribute Store</td>
+      <td>保存区间格式，分整形 / 尺寸 / 绘制三张</td></tr>
+  <tr><td class="c">③</td><td><b>分段器</b> Segmenter</td>
+      <td>产出所有合法边界：簇、词、整形单元、绘制单元</td></tr>
+  <tr><td class="c">④</td><td><b>整形缓存</b> Shaper</td>
+      <td>词 → 字形号 + 推进量，带缓存</td></tr>
+  <tr><td class="c">⑤</td><td><b>排版器</b> Layouter</td>
+      <td>字形 → 视觉行/列与落点</td></tr>
+  <tr><td class="c">⑥</td><td><b>映射器</b> Mapper</td>
+      <td>像素 ↔ 码位，双向；命中测试与光标几何</td></tr>
+  <tr><td class="c">⑦</td><td><b>光标与选区</b> Caret</td>
+      <td>锚点与焦点，按簇移动</td></tr>
+  <tr><td class="c">⑧</td><td><b>编辑事务</b> Transaction</td>
+      <td><b>唯一</b>能改 ①② 的角色</td></tr>
+  <tr><td class="c">⑨</td><td><b>撤销栈</b> History</td><td>逆操作与合并</td></tr>
+  <tr><td class="c">⑩</td><td><b>序列化</b> Serializer</td><td>存 / 读 / 导出</td></tr>
+  </tbody>
+  </table>
+</div>
+
 <h2 id="s14"><span class="n">14</span>三个范围，和脏矩形的正确算法</h2>
 
 <p>一次编辑会产生<b>三个不同的数字</b>，混用任何一个都会出问题：</p>
@@ -398,7 +427,7 @@ u182F.L.fina      24.52
 <thead><tr><th style="width:24%">范围</th><th style="width:24%">例子</th><th>用途</th></tr></thead>
 <tbody>
 <tr><td><b>改动范围</b></td><td>1 个码位</td><td>① 存储真的改了这么多</td></tr>
-<tr><td><b>重算范围</b></td><td>整个词</td><td>让 ③④⑤⑥ 作废重算</td></tr>
+<tr><td><b>重算范围</b></td><td>整个词</td><td>让 ③ 分段器、④ 整形缓存、⑤ 排版器、⑥ 映射器 作废重算</td></tr>
 <tr><td><b>脏矩形</b></td><td>一小块像素</td><td>让绘制器擦这块、重画这块</td></tr>
 </tbody>
 </table>
@@ -433,24 +462,24 @@ u182F.L.fina      24.52
 
 <div class="code-wrap">
   <div class="bar"><span>逐个角色</span><button class="cp">复制</button></div>
-<pre>⑦ 光标    移到前一簇边界
+<pre>⑦ 光标与选区   移到前一簇边界
 
-⑧ 事务
+⑧ 编辑事务
    钳制    起点吸到簇边界         → 改 1 个码位
    扩张    问分段要词边界          → 重算那个词
    提交    revision + 1
 
-① 存储    60 万码位 → 59 万 9999
-② 属性表  不变
+① 存储        60 万码位 → 59 万 9999
+② 属性表      不变
 
-③ 分段    重切那一个词
-④ 整形    旧词未命中 → 重算；缓存条目 +1（旧词留着不删）
-⑤ 排版    重排第 1420 段的 7 列
+③ 分段器      重切那一个词
+④ 整形缓存    旧词未命中 → 重算；缓存条目 +1（旧词留着不删）
+⑤ 排版器      重排第 1420 段的 7 列
            列数 7 → 7（没跨列）→ 后续段<b>不平移</b>
-⑥ 映射    重建这 7 列的映射
+⑥ 映射器      重建这 7 列的映射
 
 脏矩形    可见区内只有 3 列 → 只重画 3 列
-⑨ 撤销    push 一条</pre>
+⑨ 撤销栈      push 一条</pre>
 </div>
 
 <table>
