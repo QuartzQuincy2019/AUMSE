@@ -56,6 +56,36 @@ main code,main kbd,main samp,.code-wrap pre,.code-wrap .bar,
   .fig img{background:#0b0906;border-color:#3a2c11}
 }
 
+/* ---------- 3b. 开头那两个大字：画 / 擦 ----------
+   全篇的骨架就是这两个字，所以放在正文之前、给足尺寸。
+   用**金渐变文字**（background-clip:text）与 A 系列的 h1 同一套做法；
+   暗色下要换一版更亮的渐变，否则深底上会糊成一团。 */
+.pair{display:flex;justify-content:center;align-items:stretch;
+  margin:28px 0 10px;padding:26px 12px 22px;border-radius:14px;
+  border:1px solid var(--line-2);
+  background:linear-gradient(180deg,rgba(200,160,58,.12),transparent 72%)}
+.pair-item{flex:1 1 0;max-width:280px;text-align:center;padding:0 12px}
+.pair-item + .pair-item{border-left:1px solid var(--line-2)}
+.pair-glyph{font-family:"华文中宋","STZhongsong","宋体",serif;
+  font-size:112px;line-height:1.06;font-weight:400;letter-spacing:.05em;
+  background:linear-gradient(152deg,#3a2a06,#8a6410 38%,#c8a03a 66%,#5f450a);
+  -webkit-background-clip:text;background-clip:text;
+  -webkit-text-fill-color:transparent;color:transparent}
+.pair-desc{margin-top:10px;font-size:13px;line-height:1.6;color:var(--fg-3)}
+.pair-lead{text-align:center;font-size:15px;color:var(--fg-2);
+  margin:0 0 26px;letter-spacing:.02em}
+@media (prefers-color-scheme: dark){
+  /* ⚠ 这里只能用 background-image，不能用 background 简写：
+     简写会把上面设的 background-clip:text 重置回 border-box，
+     结果两个字变成两块**实心金色方块**（文字被裁成了透明，渐变铺满了整个盒子）。
+     实测踩过一次，暗色截图里一目了然。 */
+  .pair-glyph{background-image:linear-gradient(152deg,#a07c22,#f0d38a 42%,#c8a03a 70%,#8a6410)}
+}
+@media (max-width:560px){
+  .pair-glyph{font-size:72px}
+  .pair-desc{font-size:12px}
+}
+
 /* ---------- 4. 屏幕示意图 ----------
    用等宽字符画「屏幕上哪块被擦、哪块被写」。必须等宽，否则对不齐；
    底色用一层浅灰「纸」，让方框看起来像屏幕而不是代码。

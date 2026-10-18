@@ -44,6 +44,42 @@
 <p>A01 讲整形，A02 讲落笔。两篇合起来解决了「一个字怎么画」。
 本篇往上走一层：<b>一整篇文档怎么画，以及改一个字之后怎么只重画该画的那一块</b>。</p>
 
+<div class="pair">
+  <div class="pair-item">
+    <div class="pair-glyph">画</div>
+    <div class="pair-desc">把字形变成像素<br>写上去</div>
+  </div>
+  <div class="pair-item">
+    <div class="pair-glyph">擦</div>
+    <div class="pair-desc">用背景色抹掉旧像素<br>擦干净</div>
+  </div>
+</div>
+
+<p class="pair-lead">一篇 17 节的文章，说到底就这两个字。</p>
+
+<div class="card key">
+  <div class="card-t">全篇摘要：绕不开「画」和「擦」</div>
+  <p>屏幕是有记忆的 —— 你画上去的东西不会自己消失，必须有人<b>擦</b>。
+  于是编辑器在屏幕上永远只做两件事：<b>画</b>上去、把旧的<b>擦</b>掉。</p>
+  <p>整篇 17 节，其实只在回答四个问题：</p>
+  <table>
+  <thead><tr><th style="width:34%">问题</th><th style="width:22%">落在哪个字</th>
+  <th>在哪几节</th></tr></thead>
+  <tbody>
+  <tr><td><b>凭什么必须擦？</b></td><td class="c">擦</td>
+      <td>第 2–4 节：屏幕有记忆 → 残影 → 脏矩形</td></tr>
+  <tr><td><b>怎样少画？</b></td><td class="c">画</td>
+      <td>第 5–8 节：全量太贵 → 缓存 → 按内容建键 → 局部坐标</td></tr>
+  <tr><td><b>画成什么样？</b></td><td class="c">画</td>
+      <td>第 9–12 节：簇 → 钳制 → 分段 → 映射</td></tr>
+  <tr><td><b>擦画多大一块？</b></td><td class="c">擦 + 画</td>
+      <td>第 13–14 节：扩张 → 三个范围 → 脏矩形 = 旧 ∪ 新</td></tr>
+  </tbody>
+  </table>
+  <p>第 15 节把这条流程串一遍（3000 段的文档删一个字母），
+  第 16–17 节回头交代：每个角色是<b>几样功能买来的</b>，以及理解时最容易偏在哪。</p>
+</div>
+
 <div class="card note">
   <div class="card-t">本篇的路子</div>
   <p>不从术语开始 —— 从<b>最笨的编辑器</b>开始。</p>
