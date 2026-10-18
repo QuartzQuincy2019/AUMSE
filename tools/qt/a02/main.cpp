@@ -302,5 +302,41 @@ int main(int argc, char **argv) {
     }
 #endif
 
+    // ---------- ⑩ 词中间改格式，Qt 会不会自己切 run ----------
+    // 「像 Word 一样实时渲染用户指定的格式」必然出现这种布局：
+    // 一个词里第 3 个字是另一种字号。Qt 会把它切成几个 glyph run？
+    {
+        QTextLayout f2(text, f);
+        f2.setTextOption(opt);
+        QTextLayout::FormatRange fr;
+        fr.start = 2;
+        fr.length = 1;
+        fr.format.setProperty(QTextFormat::FontPixelSize, 96);   // 只改中间一个字的字号
+        f2.setFormats({fr});
+        f2.beginLayout();
+        QTextLine l2 = f2.createLine();
+        l2.setLineWidth(10000);
+        f2.endLayout();
+
+        qInfo().noquote() << "⑩ 词中间一个字号不同 → glyph runs 数量:"
+                          << l2.glyphRuns().size();
+        for (const QGlyphRun &gr : l2.glyphRuns()) {
+            QStringList ids, pxs;
+            const QVector<quint32> gi = gr.glyphIndexes();
+            const QVector<QPointF> gp = gr.positions();
+            for (int i = 0; i < gi.size(); ++i) {
+                ids << QString::number(gi[i]);
+                if (i < gp.size()) pxs << QString::number(gp[i].x(), 'f', 1);
+            }
+            qInfo().noquote() << "     run:" << ids.join(" ")
+                              << "  位置" << pxs.join(" ")
+                              << "  rawFont px" << gr.rawFont().pixelSize();
+        }
+        qInfo().noquote() << "   行宽:" << QString::number(l2.naturalTextWidth(), 'f', 2)
+                          << "（无格式时 186.0）";
+        qInfo().noquote() << "   → 无格式时是 1 个 run / 5 个字形；"
+                             "改一个字就切成上面这些 run，连写被切断";
+    }
+
     return 0;
 }
