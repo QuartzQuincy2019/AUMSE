@@ -190,18 +190,18 @@ def step4_attach_theme():
 
         # 主题样式表：加在最后一个 stylesheet link 之后
         if sk == "T":
-            need = '<link rel="stylesheet" href="assets/t-theme.css">'
+            need = '<link rel="stylesheet" href="assets/css/t-theme.css">'
         else:
-            need = '<link rel="stylesheet" href="assets/series-theme.css">'
+            need = '<link rel="stylesheet" href="assets/css/series-theme.css">'
         if need not in t:
             links = list(re.finditer(r'<link[^>]*rel="stylesheet"[^>]*>', t))
             last = links[-1]
             t = t[:last.end()] + "\n" + need + t[last.end():]
 
         # 共用脚本（内含文末系列跳转 + 当前页小目录）
-        if "assets/series-common.js" not in t:
+        if "assets/js/series-common.js" not in t:
             t = t.replace("</body>",
-                          '<script src="assets/series-common.js"></script>\n</body>', 1)
+                          '<script src="assets/js/series-common.js"></script>\n</body>', 1)
 
         # 旧的 .t-nav 由 t-common.js 生成，改用统一的 series-common.js
         t = re.sub(r'\s*<script src="assets/t-common\.js"></script>', '', t)

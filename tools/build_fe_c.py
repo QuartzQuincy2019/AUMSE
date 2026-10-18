@@ -30,7 +30,7 @@ BODY04 = r"""<div class="card note">
 <p>浏览器眼里，页面上<b>每一个元素都是一个矩形盒子</b>。盒子从里到外分四层：</p>
 
 <figure class="fig">
-  <img src="assets/box-model.png"
+  <img src="assets/img/box-model.png"
        alt="盒模型四层示意图：内容、内边距 padding、边框 border、外边距 margin，并标出上下左右四边的所有属性名"
        width="669" height="672" loading="lazy" decoding="async">
   <figcaption>盒模型从里到外四层：<b>内容</b> → <b>内边距 padding</b> → <b>边框 border</b> → <b>外边距 margin</b>。图里把上下左右四边的属性名都标出来了 —— 注意 <code>width</code> / <code>height</code> 只管最里面那一块内容区。</figcaption>

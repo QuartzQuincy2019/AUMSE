@@ -43,7 +43,7 @@ A = r"E:\QKMansion\CSX10\w\UME\SharingGroup\tutorials\assets"
 FE = os.path.join(A, "fe-data.js")
 
 # 与 series-common.js 的 SERIES / ORDER **逐字一致**
-NEW_DATA = """  /* ---------- 系列定义（与 assets/series-common.js 逐字一致） ----------
+NEW_DATA = """  /* ---------- 系列定义（与 assets/js/series-common.js 逐字一致） ----------
      原来这里手写了一份 ALL_SERIES，和 series-common.js 的
      SERIES + ORDER + PAGES 是两套数据 —— 于是 R 抄的时候留了 f: null，
      FE 页尾的「相关 · R」永远是灰色点不动的 ss-empty，而 R 其实有 3 篇。

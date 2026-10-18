@@ -230,7 +230,7 @@ def main():
     print("  ✓ genelayout.css  %d B（合并后共 %d 条）" % (len(gl), len(allrules)))
 
     kill = set(share)
-    LINK = '<link rel="stylesheet" href="assets/genelayout.css">'
+    LINK = '<link rel="stylesheet" href="assets/css/genelayout.css">'
     for pf in sorted(pages):
         if only and pf != only:
             continue

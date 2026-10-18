@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-"""修复 CSS 分离引入的顺序 bug（直接重排 assets/tutorial.css）。
+"""修复 CSS 分离引入的顺序 bug（直接重排 assets/css/tutorial.css）。
 
 问题现象（手机端）：
     #toc 仍是 position:sticky + height:100vh，留在文档流里占满一屏，

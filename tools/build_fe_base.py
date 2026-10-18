@@ -143,7 +143,7 @@ def main():
 
     # ---------- 逐份删除 + 加链接 ----------
     kill = set(share)
-    LINK = '<link rel="stylesheet" href="assets/fe_base.css">'
+    LINK = '<link rel="stylesheet" href="assets/css/fe_base.css">'
     for pf in sorted(pages):
         if only and pf != only:
             continue

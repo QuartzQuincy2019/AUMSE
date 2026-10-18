@@ -754,7 +754,7 @@ def main():
 
     page = (head
             + "<title>C++ · std 与命名空间初步</title>\n"
-            + '<link rel="stylesheet" href="assets/tutorial.css">\n'
+            + '<link rel="stylesheet" href="assets/css/tutorial.css">\n'
             + '<link rel="stylesheet" href="assets/%s">\n' % OUT_CSS
             + "</head>\n<body>\n<div id=\"shell\">\n\n"
             + new_nav + "\n\n<main>\n"

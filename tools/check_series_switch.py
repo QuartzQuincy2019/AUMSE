@@ -25,6 +25,18 @@ R = r"E:\QKMansion\CSX10\w\UME"
 T = os.path.join(R, "SharingGroup", "tutorials")
 A = os.path.join(T, "assets")
 
+# ---- assets 已按类型分到 css/ img/ js/，这里统一兜底找 ----
+def resolve(name):
+    """先找 assets/<name>，再找 assets/{css,js,img}/<name>。"""
+    p = os.path.join(A, name)
+    if os.path.exists(p):
+        return p
+    for sub in ("css", "js", "img", "fonts"):
+        q = os.path.join(A, sub, name)
+        if os.path.exists(q):
+            return q
+    return p
+
 ns = {}
 exec(compile(io.open(os.path.join(R, "tools", "series_data.py"),
                      encoding="utf-8").read(), "series_data.py", "exec"), ns)
@@ -82,7 +94,7 @@ for f in sorted(os.listdir(T)):
 
 print()
 print("2. fe-data.js 的「全部系列」必须每个系列都有跳转目标")
-d = io.open(os.path.join(A, "fe-data.js"), encoding="utf-8").read()
+d = io.open(resolve("fe-data.js"), encoding="utf-8").read()
 # 数据驱动写法：SERIES / ORDER / SERIES_FILES；不再有手写 ALL_SERIES
 chk("var ALL_SERIES" not in d, "不再手写 ALL_SERIES（已改成数据驱动）")
 chk(ORDER_JS in d, "ORDER 与 series_data.py 一致：%s" % ORDER_JS)
@@ -97,7 +109,7 @@ for key in ns["PAGE_ORDER"]:
 
 print()
 print("3. series-common.js 的 ORDER 与系列定义")
-s = io.open(os.path.join(A, "series-common.js"), encoding="utf-8").read()
+s = io.open(resolve("series-common.js"), encoding="utf-8").read()
 chk(ORDER_JS in s, "ORDER 一致：%s" % ORDER_JS)
 for key in ns["PAGE_ORDER"]:
     chk(re.search(r"\b%s:\s*\{\s*label:" % key, s) is not None,

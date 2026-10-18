@@ -3,7 +3,7 @@
 
 那一段是早先 fix_fab_overlap.py 注入的（返回 home 按钮 +
 抽屉遮罩的 pointer-events 规避）。这些规则现在都已经在
-assets/series-theme.css 与 assets/t-theme.css 里了，
+assets/css/series-theme.css 与 assets/css/t-theme.css 里了，
 留着就是同一批选择器在两处定义 —— 迟早会分叉。
 
 删之前先确认：

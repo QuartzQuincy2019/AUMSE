@@ -1,8 +1,8 @@
 # -*- coding: utf-8 -*-
-"""按 series_data.py 生成 assets/series-theme.css。
+"""按 series_data.py 生成 assets/css/series-theme.css。
 
 设计：一套模板，按系列替换颜色与文案。
-  · T 的规则由 assets/t-theme.css 提供（我手写的那份，含两轮对比度修正），
+  · T 的规则由 assets/css/t-theme.css 提供（我手写的那份，含两轮对比度修正），
     本文件**不再重复**，只在末尾做少量补充，以免两处定义打架。
   · M / Q / E / R 用同一套模板生成，只是配色不同。
   · F 保留原有样式（08_f03 里的蓝色皮肤），本文件只改顶部常驻条的**文字**，
@@ -26,7 +26,7 @@ except Exception:
     pass
 
 TUT = r"E:\QKMansion\CSX10\w\UME\SharingGroup\tutorials"
-OUT = os.path.join(TUT, "assets", "series-theme.css")
+OUT = os.path.join(TUT, "assets", "css", "series-theme.css")
 
 # 每个系列一段：变量 + 顶部条 + 侧栏 + 卡片
 TPL = """
@@ -414,7 +414,7 @@ HEAD = """/* ===================================================================
        python tools/build_series_css.py
 
    说明：
-     · T 的完整规则在 assets/t-theme.css（手写，含两轮对比度修正），
+     · T 的完整规则在 assets/css/t-theme.css（手写，含两轮对比度修正），
        本文件不为 T 重复生成，只在末尾补一条覆盖，免得两处打架。
      · F 保留原来的蓝色皮肤（用户要求），本文件只把顶部常驻条的文字统一。
      · 顶部常驻条用 body[data-series]::before 实现，position:fixed，
@@ -715,9 +715,9 @@ def main():
     for sk in ORDER:
         s = SERIES[sk]
         if sk == "T":
-            # T 的主题由手写的 assets/t-theme.css 提供（含两轮对比度修正），
+            # T 的主题由手写的 assets/css/t-theme.css 提供（含两轮对比度修正），
             # 这里不重复生成，免得同一批选择器在两个文件里打架。
-            out.append('\n/* T 系列见 assets/t-theme.css（手写） */\n')
+            out.append('\n/* T 系列见 assets/css/t-theme.css（手写） */\n')
             continue
         if s.get("keep_legacy"):
             # F：保留原样式，只统一顶部条文字与吸顶行为

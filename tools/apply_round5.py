@@ -107,8 +107,8 @@ def fix_t02(dry):
 # ---------------------------------------------------------------------
 # 标签共出现在三个地方，必须一起改，否则页尾「全部系列」与首页会对不上：
 #   tools/series_data.py            首页分组数据（label 字段）
-#   assets/series-common.js         SERIES 映射（非 FE 页尾的「全部系列」）
-#   assets/fe-data.js               ALL_SERIES（FE 页尾的「全部系列」）
+#   assets/js/series-common.js         SERIES 映射（非 FE 页尾的「全部系列」）
+#   assets/js/fe-data.js               ALL_SERIES（FE 页尾的「全部系列」）
 # 注意用**字面 &**，不要写 &amp; —— 三处都是 textContent / JSON，
 # 不是 HTML 文本，写 &amp; 会原样显示出来。
 # =====================================================================

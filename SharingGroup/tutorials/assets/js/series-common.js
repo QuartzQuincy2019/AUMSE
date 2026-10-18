@@ -12,7 +12,7 @@
      3. 暗色模式：同步 color-scheme / theme-color，并防白闪。
 
    用法（放在 </body> 之前）：
-     <script src="assets/series-common.js"></script>
+     <script src="assets/js/series-common.js"></script>
 
    ⚠ 这个文件里的 SERIES 必须与 tools/series_data.py 保持一致。
      两边是同一份数据的两个副本 —— 改完 Python 那边记得同步这里。

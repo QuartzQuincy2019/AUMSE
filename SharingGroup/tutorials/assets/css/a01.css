@@ -1,21 +1,54 @@
 /* =====================================================================
    A01 · HarfBuzz 及其基础用法 —— 页面样式
    ---------------------------------------------------------------------
-   本页只做三件事，配色与骨架全部交给 series-theme.css（A 系列黑金）：
-     1. 三类示意字符：阿拉伯 / 天城文 / IPA —— 交给系统字体，别用等宽
+   本页做四件事，配色与骨架全部交给 series-theme.css（A 系列黑金）：
+     1. 三类示意字符：阿拉伯（Amiri）/ 天城文（Shobhika）/ IPA（DejaVu Serif）
      2. 内联的竖排蒙文：竖排 + 回退到内置字体
      3. .mem / .slot：内存示意块（样式表按页自成一篇，用到的块必须在此定义）
+     4. 圣书体演示块（第 15 节）
    ===================================================================== */
 
+/* ---------- 0. 随项目分发的三支字体（全部 OFL 1.1）----------
+   许可证正文见 fonts/OFL.txt；DejaVu 是另一份许可，见 fonts/LICENSE-DejaVu.txt。
+
+   ⚠ 路径写法：本样式表**曾经**放在 assets/ 顶层，现已移入 assets/css/，
+   所以下面的 url() 一律是 ../fonts/ 而不是 fonts/。
+   换目录时这一处最容易漏 —— 漏了的表现是「字体悄悄没加载、退回系统字体」，
+   页面不报错，只是字形变了。 */
+@font-face{
+  font-family:"Amiri";
+  src:url("../fonts/Amiri-Regular.ttf") format("truetype");
+  font-weight:400;font-style:normal;font-display:swap;
+}
+@font-face{
+  font-family:"Shobhika";
+  src:url("../fonts/Shobhika-Regular.otf") format("opentype");
+  font-weight:400;font-style:normal;font-display:swap;
+}
+@font-face{
+  font-family:"Shobhika";
+  src:url("../fonts/Shobhika-Bold.otf") format("opentype");
+  font-weight:700;font-style:normal;font-display:swap;
+}
+@font-face{
+  font-family:"DejaVu Serif APA01";
+  src:url("../fonts/DejaVuSerif.ttf") format("truetype");
+  font-weight:400;font-style:normal;font-display:swap;
+}
+
 /* ---------- 1. 示意字符 ----------
-   .ipa 在本页不只装 IPA，还装了阿拉伯字母与天城文（波斯语/印地语的例子）。
-   所以字体栈要按「谁的覆盖广」排：
-     Segoe UI     —— Windows 自带阿拉伯，笔形规整
-     Nirmala UI   —— Windows 自带天城文（C:\Windows\Fonts\Nirmala.ttc）
-     DejaVu Serif —— 前两者都没有时兜底 IPA 扩展区（本项目已内嵌）
-   千万别用 --mono：Consolas 没有阿拉伯和天城文，会掉到备用字体、字距全乱。 */
-.ipa{font-family:"Segoe UI","Nirmala UI","DejaVu Serif",var(--sans);
-  font-size:1.05em;line-height:1.4}
+   按**语言**分字体，不再用一个 .ipa 通吃：
+     [lang="ar"] 阿拉伯 → Amiri（Naskh 体，连写规则完整）
+     [lang="hi"] 天城文 → Shobhika（IIT Bombay，组合与半形完整）
+     .ipa        纯音标 → DejaVu Serif（IPA 扩展区覆盖最全）
+   回退留了系统字体，万一字体文件缺失也不至于变豆腐块；
+   但千万别落到 --mono（Consolas 三样都没有，字距会全乱）。 */
+[lang="ar"]{font-family:"Amiri","Segoe UI",var(--sans);
+  font-size:1.18em;line-height:1.6}
+[lang="hi"]{font-family:"Shobhika","Nirmala UI",var(--sans);
+  font-size:1.06em;line-height:1.6}
+.ipa{font-family:"DejaVu Serif APA01","DejaVu Serif","Shobhika",var(--sans);
+  font-size:1.04em;line-height:1.4}
 
 /* ---------- 2. 内联竖排蒙文 ----------
    正文里出现的是**词**（ᠮᠣᠩᠭᠣᠯ 之类），要竖着摆才认得出。

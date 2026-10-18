@@ -4,11 +4,11 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Q11 · 线程与互斥锁</title>
-<link rel="stylesheet" href="assets/genelayout.css">
-<link rel="stylesheet" href="assets/q11.css">
-<link rel="stylesheet" href="assets/series-theme.css">
-<link rel="stylesheet" href="assets/tg_L.css">
-<link rel="stylesheet" href="assets/tg_D.css">
+<link rel="stylesheet" href="assets/css/genelayout.css">
+<link rel="stylesheet" href="assets/css/q11.css">
+<link rel="stylesheet" href="assets/css/series-theme.css">
+<link rel="stylesheet" href="assets/css/tg_L.css">
+<link rel="stylesheet" href="assets/css/tg_D.css">
 
 </head>
 <body class="qseries" data-series="Q">
@@ -108,8 +108,8 @@
 而排队就意味着切换。</p>
 
 <div class="tlfig">
-  <img class="tll" src="assets/q11-tl1-light.svg" alt="甘特图：线程 A 在 0–4、线程 B 在 4–9、线程 A 又在 9–12 占用 CPU">
-  <img class="tld" src="assets/q11-tl1-dark.svg" alt="甘特图：线程 A 在 0–4、线程 B 在 4–9、线程 A 又在 9–12 占用 CPU">
+  <img class="tll" src="assets/img/q11-tl1-light.svg" alt="甘特图：线程 A 在 0–4、线程 B 在 4–9、线程 A 又在 9–12 占用 CPU">
+  <img class="tld" src="assets/img/q11-tl1-dark.svg" alt="甘特图：线程 A 在 0–4、线程 B 在 4–9、线程 A 又在 9–12 占用 CPU">
   <p class="tlcap"><b>任何时刻只有一条线程真正占着 CPU。</b>线程 A 在时间片 0–3 跑，4 起换成线程 B，9 又换回来 —— 「同时」是靠这样来回换出来的，不是两条真的一起在算。</p>
 </div>
 
@@ -128,8 +128,8 @@
 </table>
 
 <div class="tlfig">
-  <img class="tll" src="assets/q11-tl2-light.svg" alt="甘特图：执行—切换—执行—切换—执行，橙红色是切换本身">
-  <img class="tld" src="assets/q11-tl2-dark.svg" alt="甘特图：执行—切换—执行—切换—执行，橙红色是切换本身">
+  <img class="tll" src="assets/img/q11-tl2-light.svg" alt="甘特图：执行—切换—执行—切换—执行，橙红色是切换本身">
+  <img class="tld" src="assets/img/q11-tl2-dark.svg" alt="甘特图：执行—切换—执行—切换—执行，橙红色是切换本身">
   <p class="tlcap">中间那两条橙红色窄块就是<b>切换本身</b>：保存现场 → 挑人 → 恢复现场。这段时间没有任何计算产出。线程开得越多，这种空隙越密，总时间反而可能更长。</p>
 </div>
 
@@ -218,8 +218,8 @@
 多线程只会带来麻烦，不会带来收益。</b></p>
 
 <div class="tlfig">
-  <img class="tll" src="assets/q11-tl3-light.svg" alt="甘特图：单线程一整条 vs 八条线程一小段">
-  <img class="tld" src="assets/q11-tl3-dark.svg" alt="甘特图：单线程一整条 vs 八条线程一小段">
+  <img class="tll" src="assets/img/q11-tl3-light.svg" alt="甘特图：单线程一整条 vs 八条线程一小段">
+  <img class="tld" src="assets/img/q11-tl3-dark.svg" alt="甘特图：单线程一整条 vs 八条线程一小段">
   <p class="tlcap"><b>示意图，不是实测。</b>同一批计算，一条线程顺着做完；切成几份交给多个核，墙钟时间大致按份数缩短。这就是第 4 节说「算得太多」才值得多线程的理由。</p>
 </div>
 
@@ -325,8 +325,8 @@ std::vector&lt;std::thread&gt; ts;
 </div>
 
 <div class="tlfig">
-  <img class="tll" src="assets/q11-tl4-light.svg" alt="甘特图：线程 A 读、线程 B 读、线程 A 写、线程 B 写">
-  <img class="tld" src="assets/q11-tl4-dark.svg" alt="甘特图：线程 A 读、线程 B 读、线程 A 写、线程 B 写">
+  <img class="tll" src="assets/img/q11-tl4-light.svg" alt="甘特图：线程 A 读、线程 B 读、线程 A 写、线程 B 写">
+  <img class="tld" src="assets/img/q11-tl4-dark.svg" alt="甘特图：线程 A 读、线程 B 读、线程 A 写、线程 B 写">
   <p class="tlcap">两条线程都<b>在对方写回之前读到了 100</b>，各自加 1 得到 101，然后先后写回 101 —— <b>加了两次，值只涨了 1。</b>第二次写回把第一次覆盖掉了。</p>
 </div>
 
@@ -421,8 +421,8 @@ ts.emplace_back([&amp;] {
 <div class="out-wrap"><div class="cap">运行结果（已核对）</div><pre>lock_guard: total = 2000000</pre></div>
 
 <div class="tlfig">
-  <img class="tll" src="assets/q11-tl5-light.svg" alt="甘特图：线程 B 等锁，线程 A 在临界区，之后线程 B 才进">
-  <img class="tld" src="assets/q11-tl5-dark.svg" alt="甘特图：线程 B 等锁，线程 A 在临界区，之后线程 B 才进">
+  <img class="tll" src="assets/img/q11-tl5-light.svg" alt="甘特图：线程 B 等锁，线程 A 在临界区，之后线程 B 才进">
+  <img class="tld" src="assets/img/q11-tl5-dark.svg" alt="甘特图：线程 B 等锁，线程 A 在临界区，之后线程 B 才进">
   <p class="tlcap">加了锁之后，两段临界区<b>完全不重叠</b>：B 在等锁的整段时间里进不来，A 退出（<code>g</code> 析构）的那一刻 B 才拿到。这就是「串行化」在时间轴上的样子。</p>
 </div>
 
@@ -510,8 +510,8 @@ C++17 的 <code>std::scoped_lock</code> 就是干这个的：</p>
 <div class="out-wrap"><div class="cap">运行结果（已核对：8 线程 × 2000 次，没有卡死）</div><pre>scoped_lock : a=16000 b=16000</pre></div>
 
 <div class="tlfig">
-  <img class="tll" src="assets/q11-tl6-light.svg" alt="甘特图：两条线程各持有锁后互相等待，右边再无进展">
-  <img class="tld" src="assets/q11-tl6-dark.svg" alt="甘特图：两条线程各持有锁后互相等待，右边再无进展">
+  <img class="tll" src="assets/img/q11-tl6-light.svg" alt="甘特图：两条线程各持有锁后互相等待，右边再无进展">
+  <img class="tld" src="assets/img/q11-tl6-dark.svg" alt="甘特图：两条线程各持有锁后互相等待，右边再无进展">
   <p class="tlcap">两条线程各拿到一把锁，然后都在等对方手里那把。<b>横条右边没有任何「继续」的块</b> —— 不是变慢，是永远不动了。死锁不报错、不崩溃，只是程序不再前进。</p>
 </div>
 
@@ -734,6 +734,6 @@ UME 项目组内部教程 · Q11《线程与互斥锁》<br>
   sync();
 })();
 </script>
-<script src="assets/series-common.js"></script>
+<script src="assets/js/series-common.js"></script>
 </body>
 </html>

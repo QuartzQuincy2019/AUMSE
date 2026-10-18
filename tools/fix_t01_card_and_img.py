@@ -57,7 +57,7 @@ old = '''<div class="code-wrap"><div class="bar"><span class="dot r"></span><spa
      正文里绝不会用 —— 因为没人能一眼读出来。</pre></div>'''
 if old in t:
     new = '''<figure class="fig">
-  <img src="assets/zhaocaijinbao.webp"
+  <img src="assets/img/zhaocaijinbao.webp"
        alt="招财进宝合体字：把「招财进宝」四个字挤进一个字的位置，笔画相互借用、偏旁共用"
        width="715" height="800" loading="lazy" decoding="async">
   <figcaption><b>招财进宝</b>合体字 —— 四个字共用一个字形的空间，

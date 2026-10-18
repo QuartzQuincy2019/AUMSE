@@ -31,11 +31,11 @@ HEAD = """<!DOCTYPE html>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Q02 · C++ 的引用</title>
-<link rel="stylesheet" href="assets/genelayout.css">
+<link rel="stylesheet" href="assets/css/genelayout.css">
 <link rel="stylesheet" href="assets/q02_references.css">
-<link rel="stylesheet" href="assets/series-theme.css">
-<link rel="stylesheet" href="assets/tg_L.css">
-<link rel="stylesheet" href="assets/tg_D.css">
+<link rel="stylesheet" href="assets/css/series-theme.css">
+<link rel="stylesheet" href="assets/css/tg_L.css">
+<link rel="stylesheet" href="assets/css/tg_D.css">
 
 </head>
 <body class="qseries" data-series="Q">
@@ -139,7 +139,7 @@ UME 项目组内部教程 · Q02《C++ 的引用》<br>
   sync();
 })();
 </script>
-<script src="assets/series-common.js"></script>
+<script src="assets/js/series-common.js"></script>
 </body>
 </html>
 """

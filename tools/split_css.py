@@ -144,7 +144,7 @@ def main():
         path = os.path.join(ROOT, name)
         with io.open(path, encoding="utf-8") as fh:
             t = fh.read()
-        link = '<link rel="stylesheet" href="assets/tutorial.css">'
+        link = '<link rel="stylesheet" href="assets/css/tutorial.css">'
         if page:
             link += '\n<link rel="stylesheet" href="assets/%s">' % per_file
         t = re.sub(r'(?s)<style>.*?</style>\s*', '', t)

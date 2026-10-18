@@ -28,7 +28,7 @@ OLD = '''文中所有输出与报错，均使用 g++ 13.1.0（<code>-std=c++17</
 代码示例以 <b>Consolas</b> 等宽字体呈现。'''
 NEW = '''本篇不含代码运行结果，没有经过编译器核对的内容；
 音标图与符号名称参考 <b>2015 修订版</b>的 IPA 官方全图
-（<code>assets/IPA_Deja_2015.pdf</code>，DejaVu Sans + Doulos SIL 排版），
+（<code>assets/img/IPA_Deja_2015.pdf</code>，DejaVu Sans + Doulos SIL 排版），
 中文术语与分区名参考 <a href="https://toipa.org/zh/ipa-chart">toIPA 的中文音标表</a>；
 元音位置图是按舌位示意重画的，不是从官方图上截的。'''
 if OLD in t:

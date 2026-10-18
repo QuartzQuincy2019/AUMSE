@@ -11,6 +11,18 @@ R = r"E:\QKMansion\CSX10\w\UME"
 T = os.path.join(R, "SharingGroup", "tutorials")
 A = os.path.join(T, "assets")
 
+# ---- assets 已按类型分到 css/ img/ js/，这里统一兜底找 ----
+def resolve(name):
+    """先找 assets/<name>，再找 assets/{css,js,img}/<name>。"""
+    p = os.path.join(A, name)
+    if os.path.exists(p):
+        return p
+    for sub in ("css", "js", "img", "fonts"):
+        q = os.path.join(A, sub, name)
+        if os.path.exists(q):
+            return q
+    return p
+
 ok = bad = 0
 
 
@@ -51,7 +63,7 @@ for f in ("series_data.py",):
     chk("C++&Qt · Q" in t, "%s 有「C++&Qt · Q」" % f)
     chk("文件 · F" in t, "%s 有「文件 · F」" % f)
 for f in ("series-common.js", "fe-data.js"):
-    t = io.open(os.path.join(A, f), encoding="utf-8").read()
+    t = io.open(resolve(f), encoding="utf-8").read()
     chk("C++&Qt · Q" in t, "%s 有「C++&Qt · Q」" % f)
     chk("文件 · F" in t, "%s 有「文件 · F」" % f)
     chk("&amp;Qt" not in t, "%s 没有误写成 &amp;" % f)
@@ -62,7 +74,7 @@ t03 = io.open(os.path.join(T, "t03.html"),
               encoding="utf-8").read()
 chk('class="see-also"' in t03, "T03 有 .see-also 块")
 chk('href="r01.html"' in t03, "T03 链到 R01")
-gl = io.open(os.path.join(A, "genelayout.css"), encoding="utf-8").read()
+gl = io.open(resolve("genelayout.css"), encoding="utf-8").read()
 chk(".see-also{" in gl, "genelayout.css 有 .see-also 样式")
 chk(".see-also a{" in gl, "样式里有 .see-also a")
 # 位置：应在 <footer> 之前
@@ -71,7 +83,7 @@ chk(t03.find('class="see-also"') < t03.find("<footer>"),
 
 print()
 print("5. FE series-nav 暗色覆盖")
-fd = io.open(os.path.join(A, "fe-dark.css"), encoding="utf-8").read()
+fd = io.open(resolve("fe-dark.css"), encoding="utf-8").read()
 chk('body[data-series="FE"] .series-nav a:not(.cur)' in fd,
     "fe-dark.css 有非 .cur 的暗色覆盖")
 chk("#1e242e" in fd, "覆盖里用了深底（不是白色）")

@@ -440,7 +440,7 @@ def card(fn, num, title, desc, kind, star):
 # 「半透明白 → 完全透明」的线性渐变：左侧留给文字，图推向右侧。
 # 只放真正需要「一眼认出题面」的卡片；不在表里的就用普通卡片样式。
 # ---------------------------------------------------------------- 语言徽章
-# 首页是全内联样式（加载不到 assets/tg_L.css / tg_D.css），所以语言徽章的
+# 首页是全内联样式（加载不到 assets/css/tg_L.css / tg_D.css），所以语言徽章的
 # 规则要在这里再写一份。但**色值不手写** —— 由 tools/gen_home_lang_css.py
 # 从 build_tg.py 的 LANG_CSS / LANG_DARK_CSS 里读出来，
 # 保证首页与 38 篇教程页用的是同一套颜色。
@@ -456,23 +456,23 @@ STYLE = STYLE.replace(
 
 
 CARD_BG = {
-    "q07.html": "SharingGroup/tutorials/assets/第04次作业第1题.png",
-    "q11.html": "SharingGroup/tutorials/assets/原神logo.png",
+    "q07.html": "SharingGroup/tutorials/assets/img/第04次作业第1题.png",
+    "q11.html": "SharingGroup/tutorials/assets/img/原神logo.png",
     # 用户新增的四张配图，按内容各归一篇
-    "f01.html": "SharingGroup/tutorials/assets/cmd.jpeg",
-    "e02.html": "SharingGroup/tutorials/assets/cmd_advanced.png",
-    "r01.html": "SharingGroup/tutorials/assets/EM_Square.webp",
-    "r03.html": "SharingGroup/tutorials/assets/HSV_Model.webp",
-    "t01.html": "SharingGroup/tutorials/assets/first_journey_to_Uyghur_Mongolian.jpg",
-    "q04.html": "SharingGroup/tutorials/assets/interface.webp",
-    "fe-01.html": "SharingGroup/tutorials/assets/first_journey_to_HTML.webp",
-    "fe-03.html": "SharingGroup/tutorials/assets/first_journey_to_CSS.webp",
-    "fe-08.html": "SharingGroup/tutorials/assets/first_journey_to_JS.webp",
-    "t03.html": "SharingGroup/tutorials/assets/dive_into_fonts.webp",
-    "f02.html": "SharingGroup/tutorials/assets/macro.png",
-    "m10.html": "SharingGroup/tutorials/assets/virtual_function.gif",
-    "t02.html": "SharingGroup/tutorials/assets/unicode.webp",
-    "f04.html": "SharingGroup/tutorials/assets/CMake.webp",
+    "f01.html": "SharingGroup/tutorials/assets/img/cmd.jpeg",
+    "e02.html": "SharingGroup/tutorials/assets/img/cmd_advanced.png",
+    "r01.html": "SharingGroup/tutorials/assets/img/EM_Square.webp",
+    "r03.html": "SharingGroup/tutorials/assets/img/HSV_Model.webp",
+    "t01.html": "SharingGroup/tutorials/assets/img/first_journey_to_Uyghur_Mongolian.jpg",
+    "q04.html": "SharingGroup/tutorials/assets/img/interface.webp",
+    "fe-01.html": "SharingGroup/tutorials/assets/img/first_journey_to_HTML.webp",
+    "fe-03.html": "SharingGroup/tutorials/assets/img/first_journey_to_CSS.webp",
+    "fe-08.html": "SharingGroup/tutorials/assets/img/first_journey_to_JS.webp",
+    "t03.html": "SharingGroup/tutorials/assets/img/dive_into_fonts.webp",
+    "f02.html": "SharingGroup/tutorials/assets/img/macro.png",
+    "m10.html": "SharingGroup/tutorials/assets/img/virtual_function.gif",
+    "t02.html": "SharingGroup/tutorials/assets/img/unicode.webp",
+    "f04.html": "SharingGroup/tutorials/assets/img/CMake.webp",
 }
 
 # 遮罩配色现在是**自动推导**（见 pack()）：重点卡底色是暖黄 → 默认暖黄遮罩；

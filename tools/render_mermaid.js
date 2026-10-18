@@ -8,8 +8,8 @@
        页面里用 <img> 引用 —— 运行时零依赖。
 
    产物
-       SharingGroup/tutorials/assets/m10-class-light.svg   （mermaid default 主题）
-       SharingGroup/tutorials/assets/m10-class-dark.svg    （mermaid dark 主题）
+       SharingGroup/tutorials/assets/img/m10-class-light.svg   （mermaid default 主题）
+       SharingGroup/tutorials/assets/img/m10-class-dark.svg    （mermaid dark 主题）
 
    用法（需要本机装了 mermaid 与 Edge）
        node tools/render_mermaid.js [调试端口]

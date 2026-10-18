@@ -4,11 +4,11 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>A01 · HarfBuzz 及其基础用法</title>
-<link rel="stylesheet" href="assets/genelayout.css">
-<link rel="stylesheet" href="assets/a01.css">
-<link rel="stylesheet" href="assets/series-theme.css">
-<link rel="stylesheet" href="assets/tg_L.css">
-<link rel="stylesheet" href="assets/tg_D.css">
+<link rel="stylesheet" href="assets/css/genelayout.css">
+<link rel="stylesheet" href="assets/css/a01.css">
+<link rel="stylesheet" href="assets/css/series-theme.css">
+<link rel="stylesheet" href="assets/css/tg_L.css">
+<link rel="stylesheet" href="assets/css/tg_D.css">
 
 </head>
 <body class="aseries" data-series="A">
@@ -104,10 +104,10 @@
 <tbody>
 <tr><td><b>一对一</b></td><td>拉丁字母 <code>a</code></td>
     <td>一个码位一个字形，最常见</td></tr>
-<tr><td><b>一对多</b></td><td>天城文 <span class="ipa">क्</span> 的元音符号、
+<tr><td><b>一对多</b></td><td>天城文 <span lang="hi">क्</span> 的元音符号、
     阿拉伯的 harakat</td>
     <td>一个码位拆成基础字 + 附加标记</td></tr>
-<tr><td><b>多对一</b></td><td>阿拉伯 <span class="ipa">لا</span>（LAM+ALEF）、
+<tr><td><b>多对一</b></td><td>阿拉伯 <span lang="ar">لا</span>（LAM+ALEF）、
     蒙文 <code>GO</code> 连字</td>
     <td>几个码位合成一个字形（连字）</td></tr>
 <tr><td><b>一对变体</b></td><td>阿拉伯 BEH 的四形、
@@ -118,7 +118,7 @@
 
 <h3>同一个词，不同字体给不同数量的字形</h3>
 
-<p>拿阿拉伯语 <span class="ipa">لا</span>（LAM <code>U+0644</code> +
+<p>拿阿拉伯语 <span lang="ar">لا</span>（LAM <code>U+0644</code> +
 ALEF <code>U+0627</code>）实测三支系统字体：</p>
 
 <table>
@@ -213,13 +213,13 @@ ALEF <code>U+0627</code>）实测三支系统字体：</p>
 <thead><tr><th style="width:20%">位置</th><th style="width:34%">字形</th>
 <th style="width:14%">推进量</th><th>特性</th></tr></thead>
 <tbody>
-<tr><td>单独 <span class="ipa">ب</span></td><td><code>uni0628</code></td>
+<tr><td>单独 <span lang="ar">ب</span></td><td><code>uni0628</code></td>
     <td class="c">1881</td><td><code>isol</code></td></tr>
-<tr><td>词首 <span class="ipa">بـ</span></td><td><code>uniFE91</code></td>
+<tr><td>词首 <span lang="ar">بـ</span></td><td><code>uniFE91</code></td>
     <td class="c">684</td><td><code>init</code></td></tr>
-<tr><td>词中 <span class="ipa">ـبـ</span></td><td><code>uniFE92</code></td>
+<tr><td>词中 <span lang="ar">ـبـ</span></td><td><code>uniFE92</code></td>
     <td class="c">684</td><td><code>medi</code></td></tr>
-<tr><td>词尾 <span class="ipa">ـب</span></td><td><code>uniFE90</code></td>
+<tr><td>词尾 <span lang="ar">ـب</span></td><td><code>uniFE90</code></td>
     <td class="c">1881</td><td><code>fina</code></td></tr>
 </tbody>
 </table>
@@ -355,9 +355,9 @@ hb_buffer_destroy(buf);</pre>
 <thead><tr><th style="width:30%">输入</th><th style="width:14%">码位</th>
 <th style="width:14%">字形</th><th>说明</th></tr></thead>
 <tbody>
-<tr><td><span class="ipa">با</span>（beh + alef）</td><td class="c">2</td><td class="c">2</td>
+<tr><td><span lang="ar">با</span>（beh + alef）</td><td class="c">2</td><td class="c">2</td>
     <td>beh 取 initial、alef 取 final</td></tr>
-<tr><td><span class="ipa">بَا</span>（beh + fatha + alef）</td>
+<tr><td><span lang="ar">بَا</span>（beh + fatha + alef）</td>
     <td class="c">3</td><td class="c">3</td>
     <td>fatha 推进 <b>0</b>，簇并进 beh</td></tr>
 </tbody>
@@ -414,7 +414,7 @@ hb_buffer_destroy(buf);</pre>
 
 <h3>方向传错，不只是左右颠倒</h3>
 
-<p>阿拉伯词 <span class="ipa">مكتبة</span>（5 个码位）两个方向各排一次：</p>
+<p>阿拉伯词 <span lang="ar">مكتبة</span>（5 个码位）两个方向各排一次：</p>
 
 <div class="out-wrap">
   <div class="cap">字形号 + 簇号</div>
@@ -1005,6 +1005,6 @@ C++ 片段是按接口签名写的说明性代码，<b>本机未安装 HarfBuzz 
   sync();
 })();
 </script>
-<script src="assets/series-common.js"></script>
+<script src="assets/js/series-common.js"></script>
 </body>
 </html>

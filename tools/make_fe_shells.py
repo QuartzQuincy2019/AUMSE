@@ -50,7 +50,7 @@ SHELL = """<!DOCTYPE html>
 /* 本页数据。正文里的 <h2 id="…"> 会被渲染器自动收进左侧目录。 */
 window.__FE_PAGE__ = {data};
 </script>
-<script src="assets/fe-data.js"></script>
+<script src="assets/js/fe-data.js"></script>
 </body>
 </html>
 """

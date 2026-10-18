@@ -5,7 +5,7 @@
 
     tools/series_data.py        ← 本文件（编号 / 系列 / 标题 / 配色）
     tools/apply_series.py       按它改文件名与正文里的编号
-    tools/build_series_css.py   按它生成 assets/series-theme.css
+    tools/build_series_css.py   按它生成 assets/css/series-theme.css
     tools/make_pages.py         按它生成首页卡片（import 本文件）
 
 系列一览

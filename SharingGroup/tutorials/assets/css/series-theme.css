@@ -7,7 +7,7 @@
        python tools/build_series_css.py
 
    说明：
-     · T 的完整规则在 assets/t-theme.css（手写，含两轮对比度修正），
+     · T 的完整规则在 assets/css/t-theme.css（手写，含两轮对比度修正），
        本文件不为 T 重复生成，只在末尾补一条覆盖，免得两处打架。
      · F 保留原来的蓝色皮肤（用户要求），本文件只把顶部常驻条的文字统一。
      · 顶部常驻条用 body[data-series]::before 实现，position:fixed，
@@ -165,7 +165,7 @@ body[data-series] .s-nav-switch .ss-cur{
   }
 }
 
-/* T 系列见 assets/t-theme.css（手写） */
+/* T 系列见 assets/css/t-theme.css（手写） */
 
 /* ============================ F · File（保留原样式） ====================
    用户要求「为 F 保留之前的样式」——所以底色、卡片、代码块一律沿用

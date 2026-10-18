@@ -13,6 +13,18 @@ sys.stdout.reconfigure(encoding="utf-8", errors="replace")
 R = r"E:\QKMansion\CSX10\w\UME"
 A = os.path.join(R, "SharingGroup", "tutorials", "assets")
 
+# ---- assets 已按类型分到 css/ img/ js/，这里统一兜底找 ----
+def resolve(name):
+    """先找 assets/<name>，再找 assets/{css,js,img}/<name>。"""
+    p = os.path.join(A, name)
+    if os.path.exists(p):
+        return p
+    for sub in ("css", "js", "img", "fonts"):
+        q = os.path.join(A, sub, name)
+        if os.path.exists(q):
+            return q
+    return p
+
 # 真实篇数
 ns = {}
 exec(compile(io.open(os.path.join(R, "tools", "series_data.py"),
@@ -29,7 +41,7 @@ for k, v in truth.items():
 
 print()
 print("  fe-data.js（FE 页尾用）：")
-d = io.open(os.path.join(A, "fe-data.js"), encoding="utf-8").read()
+d = io.open(resolve("fe-data.js"), encoding="utf-8").read()
 # 只从 SERIES_FILES 这个数组里取文件名。
 # 不能对全文做 'xxx.html' 匹配 —— helper 的注释里也有文件名样例，
 # 会多数出一条，第一版就是这么误报的。
@@ -53,7 +65,7 @@ print("      ORDER: %s" % (_mo.group(1).strip() if _mo else "（找不到）"))
 
 print()
 print("  series-common.js（非 FE 页尾用）：")
-s = io.open(os.path.join(A, "series-common.js"), encoding="utf-8").read()
+s = io.open(resolve("series-common.js"), encoding="utf-8").read()
 m = re.search(r'(?s)var PAGES\s*=\s*\[(.*?)\n  \];', s)
 body = m.group(1) if m else ""
 # 每条按 s: 'X' 分组

@@ -19,6 +19,18 @@ sys.stdout.reconfigure(encoding="utf-8", errors="replace")
 T = r"E:\QKMansion\CSX10\w\UME\SharingGroup\tutorials"
 A = os.path.join(T, "assets")
 
+# ---- assets 已按类型分到 css/ img/ js/，这里统一兜底找 ----
+def resolve(name):
+    """先找 assets/<name>，再找 assets/{css,js,img}/<name>。"""
+    p = os.path.join(A, name)
+    if os.path.exists(p):
+        return p
+    for sub in ("css", "js", "img", "fonts"):
+        q = os.path.join(A, sub, name)
+        if os.path.exists(q):
+            return q
+    return p
+
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 from series_data import LANG_OF  # noqa: E402
 
@@ -70,7 +82,7 @@ print("  异常 %d 篇 %s" % (bad, "OK" if bad == 0 else "FAIL"))
 print()
 need = sorted({c for v in EXPECT.values() for _, c in v})
 for fn in ("tg_L.css", "tg_D.css"):
-    c = io.open(os.path.join(A, fn), encoding="utf-8").read()
+    c = io.open(resolve(fn), encoding="utf-8").read()
     squashed = c.replace(" ", "")
     missing = [k for k in need if (".lang.%s{" % k) not in squashed]
     print("  %-10s 需 %d 条规则，缺: %s"

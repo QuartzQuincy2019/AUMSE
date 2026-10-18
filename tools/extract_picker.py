@@ -3,7 +3,7 @@
 
 问题
     R04 原来是 FE 系列的数据驱动页（fe-03-F01），拾取器的逻辑写在
-    assets/fe-data.js 里（FE 页面的运行时）。改成 R 系列的文档页后，
+    assets/js/fe-data.js 里（FE 页面的运行时）。改成 R 系列的文档页后，
     r04.html 只加载 tutorial.css / series-theme.css，**不再加载 fe-data.js**，
     于是滑块拖不动 —— 这正是用户报告的「颜色拾取器停止工作」。
 
@@ -67,7 +67,7 @@ def dedent(s):
 header = """/* =====================================================================
    r04-picker.js —— R04《十六进制颜色模型、HSV 与 Alpha》的「颜色拾取器」
    ---------------------------------------------------------------------
-   这一段逻辑原来住在 assets/fe-data.js 里（FE 系列页面的运行时）。
+   这一段逻辑原来住在 assets/js/fe-data.js 里（FE 系列页面的运行时）。
    R04 原本是 FE 的 fe-03-F01，改成 R 系列的文档页后就不再加载
    fe-data.js，滑块因此拖不动 —— 所以把它抽成独立文件单独加载。
 
@@ -79,7 +79,7 @@ header = """/* =================================================================
 
    页面侧约定：body 里要有 id="picker"，以及 pkR / pkG / pkB / pkA、
    pkSwatch / pkHex / pkRgb / pkHsl / pkRgba / pkPresets 这些元素。
-   样式在 assets/r04.css 的「颜色拾取器」一节。
+   样式在 assets/css/r04.css 的「颜色拾取器」一节。
    ===================================================================== */
 (function () {
   'use strict';
@@ -108,7 +108,7 @@ t = io.open(PAGE, encoding="utf-8").read()
 if "r04-picker.js" in t:
     print("  r04.html 已引用 r04-picker.js")
 else:
-    anchor = '<script src="assets/series-common.js"></script>'
+    anchor = '<script src="assets/js/series-common.js"></script>'
     if anchor not in t:
         print("  !! r04.html 找不到 series-common.js 的引用")
         sys.exit(1)

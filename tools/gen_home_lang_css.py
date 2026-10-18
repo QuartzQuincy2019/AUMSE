@@ -4,7 +4,7 @@
 问题
     语言徽章的颜色定义在**两处**：
       · tools/build_tg.py 的 LANG_CSS / LANG_DARK_CSS
-        → 写进 assets/tg_L.css 与 tg_D.css，供 38 篇教程页使用
+        → 写进 assets/css/tg_L.css 与 tg_D.css，供 38 篇教程页使用
       · tools/make_pages.py 里的 HEAD 模板
         → 写进 index.html 的内联 <style>，供首页卡片使用
     首页是**全内联样式**（没有外链样式表，双击也能看），所以它加载不到

@@ -1,13 +1,13 @@
 /* ---------- R 系列主色 ---------- */:root{
-  --r-main:#c0392b;
-  --r-deep:#8e2a1f;
-  --r-bright:#e8705f;
-  --r-pale:#f5a598;
-  --r-soft-strong:#e8705f;
-  --r-chiplight:color-mix(in srgb, #c0392b 12%, #fff);
+  --r-main:#d1435b;
+  --r-deep:#a02b40;
+  --r-bright:#ef7288;
+  --r-pale:#f7a8b6;
+  --r-soft-strong:#ef7288;
+  --r-chiplight:color-mix(in srgb, #d1435b 12%, #fff);
   /* 强调色改用红：.card.key 的标题、行内 .k、.tag.v */
-  --violet:#8e2a1f;
-  --violet-soft:color-mix(in srgb, #c0392b 12%, #fff);
+  --violet:#a02b40;
+  --violet-soft:color-mix(in srgb, #d1435b 12%, #fff);
 }/* =====================================================================
    表面变量（亮色）
    ---------------------------------------------------------------------
@@ -234,3 +234,135 @@
   padding:10px 12px;border:1px solid var(--line-2);border-radius:10px;background:var(--sfc)}.bars .b{flex:1;background:var(--r-main);border-radius:3px 3px 0 0;
   display:flex;align-items:flex-start;justify-content:center;
   color:#fff;font:700 11px/1.4 var(--mono);padding-top:3px;transition:height .25s}.bars .b.on{background:var(--r-deep)}.bars .b.done{background:var(--r-soft-strong)}/* 比较次数统计表 */.stat{margin:16px 0;border:1px solid var(--line-2);border-radius:11px;overflow:hidden}.stat table{margin:0;width:100%;border-collapse:collapse}.stat th,.stat td{padding:8px 12px;font-size:13.5px;border-bottom:1px solid var(--line-2)}.stat th{background:var(--r-chiplight);font-weight:700;color:var(--r-deep)}.stat tr:last-child td{border-bottom:0}.stat td.num{font-family:var(--mono);text-align:right}
+
+/* =====================================================================
+   R04 专有：颜色拾取器
+   ---------------------------------------------------------------------
+   本页比 R 系列其它篇多一个「颜色拾取器」演示（pk-* 一组 class）。
+   这些规则原来在 FE 系列的 fe_base.css 里 —— R04 从 FE 转过来后
+   文档页不加载 fe_base.css，所以把用到的那几条复制到这里。
+   ===================================================================== */
+.picker{border:1px solid var(--line-2);border-radius:16px;overflow:hidden; background:var(--surface);margin:18px 0; -webkit-backdrop-filter:blur(10px);backdrop-filter:blur(10px); box-shadow:0 4px 20px rgba(76,29,149,.10)}
+.picker .pk-ctl{padding:14px 16px;display:grid;gap:12px}
+.picker .pk-native{margin:0 16px 12px}
+.picker .pk-note{padding:0 16px 15px;font-size:12px;color:var(--fg-3);line-height:1.7}
+.picker .pk-out{flex:1 1 320px;padding:14px 16px;display:grid;gap:9px; align-content:center;background:var(--sfc-glass)}
+.picker .pk-row{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+.picker .pk-row .cp2{margin-left:auto;font-size:11.5px;color:var(--blue);cursor:pointer; border:1px solid rgba(124,58,237,.32);border-radius:7px;padding:1px 9px; background:var(--sfc-glass)}
+.picker .pk-row .cp2:hover{background:var(--blue);color:#fff;border-color:var(--blue)}
+.picker .pk-row b{min-width:78px;color:var(--fg-3);font-weight:600; font-family:var(--mono);font-size:12px}
+.picker .pk-row code{font-size:12.5px;background:var(--sfc-glass)}
+.picker .pk-row.pk-hex{align-items:baseline}
+.picker .pk-row.pk-hex code{font-size:27px;font-weight:700;letter-spacing:.02em; padding:4px 12px;border-radius:10px;line-height:1.25;color:#4c1d95; background:linear-gradient(135deg,#ede9fe,#fce7f3); border:1px solid rgba(124,58,237,.35); text-shadow:0 1px 0 rgba(255,255,255,.7)}
+.picker .pk-sl{display:grid;grid-template-columns:104px 1fr 70px;align-items:center;gap:12px; font-size:13px}
+.picker .pk-sl .val{font-family:var(--mono);font-size:12.5px;color:var(--fg-2); text-align:right}
+.picker .pk-sl input[type=range]{width:100%;height:22px;cursor:pointer; -webkit-appearance:none;appearance:none;background:transparent}
+.picker .pk-sl input[type=range]::-webkit-slider-runnable-track{height:11px; border-radius:6px;border:1px solid var(--line-2);background:var(--tk,#e3e8f0)}
+.picker .pk-sl input[type=range]::-webkit-slider-thumb{-webkit-appearance:none; width:19px;height:19px;margin-top:-5px;border-radius:50%;background:var(--sfc); border:2px solid #7c3aed;box-shadow:0 1px 4px rgba(76,29,149,.4)}
+.picker .pk-sl label{font-family:var(--mono);font-size:12.5px;color:var(--fg-2)}
+.picker .pk-sw{display:flex;flex-wrap:wrap;gap:7px;padding:0 16px 14px}
+.picker .pk-sw i{width:30px;height:30px;border-radius:9px;cursor:pointer; border:1px solid rgba(0,0,0,.14);transition:transform .12s}
+.picker .pk-sw i:hover{transform:scale(1.16)}
+.picker .pk-swatch{flex:1 1 200px;min-height:156px;display:flex;align-items:flex-end; padding:14px 16px;background:#7c3aed;transition:background .12s}
+.picker .pk-swatch span{font:700 15px/1.4 var(--mono);color:#fff; text-shadow:0 1px 4px rgba(0,0,0,.55)}
+.picker .pk-top{display:flex;flex-wrap:wrap;border-bottom:1px solid var(--line)}
+
+/* 拾取器里的数值要等宽对齐，读数才不会跳动 */
+.cp2{font-variant-numeric:tabular-nums}
+
+/* =====================================================================
+   R04 专属：元音舌位图（内联 SVG）
+   ---------------------------------------------------------------------
+   为什么内联而不用 <img>：
+     图里的线条与重点符号用 currentColor / var(--s-main)，内联才能跟着
+     主题与系列色变化；<img> 引 SVG 拿不到页面的 CSS 变量。
+   窄屏：容器横向滚动，图保底 400px，不压到看不清。
+   ================================================================== */
+.vw{margin:18px 0 22px;padding:12px 10px 8px;border:1px solid var(--line);
+  border-radius:12px;background:var(--bg-soft);overflow-x:auto}
+.vw svg{display:block;width:100%;max-width:540px;min-width:400px;height:auto;
+  margin:0 auto;color:var(--fg-2)}
+.vw .vwcap{margin:8px 0 2px;font-size:12.5px;line-height:1.7;
+  color:var(--fg-3);text-align:center}
+.vw .vwcap b{color:var(--fg-2)}
+
+@media (max-width:980px){
+  .vw{padding:10px 8px 6px;border-radius:10px}
+  .vw svg{min-width:380px}
+}
+
+/* =====================================================================
+   R04 专属：左右对照（英语靠清浊 / 普通话靠送气）
+   ---------------------------------------------------------------------
+   .two 这一组在 Q 系列各页里各自定义过，公共层没有，
+   所以这里补一份最小可用的：等宽两栏，窄屏塌成一栏。
+   ================================================================== */
+.two{margin:18px 0;display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.two .side{border:1px solid var(--line-2);border-radius:11px;overflow:hidden;
+  background:var(--sfc);min-width:0}
+.two .side .hd{padding:8px 13px;font-size:12.5px;font-weight:700;
+  letter-spacing:.02em;border-bottom:1px solid var(--line-2);
+  background:var(--bg-soft);color:var(--fg-2)}
+.two .side pre{margin:0;padding:11px 13px;overflow:auto;
+  font-family:"DejaVu Serif IPA",var(--mono),monospace;
+  font-size:13px;line-height:1.72}
+.two .side pre code{background:none;color:inherit}
+
+@media (max-width:720px){.two{grid-template-columns:1fr}}
+
+/* =====================================================================
+   R04 专属：音标统一用 DejaVu Serif 呈现
+   ---------------------------------------------------------------------
+   字体来源：DejaVu Serif 2.35（SIL / Bitstream Vera 许可，见同目录 LICENSE-DejaVu.txt）
+   文件：assets/fonts/DejaVuSerif.ttf（379,740 B）
+
+   为什么分两层
+     .ipa 这一层是精确包出来的音标槽位，整段都用 DejaVu Serif ——
+     包括 /e/ [p] 里那些 ASCII 字母，因为它们在音标语境里也是符号。
+
+     @font-face 这一层带 unicode-range，只接管 IPA 区块的码位。
+     挂在 main 上兜底：<pre> 里的 ASCII 图必须保持等宽（DejaVu Serif 是比例
+     字体，整体套用会把对齐冲掉），但里面的音标字符仍然要换成 DejaVu。
+     unicode-range 让浏览器只在这些码位上使用本字体，其余照旧。
+   ================================================================== */
+/* ① 全量：.ipa 槽位与 SVG 文本要的是这个家族名，
+      没有它，浏览器会去找**系统**里装的 "DejaVu Serif" —— 找不到就静默
+      回退到 Consolas，看起来像生效了，其实一个字都没换。 */
+@font-face{
+  font-family:"DejaVu Serif";
+  src:url("../fonts/DejaVuSerif.ttf") format("truetype");
+  font-weight:400;font-style:normal;font-display:swap;
+}
+
+/* ② 只接管音标码位：给 <pre> 等必须保持等宽的容器兜底，
+      中文与 ASCII 仍走原来的字体 */
+@font-face{
+  font-family:"DejaVu Serif IPA";
+  src:url("../fonts/DejaVuSerif.ttf") format("truetype");
+  font-weight:400;font-style:normal;font-display:swap;
+  unicode-range:U+0250-02AF, U+02B0-02FF, U+0300-036F,
+                U+1D00-1D7F, U+1D80-1DBF, U+A700-A71F, U+02E5-02E9;
+}
+
+main{font-family:"DejaVu Serif IPA","Microsoft YaHei","PingFang SC",
+  "Hiragino Sans GB",system-ui,sans-serif}
+
+/* code / pre 自己设了等宽字体，不继承 main，得单独把带 unicode-range 的
+   那一层挂上去：ASCII 仍走 Consolas，只有音标码位换成 DejaVu Serif，
+   这样 <pre> 里那些靠空格对齐的 ASCII 图不会被比例字体冲散。 */
+main code, main pre, main td.c, main th.c{
+  font-family:"DejaVu Serif IPA",var(--mono),monospace}
+
+.ipa{font-family:"DejaVu Serif","DejaVu Serif IPA",var(--mono),monospace;
+  font-size:1.04em}
+.ipa code,.ipa b{font-family:inherit}
+
+/* 舌位图里的 i e ɛ u o a 也走 DejaVu Serif */
+.vw text{font-family:"DejaVu Serif","DejaVu Serif IPA",serif}
+
+/* 兜底：页面上所有 <pre> 都挂上带 unicode-range 的音标字体。
+   .out-wrap pre / .code-wrap pre 各有自己的 font-family 规则，
+   优先级高于 main pre，所以这里逐个点名，保证 pre 里的音标字符
+   也换成 DejaVu Serif，而 ASCII 仍走等宽、对齐不变。 */
+.out-wrap pre,.code-wrap pre,.two .side pre,main pre,pre{
+  font-family:"DejaVu Serif IPA",var(--mono),monospace}

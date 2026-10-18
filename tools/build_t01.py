@@ -182,7 +182,7 @@ Unicode 里这两个都有独立码位：
 <p>这是一个民间合体字，把四个字挤进一个字的位置：</p>
 
 <figure class="fig">
-  <img src="assets/zhaocaijinbao.webp"
+  <img src="assets/img/zhaocaijinbao.webp"
        alt="招财进宝合体字：把「招财进宝」四个字挤进一个字的位置，笔画相互借用、偏旁共用"
        width="715" height="800" loading="lazy" decoding="async">
   <figcaption><b>招财进宝</b>合体字 —— 四个字共用一个字形的空间，
@@ -650,7 +650,7 @@ HTML = """<!DOCTYPE html>
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>T01 · 初识回鹘蒙文</title>
 <link rel="stylesheet" href="@@CSS@@">
-<link rel="stylesheet" href="assets/t01.css">
+<link rel="stylesheet" href="assets/css/t01.css">
 </head>
 <body>
 <button id="tocToggle">目录</button>

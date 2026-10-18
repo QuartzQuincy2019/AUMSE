@@ -59,7 +59,7 @@ else:
         print("  ! ① 没找到 lead-msg-t::before 规则")
 
 # ------------------------------------------------- ② T 篇挂上 series-theme
-LINK = '<link rel="stylesheet" href="assets/series-theme.css">'
+LINK = '<link rel="stylesheet" href="assets/css/series-theme.css">'
 n = 0
 for f in ("t01.html", "t02.html",
           "t03.html"):

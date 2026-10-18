@@ -44,12 +44,12 @@ SHELL = """<!DOCTYPE html>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>前端 · @@TITLE@@</title>
-<link rel="stylesheet" href="assets/fe_base.css">
-<link rel="stylesheet" href="assets/tg_L.css">
-<link rel="stylesheet" href="assets/tg_D.css">
-<link rel="stylesheet" href="assets/series-theme.css">
-<link rel="stylesheet" href="assets/fe_09.css">
-<link rel="stylesheet" href="assets/fe-dark.css">
+<link rel="stylesheet" href="assets/css/fe_base.css">
+<link rel="stylesheet" href="assets/css/tg_L.css">
+<link rel="stylesheet" href="assets/css/tg_D.css">
+<link rel="stylesheet" href="assets/css/series-theme.css">
+<link rel="stylesheet" href="assets/css/fe_09.css">
+<link rel="stylesheet" href="assets/css/fe-dark.css">
 </head>
 <body data-series="FE">
 <script>
@@ -69,7 +69,7 @@ m.content=d?'dark light':'light dark';document.head.appendChild(m);})();
 /* 本页数据。正文里的 <h2 id="…"> 会被渲染器自动收进左侧目录。 */
 window.__FE_PAGE__ = @@DATA@@;
 </script>
-<script src="assets/fe-data.js"></script>
+<script src="assets/js/fe-data.js"></script>
 </body>
 </html>
 """

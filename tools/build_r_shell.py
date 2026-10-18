@@ -113,7 +113,7 @@ TAIL = """<!-- NAV-AUTO -->
   sync();
 }})();
 </script>
-<script src="assets/series-common.js"></script>
+<script src="assets/js/series-common.js"></script>
 </body>
 </html>
 """
@@ -125,7 +125,7 @@ HEAD = """<!DOCTYPE html>
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>{num} · {title}</title>
 <link rel="stylesheet" href="assets/{css}">
-<link rel="stylesheet" href="assets/series-theme.css">
+<link rel="stylesheet" href="assets/css/series-theme.css">
 
 </head>
 <body class="rseries" data-series="R">

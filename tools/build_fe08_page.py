@@ -6,7 +6,7 @@
 走的是前端系列既有的两级流水线：
     ① build_fe.build()   把正文 + 目录套进完整页面模板
     ② 再抽成数据壳       把 <main> 里的正文存进 window.__FE_PAGE__.body
-                        由 assets/fe-data.js 在运行时生成目录与整页 DOM
+                        由 assets/js/fe-data.js 在运行时生成目录与整页 DOM
 
 为什么只动 FE-08
     已有的 7 篇壳是「先转壳、后补示例」的产物 —— 直接重跑
@@ -38,12 +38,12 @@ SHELL = """<!DOCTYPE html>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>前端 · @@TITLE@@</title>
-<link rel="stylesheet" href="assets/fe_base.css">
-<link rel="stylesheet" href="assets/tg_L.css">
-<link rel="stylesheet" href="assets/tg_D.css">
-<link rel="stylesheet" href="assets/series-theme.css">
-<link rel="stylesheet" href="assets/fe_08.css">
-<link rel="stylesheet" href="assets/fe-dark.css">
+<link rel="stylesheet" href="assets/css/fe_base.css">
+<link rel="stylesheet" href="assets/css/tg_L.css">
+<link rel="stylesheet" href="assets/css/tg_D.css">
+<link rel="stylesheet" href="assets/css/series-theme.css">
+<link rel="stylesheet" href="assets/css/fe_08.css">
+<link rel="stylesheet" href="assets/css/fe-dark.css">
 </head>
 <body data-series="FE">
 <script>
@@ -63,7 +63,7 @@ m.content=d?'dark light':'light dark';document.head.appendChild(m);})();
 /* 本页数据。正文里的 <h2 id="…"> 会被渲染器自动收进左侧目录。 */
 window.__FE_PAGE__ = @@DATA@@;
 </script>
-<script src="assets/fe-data.js"></script>
+<script src="assets/js/fe-data.js"></script>
 </body>
 </html>
 """

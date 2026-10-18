@@ -3,9 +3,9 @@
 
 涉及四处：
   1. tools/series_data.py            FE_PAGES（首页卡片 + 分组计数）
-  2. assets/series-common.js         PAGES（非 FE 页尾的「本系列」用不到 FE，
+  2. assets/js/series-common.js         PAGES（非 FE 页尾的「本系列」用不到 FE，
                                      但「全部系列」的 FE 计数要用）
-  3. assets/fe-data.js               SERIES_FILES（「全部系列」篇数与跳转目标）
+  3. assets/js/fe-data.js               SERIES_FILES（「全部系列」篇数与跳转目标）
   4. 各 FE 页的 __FE_PAGE__.series     「本系列」小目录
 
 第 4 项单独由 add_fe08_to_series.py 的同类逻辑处理；

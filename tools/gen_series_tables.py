@@ -1,11 +1,11 @@
 # -*- coding: utf-8 -*-
-"""从 tools/series_data.py 生成 assets/series-common.js 与 assets/fe-data.js 里的篇目表。
+"""从 tools/series_data.py 生成 assets/js/series-common.js 与 assets/js/fe-data.js 里的篇目表。
 
 为什么要有这个生成器
     同一份篇目数据原来散在**三处**手写副本里：
         tools/series_data.py          权威来源
-        assets/series-common.js       PAGES（非 FE 页尾的「本系列」「全部系列」）
-        assets/fe-data.js             SERIES_FILES（FE 页尾的「全部系列」）
+        assets/js/series-common.js       PAGES（非 FE 页尾的「本系列」「全部系列」）
+        assets/js/fe-data.js             SERIES_FILES（FE 页尾的「全部系列」）
     于是每次加篇目都要改好几处，漏一处就出问题。本会话已经栽过三次：
         · FE 页尾的「相关 · R」一直点不动（fe-data.js 里 f: null）
         · 各 FE 页 series 条数 8 / 9 不一致
@@ -136,7 +136,7 @@ def main():
     check = "--check" in sys.argv
 
     # ---------- series-common.js 的 PAGES ----------
-    p1 = os.path.join(A, "series-common.js")
+    p1 = os.path.join(A, "js", "series-common.js")
     t1 = io.open(p1, encoding="utf-8").read()
     new1 = render_pages()
     out1, old1 = splice(t1, "PAGES", new1, "  ")
@@ -145,7 +145,7 @@ def main():
         return
 
     # ---------- fe-data.js 的 SERIES_FILES ----------
-    p2 = os.path.join(A, "fe-data.js")
+    p2 = os.path.join(A, "js", "fe-data.js")
     t2 = io.open(p2, encoding="utf-8").read()
     new2 = render_series_files()
     out2, old2 = splice(t2, "SERIES_FILES", new2, "  ")

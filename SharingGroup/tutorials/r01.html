@@ -4,11 +4,11 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>R01 · 字体设计里的几个基本概念</title>
-<link rel="stylesheet" href="assets/genelayout.css">
-<link rel="stylesheet" href="assets/r01.css">
-<link rel="stylesheet" href="assets/series-theme.css">
-<link rel="stylesheet" href="assets/tg_L.css">
-<link rel="stylesheet" href="assets/tg_D.css">
+<link rel="stylesheet" href="assets/css/genelayout.css">
+<link rel="stylesheet" href="assets/css/r01.css">
+<link rel="stylesheet" href="assets/css/series-theme.css">
+<link rel="stylesheet" href="assets/css/tg_L.css">
+<link rel="stylesheet" href="assets/css/tg_D.css">
 
 </head>
 <body class="rseries" data-series="R">
@@ -45,7 +45,7 @@
 <p>先看一张图。它是本篇的核心，后面每一节都在拆解图上的某一条线：</p>
 
 <figure class="fig">
-  <img class="fig-img" src="assets/RT_八根线2.awebp" width="1512" height="424"
+  <img class="fig-img" src="assets/img/RT_八根线2.awebp" width="1512" height="424"
        alt="字体度量：顶线、上悬线、大写字高线、主线、中线、基线、下悬线、底线">
   <figcaption><b>字体的八条水平参考线</b>（示例字体 MiLanPro，文字 Xiaomi Mix）。<br>
   每一条线都有自己的名字，字体里的每个字形都挂在这套坐标系上。</figcaption>
@@ -130,7 +130,7 @@
 它是字形「站上去」的那条线，也是字体的<b>原点</b>（<code>y = 0</code>）。</p>
 
 <figure class="fig">
-  <img class="fig-img" src="assets/RT_八根线.awebp" width="1512" height="320"
+  <img class="fig-img" src="assets/img/RT_八根线.awebp" width="1512" height="320"
        alt="字体度量与具体数值：行高 214px、上悬线距 110px、x 字高 49px、下悬线距 54px">
   <figcaption><b>同一张图，这次看数值</b>：行高 <b>214px</b>、
   上悬线距 <b>110px</b>、下悬线距 <b>54px</b>、大写字高 <b>68px</b>、
@@ -171,14 +171,14 @@
 </div>
 
 <figure class="fig">
-  <img class="fig-img" src="assets/上悬线.awebp" width="425" height="166"
+  <img class="fig-img" src="assets/img/上悬线.awebp" width="425" height="166"
        alt="Ascenders 上悬线示意：A 的尖端、h 的竖笔、f 的顶端都碰到上悬线">
   <figcaption><b>上悬线（Ascenders）</b>。
   <code>A</code> 的尖、<code>h</code> 的竖笔顶、<code>f</code> 的上钩都碰到这条线。</figcaption>
 </figure>
 
 <figure class="fig">
-  <img class="fig-img" src="assets/下悬线.awebp" width="425" height="166"
+  <img class="fig-img" src="assets/img/下悬线.awebp" width="425" height="166"
        alt="Descenders 下悬线示意：g 的下圈和 y 的尾巴沉到基线以下">
   <figcaption><b>下悬线（Descenders）</b>。
   <code>g</code> 的下圈和 <code>y</code> 的尾巴都沉到基线以下。</figcaption>
@@ -281,7 +281,7 @@ x 字高       49px   ← 小写 x 到这里，只有大写的 72%
 <p>同一个字母 <code>A</code>，在不同字重下的样子：</p>
 
 <figure class="fig">
-  <img class="fig-img" src="assets/字重.awebp" width="1394" height="254"
+  <img class="fig-img" src="assets/img/字重.awebp" width="1394" height="254"
        alt="同一个字母 A 在 100 到 900 九种字重下的效果，笔画由细到粗">
   <figcaption><b>字重阶梯 100 → 900</b>。数值越小笔画越细；
   400 是常规（Regular），700 是粗体（Bold）。</figcaption>
@@ -454,6 +454,6 @@ UME 项目组内部教程 · R01《字体设计里的几个基本概念》<br>
   sync();
 })();
 </script>
-<script src="assets/series-common.js"></script>
+<script src="assets/js/series-common.js"></script>
 </body>
 </html>

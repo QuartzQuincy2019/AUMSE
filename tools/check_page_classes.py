@@ -30,6 +30,17 @@ except Exception:
     pass
 
 A = r"E:\QKMansion\CSX10\w\UME\SharingGroup\tutorials\assets"
+
+# ---- assets 已按类型分到 css/ img/ js/，这里统一兜底找 ----
+def resolve(name):
+    p = os.path.join(A, name)
+    if os.path.exists(p):
+        return p
+    for sub in ("css", "js", "img", "fonts"):
+        q = os.path.join(A, sub, name)
+        if os.path.exists(q):
+            return q
+    return p
 T = r"E:\QKMansion\CSX10\w\UME\SharingGroup\tutorials"
 TOOLS = os.path.dirname(os.path.abspath(__file__))
 
@@ -40,7 +51,7 @@ def selectors_of(files):
     """把若干样式表里出现过的选择器收集起来（去掉空白，便于子串匹配）。"""
     out = set()
     for f in files:
-        p = os.path.join(A, f)
+        p = resolve(f)
         if not os.path.exists(p):
             print("     !! 缺样式表 %s" % f)
             continue
@@ -96,9 +107,11 @@ def page_css_for(slug):
              if f.endswith(".html") and slug in f]
     for h in htmls:
         t = Io(os.path.join(T, h))
-        for m in re.finditer(r'<link[^>]*href="assets/([^"]+\.css)"', t):
+        for m in re.finditer(r'<link[^>]*href="assets/((?:css/)?[^"]+\.css)"', t):
             fn = m.group(1)
-            if fn not in COMMON:
+            # 链接现在一律是 css/xxx.css；COMMON 里存的是不带前缀的名字，
+            # 所以比较前先剥掉子目录，否则 genelayout 会被当成「本页样式表」。
+            if fn.rsplit('/', 1)[-1] not in COMMON:
                 return fn, h
     return None, None
 

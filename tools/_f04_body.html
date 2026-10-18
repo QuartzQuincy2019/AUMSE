@@ -12,9 +12,9 @@ Ninja、GNU Make、MSBuild。别怕，它们其实只是<b>同一条流水线上
 <p>先看全貌。这张图是这一篇的地图，后面每一节只放大其中一层。</p>
 
 <div class="pfig">
-  <img class="pl" src="assets/pro.svg"
+  <img class="pl" src="assets/img/pro.svg"
        alt="四层流水线：项目描述（CMakeLists.txt 或 .pro）→ 生成器（CMake 或 qmake）→ 构建文件（build.ninja / Makefile / .sln+.vcxproj）→ 构建引擎（Ninja / GNU Make / MSBuild）→ 编译器驱动（g++ 或 cl.exe）">
-  <img class="pd" src="assets/pro_nd.svg"
+  <img class="pd" src="assets/img/pro_nd.svg"
        alt="同上的暗色版本：四层流水线">
   <p class="pcap">图里的箭头就是<b>数据流</b>：上一层的产物是下一层的输入。
   竖着读一遍，就是一次构建的完整路径。</p>

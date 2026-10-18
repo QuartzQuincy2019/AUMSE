@@ -2,7 +2,7 @@
 """把三篇 T 接到统一主题上，并完成用户要求的其余改动。
 
 改动清单（对应用户 1~5 条）：
-  1. 整篇金色渐变背景 —— 三篇都 <link> assets/t-theme.css（最后加载）
+  1. 整篇金色渐变背景 —— 三篇都 <link> assets/css/t-theme.css（最后加载）
      并加 body class="tseries"；T02 去掉 class="fseries"（覆盖旧的蓝色皮肤）
   2. 暗色模式适配 —— 由 t-theme.css 的 prefers-color-scheme 段完成；
      这里额外插一段**极早执行**的脚本，先按系统偏好定好配色方案，
@@ -29,7 +29,7 @@ FILES = ["t01.html",
          "t02.html",
          "t03.html"]
 
-THEME_LINK = '<link rel="stylesheet" href="assets/t-theme.css">'
+THEME_LINK = '<link rel="stylesheet" href="assets/css/t-theme.css">'
 COMMON_JS = '<script src="assets/t-common.js"></script>'
 
 # 极早执行：先定配色方案，避免暗色模式下的白闪

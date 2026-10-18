@@ -68,7 +68,7 @@ def main():
     for fn in sorted(os.listdir(T)):
         if not fn.endswith(".html"):
             continue
-        # FE 系列的正文是运行时由 assets/fe-data.js 生成的，
+        # FE 系列的正文是运行时由 assets/js/fe-data.js 生成的，
         # 静态 HTML 里本来就没有内容标签，查了必然全红。
         if fn.startswith("fe-"):
             continue
