@@ -30,10 +30,11 @@ UME 项目组内部教程 · A01《HarfBuzz 及其基础用法》<br>
 NEW = """<footer>
 UME 项目组内部教程 · A01《HarfBuzz 及其基础用法》<br>
 文中的字形序列、推进量、簇号与方向对照，均由
-<b>uharfbuzz 14.6.0</b>（HarfBuzz 14.6.0）配合 <b>fontTools 4.67.0</b>，
-在 <code>Noto Sans Mongolian</code>（UPEM 1000）、<code>Segoe UI</code>、
-<code>Arial</code>、<code>Times New Roman</code> 上实际运行得出。<br>
-第 15 节的圣书体示例由 <b>MdCRndr</b> 配 <b>New Gardiner 3.06</b>
+<b>uharfbuzz 14.6.0</b>（HarfBuzz 14.6.0）配合 <b>fontTools 4.67.0</b> 实测得出，
+字体为 <code>Noto Sans Mongolian</code>（UPEM 1000）、<code>Shobhika</code>、
+<code>Amiri</code>、<code>Segoe UI</code>、<code>Arial</code>、<code>Times New Roman</code>。<br>
+手册引文出自 <a href="https://harfbuzz.github.io/">harfbuzz.github.io</a>；
+第 17 节的圣书体示例由 <b>MdCRndr</b> 配 <b>New Gardiner 3.06</b>
 （Mark-Jan Nederhof，OFL 1.1）实际渲染。<br>
 C++ 片段是按接口签名写的说明性代码，<b>本机未安装 HarfBuzz 开发库，未编译</b>；
 代码示例以 <b>Consolas</b> 等宽字体呈现。
