@@ -527,6 +527,162 @@ painter.translate(width - inset, top);</pre>
 </div>
 
 
+
+<h3>两个留白各留的是哪一块</h3>
+
+<p>「右边留白」和「顶端留白」听起来像内边距，其实是<b>两块位置</b>。
+下面一张图把它们都画出来：外面的矩形是画布，里面的金色带与蓝色带就是这两处留白。</p>
+
+<figure class="geomfig">
+  <canvas id="geom1" width="760" height="1040"></canvas>
+  <figcaption>
+    <b class="g-band">金色带</b>＝90 的右边留白：竖排后「字身」（基线以上的部分）
+    落在这里，所以要留够。<br>
+    <b class="b-band">蓝色带</b>＝24 的顶端留白：首字的基线离画布顶边 24px。<br>
+    金色十字就是基点 <code>(width − 90, 24)</code>。
+  </figcaption>
+</figure>
+
+<script>
+/* 「两个留白」几何示意图：一张图里画完画布、两块留白、基点与文字列 */
+(function () {
+  var cv = document.getElementById("geom1");
+  if (!cv) return;
+
+  var WORD = "\u182E\u1823\u1829\u182D\u1823\u182F";
+  var DPR = Math.min(window.devicePixelRatio || 1, 2);
+
+  function arrowHead(ctx, x, y, ang) {
+    var s = 5;
+    ctx.beginPath();
+    ctx.moveTo(x, y);
+    ctx.lineTo(x - s * Math.cos(ang - 0.4), y - s * Math.sin(ang - 0.4));
+    ctx.lineTo(x - s * Math.cos(ang + 0.4), y - s * Math.sin(ang + 0.4));
+    ctx.closePath();
+    ctx.fill();
+  }
+  function dimH(ctx, x1, x2, y, label) {          /* 水平尺寸线 */
+    ctx.strokeStyle = "#8a6410"; ctx.fillStyle = "#8a6410"; ctx.lineWidth = 1;
+    ctx.beginPath(); ctx.moveTo(x1, y); ctx.lineTo(x2, y); ctx.stroke();
+    arrowHead(ctx, x1, y, Math.PI);
+    arrowHead(ctx, x2, y, 0);
+    ctx.font = '600 11px Consolas,monospace';
+    ctx.textAlign = "center"; ctx.textBaseline = "bottom";
+    ctx.fillText(label, (x1 + x2) / 2, y - 4);
+    ctx.textAlign = "start";
+  }
+  function dimV(ctx, x, y1, y2, label) {          /* 竖直尺寸线 */
+    ctx.strokeStyle = "#8a6410"; ctx.fillStyle = "#8a6410"; ctx.lineWidth = 1;
+    ctx.beginPath(); ctx.moveTo(x, y1); ctx.lineTo(x, y2); ctx.stroke();
+    arrowHead(ctx, x, y1, -Math.PI / 2);
+    arrowHead(ctx, x, y2, Math.PI / 2);
+    ctx.font = '600 11px Consolas,monospace';
+    ctx.textAlign = "right"; ctx.textBaseline = "middle";
+    ctx.fillText(label, x - 5, (y1 + y2) / 2);
+    ctx.textAlign = "start";
+  }
+
+  function draw() {
+    var w = cv.clientWidth || 380, h = cv.clientHeight || 520;
+    cv.width = Math.round(w * DPR);
+    cv.height = Math.round(h * DPR);
+    var ctx = cv.getContext("2d");
+    ctx.setTransform(DPR, 0, 0, DPR, 0, 0);
+    ctx.clearRect(0, 0, w, h);
+
+    /* 画布矩形 */
+    var padL = 46, padR = 24, padT = 40, padB = 40;
+    var x0 = padL, y0 = padT, x1 = w - padR, y1 = h - padB;
+    var W = x1 - x0, H = y1 - y0;
+    var IN_R = 90, IN_T = 24;                 /* 与正文代码里的 90 / 24 一致 */
+
+    ctx.fillStyle = "#fffdf6";
+    ctx.fillRect(x0, y0, W, H);
+
+    /* 右侧留白带（金色） */
+    ctx.fillStyle = "rgba(200,160,58,.20)";
+    ctx.fillRect(x1 - IN_R, y0, IN_R, H);
+    /* 顶部留白带（蓝色） */
+    ctx.fillStyle = "rgba(70,110,190,.14)";
+    ctx.fillRect(x0, y0, W, IN_T);
+
+    /* 画布边框 */
+    ctx.strokeStyle = "#c8a03a"; ctx.lineWidth = 2;
+    ctx.strokeRect(x0 + 1, y0 + 1, W - 2, H - 2);
+
+    /* 文字列：translate 到基点后 rotate(90)，与正文代码一一对应 */
+    ctx.save();
+    ctx.beginPath(); ctx.rect(x0, y0, W, H); ctx.clip();
+    ctx.translate(x1 - IN_R, y0 + IN_T);
+    ctx.rotate(Math.PI / 2);
+    ctx.fillStyle = "#1a1509";
+    ctx.font = '40px "UME Mongolian","Noto Sans Mongolian",sans-serif';
+    ctx.textBaseline = "alphabetic";
+    var adv = ctx.measureText(WORD).width + 8;
+    for (var k = 0; k < 3; k++) ctx.fillText(WORD, k * adv, 0);
+    ctx.restore();
+
+    /* 基线（细虚线）：基点往右是 ascent，往左是 descent */
+    var px = x1 - IN_R, py = y0 + IN_T;
+    ctx.save();
+    ctx.setLineDash([4, 3]);
+    ctx.strokeStyle = "rgba(138,100,16,.55)";
+    ctx.lineWidth = 1;
+    ctx.beginPath();
+    ctx.moveTo(px, py); ctx.lineTo(px, y1);
+    ctx.stroke();
+    ctx.restore();
+
+    /* 基点十字（不写文字，避免和带内标签打架；说明交给图注） */
+    ctx.strokeStyle = "#8a6410"; ctx.lineWidth = 1.5;
+    ctx.beginPath();
+    ctx.moveTo(px - 9, py); ctx.lineTo(px + 9, py);
+    ctx.moveTo(px, py - 9); ctx.lineTo(px, py + 9);
+    ctx.stroke();
+    ctx.beginPath(); ctx.arc(px, py, 3.5, 0, Math.PI * 2);
+    ctx.fillStyle = "#c8a03a"; ctx.fill();
+
+    /* 尺寸标注 */
+    dimH(ctx, x0, x1, y1 + 16, "width");
+    dimH(ctx, x1 - IN_R, x1, y0 - 14, "90");
+    dimV(ctx, x0 - 14, y0, y0 + IN_T, "24");
+
+    /* 24 那条带子里只放四个小字，左对齐，避开基点 */
+    ctx.fillStyle = "#33507f";
+    ctx.font = '600 10px "Microsoft YaHei","PingFang SC",sans-serif';
+    ctx.textAlign = "left"; ctx.textBaseline = "middle";
+    ctx.fillText("顶端留白", x0 + 6, y0 + IN_T / 2);
+
+    /* 金色带里的说明：竖排一行，贴带子右缘，避开文字墨迹 */
+    ctx.save();
+    ctx.translate(x1 - 13, y0 + H / 2);
+    ctx.rotate(-Math.PI / 2);
+    ctx.fillStyle = "#8a6410";
+    ctx.font = '600 11px "Microsoft YaHei","PingFang SC",sans-serif';
+    ctx.textAlign = "center"; ctx.textBaseline = "middle";
+    ctx.fillText("右边留白 90", 0, 0);
+    ctx.restore();
+
+    window.__geomDone = true;
+  }
+
+  function boot() {
+    if (document.fonts && document.fonts.load) {
+      document.fonts.load('40px "UME Mongolian"').then(draw).catch(draw);
+    } else {
+      draw();
+    }
+  }
+  if (document.readyState === "complete") boot();
+  else window.addEventListener("load", boot);
+
+  var t2 = null;
+  window.addEventListener("resize", function () {
+    clearTimeout(t2); t2 = setTimeout(draw, 180);
+  });
+})();
+</script>
+
 <h3>把基点画出来：1 个正确 + 3 个错误</h3>
 
 <p>「旋转基点选在哪儿」这件事，光看代码看不出来。下面四个面板各画一次，
