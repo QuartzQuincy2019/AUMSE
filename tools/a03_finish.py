@@ -22,13 +22,13 @@ P = r"E:\QKMansion\CSX10\w\UME\SharingGroup\tutorials\a03.html"
 t = io.open(P, encoding="utf-8").read()
 
 OLD = """<footer>
-UME 项目组内部教程 · A03《从 Notepad 到蒙文编辑器》<br>
+UME 项目组内部教程 · A03《懒惰的落榜美术生——文本编辑器》<br>
 文中所有输出与报错，均使用 g++ 13.1.0（<code>-std=c++17</code>）实际编译运行核对；
 代码示例以 <b>Consolas</b> 等宽字体呈现。
 </footer>"""
 
 NEW = """<footer>
-UME 项目组内部教程 · A03《从 Notepad 到蒙文编辑器》<br>
+UME 项目组内部教程 · A03《懒惰的落榜美术生——文本编辑器》<br>
 文中的字形号、推进量、切分对照，由 <b>uharfbuzz 14.6.0</b> 配合
 <code>NotoSansMongolian-Regular.ttf</code>（UPEM 1000）实测；Qt 侧的行为
 （词内改字号切成 3 个 glyph run、行宽 186 → 206）由 <b>Qt 6.12.0</b>
