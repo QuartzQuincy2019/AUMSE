@@ -268,7 +268,7 @@
 
 <p>到这里，前面说的都是任何编辑器都有的东西。蒙文从这一节开始插进来。</p>
 
-<p>屏幕上那个词有 <b>6 个码位</b>，但只有 <b>5 个字形</b>：</p>
+<p>屏幕上这个词 <span lang="mn-Mong">ᠮᠣᠩᠭᠣᠯ</span> 有 <b>6 个码位</b>，但只有 <b>5 个字形</b>：</p>
 
 <table>
 <thead><tr><th style="width:26%">字形</th><th style="width:16%">推进量</th><th style="width:18%">码位</th><th>说明</th></tr></thead>
@@ -325,7 +325,7 @@
 
 <h3>不钳制会怎样：实测</h3>
 
-<p>假设实现偷懒，退格老实删一个码位 —— 从那个词里只删掉 <code>O</code>，
+<p>假设实现偷懒，退格老实删一个码位 —— 从 <span lang="mn-Mong">ᠮᠣᠩᠭᠣᠯ</span> 里只删掉 <code>O</code>（第二个码位），
 留下 <code>GA</code> 后面直接跟 <code>L</code>：</p>
 
 <div class="out-wrap">
@@ -411,7 +411,7 @@ u182F.L.fina      24.52
 
 <h3>为什么必须放大：删末尾，前面的字会变</h3>
 
-<p>还是那个词，删掉最后一个码位（改动范围只有一个码位）：</p>
+<p>回到第 9 节那个词 <span lang="mn-Mong">ᠮᠣᠩᠭᠣᠯ</span>（6 个码位 / 5 个字形，64px 下总宽 185.59），删掉末尾的 <span lang="mn-Mong">ᠯ</span> —— 改动范围<b>只有一个码位</b>：</p>
 
 <table>
 <thead><tr><th style="width:34%"></th><th style="width:22%">删之前</th><th>删之后</th></tr></thead>
@@ -447,11 +447,11 @@ u182F.L.fina      24.52
 <div class="card key">
   <div class="card-t">脏矩形必须覆盖「旧 ∪ 新」</div>
   <p>因为<b>旧内容必须被擦掉</b>。只按新内容算范围，旧内容多出来的那一截就会留在屏幕上。</p>
-  <p>那个词的例子里：</p>
+  <p>拿 <span lang="mn-Mong">ᠮᠣᠩᠭᠣᠯ</span> 这个词说（64px，从 x = 0 画到 x = 185.59），删掉末尾的 <span lang="mn-Mong">ᠯ</span> 之后：</p>
   <ul>
-    <li>新内容到 152.37 为止</li>
-    <li>旧内容到 185.59 为止</li>
-    <li>→ 脏矩形必须到 <b>185.59</b></li>
+    <li>新内容只有四个字形，画到 <b>152.37</b> 为止</li>
+    <li>旧内容有五个字形，画到 <b>185.59</b> 为止</li>
+    <li>→ 脏矩形必须到 <b>185.59</b>，否则 152.37 ~ 185.59 这一截留下残影</li>
   </ul>
 </div>
 

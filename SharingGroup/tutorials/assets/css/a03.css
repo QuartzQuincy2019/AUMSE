@@ -94,6 +94,14 @@ main code,main kbd,main samp,.code-wrap pre,.code-wrap .bar,
   background:var(--sfc);font-size:12.5px;line-height:1.6}
 .mem .slot:last-child{border-right:0}
 
+
+/* 行内蒙文。
+   本页讲的是**横排坐标**（x 位置、186px 这类），所以行内蒙文也用横排，
+   与第 3 节那几张屏幕示意图的朝向保持一致。
+   ⚠ 必须指定 "UME Mongolian"：中文字体没有蒙文字母，会显示成豆腐块。 */
+[lang="mn-Mong"]{font-family:"UME Mongolian","Noto Sans Mongolian",serif;
+  font-size:1.12em;line-height:1.4;margin:0 1px}
+
 @media (max-width:720px){
   .fig img{padding:6px 8px}
   .screen{font-size:11.5px;padding:9px 10px}
