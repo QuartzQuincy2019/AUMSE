@@ -809,6 +809,201 @@ painter.translate(width - inset, top);</pre>
 })();
 </script>
 
+
+<h3>换列：下一列的基线在哪儿</h3>
+
+<p>蒙文竖排，<b>列是横着走的</b> —— 第一列在最左，写满之后往<b>右</b>长。
+（CSS 里就是 <code>writing-mode: vertical-lr</code>，项目 <code>web/UME.html</code>
+用的也是它。）</p>
+
+<div class="card warn">
+  <div class="card-t">前面那段示例把第一列画在了右边</div>
+  <p><code>translate(width - 90, 24)</code> 里的 <code>width - 90</code>
+  是为了让单列演示好看，把列摆在画布右侧。<b>正式排版不是这样</b>：
+  第一列在左边，往右长。下面重新给一遍。</p>
+</div>
+
+<p>列距不能写死，要从字体的行距推出来：</p>
+
+<div class="code-wrap">
+  <div class="bar"><span>column.cpp —— 第 n 列的基线</span><button class="cp">复制</button></div>
+<pre>const qreal ascent     = raw.ascent();      /* 64px 下 93 */
+const qreal descent    = raw.descent();     /* 64px 下 19 */
+const qreal gap        = 8;                 /* 列间距，自己定 */
+const qreal colAdvance = ascent + descent + gap;   /* 列距 = 行高 + 间距 */
+const qreal firstX     = descent + gap / 2;        /* 左边留白：给 descent */
+
+for (int c = 0; c &lt; columnCount; ++c) {
+    painter.save();
+    painter.translate(firstX + c * colAdvance, top);  /* ← 第 c 列的基线 x */
+    painter.rotate(90);
+    drawColumn(c);
+    painter.restore();
+}</pre>
+</div>
+
+<figure class="geomfig">
+  <canvas id="colgeom" width="900" height="1040"></canvas>
+  <figcaption>
+    三条虚线是三个<b>基线</b>；相邻基线之间的距离就是 <code>colAdvance</code>。<br>
+    每条基线的<b>左边</b>留 <code>descent</code>、<b>右边</b>留 <code>ascent</code>，
+    两列之间再留 <code>gap</code> —— 三者相加正好是列距。
+  </figcaption>
+</figure>
+
+<table>
+<thead><tr><th style="width:22%">量</th><th style="width:24%">64px 下的值</th>
+<th>为什么是这个</th></tr></thead>
+<tbody>
+<tr><td><code>colAdvance</code></td><td class="c">93 + 19 + 8 = <b>120</b></td>
+    <td>一列占的总宽度。<b>不是字号</b>，是行高加间距</td></tr>
+<tr><td><code>firstX</code></td><td class="c">19 + 4 = <b>23</b></td>
+    <td>第一列的基线离画布左边多远。左侧要放得下 <code>descent</code></td></tr>
+<tr><td>第 n 列的基线</td><td class="c">23 + n × 120</td>
+    <td>每加一列，基线右移一个 <code>colAdvance</code></td></tr>
+<tr><td>右边留白</td><td class="c">≥ 93</td>
+    <td>最后一列的 <code>ascent</code> 要放得下（这就是前文那个 90 的来历）</td></tr>
+</tbody>
+</table>
+
+<h3>换列时的光标与命中</h3>
+
+<p>列的方向定了，光标与点击才有依据：</p>
+
+<table>
+<thead><tr><th style="width:26%">操作</th><th>规则</th></tr></thead>
+<tbody>
+<tr><td>点击定位</td><td>先按 <code>x</code> 算列号：
+    <code>col = floor((x − firstX) / colAdvance)</code>；
+    再用 <code>y</code> 找列内偏移</td></tr>
+<tr><td>光标往右</td><td>直接换到下一列，<b>列内位置不变</b>（竖排里「右」就是下一列）</td></tr>
+<tr><td>光标往下到底</td><td>跳到下一列的 <b>顶端</b>，不是同高度</td></tr>
+<tr><td>列尾自动换列</td><td>下一字从新列的 <code>top</code> 开始，基线换成
+    <code>firstX + (c+1) × colAdvance</code></td></tr>
+</tbody>
+</table>
+
+<div class="card key">
+  <div class="card-t">换列是排版器的决定，不是绘制器的</div>
+  <p>「一段文字占几列、每列放多少个字、下一列从哪儿开始」——这些都属于
+  <b>⑤ 排版器</b>（A03 第 12 节）。</p>
+  <p>绘制层只回答一件事：<b>给我一列的基线 x，我把这一列画出来</b>。
+  所以上面那个循环里，<code>drawColumn(c)</code> 拿到的是一列的内容，
+  位置由 <code>firstX + c * colAdvance</code> 算 —— 两件事分开，换方向只要改一个公式。</p>
+</div>
+
+<script>
+/* 三个列的基线示意：画基线、descent/ascent 的边界、列距箭头 */
+(function () {
+  var cv = document.getElementById("colgeom");
+  if (!cv) return;
+  var WORD = "\u182E\u1823\u1829\u182D\u1823\u182F";
+  var DPR = Math.min(window.devicePixelRatio || 1, 2);
+  var FS = 26;
+  var AS = FS * 93 / 64, DE = FS * 19 / 64, GAP = 8;
+
+  function arrowHead(ctx, x, y, ang) {
+    var s = 5;
+    ctx.beginPath();
+    ctx.moveTo(x, y);
+    ctx.lineTo(x - s * Math.cos(ang - 0.4), y - s * Math.sin(ang - 0.4));
+    ctx.lineTo(x - s * Math.cos(ang + 0.4), y - s * Math.sin(ang + 0.4));
+    ctx.closePath(); ctx.fill();
+  }
+
+  function draw() {
+    var w = cv.clientWidth || 420, h = cv.clientHeight || 480;
+    cv.width = Math.round(w * DPR); cv.height = Math.round(h * DPR);
+    var ctx = cv.getContext("2d");
+    ctx.setTransform(DPR, 0, 0, DPR, 0, 0);
+    ctx.clearRect(0, 0, w, h);
+
+    var x0 = 34, y0 = 46, x1 = w - 20, y1 = h - 54;
+    var W = x1 - x0, H = y1 - y0;
+    var adv = AS + DE + GAP;
+    var firstX = x0 + DE + GAP / 2;
+    var n = Math.max(1, Math.floor((W - firstX - AS) / adv) + 1);
+    if (n > 4) n = 4;
+
+    /* 画布 */
+    ctx.fillStyle = "#fffdf6"; ctx.fillRect(x0, y0, W, H);
+    ctx.strokeStyle = "#c8a03a"; ctx.lineWidth = 2;
+    ctx.strokeRect(x0 + 1, y0 + 1, W - 2, H - 2);
+
+    for (var c = 0; c < n; c++) {
+      var bx = firstX + c * adv;
+      /* 这一列的占地：descent | 基线 | ascent */
+      ctx.fillStyle = "rgba(70,110,190,.10)";
+      ctx.fillRect(bx - DE, y0, DE, H);
+      ctx.fillStyle = "rgba(200,160,58,.18)";
+      ctx.fillRect(bx, y0, AS, H);
+
+      /* 基线 */
+      ctx.save();
+      ctx.setLineDash([4, 3]);
+      ctx.strokeStyle = "#8a6410"; ctx.lineWidth = 1;
+      ctx.beginPath(); ctx.moveTo(bx, y0); ctx.lineTo(bx, y1); ctx.stroke();
+      ctx.restore();
+
+      /* 文字 */
+      ctx.save();
+      ctx.beginPath(); ctx.rect(x0, y0, W, H); ctx.clip();
+      ctx.translate(bx, y0 + 16);
+      ctx.rotate(Math.PI / 2);
+      ctx.fillStyle = "#1a1509";
+      ctx.font = FS + 'px "UME Mongolian","Noto Sans Mongolian",sans-serif';
+      ctx.textBaseline = "alphabetic";
+      var a2 = ctx.measureText(WORD).width + 6;
+      for (var k = 0; k < 2; k++) ctx.fillText(WORD, k * a2, 0);
+      ctx.restore();
+
+      /* 基线编号 */
+      ctx.fillStyle = "#5f450a";
+      ctx.font = "600 10px Consolas,monospace";
+      ctx.textAlign = "center"; ctx.textBaseline = "top";
+      ctx.fillText("第 " + c + " 列", bx + AS / 2, y1 + 6);
+      ctx.textAlign = "start";
+    }
+
+    /* 列距尺寸线（两根相邻基线之间） */
+    if (n >= 2) {
+      var a = firstX, b = firstX + adv, yy = y0 - 16;
+      ctx.strokeStyle = "#8a6410"; ctx.fillStyle = "#8a6410"; ctx.lineWidth = 1;
+      ctx.beginPath(); ctx.moveTo(a, yy); ctx.lineTo(b, yy); ctx.stroke();
+      arrowHead(ctx, a, yy, Math.PI); arrowHead(ctx, b, yy, 0);
+      ctx.font = "600 10px Consolas,monospace";
+      ctx.textAlign = "center"; ctx.textBaseline = "bottom";
+      ctx.fillText("colAdvance", (a + b) / 2, yy - 4);
+      ctx.textAlign = "start";
+    }
+
+    /* 方向箭头：列从左往右 */
+    var ay = y1 + 30;
+    ctx.strokeStyle = "#33507f"; ctx.fillStyle = "#33507f"; ctx.lineWidth = 1.2;
+    ctx.beginPath(); ctx.moveTo(x0 + 10, ay); ctx.lineTo(x0 + 92, ay); ctx.stroke();
+    arrowHead(ctx, x0 + 92, ay, 0);
+    ctx.font = '600 10px "Microsoft YaHei","PingFang SC",sans-serif';
+    ctx.textAlign = "left"; ctx.textBaseline = "middle";
+    ctx.fillText("列从左往右长（vertical-lr）", x0 + 100, ay);
+    ctx.textAlign = "start";
+
+    window.__colDone = true;
+  }
+
+  function boot() {
+    if (document.fonts && document.fonts.load) {
+      document.fonts.load(FS + 'px "UME Mongolian"').then(draw).catch(draw);
+    } else draw();
+  }
+  if (document.readyState === "complete") boot();
+  else window.addEventListener("load", boot);
+  var t2 = null;
+  window.addEventListener("resize", function () {
+    clearTimeout(t2); t2 = setTimeout(draw, 180);
+  });
+})();
+</script>
+
 <h2 id="s10"><span class="n">10</span>取轮廓：从字形到路径</h2>
 
 <p>要描边、要做动画、要导出 SVG，就不能只画像素 —— 要拿到<b>轮廓</b>。
