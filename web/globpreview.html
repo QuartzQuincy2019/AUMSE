@@ -60,9 +60,9 @@ code{font-family:var(--mono);font-size:12px;background:var(--bg-code);
   writing-mode:vertical-lr;   /* 列自左向右 */
   direction:ltr;              /* 必须显式，否则继承 rtl 会让列序反转 */
   text-orientation:mixed;     /* 蒙文整块 vo=R，设 upright 会失去连写形态 */
-  font-family:"UME Mongolian",serif;
-  /* 基准字号 × 字体缩放。Baiti 的字面明显比 Noto 小，
-     同字号下墨迹高度只有约 1/1.2，靠 --mn-scale 补回来。 */
+  /* --mn-font / --mn-scale 由脚本按下面的「字体表」(MN_FONTS) 写进 :root，
+     这里只留兜底值。加字体只改那张表，CSS 一个字都不用动。 */
+  font-family:var(--mn-font,"UME Mongolian"),serif;
   font-size:calc(34px * var(--mn-scale,1));line-height:1;
   font-kerning:normal;font-variant-ligatures:normal;
   text-rendering:optimizeLegibility;
@@ -70,18 +70,19 @@ code{font-family:var(--mono);font-size:12px;background:var(--bg-code);
 }
 body.h-mode .gl{writing-mode:horizontal-tb}
 /* ---------------------------------------------------------------------
-   ⚠ Mongolian Baiti 是**微软的系统字体**（© Microsoft；部分字形 © 北京方正），
+   ⚠ 本机字体一律「只点名、不打包」
+   · Mongolian Baiti —— 微软系统字体（© Microsoft；部分字形 © 北京方正），
      许可证写明「Microsoft supplied font … Any other use is prohibited」。
-     微软字体 FAQ 允许的只有一件事：在 CSS font stack 里点它的名字 ——
-     因为「use」发生在装了该字体的设备上，不在服务器上。
+   · Menk * Tig / * StdEx Tig —— 内蒙古蒙科立字体（© 蒙科立）。
+     微软字体 FAQ 允许的只有一件事：在 font-family 串里点它的名字 ——
+     因为真正的「use」发生在装了该字体的这台机器上，不在服务器上。
      禁止：把字体拷到服务器（web font self-hosting）、转成 WOFF/WOFF2、再分发。
-     所以这里**只**写字体名 + 回退到内置的 Noto，仓库里不放它的任何副本。
+     所以本页对本机字体**只存族名**，仓库里不放任何一份副本。
+     内置那一支（Noto Sans Mongolian）是 SIL OFL 1.1，可自由内嵌，在 font/。
    --------------------------------------------------------------------- */
 
-body.use-baiti .gl{font-family:"Mongolian Baiti","UME Mongolian",serif}
-/* 100px 下墨迹高度实测：元音 A 79 vs 70、辅音 M 73 vs 58 ——
-   取 1.22 让两套字体的字面高度大致齐平（宽度差是 Baiti 本身的窄字形，不管） */
-body.use-baiti{--mn-scale:1.35}
+/* 字体族名与光学缩放全部由脚本的表驱动，CSS 不再写死任何一支本机字体：
+   见文件末尾的 MN_FONTS。 */
 
 table{border-collapse:collapse;width:100%;font-size:13px}
 th,td{border:1px solid var(--line);padding:0;text-align:center;vertical-align:middle}
@@ -143,7 +144,8 @@ thead th .hglyph{margin:2px auto 5px}
 .notes b{color:var(--fg)}
 .notes ul{margin:6px 0 0;padding-left:20px}
 .notes li{margin:5px 0}
-.warn{margin-top:10px;color:var(--red);font-size:12.5px}
+.warn{margin-top:10px;color:var(--red);font-size:12.5px;
+  border-left:3px solid currentColor;padding-left:9px;line-height:1.65}
 .hint{font-size:12.5px;color:var(--fg-3);margin:6px 0 0}
 
 
@@ -240,13 +242,14 @@ thead th .hglyph{margin:2px auto 5px}
     <div class="brand">globpreview<small>位置形态 · 元音组合</small></div>
     <div class="ctl">字体
       <select id="fontsel">
-        <option value="ume">UME Mongolian（内置）</option>
-        <option value="baiti">Mongolian Baiti（本机）</option>
+        <!-- 选项由脚本按 MN_FONTS 生成；这条只是脚本没跑起来时的兜底 -->
+        <option value="UME Mongolian">UME Mongolian（内置）</option>
       </select>
     </div>
     <div class="ctl">
       <button id="btn-orient">竖排</button>
       <button id="btn-cp" class="on">码位</button>
+      <button id="btn-check" title="当场量一次：这支字体有没有真的接管排版">校验</button>
       <button id="btn-clear">清标记</button>
       <button id="btn-copy">复制标记</button>
     </div>
@@ -323,7 +326,25 @@ thead th .hglyph{margin:2px auto 5px}
     <b>怎么用这张表</b>
     <ul>
       <li><b>形态由字体决定</b>：同一串在不同字体里可能给出不同结果，
-        所以顶部留了字体切换（内置 Noto / 本机 Baiti），方便对照。</li>
+        所以顶部留了字体切换 —— 内置 Noto / 微软 Baiti / 蒙科立 <b>Tig</b> 与
+        <b>StdEx</b> 各 28 款，共 58 个选项。各家字面高矮差得很远
+        （Hawang 与 Vyangga 差近一倍），所以按<b>等墨迹高度</b>给了每支一个缩放系数。</li>
+      <li><b>蒙科立那 56 款只收 91 个蒙文码位</b>：缺 <code>U+180F</code>(FVS4)、
+        托忒长元音、锡伯/满文字母与阿礼嘎礼。第 3、4 节里冒出空白格或回退字形
+        <b>不是页面坏了</b>，是那支字体本身没有这些码位 —— 这本身就是可比的结论。
+        要完整覆盖请切回 Noto 或 Baiti（两者都是 158/158）。</li>
+      <li><b>不确定字形来自哪支字体</b>：点顶栏「校验」当场量一次 ——
+        同一串蒙文在「目标字体 + 内置」与「只用内置」下宽度不同，才算那支字体接管了；
+        一次点完还会顺带把 58 支<b>全表自检</b>一遍。没装时浏览器自动回退到内置 Noto，
+        页面照常工作，所以本页<b>不做预判、也不在选项名后标注「未安装」</b>
+        （各浏览器探本机字体的行为不一致，预判容易全线误报）。</li>
+      <li><b>切了字体但字形没变</b>：最常见的原因是<b>同一族名装了两份</b> ——
+        蒙科立这套就装在 <code>HKLM</code>（系统级 8103）和 <code>HKCU</code>（用户级 8102）
+        两处且同名，<code>Menk Qagan Tig</code> 更是 <code>MQG8103</code> 与
+        <code>MQG8F02</code> 撞名，浏览器可能两边都匹配不上、直接回退。
+        先跑 <code>python tools/check_font_name_collisions.py</code> 看撞了哪些，
+        再用 <code>tools/remove_duplicate_user_fonts.ps1</code>（默认只预演、不加 <code>-Apply</code> 不动手）。
+        注意 <b>StdEx 那 28 款都没撞名</b>，可以拿它来验证这个猜测。</li>
       <li><b>ZWJ / ZWNJ 不占位</b>：<code>U+200D</code> 让两侧连上，
         <code>U+200C</code> 让两侧断开。它们不出字形，只影响形态选择。</li>
       <li><b>行宽只是线索</b>：连字通常会让推进量变小，但形态变化本身也会改变宽度。
@@ -352,6 +373,9 @@ const FVS  = [0x180B, 0x180C, 0x180D, 0x180F];
 
 const ch  = cp => String.fromCodePoint(cp);
 const hex = cp => cp.toString(16).toUpperCase().padStart(4, "0");
+/* 拼进 innerHTML 的字符串一律先转义（目前来源都是本文件的字体表，仍照做） */
+const esc = s => String(s).replace(/[&<>"]/g,
+  c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
 
 const VOWELS = [
   [0x1820,"A","阳性"], [0x1821,"E","阴性"], [0x1822,"I","中性"],
@@ -397,10 +421,13 @@ const CTXc = (ctx, cps) => CTX[ctx](cps.map(ch).join(""));
 const state = { ctx:"medi", showCp:true };
 
 /* ---------------- 量宽（只用于悬停提示） ---------------- */
+/* 也跟着 --mn-scale 放大：否则换一支字号换算不同的字体，
+   同一串量出来的数就没法横向比了（数字的绝对值无意义，比值才有）。 */
 const ruler = document.createElement("span");
 ruler.lang = "mn-Mong";
 ruler.style.cssText = "position:absolute;left:-99999px;top:0;white-space:pre;"
-  + "font-size:100px;line-height:1;writing-mode:horizontal-tb;direction:ltr;"
+  + "font-size:calc(100px * var(--mn-scale,1));line-height:1;"
+  + "writing-mode:horizontal-tb;direction:ltr;"
   + "font-family:var(--mn-font,'UME Mongolian'),serif";
 document.body.appendChild(ruler);
 const advance = str => { ruler.textContent = str; return ruler.getBoundingClientRect().width; };
@@ -632,27 +659,179 @@ function setCtx(k){
 
 function rebuildAll(){ buildPos(); buildVowel(); buildLoan(); buildFvs(); updateInput(); }
 
-function localFontAvailable(family){
-  /* 用拉丁样本：蒙文样本会被回退字体干扰（本机只有 Baiti 一支能排蒙文） */
-  const p = document.createElement("span");
-  p.style.cssText = "position:absolute;left:-9999px;top:0;white-space:nowrap;font-size:48px";
-  p.textContent = "MongolianBaiti";
-  document.body.appendChild(p);
-  p.style.fontFamily = "monospace";
-  const a = p.getBoundingClientRect().width;
-  p.style.fontFamily = '"' + family + '", monospace';
-  const b = p.getBoundingClientRect().width;
-  p.remove();
-  return Math.abs(b - a) > 0.5;
+/* =====================================================================
+   字体表 —— 本页唯一要维护的字体清单
+   ---------------------------------------------------------------------
+   f : 字体族名（CSS 里点名的那个，必须与 name 表 ID1 逐字一致）
+   s : 光学缩放。口径 = 等墨迹高度：以内置 Noto 的
+       U+1820「墨迹高 / upem」= 0.783 为基准，s = 0.783 / inkH(font)。
+       inkH 由 tools/list_local_mongolian_fonts.py 用 fontTools 量出。
+       必须换算：Hawang(0.604) 与 Vyangga(1.192) 的字面差近一倍，
+       同字号摆在一起，「谁粗谁细」的观感全是字号造成的假象。
+   c : 该字体 cmap 里 U+1800–U+18AA 已分配码位的覆盖数（共 158）。
+   g : 下拉框分组名。
+   加字体：往数组里加一行，CSS 与 HTML 都不用动。
+   ===================================================================== */
+const MN_FONTS = [
+  { f:"UME Mongolian",           s:1.00, c:158, g:"内置（可自由分发）",
+    label:"UME Mongolian（内置 Noto Sans Mongolian）" },
+  { f:"Mongolian Baiti",         s:1.14, c:158, g:"本机 · 微软" },
+
+  /* 蒙科立 Tig 系列：8102/8103 两代同名，取 v1.03；GSUB 带 rclt + calt */
+  { f:"Menk Amglang Tig",        s:1.21, c:91, g:"本机 · 蒙科立 Tig（28 款）" },
+  { f:"Menk BudunTig",           s:0.97, c:91, g:"本机 · 蒙科立 Tig（28 款）" },
+  { f:"Menk Doroge Tig",         s:0.86, c:91, g:"本机 · 蒙科立 Tig（28 款）" },
+  { f:"Menk Egulen Tig",         s:0.69, c:91, g:"本机 · 蒙科立 Tig（28 款）" },
+  { f:"Menk Erihe Tig",          s:0.76, c:91, g:"本机 · 蒙科立 Tig（28 款）" },
+  { f:"Menk Garqag Tig",         s:1.00, c:91, g:"本机 · 蒙科立 Tig（28 款）" },
+  { f:"Menk Har_a Tig",          s:1.03, c:91, g:"本机 · 蒙科立 Tig（28 款）" },
+  { f:"Menk Hawang Tig",         s:1.30, c:91, g:"本机 · 蒙科立 Tig（28 款）" },
+  { f:"Menk Hvlvsvn Tig",        s:1.05, c:91, g:"本机 · 蒙科立 Tig（28 款）" },
+  { f:"Menk Lhundb Tig",         s:1.01, c:91, g:"本机 · 蒙科立 Tig（28 款）" },
+  { f:"Menk Mcdvnbar Tig",       s:0.83, c:91, g:"本机 · 蒙科立 Tig（28 款）" },
+  { f:"Menk Narin Tig",          s:0.99, c:91, g:"本机 · 蒙科立 Tig（28 款）" },
+  { f:"Menk OnqaHar_a Tig",      s:0.82, c:91, g:"本机 · 蒙科立 Tig（28 款）" },
+  { f:"Menk Qagan Tig",          s:1.06, c:91, g:"本机 · 蒙科立 Tig（28 款）" },
+  { f:"Menk Qimed Tig",          s:1.18, c:91, g:"本机 · 蒙科立 Tig（28 款）" },
+  { f:"Menk Qimig Tig",          s:1.04, c:91, g:"本机 · 蒙科立 Tig（28 款）" },
+  { f:"Menk Qingming Tig",       s:0.99, c:91, g:"本机 · 蒙科立 Tig（28 款）" },
+  { f:"Menk Scnin Tig",          s:1.01, c:91, g:"本机 · 蒙科立 Tig（28 款）" },
+  { f:"Menk Sidam Tig",          s:0.85, c:91, g:"本机 · 蒙科立 Tig（28 款）" },
+  { f:"Menk Svgvnag Tig",        s:0.88, c:91, g:"本机 · 蒙科立 Tig（28 款）" },
+  { f:"Menk Svlbiya Tig",        s:0.77, c:91, g:"本机 · 蒙科立 Tig（28 款）" },
+  { f:"Menk Tegus Tig",          s:0.79, c:91, g:"本机 · 蒙科立 Tig（28 款）" },
+  { f:"Menk Tenigun Tig",        s:0.98, c:91, g:"本机 · 蒙科立 Tig（28 款）" },
+  { f:"Menk Tvgvrai Tig",        s:1.04, c:91, g:"本机 · 蒙科立 Tig（28 款）" },
+  { f:"Menk Ujug Tig",           s:1.00, c:91, g:"本机 · 蒙科立 Tig（28 款）" },
+  { f:"Menk Vran Tig",           s:0.86, c:91, g:"本机 · 蒙科立 Tig（28 款）" },
+  { f:"Menk Vyangga Tig",        s:0.66, c:91, g:"本机 · 蒙科立 Tig（28 款）" },
+  { f:"Menk Xvsiga Tig",         s:0.82, c:91, g:"本机 · 蒙科立 Tig（28 款）" },
+
+  /* 蒙科立 StdEx 系列：8200 代 v2.002，GB/T 25914-2023 标准编码。
+     注意它的 GSUB 只有 rlig，没有 rclt —— 成形靠 rlig + init/medi/fina/isol，
+     所以本页那套「用 ZWJ 逼形态」的做法在这里同样有效，但字形可能与 Tig 不同。 */
+  { f:"Menk Amgalang StdEx Tig",  s:1.21, c:91, g:"本机 · 蒙科立 StdEx（28 款）" },
+  { f:"Menk Budun StdEx Tig",     s:0.97, c:91, g:"本机 · 蒙科立 StdEx（28 款）" },
+  { f:"Menk Doroge StdEx Tig",    s:0.86, c:91, g:"本机 · 蒙科立 StdEx（28 款）" },
+  { f:"Menk Egulen StdEx Tig",    s:0.69, c:91, g:"本机 · 蒙科立 StdEx（28 款）" },
+  { f:"Menk Erihe StdEx Tig",     s:0.76, c:91, g:"本机 · 蒙科立 StdEx（28 款）" },
+  { f:"Menk Garqag StdEx Tig",    s:1.00, c:91, g:"本机 · 蒙科立 StdEx（28 款）" },
+  { f:"Menk Har_a StdEx Tig",     s:1.03, c:91, g:"本机 · 蒙科立 StdEx（28 款）" },
+  { f:"Menk Hawang StdEx Tig",    s:1.30, c:91, g:"本机 · 蒙科立 StdEx（28 款）" },
+  { f:"Menk Hvlvsvn StdEx Tig",   s:1.05, c:91, g:"本机 · 蒙科立 StdEx（28 款）" },
+  { f:"Menk Lhundb StdEx Tig",    s:1.01, c:91, g:"本机 · 蒙科立 StdEx（28 款）" },
+  { f:"Menk Mcdvnbar StdEx Tig",  s:0.83, c:91, g:"本机 · 蒙科立 StdEx（28 款）" },
+  { f:"Menk Narin StdEx Tig",     s:0.99, c:91, g:"本机 · 蒙科立 StdEx（28 款）" },
+  { f:"Menk OnqaHar_a StdEx Tig", s:0.82, c:91, g:"本机 · 蒙科立 StdEx（28 款）" },
+  { f:"Menk Qagan StdEx Tig",     s:1.06, c:91, g:"本机 · 蒙科立 StdEx（28 款）" },
+  { f:"Menk Qimed StdEx Tig",     s:1.18, c:91, g:"本机 · 蒙科立 StdEx（28 款）" },
+  { f:"Menk Qimig StdEx Tig",     s:1.04, c:91, g:"本机 · 蒙科立 StdEx（28 款）" },
+  { f:"Menk Qingming StdEx Tig",  s:0.99, c:91, g:"本机 · 蒙科立 StdEx（28 款）" },
+  { f:"Menk Scnin StdEx Tig",     s:1.01, c:91, g:"本机 · 蒙科立 StdEx（28 款）" },
+  { f:"Menk Sidam StdEx Tig",     s:0.85, c:91, g:"本机 · 蒙科立 StdEx（28 款）" },
+  { f:"Menk Svgvnag StdEx Tig",   s:0.88, c:91, g:"本机 · 蒙科立 StdEx（28 款）" },
+  { f:"Menk Svlbiya StdEx Tig",   s:0.77, c:91, g:"本机 · 蒙科立 StdEx（28 款）" },
+  { f:"Menk Tegus StdEx Tig",     s:0.80, c:91, g:"本机 · 蒙科立 StdEx（28 款）" },
+  { f:"Menk Tenigun StdEx Tig",   s:0.98, c:91, g:"本机 · 蒙科立 StdEx（28 款）" },
+  { f:"Menk Tvgvrai StdEx Tig",   s:1.04, c:91, g:"本机 · 蒙科立 StdEx（28 款）" },
+  { f:"Menk Ujug StdEx Tig",      s:1.00, c:91, g:"本机 · 蒙科立 StdEx（28 款）" },
+  { f:"Menk Vran StdEx Tig",      s:0.86, c:91, g:"本机 · 蒙科立 StdEx（28 款）" },
+  { f:"Menk Vyangga StdEx Tig",   s:0.66, c:91, g:"本机 · 蒙科立 StdEx（28 款）" },
+  { f:"Menk Xvsiga StdEx Tig",    s:0.82, c:91, g:"本机 · 蒙科立 StdEx（28 款）" },
+];
+
+const fontOf = fam => MN_FONTS.find(x => x.f === fam) || MN_FONTS[0];
+
+function buildFontOptions(){
+  const sel = document.getElementById("fontsel");
+  sel.replaceChildren();
+  const groups = new Map();
+  for (const f of MN_FONTS){
+    if (!groups.has(f.g)){
+      const og = document.createElement("optgroup");
+      og.label = f.g;
+      groups.set(f.g, og);
+      sel.appendChild(og);
+    }
+    const o = document.createElement("option");
+    o.value = f.f;
+    o.textContent = f.label || f.f;
+    groups.get(f.g).appendChild(o);
+  }
 }
 
-function applyFont(v){
-  document.body.classList.toggle("use-baiti", v === "baiti");
-  const ok = v !== "baiti" || localFontAvailable("Mongolian Baiti");
-  document.documentElement.style.setProperty("--mn-font",
-    v === "baiti" ? '"Mongolian Baiti","UME Mongolian"' : '"UME Mongolian"');
+/* ---------------------------------------------------------------------
+   关于「这支字体本机有没有」——不做预判。
+   ---------------------------------------------------------------------
+   曾经在启动时逐支探测，没装就在选项后面加「（本机未安装）」。
+   实测这条路走不通：不同浏览器/配置下，页面能否探到本机字体差别很大，
+   一旦探不到就是**全线误报**，比不探更误导。
+
+   现在的做法：
+     · 字体栈一律是 "目标字体","UME Mongolian" —— 没装时浏览器自己回退，
+       页面照常工作，不需要也不应该由脚本删掉那个族名。
+     · 真要确认某支字体有没有真的接管，点顶栏「校验」，当场量一次。
+   --------------------------------------------------------------------- */
+/* 量宽用同一个隐藏标尺：反复 setProperty 比重建节点快得多，
+   一次全表自检要量 58×2 次，这一点很关键。 */
+const _ruler = (() => {
+  const s = document.createElement("span");
+  s.lang = "mn-Mong";
+  s.style.cssText = "position:absolute;left:-99999px;top:0;white-space:pre;"
+    + "line-height:1;font-size:100px;writing-mode:horizontal-tb;direction:ltr;";
+  document.body.appendChild(s);
+  return s;
+})();
+function measureWith(fontStack, text){
+  _ruler.style.fontFamily = fontStack;
+  _ruler.textContent = text;
+  return _ruler.getBoundingClientRect().width;
+}
+
+/* 判据：同一串蒙文，在「目标字体 + 内置」与「只用内置」下量出的宽度是否相同。
+   相同 → 目标字体没有接管（没装，或本浏览器不认这个族名）。
+   注意这只是**诊断**，不参与排版决策 —— 字体栈永远保留目标族名，
+   浏览器认就用了，不认就自己回退，页面不会因此变样。 */
+const CHECK_SAMPLE = "\u182E\u1823\u1829\u182D\u1823\u182F\u1820\u1821";
+function fontSeemsApplied(family){
+  if (family === "UME Mongolian") return true;
+  const a = measureWith('"UME Mongolian",serif', CHECK_SAMPLE);
+  const b = measureWith('"' + family + '","UME Mongolian",serif', CHECK_SAMPLE);
+  return Math.abs(a - b) > 0.01;
+}
+
+/* 全表自检：哪些族名在当前浏览器里真的解析得到 */
+function scanAllFonts(){
+  const base = measureWith('"UME Mongolian",serif', CHECK_SAMPLE);
+  const ok = [], bad = [];
+  for (const f of MN_FONTS){
+    if (f.f === "UME Mongolian") { ok.push(f.f); continue; }
+    const w = measureWith('"' + f.f + '","UME Mongolian",serif', CHECK_SAMPLE);
+    (Math.abs(w - base) > 0.01 ? ok : bad).push(f.f);
+  }
+  return { ok, bad, base };
+}
+
+function setFstat(f, applied){
+  const st = document.getElementById("fstat");
+  if (applied === false){
+    st.style.color = "var(--amber)";
+    st.textContent = f.f + " · 码位 " + f.c + "/158 · ×" + f.s.toFixed(2)
+      + " · 字形与内置一致";
+  }else{
+    st.style.color = "var(--fg-3)";
+    st.textContent = f.f + " · 码位 " + f.c + "/158 · ×" + f.s.toFixed(2);
+  }
+}
+
+function applyFont(fam){
+  const f = fontOf(fam);
+  document.documentElement.style.setProperty(
+    "--mn-font", '"' + f.f + '","UME Mongolian"');
+  document.documentElement.style.setProperty("--mn-scale", String(f.s));
+  setFstat(f);
   rebuildAll();
-  return ok;
+  return f;
 }
 
 document.getElementById("btn-orient").addEventListener("click", e => {
@@ -665,6 +844,55 @@ document.getElementById("btn-cp").addEventListener("click", e => {
   state.showCp = !state.showCp;
   e.currentTarget.classList.toggle("on", state.showCp);
   rebuildAll();
+});
+
+/* 「校验」：当场量一次，回答「现在看到的字形到底来自哪支字体」。
+   结果写进两条：状态栏一行，说明区一段。 */
+document.getElementById("btn-check").addEventListener("click", e => {
+  const f = fontOf(document.getElementById("fontsel").value);
+  const w = document.getElementById("fontWarn");
+  w.style.display = "block";
+
+  /* 一次点完，两件事都做：验当前这支 + 全表自检。
+     全表结果能立刻区分「某一支的问题」和「整个环境的问题」。 */
+  const scan = scanAllFonts();
+  const total = MN_FONTS.length;
+  const allLocal = total - 1;
+  const summary = "全表自检：<b>" + scan.ok.length + "/" + total + "</b> 支能解析"
+    + (scan.bad.length
+        ? "；失败的 " + scan.bad.length + " 支 —— "
+          + esc(scan.bad.slice(0, 5).join("、"))
+          + (scan.bad.length > 5 ? " …" : "")
+        : "")
+    + (scan.bad.length === allLocal
+        ? "<br>⚠ <b>所有本机字体都解析不到</b>：这不是某一支字体的问题，"
+          + "而是本浏览器拿不到系统字体列表（缓存过期或字体被策略屏蔽）。"
+        : "");
+
+  /* 内置字体就是基准，自己跟自己量必然相等，别去编「两者不同」那种话 */
+  if (f.f === "UME Mongolian"){
+    w.style.color = "var(--fg-2)";
+    w.innerHTML = "内置 Noto Sans Mongolian 是本页的基准字体，其余各支都拿它比对。"
+      + "换一支本机字体再点「校验」，就能知道那支有没有真的接管。<br>" + summary;
+    setFstat(f);
+    setTimeout(() => e.currentTarget.blur(), 0);
+    return;
+  }
+
+  const applied = fontSeemsApplied(f.f);
+  const a = measureWith('"UME Mongolian",serif', CHECK_SAMPLE).toFixed(1);
+  const b = measureWith('"' + f.f + '","UME Mongolian",serif', CHECK_SAMPLE).toFixed(1);
+
+  w.style.color = applied ? "var(--green)" : "var(--amber)";
+  w.innerHTML = applied
+    ? "✔ <b>" + esc(f.f) + "</b> 已接管排版：同一串蒙文量出 " + b
+      + " px，内置 Noto 是 " + a + " px，两者不同，字形确实来自这支字体。<br>" + summary
+    : "⚠ <b>" + esc(f.f) + "</b> 与内置 Noto 量出的宽度完全一致（都是 " + a
+      + " px）—— 这支字体没被用上，现在显示的是 Noto 字形。"
+      + "<br>常见原因：字体在浏览器启动后才安装（重开浏览器），"
+      + "或同一族名装了两份（到「设置 → 字体」删掉多余的一份）。<br>" + summary;
+  setFstat(f, applied);
+  setTimeout(() => e.currentTarget.blur(), 0);
 });
 
 document.getElementById("btn-clear").addEventListener("click", () => {
@@ -688,14 +916,24 @@ document.getElementById("btn-copy").addEventListener("click", async e => {
 });
 
 document.getElementById("fontsel").addEventListener("change", e => {
-  const ok = applyFont(e.target.value);
+  const f = applyFont(e.target.value);
   const w = document.getElementById("fontWarn");
-  if (!ok){
-    w.style.display = "block";
-    w.textContent = "本机没有 Mongolian Baiti，已回退到内置 UME Mongolian。";
-  }else{
-    w.style.display = "none";
-  }
+  w.style.display = "none";
+
+  /* 换字体时**当场**验一下这支有没有被用上。只验刚选的那一支，
+     不在启动时预判全部 —— 后者一旦探错就是满屏红。 */
+  if (f.f === "UME Mongolian" || fontSeemsApplied(f.f)) return;
+
+  w.style.display = "block";
+  w.style.color = "var(--amber)";
+  w.innerHTML = "⚠ 已切到 <b>" + esc(f.f) + "</b>，但同一串蒙文量出的宽度与内置 Noto "
+    + "完全一致 —— 这支字体没被浏览器用上，你现在看到的仍是 Noto 的字形。<br>"
+    + "两个常见原因：① <b>字体是在浏览器启动之后才装的</b> → 关掉所有浏览器窗口重开；"
+    + "② <b>同一族名被装了两次</b>（系统级 8103 与用户级 8102 同名；"
+    + "<code>Menk Qagan Tig</code> 还有 <code>MQG8F02</code>/<code>MQG8103</code> 冲突）"
+    + " → 到「设置 → 字体」里删掉多余的那一份。<br>"
+    + "点顶栏「校验」可看 58 支的全表自检结果。";
+  document.getElementById("fstat").style.color = "var(--amber)";
 });
 
 document.querySelectorAll(".ctx").forEach(b =>
@@ -711,22 +949,33 @@ document.getElementById("inp").addEventListener("input", updateInput);
 /* ---------------- 启动 ---------------- */
 (async function boot(){
   const st = document.getElementById("fstat");
+
+  /* 1) 内置 @font-face 到底有没有加载上来 */
+  let builtinOk = true;
   try{
     await document.fonts.load('40px "UME Mongolian"');
     await document.fonts.ready;
-    const ok = document.fonts.check('40px "UME Mongolian"');
-    st.textContent = ok ? "内置字体已加载" : "内置字体未加载";
-    if (!ok) st.style.color = "var(--red)";
+    builtinOk = document.fonts.check('40px "UME Mongolian"');
   }catch(err){
-    st.textContent = "字体加载失败：" + err.message;
+    builtinOk = false;
+    st.textContent = "内置字体加载失败：" + err.message;
     st.style.color = "var(--red)";
   }
 
-  if (!localFontAvailable("Mongolian Baiti")){
-    document.getElementById("fontsel").options[1].textContent =
-      "Mongolian Baiti（本机未安装）";
+  /* 2) 按字体表生成下拉框。
+        这里**不预判**「装没装」、也不改写选项文字 —— 见上面那段注释：
+        预判在各浏览器里行为不一致，误报一次就是整张列表全挂红。
+        要确认某支有没有真的接管，点顶栏「校验」。 */
+  buildFontOptions();
+
+  /* 3) 默认用内置字体 */
+  document.getElementById("fontsel").value = "UME Mongolian";
+  applyFont("UME Mongolian");
+
+  if (!builtinOk){
+    st.textContent = "内置字体未加载";
+    st.style.color = "var(--red)";
   }
-  document.getElementById("fontsel").value = "ume";
 
   document.querySelector('.ctx[data-ctx="medi"]').classList.add("on");
   document.querySelector('.ctx2[data-ctx="raw"]').classList.add("on");
