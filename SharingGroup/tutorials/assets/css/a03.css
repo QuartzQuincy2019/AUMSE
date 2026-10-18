@@ -45,6 +45,21 @@ h2 .n{flex:0 0 auto;width:30px;height:30px;line-height:30px;text-align:center;
 main code,main kbd,main samp,.code-wrap pre,.code-wrap .bar,
 .out-wrap pre,.out-wrap .cap{font-family:Consolas,"Cascadia Mono","Courier New",monospace}
 
+
+/* ---------- 卡片几何（必须每页自带）----------
+   ⚠ genelayout.css 里 .card 的 padding / 圆角只写在**窄屏的媒体查询**里
+   （≤980px 给 padding，≤560px 再给 margin），宽屏下没有任何 .card 规则。
+   所以宽屏上如果不自己补，卡片会变成：margin 0、无边框、直角 ——
+   看起来像「一块淡色背景紧贴着上一段文字」。
+   实测（1600px）：a01/a02/a03 都丢过这一条，margin=0px、border=0px、radius=0px。
+
+   数值照抄房规（r04.css），保证与其它系列一致。 */
+.card{margin:18px 0;padding:16px 20px;border:1px solid var(--line);border-radius:12px;
+  background:var(--sfc)}
+@media (max-width:560px){
+  .card{padding:12px 13px;margin:15px 0}
+}
+
 /* ---------- 3. 图形容器（mermaid 图，双主题 SVG）---------- */
 .fig{margin:20px 0;text-align:center}
 .fig picture{display:inline-block;max-width:100%}
