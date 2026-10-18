@@ -134,6 +134,15 @@ h2{display:flex;align-items:center;gap:11px}
 h2 .n{flex:0 0 auto;width:30px;height:30px;line-height:30px;text-align:center;
   border-radius:8px;font-size:15px;font-family:var(--mono);font-weight:600}
 
+/* ---------- 3c. 语言/主题标签 .tag ----------
+   ⚠ 同样是「每页自带」的东西：genelayout.css 只给了 font-size 与 padding，
+   圆角、边框、底色都在各页样式表里。A01 一开始漏了这一条，
+   表现就是标题下面那两个标签**变成没有圆角的裸文字块**。
+   几何照抄房规（r04.css），颜色让 series-theme 的 A 段去覆盖。 */
+.tag{display:inline-block;font-family:var(--mono);font-size:11.5px;
+  padding:1.5px 8px;border-radius:999px;background:#f3efe3;
+  color:var(--fg-2);border:1px solid var(--line-2);vertical-align:2px}
+
 /* 代码区一律 Consolas —— 与页尾声明一致，也与其它系列一致 */
 main code, main pre, main kbd, main samp,
 .code-wrap pre, .out-wrap pre, .code-wrap .bar, .out-wrap .cap{

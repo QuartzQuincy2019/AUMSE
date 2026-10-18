@@ -1560,6 +1560,34 @@ body[data-series="A"][data-series="A"] .s-nav-toc a{color:var(--s-main-deep)}
    与其它系列的差别不只在颜色：A 用**金线**做分隔、用黑底做代码块、
    标题是金渐变。这些规则写在 TPL 之后，靠同特异性 + 更靠后来生效。
    ==================================================================== */
+
+/* ---------- 正文字体：华文中宋 ----------
+   用户指定 A 系列正文与标题都用「华文中宋」（Windows 自带 STZHONGS.TTF）。
+   回退链：华文中宋 → STZhongsong（同一支字体的英文名）→ 宋体 → serif。
+
+   ⚠ 只写在 body 上，不要给 .quote / .tag / pre / code 也加：
+   那些元素有自己的 font-family 直系规则，继承永远输给直系规则，
+   所以它们会保持原样（英文引文衬线、标签等宽、代码 Consolas）。
+   这正好是想要的 —— 中文用宋体，西文与代码用原来的字体。 */
+body[data-series="A"][data-series="A"],
+body[data-series="A"][data-series="A"] main,
+body[data-series="A"][data-series="A"] h1,
+body[data-series="A"][data-series="A"] h2,
+body[data-series="A"][data-series="A"] h3,
+body[data-series="A"][data-series="A"] h4,
+body[data-series="A"][data-series="A"] h5,
+body[data-series="A"][data-series="A"] h6,
+body[data-series="A"][data-series="A"] .card,
+body[data-series="A"][data-series="A"] table{
+  font-family:"华文中宋","STZhongsong","宋体",SimSun,serif;
+}
+/* 标题的字重：华文中宋只有 Regular，别让浏览器去合成假粗体 */
+body[data-series="A"][data-series="A"] h1,
+body[data-series="A"][data-series="A"] h2,
+body[data-series="A"][data-series="A"] h3{
+  font-weight:400;
+}
+
 body[data-series="A"][data-series="A"]::before{
   background:#0b0906;
   color:#e8c877;
