@@ -87,11 +87,12 @@
     E: { label: 'Extra · E' },
     F: { label: '文件 · F' },
     R: { label: '相关 · R' },
-    FE: { label: '前端 · FE' }
+    FE: { label: '前端 · FE' },
+    A: { label: '进阶 · A' }
   };
 
   /* 展示顺序，必须与 tools/series_data.py 的 ORDER 一致 */
-  var ORDER = ['T', 'F', 'M', 'R', 'Q', 'E', 'FE'];
+  var ORDER = ['T', 'F', 'M', 'R', 'Q', 'E', 'FE', 'A'];
 
   /* 现存的篇目（除 FE 自己，FE 那份在页面数据 P.series 里）。
      用来数篇数、并取每个系列的首篇作为跳转目标。 */
@@ -110,7 +111,8 @@
     'e02.html','e03.html','e04.html',
     'fe-01.html','fe-02.html','fe-03.html',
     'fe-04.html','fe-05.html','fe-06.html',
-    'fe-07.html','fe-08.html','fe-09.html'
+    'fe-07.html','fe-08.html','fe-09.html',
+    'a01.html'
   ];
 
   /* fe- 开头的一律算 FE（r03.html 也是 FE），其余按首字母。 */

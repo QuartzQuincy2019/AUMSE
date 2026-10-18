@@ -306,6 +306,105 @@ body[data-series="{SK}"][data-series="{SK}"] .s-nav-toc a{{color:var(--s-main-de
 }}
 """
 
+# ---------------------------------------------------------------- A 系列主题
+# A 不在 ORDER 里 —— ORDER 管的是首页分组顺序，A 要排在 FE 之后，
+# 且外观要另起一套（黑金）。所以这里单独生成：复用 TPL 换配色，
+# 再追加 A_EXTRA 把「金线 / 黑底 / 金标题」这些风格化部分补上。
+A_EXTRA = """
+/* ============================ A · Advanced（黑金） ====================
+   与其它系列的差别不只在颜色：A 用**金线**做分隔、用黑底做代码块、
+   标题是金渐变。这些规则写在 TPL 之后，靠同特异性 + 更靠后来生效。
+   ==================================================================== */
+body[data-series="A"][data-series="A"]::before{
+  background:#0b0906;
+  color:#e8c877;
+  border-bottom:1px solid #c8a03a;
+  box-shadow:0 2px 10px rgba(0,0,0,.55);
+}
+body[data-series="A"][data-series="A"] h1{
+  background:linear-gradient(96deg,#3a2a06,#8a6410 38%,#c8a03a 62%,#5f450a);
+  -webkit-background-clip:text;background-clip:text;color:transparent;
+  letter-spacing:.01em;
+}
+/* 金线的 h2：左侧一道 3px 金条，比默认的色块更「A」 */
+body[data-series="A"][data-series="A"] main h2{
+  border-left:3px solid #c8a03a;padding-left:11px;
+  background:linear-gradient(90deg,rgba(200,160,58,.10),transparent 72%);
+}
+body[data-series="A"][data-series="A"] main h2 .n{
+  background:#1a1509;color:#e8c877;border:1px solid #c8a03a;
+}
+/* 代码块：近黑底 + 金框，与其它系列的彩色皮肤区分开 */
+body[data-series="A"][data-series="A"] main>.code-wrap,
+body[data-series="A"][data-series="A"] .code-wrap{
+  background-color:#0d0b07 !important;
+  border:1px solid #3a2c11 !important;
+}
+body[data-series="A"][data-series="A"] .code-wrap>pre{
+  background:transparent !important;color:#f0e4c6;
+}
+body[data-series="A"][data-series="A"] .code-wrap .bar{
+  background-color:#12100a !important;
+  background-image:linear-gradient(180deg,#1c160c,#12100a) !important;
+  border-bottom:1px solid #3a2c11 !important;
+  color:#c9b06a;
+}
+body[data-series="A"][data-series="A"] .code-wrap .bar .cp{
+  background-color:#241b0d;border-color:rgba(232,200,119,.34);color:#e8c877;
+}
+body[data-series="A"][data-series="A"] main>.out-wrap,
+body[data-series="A"][data-series="A"] .out-wrap{
+  background-color:#0f0d08 !important;border:1px solid #2e2410 !important;
+}
+body[data-series="A"][data-series="A"] .out-wrap>pre{
+  background:transparent !important;color:#ddc98f;
+}
+body[data-series="A"][data-series="A"] .out-wrap .cap{color:#a08a52}
+/* 重点卡：金边 + 象牙底 */
+body[data-series="A"][data-series="A"] .card.key{
+  background:linear-gradient(96deg,#fffdf6,#f7efd8 55%,#fffdf6);
+  border-left:6px solid #c8a03a;
+}
+body[data-series="A"][data-series="A"] .key-mark{color:#a97c12}
+/* 表格与标签 */
+body[data-series="A"][data-series="A"] table th{
+  background:linear-gradient(180deg,#f7efd8,#efe2c2);
+  color:#5f450a;border-color:#d9c79a;
+}
+body[data-series="A"][data-series="A"] .tag{
+  background:#f7efd8;border-color:#d9c79a;color:#5f450a;
+}
+/* 暗色：金在深底上提亮，避免发暗 */
+@media (prefers-color-scheme: dark){
+  body[data-series="A"][data-series="A"]::before{
+    background:#080705;color:#e8c877;border-bottom:1px solid #6b5320;
+  }
+  body[data-series="A"][data-series="A"] h1{
+    background:linear-gradient(96deg,#8a7038,#e8c877 40%,#c8a03a 64%,#a08a52);
+    -webkit-background-clip:text;background-clip:text;color:transparent;
+  }
+  body[data-series="A"][data-series="A"] main h2{
+    border-left-color:#c8a03a;
+    background:linear-gradient(90deg,rgba(200,160,58,.16),transparent 72%);
+  }
+  body[data-series="A"][data-series="A"] main h2 .n{
+    background:#e8c877;color:#14100a;border-color:#e8c877;
+  }
+  body[data-series="A"][data-series="A"] .card.key{
+    background:linear-gradient(96deg,#171106,#1f1708 55%,#171106);
+    border-left-color:#c8a03a;
+  }
+  body[data-series="A"][data-series="A"] .key-mark{color:#e8c877}
+  body[data-series="A"][data-series="A"] table th{
+    background:linear-gradient(180deg,#241b0d,#1a1409);
+    color:#e8c877;border-color:#3a2c11;
+  }
+  body[data-series="A"][data-series="A"] .tag{
+    background:#241b0d;border-color:#3a2c11;color:#e8c877;
+  }
+}
+"""
+
 HEAD = """/* =====================================================================
    series-theme.css —— 并列系列（M / Q / E / R）的统一主题
    ---------------------------------------------------------------------
@@ -642,6 +741,14 @@ body[data-series="F"] main{padding-top:52px}
                               **{k: v for k, v in s.items()
                                  if k in ("c1", "c2", "c3", "c4", "ink",
                                           "d1", "d2", "d3", "d4", "dink")}))
+
+    # ---------- A 系列：黑金（不在 ORDER 里，单独生成）----------
+    _a = SERIES["A"]
+    out.append(TPL.format(SK="A", NAME=_a["name"], BANNER=_a["banner"],
+                          **{k: _a[k] for k in
+                             ("c1", "c2", "c3", "c4", "ink",
+                              "d1", "d2", "d3", "d4", "dink")}))
+    out.append(A_EXTRA)
 
     # ---------- 收尾：用不透明实色盖掉 color-mix 派生色 ----------
     # 原来凡是用 color-mix(…, transparent) 派生出来的文字色都是**半透明**的

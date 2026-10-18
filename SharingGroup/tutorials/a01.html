@@ -1,0 +1,814 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>A01 · HarfBuzz 及其基础用法</title>
+<link rel="stylesheet" href="assets/genelayout.css">
+<link rel="stylesheet" href="assets/a01.css">
+<link rel="stylesheet" href="assets/series-theme.css">
+<link rel="stylesheet" href="assets/tg_L.css">
+<link rel="stylesheet" href="assets/tg_D.css">
+
+</head>
+<body class="aseries" data-series="A">
+<div id="shell">
+
+<nav id="toc">
+  <h5>目录</h5>
+  <a href="#s1">1 · 三层分工：谁把文字变成像素</a>
+  <a href="#s2">2 · 字形不是字符：四种对应关系</a>
+  <a href="#s3">3 · 三张表，三件事</a>
+  <a href="#s4">4 · 一次完整的整形</a>
+  <a href="#s5">5 · 缓冲区：一个会改变「内容类型」的数组</a>
+  <a href="#s6">6 · 簇（cluster）：编辑器的命根子</a>
+  <a href="#s7">7 · 方向与脚本：谁决定连写方向</a>
+  <a href="#s8">8 · 特性（features）：默认集与手动覆盖</a>
+  <a href="#s9">9 · 单位、定点数与那个「一千倍」</a>
+  <a href="#s10">10 · 竖排：为什么蒙文要走 ltr + 旋转</a>
+  <a href="#s11">11 · 落到 Qt：从字形号到 QPainter</a>
+  <a href="#s12">12 · 性能：该缓存的三处</a>
+  <a href="#s13">13 · 调试：怎么知道它选对了字形</a>
+  <a href="#s14">14 · 一页速查</a>
+</nav>
+
+<main>
+<h1>HarfBuzz 及其基础用法</h1>
+<p class="sub-title">UME 项目组内部教程 · A01（A） · 从字符到字形：缓冲区、整形、簇、特性，以及落到 Qt 的那一步</p>
+
+<p><span class="lang cpp">C++</span> <span class="tag">HarfBuzz</span> <span class="tag b">排版引擎</span></p>
+
+<p>T03 拆过字体文件：<code>cmap</code> 是码位到字形的字典，<code>GSUB</code> 是替换规则，
+<code>GPOS</code> 是间距规则。那一篇是<b>把字体拆开看</b>。</p>
+
+<p>这一篇反过来：<b>谁来用这些表</b>。答案是排版引擎 —— 本项目选的是
+<b>HarfBuzz</b>。它要做的事只有一句：把一串 Unicode 码位，变成
+<b>「用哪几个字形、按什么顺序、各占多宽」</b>。</p>
+
+<div class="card note">
+  <div class="card-t">A 系列是写给谁看的</div>
+  <p>写给项目组长自己 —— 所以默认你已经知道：阿拉伯字母的连写与四形、
+  天城文的组合与半形、埃及圣书体的转写惯例、日语的混排与竖排、
+  古典拉丁语的词界与空格、IPA 的宽严式标音、以及音位与变体的关系。</p>
+  <p>这篇不解释这些概念本身，只解释<b>Harfbuzz 怎么处理它们</b>。
+  没接触过排版引擎也不影响 —— 前面 45 篇打的地基够用。</p>
+</div>
+
+<h2 id="s1"><span class="n">1</span>三层分工：谁把文字变成像素</h2>
+
+<p>从你敲下一个字，到屏幕上出现笔画，中间过三道手：</p>
+
+<table>
+<thead><tr><th style="width:14%">层</th><th style="width:26%">输入</th>
+<th style="width:26%">输出</th><th>谁负责</th></tr></thead>
+<tbody>
+<tr><td><b>① 编码</b></td><td>按键 / 文本</td><td>一串码位</td>
+    <td>编辑器、输入法</td></tr>
+<tr><td><b>② 整形</b></td><td>码位 + 字体 + 方向</td>
+    <td><b>字形号 + 位置 + 簇</b></td>
+    <td><b>HarfBuzz</b></td></tr>
+<tr><td><b>③ 栅格化</b></td><td>字形号 + 字号</td><td>位图 / 轮廓 → 像素</td>
+    <td>FreeType、Skia、Qt</td></tr>
+</tbody>
+</table>
+
+<div class="card key">
+  <div class="card-t">关键：第 ② 层的输出不是图，是「施工单」</div>
+  <p>HarfBuzz 交出的是<b>字形编号 + 相对位置 + 回指输入的对照表</b>。
+  没有像素，没有路径，没有颜色。</p>
+  <p>所以渲染方还得拿着这些编号，<b>回到同一个字体文件</b>去取字模。
+  编号是字体内部的下标 —— 换个字体文件，同一个编号就是另一个字。</p>
+</div>
+
+<h2 id="s2"><span class="n">2</span>字形不是字符：四种对应关系</h2>
+
+<p>如果你熟悉音位学，这一节可以一句话概括：</p>
+
+<div class="card teal">
+  <div class="card-t">用音位学打个比方</div>
+  <p><b>字符 ↔ 音位</b>，<b>字形 ↔ 音位变体</b>。</p>
+  <p><code>/p/</code> 在不同环境里念成 <span class="ipa">[p]</span> 或
+  <span class="ipa">[pʰ]</span> —— 那还是同一个音位，只是<b>条件变体</b>。
+  阿拉伯字母的 BEH 在词首、词中、词尾、单独时是四个字形，
+  同样是同一个字符的<b>位置变体</b>。</p>
+  <p>「宽式标音」只写音位，「严式标音」写出变体 ——
+  HarfBuzz 干的就是把宽式变成严式那一步。</p>
+</div>
+
+<p>四种对应关系，每种都有实例：</p>
+
+<table>
+<thead><tr><th style="width:16%">关系</th><th style="width:30%">例子</th>
+<th>说明</th></tr></thead>
+<tbody>
+<tr><td><b>一对一</b></td><td>拉丁字母 <code>a</code></td>
+    <td>一个码位一个字形，最常见</td></tr>
+<tr><td><b>一对多</b></td><td>天城文 <span class="ipa">क्</span> 的元音符号、
+    阿拉伯的 harakat</td>
+    <td>一个码位拆成基础字 + 附加标记</td></tr>
+<tr><td><b>多对一</b></td><td>阿拉伯 <span class="ipa">لا</span>（LAM+ALEF）、
+    蒙文 <code>GO</code> 连字</td>
+    <td>几个码位合成一个字形（连字）</td></tr>
+<tr><td><b>一对变体</b></td><td>阿拉伯 BEH 的四形、
+    蒙文的 <code>init/medi/fina/isol</code></td>
+    <td>同一个字符按环境取不同字形号</td></tr>
+</tbody>
+</table>
+
+<h3>同一个词，不同字体给不同数量的字形</h3>
+
+<p>拿阿拉伯语 <span class="ipa">لا</span>（LAM <code>U+0644</code> +
+ALEF <code>U+0627</code>）实测三支系统字体：</p>
+
+<table>
+<thead><tr><th style="width:26%">字体</th><th style="width:12%">码位</th>
+<th style="width:12%">字形</th><th>结果</th></tr></thead>
+<tbody>
+<tr><td>Arial</td><td class="c">2</td><td class="c">1</td>
+    <td><code>uniFEFB</code>（LAM WITH ALEF ISOLATED FORM）</td></tr>
+<tr><td>Times New Roman</td><td class="c">2</td><td class="c">1</td>
+    <td><code>uniFEFB</code></td></tr>
+<tr><td>Segoe UI</td><td class="c">2</td><td class="c">2</td>
+    <td><code>glyph03941</code> + <code>glyph03980</code></td></tr>
+</tbody>
+</table>
+
+<div class="card warn">
+  <div class="card-t">连字是不是「标准规定」？不是</div>
+  <p>标准只要求「视觉上必须连成一个」，<b>用几个字形是字体的设计自由</b>。
+  HarfBuzz 通过 <code>rlig</code>（Required Ligature）去问字体，
+  字体给什么就用什么。</p>
+  <p>推论很硬：<b>换字体不能只换字形表</b>。字形数量会变，
+  你缓存下来的排版结果、光标位置、选区边界统统作废。</p>
+</div>
+
+<p>蒙文这边是同样的故事，只是数字更夸张。整词
+<span lang="mn-Mong">ᠮᠣᠩᠭᠣᠯ</span> 有 <b>6 个码位</b>，整形出 <b>5 个字形</b>：</p>
+
+<table>
+<thead><tr><th style="width:34%">字形</th><th style="width:16%">推进量</th>
+<th>说明</th></tr></thead>
+<tbody>
+<tr><td><code>u182E.M.init</code></td><td class="c">492</td><td>词首</td></tr>
+<tr><td><code>u1823.O.medi</code></td><td class="c">573</td><td>词中</td></tr>
+<tr><td><code>u1829.AG.medi</code></td><td class="c">614</td><td>词中</td></tr>
+<tr><td><code>u182D_u1823.GO.medi</code></td><td class="c">838</td>
+    <td><b>GA + O 合成的连字</b> —— 两个码位一个字形</td></tr>
+<tr><td><code>u182F.L.fina</code></td><td class="c">383</td><td>词尾</td></tr>
+</tbody>
+</table>
+
+<p>总数 2900 —— 也就是 <b>2.9000 em</b>（字体 UPEM = 1000）。
+这个数和 <code>report/harfbuzz-ground-truth.txt</code> 里的记录一致。</p>
+
+<h2 id="s3"><span class="n">3</span>三张表，三件事</h2>
+
+<p>HarfBuzz 不「懂」任何语言。它的全部工作是查三张表、跑两个状态机：</p>
+
+<table>
+<thead><tr><th style="width:12%">表</th><th style="width:14%">作用</th>
+<th style="width:30%">读成一句话</th><th>例子</th></tr></thead>
+<tbody>
+<tr><td><code>cmap</code></td><td><b>查</b></td>
+    <td>这个码位的「名义字形」是几号</td>
+    <td><code>U+0628</code> → <code>uni0628</code></td></tr>
+<tr><td><code>GSUB</code></td><td><b>换</b></td>
+    <td>在某个上下文里，把 A 换成 B</td>
+    <td><code>beh</code> → <code>uniFE91</code>（initial）</td></tr>
+<tr><td><code>GPOS</code></td><td><b>挪</b></td>
+    <td>把 B 往左/右/上/下偏一点</td>
+    <td>haraka 贴到基字上方</td></tr>
+</tbody>
+</table>
+
+<p>如果按设计模式给它们各起一个名字：</p>
+
+<div class="card note">
+  <div class="card-t">三张表的模式语言</div>
+  <ul>
+    <li><code>cmap</code> 是<b>字典</b>（哈希表）：键是码位，值是字形号。</li>
+    <li><code>GSUB</code> 是<b>多态替换表 + 上下文策略</b>：
+    表里存的是「条件 → 替换」，引擎负责匹配条件。
+    对应到代码就是 <code>map&lt;上下文, 替换&gt;</code>。</li>
+    <li><code>GPOS</code> 是<b>约束求解</b>的简化版：若干条「相对位置」规则叠加，
+    最后落到每个字形的 <code>x_offset / y_offset</code>。</li>
+  </ul>
+</div>
+
+<h3>阿拉伯的四形走哪条路</h3>
+
+<p>BEH（<code>U+0628</code>）在四个位置上落成四个字形，靠的是四条 GSUB 特性，
+按顺序跑：</p>
+
+<div class="code-wrap">
+  <div class="bar"><span>特性的执行顺序（节选）</span><button class="cp">复制</button></div>
+<pre>ccmp  → locl  → isol → fina → finl → init → medi → rlig → calt → liga
+       ↑预组合  ↑本地化  └──────── 四形，按加入方向的连写状态挑 ────────┘</pre>
+</div>
+
+<p>实测（Segoe UI，用 <code>U+0640</code> tatweel 撑出位置）：</p>
+
+<table>
+<thead><tr><th style="width:20%">位置</th><th style="width:34%">字形</th>
+<th style="width:14%">推进量</th><th>特性</th></tr></thead>
+<tbody>
+<tr><td>单独 <span class="ipa">ب</span></td><td><code>uni0628</code></td>
+    <td class="c">1881</td><td><code>isol</code></td></tr>
+<tr><td>词首 <span class="ipa">بـ</span></td><td><code>uniFE91</code></td>
+    <td class="c">684</td><td><code>init</code></td></tr>
+<tr><td>词中 <span class="ipa">ـبـ</span></td><td><code>uniFE92</code></td>
+    <td class="c">684</td><td><code>medi</code></td></tr>
+<tr><td>词尾 <span class="ipa">ـب</span></td><td><code>uniFE90</code></td>
+    <td class="c">1881</td><td><code>fina</code></td></tr>
+</tbody>
+</table>
+
+<p>这四个字形在字体里是<b>现成的</b>（名字就是 FE90 / FE91 / FE92），
+HarfBuzz 只是负责<b>挑</b>。蒙文不一样：字体里没预置四种形态，
+<b>86.1% 的字形要现场生成</b> —— 这就是为什么蒙文对引擎的依赖更重。</p>
+
+<h2 id="s4"><span class="n">4</span>一次完整的整形</h2>
+
+<p>七个步骤，顺序不能乱：</p>
+
+<div class="code-wrap">
+  <div class="bar"><span>shape.cpp —— 最小可用流程</span><button class="cp">复制</button></div>
+<pre>#include &lt;hb.h&gt;
+
+/* ① 字体：blob → face → font，三级引用，各管一件事 */
+hb_blob_t* blob = hb_blob_create_from_file_or_fail("NotoSansMongolian-Regular.ttf");
+hb_face_t* face = hb_face_create(blob, 0);      /* 0 = 第一个字体（ttc 才有多个） */
+hb_font_t* font = hb_font_create(face);
+
+/* ② 缩放：不设这一行，后面所有推进量都是 em 单位（UPEM 一千倍） */
+hb_font_set_scale(font, px * 64, px * 64);
+hb_font_set_ppem (font, px, px);
+
+/* ③ 装文本：QString 内部就是 UTF-16，直接给它 */
+hb_buffer_t* buf = hb_buffer_create();
+hb_buffer_add_utf16(buf, reinterpret_cast&lt;const uint16_t*&gt;(text.utf16()),
+                    text.size(), 0, text.size());
+
+/* ④ 猜属性：script / direction / language 一次到位 */
+hb_buffer_guess_segment_properties(buf);
+
+/* ⑤ 整形 —— 真正干活的一行 */
+hb_shape(font, buf, nullptr, 0);
+
+/* ⑥ 取结果：两条平行数组 */
+unsigned n = hb_buffer_get_length(buf);
+hb_glyph_info_t*     info = hb_buffer_get_glyph_infos(buf, nullptr);
+hb_glyph_position_t* pos  = hb_buffer_get_glyph_positions(buf, nullptr);
+
+/* ⑦ 用完要还 */
+hb_buffer_destroy(buf);</pre>
+</div>
+
+<p>每一步都有对应的坑，后面几节逐个说。这里先记住三条：</p>
+
+<div class="card warn">
+  <div class="card-t">三个最常见的错</div>
+  <ol>
+    <li><b>忘设 <code>scale</code></b>：推进量是 em 单位，排出来小了一千倍。</li>
+    <li><b>用 <code>ttb</code> 排蒙文</b>：见第 10 节，实测每一个字形都是 −1750。</li>
+    <li><b>手写 <code>feature</code> 列表</b>：等于覆盖掉默认集，86.1% 的连写全丢。</li>
+  </ol>
+</div>
+
+<h2 id="s5"><span class="n">5</span>缓冲区：一个会改变「内容类型」的数组</h2>
+
+<p><code>hb_buffer_t</code> 是 HarfBuzz 里唯一可变的东西。它有两个阶段：</p>
+
+<div class="mem">
+  <div class="slot"><b>阶段一</b>　content_type = <code>UNICODE</code>　里面是码位 + 每个码位的 cluster 号</div>
+  <div class="slot">　　↓　<code>hb_shape()</code></div>
+  <div class="slot"><b>阶段二</b>　content_type = <code>GLYPHS</code>　里面换成字形号 + 位置</div>
+</div>
+
+<div class="card tip">
+  <div class="card-t">这是原地转换，不是新建一份</div>
+  <p>同一个缓冲区，整形前后<b>长度可以不同</b>（连字会让它变短，分解会让它变长）。
+  内部是两条平行数组：<code>info[]</code>（字号 + 簇）和
+  <code>pos[]</code>（推进 + 偏移）—— 典型的 <b>SoA</b> 布局，
+  比 <code>struct</code> 数组更省一次内存跳转。</p>
+</div>
+
+<p>用编辑器的话说：这个 buffer 就是<b>一次排版事务的工作区</b>。
+所以它该<b>复用</b>，不该每次击键都新建：</p>
+
+<table>
+<thead><tr><th style="width:24%">函数</th><th>什么时候用</th></tr></thead>
+<tbody>
+<tr><td><code>hb_buffer_create()</code></td><td>线程启动时建一次</td></tr>
+<tr><td><code>hb_buffer_clear_contents()</code></td>
+    <td>每次整形前清空，<b>保留已分配的内存</b></td></tr>
+<tr><td><code>hb_buffer_destroy()</code></td><td>线程结束时</td></tr>
+</tbody>
+</table>
+
+<div class="card warn">
+  <div class="card-t">忘了清空会怎样</div>
+  <p>上一次的文本还在缓冲区里，这一次的新文本<b>接在后面</b>一起整形 ——
+  表现为「打一个字，屏幕上多了好几个字」，而且<b>越打越多</b>。
+  这个 bug 很隐蔽：单次测试永远复现不了。</p>
+</div>
+
+<h2 id="s6" class="key-h key-h key-h key-h"><span class="key-mark" title="重点内容">★</span><span class="n">6</span>簇（cluster）：编辑器的命根子</h2>
+
+<p><code>cluster</code> 是每个字形身上的一个整数，含义只有一个：
+<b>「我对应输入里的第几个字符」</b>。</p>
+
+<p>它存在的理由，是上面那些「多对一 / 一对多」的关系 ——
+<b>字形数量和字符数量不一样，你得有办法映射回去</b>，否则光标往哪放？</p>
+
+<h3>实测：FVS 与 ZWJ 都不占自己的簇</h3>
+
+<table>
+<thead><tr><th style="width:30%">输入</th><th style="width:14%">码位</th>
+<th style="width:14%">字形</th><th>簇 : 推进量</th></tr></thead>
+<tbody>
+<tr><td>蒙文 <span lang="mn-Mong">ᠮ</span></td><td class="c">1</td><td class="c">1</td>
+    <td><code>c0:632</code></td></tr>
+<tr><td>同上 + FVS1（<code>U+180B</code>）</td><td class="c">2</td><td class="c">2</td>
+    <td><code>c0:632</code> <code>c0:770</code></td></tr>
+<tr><td>同上 + ZWJ（<code>U+200D</code>）</td><td class="c">2</td><td class="c">2</td>
+    <td><code>c0:492</code> <code>c0:0</code></td></tr>
+<tr><td>同上 + FVS1 + ZWJ</td><td class="c">3</td><td class="c">3</td>
+    <td><code>c0:492</code> <code>c0:770</code> <code>c0:0</code></td></tr>
+</tbody>
+</table>
+
+<p>三条结论，每条都能直接写成代码规则：</p>
+
+<ol>
+  <li><b>FVS / ZWJ 全部并进 <code>c0</code></b> ——
+  光标移动、退格删除必须<b>按簇走</b>，按字符删会把一个字形拆成两半。</li>
+  <li><b>ZWJ 的推进是 0</b>，但它把字形从 632 变成了 <b>492</b>（强制成词首形）。
+  这就是网页版 <code>globpreview</code> 用 ZWJ 逼出四种形态的原理。</li>
+  <li><b>FVS1 把 632 变成了 770</b> —— FVS 不是「删掉」，是「换一个更宽的字形」。</li>
+</ol>
+
+<h3>阿拉伯那边同理</h3>
+
+<table>
+<thead><tr><th style="width:30%">输入</th><th style="width:14%">码位</th>
+<th style="width:14%">字形</th><th>说明</th></tr></thead>
+<tbody>
+<tr><td><span class="ipa">با</span>（beh + alef）</td><td class="c">2</td><td class="c">2</td>
+    <td>beh 取 initial、alef 取 final</td></tr>
+<tr><td><span class="ipa">بَا</span>（beh + fatha + alef）</td>
+    <td class="c">3</td><td class="c">3</td>
+    <td>fatha 推进 <b>0</b>，簇并进 beh</td></tr>
+</tbody>
+</table>
+
+<p>加了 fatha 之后，beh <b>仍然是 initial 形</b>、alef <b>仍然是 final 形</b> ——
+透明字符不打断连写。这对你来说应该很眼熟：这正是<b>区别特征</b>里
+「加一个不改变音位的成分」的排版版本。</p>
+
+<div class="card key">
+  <div class="card-t">把「簇」当成事务的原子单位</div>
+  <p>编辑器的所有文本操作都该以簇为最小单位：</p>
+  <ul>
+    <li><b>退格</b>：删一簇，不是删一个码位</li>
+    <li><b>方向键</b>：跳一簇</li>
+    <li><b>选区</b>：边界永远落在簇边界上</li>
+    <li><b>复制</b>：复制簇对应的<b>原始码位区间</b>，不是字形</li>
+  </ul>
+  <p>违反任何一条，用户看到的就是「删了一个字母，屏幕上少了半个字」。</p>
+</div>
+
+<h2 id="s7"><span class="n">7</span>方向与脚本：谁决定连写方向</h2>
+
+<p>缓冲区身上有三个属性，整形前必须正确：</p>
+
+<table>
+<thead><tr><th style="width:14%">属性</th><th style="width:22%">取值</th>
+<th>作用</th></tr></thead>
+<tbody>
+<tr><td><code>script</code></td><td><code>Mong</code> / <code>Arab</code> /
+    <code>Deva</code></td>
+    <td>决定用哪套连写规则（不同文字的规则完全不同）</td></tr>
+<tr><td><code>direction</code></td><td><code>ltr</code> / <code>rtl</code> /
+    <code>ttb</code></td>
+    <td>决定连写<b>朝哪个方向接</b>，也决定输出顺序</td></tr>
+<tr><td><code>language</code></td><td>如 <code>mn</code></td>
+    <td>影响 <code>locl</code>（本地化字形），多数场景可以不设</td></tr>
+</tbody>
+</table>
+
+<h3>猜的属性够不够用？实测：够</h3>
+
+<p>同一串蒙文，一次用 <code>guess_segment_properties()</code>，
+一次显式指定 <code>Mong</code>：</p>
+
+<div class="out-wrap">
+  <div class="cap">两种做法的结果</div>
+<pre>guess      → Mong / ltr   字形 5 个   总推进 2900
+显式 mong  → Mong / ltr   字形 5 个   总推进 2900</pre>
+</div>
+
+<p>完全一致。所以 <b>不必手动设 <code>script</code></b> ——
+除非你的文本是「一段里混了多种文字」，那要自己切段。</p>
+
+<h3>方向传错，不只是左右颠倒</h3>
+
+<p>阿拉伯词 <span class="ipa">مكتبة</span>（5 个码位）两个方向各排一次：</p>
+
+<div class="out-wrap">
+  <div class="cap">字形号 + 簇号</div>
+<pre>rtl →  uniFE94/c4  uniFE92/c3  uniFE98/c2  uniFEDC/c1  uniFEE3/c0
+ltr →  uniFEE2/c0  uniFEDC/c1  uniFE98/c2  uniFE91/c3  uni0629/c4</pre>
+</div>
+
+<ul>
+  <li><b><code>rtl</code></b>：簇号 <b>4 → 0</b>（倒序）。第一个字形是<b>最左边</b>的 ——
+  HarfBuzz 已经把视觉顺序排好了，客户端<b>从左往右依次画</b>就行。</li>
+  <li><b><code>ltr</code></b>：簇号 0 → 4，而且字形<b>换了一整批</b>
+  （<code>uniFEE3</code> ↔ <code>uniFEE2</code>，词尾形 ↔ 词首形）。</li>
+</ul>
+
+<div class="card warn">
+  <div class="card-t">HarfBuzz 不管 bidi</div>
+  <p>「一段文字里既有阿拉伯文又有拉丁文」，必须先跑
+  <b>Unicode Bidi Algorithm</b> 把它切成若干<b>单向段</b>，
+  每段单独 <code>hb_shape</code>，最后按段拼版面。</p>
+  <p>HarfBuzz 只认「这一段的这一个方向」。数字、标点在阿拉伯文里的方向，
+  是 bidi 层的判断，不是整形层的。</p>
+</div>
+
+<h2 id="s8"><span class="n">8</span>特性（features）：默认集与手动覆盖</h2>
+
+<p><code>hb_shape</code> 的第三个参数是一组 <code>hb_feature_t</code>。
+它默认是空的 —— <b>空就是对的</b>。</p>
+
+<div class="card key">
+  <div class="card-t">不要手写特性列表</div>
+  <p>HarfBuzz 对 <code>script=mong</code> <b>默认就启用</b>了
+  <code>isol / init / medi / fina / rclt / ccmp</code>。
+  你手写一串，看起来是「确保开启」，实际会<b>覆盖掉默认集</b>。</p>
+  <p>本项目实测过这件事（<code>report/harfbuzz-features-compare.txt</code>）：
+  手写之后蒙文的连写反而变差。正确做法是<b>什么都不写</b>。</p>
+</div>
+
+<p>什么时候才需要传？<b>做对照实验</b>的时候：</p>
+
+<div class="code-wrap">
+  <div class="bar"><span>关掉 rclt 看差别</span><button class="cp">复制</button></div>
+<pre>hb_feature_t f;
+hb_feature_from_string("-rclt", -1, &amp;f);   /* 减号 = 关闭 */
+hb_shape(font, buf, &amp;f, 1);</pre>
+</div>
+
+<p>这条命令的价值在于：<b>它能证明某个特性确实在起作用</b>。
+关掉 <code>rclt</code> 之后蒙文退回孤立字形 —— 一眼就能看出差别。</p>
+
+<div class="card note">
+  <div class="card-t">特性是「策略注入」，不是「参数」</div>
+  <p>四个常见开关的写法：<code>+liga</code> 开、<code>-liga</code> 关、
+  <code>kern=0</code> 带值、<code>aalt=2</code> 取第 2 个备选。
+  它们作用的<b>不是</b>字形内容，而是<b>引擎跑哪几条规则</b> ——
+  策略模式里的「换一个策略实现」。</p>
+</div>
+
+<h2 id="s9"><span class="n">9</span>单位、定点数与那个「一千倍」</h2>
+
+<p>HarfBuzz 的所有度量都是<b>定点数</b>：整数除以 64 才是像素。</p>
+
+<table>
+<thead><tr><th style="width:22%">数</th><th style="width:20%">类型</th>
+<th>含义</th></tr></thead>
+<tbody>
+<tr><td><code>x_advance</code></td><td>定点数</td>
+    <td>排下一个字形，笔要往右走多远</td></tr>
+<tr><td><code>y_advance</code></td><td>定点数</td>
+    <td>竖排时往下走多远（横排恒为 0）</td></tr>
+<tr><td><code>x_offset</code> / <code>y_offset</code></td><td>定点数</td>
+    <td>这个字形相对基线偏多少（不推进笔）</td></tr>
+</tbody>
+</table>
+
+<p>换算关系：</p>
+
+<div class="code-wrap">
+  <div class="bar"><span>两处缩放，别混</span><button class="cp">复制</button></div>
+<pre>字体侧   hb_font_set_scale(font, px*64, px*64);
+         ↑ 此后所有度量都是「已经乘过 scale 的定点数」
+
+应用侧   double px_value = pos[i].x_advance / 64.0;
+         ↑ 定点数还原成像素
+
+UPEM     只在你**不给** scale 的时候才参与运算 —— 那时结果以 em 为单位</pre>
+</div>
+
+<div class="card warn">
+  <div class="card-t">UPEM 是 1000 还是 2048，会咬人</div>
+  <p>Noto Sans Mongolian 的 UPEM 是 <b>1000</b>，
+  很多传统字体是 <b>2048</b>。如果你跳过 <code>set_scale</code>、
+  直接拿 <code>x_advance</code> 当像素用，排出来的字会小得几乎看不见 ——
+  而且<b>换一支字体，大小错的倍数还不一样</b>。</p>
+  <p>正确做法永远是：<b>先 <code>set_scale</code>，再读结果</b>。</p>
+</div>
+
+<h2 id="s10" class="key-h key-h key-h key-h"><span class="key-mark" title="重点内容">★</span><span class="n">10</span>竖排：为什么蒙文要走 ltr + 旋转</h2>
+
+<p>HarfBuzz <b>支持</b> <code>ttb</code>（top-to-bottom）。但对这支蒙文字体，
+实测结果是这样的：</p>
+
+<table>
+<thead><tr><th style="width:14%">方向</th><th style="width:44%">x_advance 序列</th>
+<th>y_advance 序列</th></tr></thead>
+<tbody>
+<tr><td><code>ltr</code></td><td><b>492 573 614 838 383</b></td><td>0 0 0 0 0</td></tr>
+<tr><td><code>ttb</code></td><td>0 0 0 0 0 0</td>
+    <td><b>−1750 −1750 −1750 −1750</b></td></tr>
+</tbody>
+</table>
+
+<p><code>ttb</code> 给每个字形<b>一律 −1750</b> —— 因为字体里没有
+<code>vmtx</code>（竖排度量表），HarfBuzz 退回到「统一竖排推进」。
+这个数<b>不是真的</b>，用它排版会把长短不一的词压成等宽。</p>
+
+<div class="card key">
+  <div class="card-t">所以竖排只能这样做</div>
+  <ol>
+    <li>按 <code>ltr</code> 横排整形，拿到真实的 <code>x_advance</code>；</li>
+    <li>把整个排版结果<b>整体旋转 −90°</b>；</li>
+    <li>横排时的「宽度」变成竖排时的「列高」。</li>
+  </ol>
+  <p>这与 <code>FONT_ANALYSIS.md</code> §309 的结论一致：
+  <b>不依赖字体的竖排度量</b>。</p>
+</div>
+
+<p>网页版做过更直接的对照：<code>vertical-lr</code> 与 <code>rotate(90deg)</code>
+两种引擎并排比，墨迹像素<b>逐位相同</b>，只有起始 x 差一点（旋转基点不同）。
+换句话说 —— <b>竖排不必是引擎的原生能力，几何变换就能办到</b>。</p>
+
+<div class="card tip">
+  <div class="card-t">标点要换字形</div>
+  <p>字体里有 <b>25 个</b> <code>.vert</code> 变体（竖排标点）。
+  旋转方案下，这些标点要用 <code>vert</code> 特性换成竖排字形，
+  否则「（）」旋转后开口方向是错的。</p>
+  <p>这正是「方向是排版决策、取向是字形决策」两条线分开的证据。</p>
+</div>
+
+<h2 id="s11"><span class="n">11</span>落到 Qt：从字形号到 QPainter</h2>
+
+<p>HarfBuzz 给出编号，Qt 负责画。中间的桥是 <code>QGlyphRun</code>：</p>
+
+<div class="code-wrap">
+  <div class="bar"><span>draw.cpp —— HB → QGlyphRun → QPainter</span><button class="cp">复制</button></div>
+<pre>QVector&lt;quint32&gt; idx;
+QVector&lt;QPointF&gt; pt;
+double pen = 0.0;
+
+for (unsigned i = 0; i &lt; n; ++i) {
+    idx &lt;&lt; info[i].codepoint;                     /* 字形号，两边通用 */
+    pt  &lt;&lt; QPointF(pen + pos[i].x_offset / 64.0,
+                   -pos[i].y_offset / 64.0);      /* 屏幕 y 向下，取负 */
+    pen += pos[i].x_advance / 64.0;               /* 64 = 定点精度 */
+}
+
+QGlyphRun run;
+run.setRawFont(rawFont);                          /* 必须与 HB 用同一个文件 */
+run.setGlyphIndexes(idx);
+run.setPositions(pt);
+painter.drawGlyphRun(QPointF(0, 0), run);</pre>
+</div>
+
+<div class="card warn">
+  <div class="card-t">最阴的一个错：字体名一样，文件不一样</div>
+  <p>HarfBuzz 用的是 <code>A.ttf</code>，<code>QRawFont</code> 却加载了同名的
+  <code>A'</code>（不同版本）。字形号会<b>整体错位</b> ——
+  画出来是<b>别的字</b>，而且<b>不报任何错</b>。</p>
+  <p>防护办法：把字体文件<b>嵌进资源</b>（<code>QFontDatabase::addApplicationFont</code>），
+  让两边都用同一份内存数据。</p>
+</div>
+
+<h3>竖排怎么画</h3>
+
+<p>第 10 节说过：横排整形 + 整体旋转。代码上就是先 <code>rotate(-90)</code>
+再按上面的方式画 —— 此时 <code>pen</code> 累加的方向从「向右」变成「向下」。</p>
+
+<div class="card note">
+  <div class="card-t">和 QTextLayout 的分工</div>
+  <p><code>QTextLayout</code> 内部<b>也是</b> HarfBuzz。所以两条路可选：</p>
+  <ul>
+    <li><b>要快、要简单</b>：直接用 <code>QTextLayout</code>，
+    用 <code>QTextLine::glyphRuns()</code> 取结果，不引额外依赖。</li>
+    <li><b>要控制</b>：自己调 HarfBuzz，拿最原始的 <code>codepoint</code> 与
+    <code>x_advance</code>，方便做缓存、逐簇排版、导 SVG。</li>
+  </ul>
+  <p>本项目的导出功能走的是第二条。</p>
+</div>
+
+<h2 id="s12"><span class="n">12</span>性能：该缓存的三处</h2>
+
+<p>整形本身是纯函数 —— 同样的入参永远同样的出参。纯函数就能缓存：</p>
+
+<table>
+<thead><tr><th style="width:20%">缓存</th><th style="width:34%">键</th>
+<th>命中率</th></tr></thead>
+<tbody>
+<tr><td><b>整形结果</b></td>
+    <td>字体 + 字号 + 文本片段 + 特性集</td>
+    <td>打字时极高：只有改动的那一小段失效</td></tr>
+<tr><td><b>字形栅格</b></td>
+    <td>字体 + 字号 + 字形号</td>
+    <td>极高：同一字形反复出现</td></tr>
+<tr><td><b>整列排版</b></td>
+    <td>段落 + 列宽</td>
+    <td>中等：改一个字只重排一列</td></tr>
+</tbody>
+</table>
+
+<div class="card warn">
+  <div class="card-t">两个反面教材</div>
+  <p><b>① 逐簇整形。</b>把每个字素簇单独 <code>hb_shape</code>，
+  连写就断了 —— 蒙文会显示成一串孤立字母。必须<b>整词</b>整形。</p>
+  <p><b>② 每次击键整篇重排。</b>一万字的文档，每个键都重排全文，
+  延迟肉眼可见。正确做法是按段落或按列打脏标记。</p>
+</div>
+
+<h2 id="s13"><span class="n">13</span>调试：怎么知道它选对了字形</h2>
+
+<p>整形出了问题，肉眼只能看到「显示不对」。要定位必须能<b>读出字形名</b>。</p>
+
+<h3>三条路子</h3>
+
+<table>
+<thead><tr><th style="width:22%">手段</th><th style="width:26%">拿到的</th>
+<th>适合</th></tr></thead>
+<tbody>
+<tr><td><code>hb-shape</code> 命令</td><td><code>[u182E.M.init=0+492|…]</code></td>
+    <td>命令行快速试一个词</td></tr>
+<tr><td>HarfBuzz + 字体名表</td><td>字形号 → <code>uniFE91</code> 这类名字</td>
+    <td>写测试、批量对拍</td></tr>
+<tr><td>项目的 <code>report/</code></td><td>已有的地面真相</td>
+    <td>改代码后回归比对</td></tr>
+</tbody>
+</table>
+
+<p>本机实测的一小段（供日后回归比对用）：</p>
+
+<div class="out-wrap">
+  <div class="cap">Noto Sans Mongolian · UPEM 1000</div>
+<pre>MA 单独           u182E.M.init._isol      632
+MA 词首 (MA+A)    u182E.M.init  492 | u1823.O.fina  440
+MA 词中 (A+MA+A)  u1820.AA.init 776 | u182E.M.medi 284 | u1820.A.fina 427
+mongol 整词       u182E.M.init 492 | u1823.O.medi 573 | u1829.AG.medi 614
+                  | u182D_u1823.GO.medi 838 | u182F.L.fina 383   → 合计 2900</pre>
+</div>
+
+<div class="card note">
+  <div class="card-t">仓库里的验证脚本是 Python 写的</div>
+  <p><code>tools/harfbuzz_ground_truth.py</code> 用的是 <code>uharfbuzz</code>。
+  <b>不需要读懂它</b> —— 直接跑就能出结果，产物在
+  <code>report/harfbuzz-ground-truth.txt</code>。</p>
+  <p>要改的话，改的是「喂什么文本进去」那一行，不是逻辑。</p>
+</div>
+
+<h2 id="s14"><span class="n">14</span>一页速查</h2>
+
+<table>
+<thead><tr><th style="width:24%">要做的事</th><th>写法</th></tr></thead>
+<tbody>
+<tr><td>建字体</td>
+    <td><code>hb_blob_create_from_file_or_fail → hb_face_create → hb_font_create</code></td></tr>
+<tr><td>设缩放</td>
+    <td><code>hb_font_set_scale(font, px*64, px*64)</code> ＋ <code>set_ppem</code></td></tr>
+<tr><td>装文本</td>
+    <td><code>hb_buffer_add_utf16(buf, (uint16_t*)s.utf16(), s.size(), 0, s.size())</code></td></tr>
+<tr><td>猜属性</td>
+    <td><code>hb_buffer_guess_segment_properties(buf)</code></td></tr>
+<tr><td>整形</td>
+    <td><code>hb_shape(font, buf, nullptr, 0)</code> —— 特性传空才对</td></tr>
+<tr><td>读结果</td>
+    <td><code>get_glyph_infos</code> / <code>get_glyph_positions</code>，除以 64</td></tr>
+<tr><td>蒙文竖排</td>
+    <td><code>ltr</code> 整形 → 整体 <code>rotate(-90°)</code></td></tr>
+<tr><td>编辑单位</td>
+    <td>按 <code>cluster</code>，不按字符</td></tr>
+</tbody>
+</table>
+
+<div class="card key">
+  <div class="card-t">五条铁律</div>
+  <ol>
+    <li><b>输出是施工单，不是图</b> —— 字形号只在同一个字体文件内有效。</li>
+    <li><b>簇是编辑的最小单位</b> —— 光标、删除、选区都按簇走。</li>
+    <li><b>不要让 HarfBuzz 猜方向</b>，但可以让它猜脚本（实测等价）。</li>
+    <li><b>特性传空</b> —— 手写等于覆盖默认集。</li>
+    <li><b>竖排自己转</b> —— 字体没有 <code>vmtx</code>，<code>ttb</code> 的数字不可信。</li>
+  </ol>
+</div>
+
+<div class="see-also">
+  <div class="card-t">想接着看</div>
+  <ul>
+    <li><a href="t03.html">T03 · 字体文件结构大揭秘</a>
+      <span class="why">—— 本篇讲的 <code>cmap</code> / <code>GSUB</code> / <code>GPOS</code>
+      在那篇是拆开看的；本篇是「谁来用它们」。</span></li>
+    <li><a href="q11.html">Q11 · 线程与互斥锁</a>
+      <span class="why">—— <code>hb_buffer</code> 与 <code>hb_font</code> 都不是线程安全的，
+      每线程一份是硬要求。</span></li>
+    <li><a href="fe-06.html">FE-06 · Writing Mode 与溢出滚动</a>
+      <span class="why">—— 竖排那部分在浏览器里由 <code>writing-mode</code> 代劳；
+      对照第 10 节看，能看出引擎替你做了多少。</span></li>
+  </ul>
+</div>
+
+<!-- NAV-AUTO -->
+<a class="home-fab" href="../../index.html" title="返回教程总目录">返回 home</a>
+
+</div>
+
+</div>
+<!-- /NAV-AUTO -->
+<footer>
+UME 项目组内部教程 · A01《HarfBuzz 及其基础用法》<br>
+文中的字形序列、推进量、簇号与方向对照，均由
+<b>uharfbuzz 14.6.0</b>（HarfBuzz 14.6.0）配合 <b>fontTools 4.67.0</b>，
+在 <code>Noto Sans Mongolian</code>（UPEM 1000）、<code>Segoe UI</code>、
+<code>Arial</code>、<code>Times New Roman</code> 上实际运行得出。<br>
+C++ 片段是按接口签名写的说明性代码，<b>本机未安装 HarfBuzz 开发库，未编译</b>；
+代码示例以 <b>Consolas</b> 等宽字体呈现。
+</footer>
+</main>
+</div>
+
+<script>
+/* 目录滚动高亮 */
+(function(){
+  const links = [...document.querySelectorAll('#toc a')];
+  const targets = links.map(a => document.querySelector(a.getAttribute('href'))).filter(Boolean);
+  const setOn = id => links.forEach(a => a.classList.toggle('on', a.getAttribute('href') === '#'+id));
+  const io = new IntersectionObserver(es => {
+    const vis = es.filter(e => e.isIntersecting)
+                  .sort((a,b) => a.boundingClientRect.top - b.boundingClientRect.top);
+    if (vis[0]) setOn(vis[0].target.id);
+  }, { rootMargin:'-8% 0px -72% 0px', threshold:0 });
+  targets.forEach(t => io.observe(t));
+})();
+
+/* 复制按钮 */
+(function(){
+  document.querySelectorAll('.code-wrap').forEach(box => {
+    const btn = box.querySelector('.cp');
+    const pre = box.querySelector('pre');
+    if (!btn || !pre) return;
+    btn.addEventListener('click', async () => {
+      const text = pre.textContent;
+      try { await navigator.clipboard.writeText(text); }
+      catch (e) {
+        const ta = document.createElement('textarea');
+        ta.value = text; document.body.appendChild(ta);
+        ta.select(); document.execCommand('copy'); ta.remove();
+      }
+      const old = btn.textContent;
+      btn.textContent = '已复制 ✓';
+      setTimeout(() => { btn.textContent = old; }, 1200);
+    });
+  });
+})();
+</script>
+<script>
+/* 移动端：生成「目录」按钮，点击呼出/收起侧滑目录 */
+(function(){
+  var toc = document.getElementById('toc');
+  if (!toc) return;
+  var btn = document.createElement('button');
+  btn.id = 'tocToggle';
+  btn.type = 'button';
+  btn.setAttribute('aria-controls','toc');
+  btn.textContent = '目录';
+  document.body.appendChild(btn);
+
+  function setOpen(on){
+    toc.classList.toggle('open', on);
+    document.body.classList.toggle('toc-open', on);
+    btn.setAttribute('aria-expanded', on ? 'true' : 'false');
+    btn.textContent = on ? '收起' : '目录';
+  }
+  btn.addEventListener('click', function(){
+    setOpen(!toc.classList.contains('open'));
+  });
+  toc.addEventListener('click', function(e){
+    if (e.target.closest('a')) setOpen(false);
+  });
+  document.addEventListener('click', function(e){
+    if (!toc.classList.contains('open')) return;
+    if (e.target === toc || toc.contains(e.target) || e.target === btn) return;
+    setOpen(false);
+  });
+  document.addEventListener('keydown', function(e){
+    if (e.key === 'Escape') setOpen(false);
+  });
+  function sync(){ if (window.innerWidth > 980) setOpen(false); }
+  window.addEventListener('resize', sync);
+  sync();
+})();
+</script>
+<script src="assets/series-common.js"></script>
+</body>
+</html>

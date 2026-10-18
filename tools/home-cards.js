@@ -45,7 +45,10 @@
   }
 
   function makeCard(c) {
-    var a = el('a', 'card' + (c.star ? ' star' : ''));
+    /* 系列 key → s-<key> 类。A 系列的黑金卡片靠它在样式表里命中；
+       其它系列没有对应的 s-* 规则，加了也无副作用。 */
+    var a = el('a', 'card' + (c.star ? ' star' : '')
+      + (c.series ? ' s-' + String(c.series).toLowerCase() : ''));
     a.href = 'SharingGroup/tutorials/' + c.file;
     a.target = '_blank';
     a.rel = 'noopener';

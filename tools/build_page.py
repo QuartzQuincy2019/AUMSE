@@ -155,7 +155,8 @@ UME 项目组内部教程 · @@NUM@@《@@TITLE@@》<br>
 """
 
 CLS = {"T": "tseries", "F": "fseries", "M": "mseries",
-       "R": "rseries", "Q": "qseries", "E": "eseries"}
+       "R": "rseries", "Q": "qseries", "E": "eseries",
+       "A": "aseries"}
 
 
 def main():

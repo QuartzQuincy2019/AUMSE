@@ -201,6 +201,28 @@ a.card.has-bg .ds{text-shadow:
 a.card .sb{display:inline-block;margin-top:8px;font:700 10.5px/1.8 var(--sans);
   letter-spacing:.04em;color:#fff;background:var(--gold);
   border-radius:999px;padding:0 9px}
+/* ---------- A 系列卡片：黑金（浅色与暗色主题**都**是黑金） ----------
+   用户要求：A 在首页表现为黑金色调背景，明暗一致。
+   所以这段不放进 @media (prefers-color-scheme: dark)，而是常态就写死黑金；
+   暗色主题下只把阴影加深一点。类名 s-a 由 home-cards.js 按 c.series 加上。 */
+a.card.s-a{
+  background:linear-gradient(135deg,#0d0b06 0%,#1b1408 44%,#2a1d09 100%);
+  border-color:#3a2c11;border-left:4px solid #c8a03a;
+  color:#f3e7c9;
+  box-shadow:inset 0 1px 0 rgba(255,214,120,.10);
+}
+a.card.s-a:hover{
+  background:linear-gradient(135deg,#141008 0%,#241a0b 46%,#3a2809 100%);
+  border-color:#c8a03a;box-shadow:0 8px 24px rgba(0,0,0,.45),
+  inset 0 1px 0 rgba(255,214,120,.18);
+  transform:translateY(-2px);
+}
+a.card.s-a .no{background:rgba(255,214,120,.14);border-color:#6b5320;color:#f0cf7a}
+a.card.s-a .tt{color:#f7ead0}
+a.card.s-a .ds{color:#c9b48a}
+a.card.s-a .sb{background:#c8a03a;color:#1a1204}
+/* 语言徽章在深底上要能看清：这几条只针对 s-a，不动的别的卡片 */
+a.card.s-a .lang{border-color:rgba(232,200,119,.36);box-shadow:none}
 .k-c{background:#e8f1fe;color:#14539f;border:1px solid #c9dcf7}
 .k-cpp{background:#f2ecfd;color:#5b21b6;border:1px solid #ddd0f7}
 .k-extra{background:#fdf4e3;color:#8a5a06;border:1px solid #f0dcb4}
@@ -470,7 +492,7 @@ CARD_FIT = {
 }
 
 
-def pack(items):
+def pack(items, sk=""):
     """items 里第 5 项现在是 [(显示名, class), …]。
 
     同时导出两个字段：
@@ -484,6 +506,8 @@ def pack(items):
         rec = {"file": a, "num": b, "title": c, "desc": d,
                "kind": " / ".join(n for n, _ in specs),
                "kinds": [[n, cls] for n, cls in specs],
+               # 系列 key：前端据此加 s-<key> 类，A 系列的黑金卡片靠它命中
+               "series": sk,
                "star": bool(f)}
         if a in CARD_BG:
             rec["bg"] = CARD_BG[a]
@@ -531,6 +555,15 @@ def build_html():
                    "banner": _fe["banner"], "desc": _fe["desc"],
                    "count": len(fe_items), "items": fe_items})
 
+    # A 系列：排在 FE **之后**（用户指定）。它的篇目在 PAGES 里，
+    # 只是系列 key 不在 ORDER 中 —— 所以这里手工补一个分组。
+    _a = SERIES["A"]
+    a_items = [(p[1], p[3], p[4], p[5], LANG_OF.get(p[1]) or [], bool(p[6]))
+               for p in pages_of("A")]
+    groups.append({"key": "A", "label": _a["label"],
+                   "banner": _a["banner"], "desc": _a["desc"],
+                   "count": len(a_items), "items": a_items})
+
     total = sum(g["count"] for g in groups)
     n_star = sum(1 for g in groups for it in g["items"] if it[5])
 
@@ -539,7 +572,7 @@ def build_html():
     data = {"groups": [{"key": g["key"], "label": g["label"],
                         "banner": g["banner"], "desc": g["desc"],
                         "count": g["count"],
-                        "cards": pack(g["items"])} for g in groups],
+                        "cards": pack(g["items"], g["key"])} for g in groups],
             "total": total, "star": n_star,
             # 语言 → class。首页卡片的 .lang 需要它；原来这张表手写在
             # home-cards.js 的 LCLS 里，加 Qt 时漏了更新，结果首页的 Qt
@@ -630,13 +663,14 @@ def main():
     for name in ("index.html", "home.html"):
         io.open(os.path.join(REPO, name), "w",
                 encoding="utf-8", newline="").write(html)
-    n_star = sum(1 for g in [pages_of(k) for k in ORDER] for p in g if p[6]) \
+    n_star = sum(1 for g in [pages_of(k) for k in ORDER + ["A"]] for p in g if p[6]) \
         + sum(1 for f in FE_PAGES if f[5])
     print("  已生成 index.html / home.html（%d 字符）" % len(html))
     print("  共 %d 篇（%s），其中星标 %d 篇"
           % (len(PAGES) + len(FE_PAGES),
              " + ".join("%s %d" % (SERIES[k]["num"], len(pages_of(k)))
-                        for k in ORDER) + " + FE %d" % len(FE_PAGES),
+                        for k in ORDER) + " + FE %d" % len(FE_PAGES)
+             + " + A %d" % len(pages_of("A")),
              n_star))
     # 链接检查
     bad = []

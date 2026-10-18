@@ -17,7 +17,10 @@ A = os.path.join(R, "SharingGroup", "tutorials", "assets")
 ns = {}
 exec(compile(io.open(os.path.join(R, "tools", "series_data.py"),
                      encoding="utf-8").read(), "series_data.py", "exec"), ns)
-truth = {k: len(ns["pages_of"](k)) for k in ns["ORDER"]}
+# 统计口径要跟首页一致：PAGE_ORDER（ORDER + FE + A）。
+# A 只在 PAGE_ORDER 里、不在 ORDER 里，只按 ORDER 统计会漏掉它。
+truth = {k: len(ns["pages_of"](k)) for k in ns["PAGE_ORDER"]
+         if k != "FE"}
 truth["FE"] = len(ns["FE_PAGES"])
 
 print("  series_data.py 的真实篇数：")
@@ -33,7 +36,7 @@ d = io.open(os.path.join(A, "fe-data.js"), encoding="utf-8").read()
 mf = re.search(r'(?s)var SERIES_FILES\s*=\s*\[(.*?)\];', d)
 files = re.findall(r"'([^']+)'", mf.group(1)) if mf else []
 print("      现算用的文件清单 %d 条" % len(files))
-for key in ("T", "F", "M", "R", "Q", "E", "FE"):
+for key in ns["PAGE_ORDER"]:
     n = sum(1 for f in files if (("FE" if f.startswith("fe-")
                                   else f[0].upper()) == key))
     mark = "OK " if n == truth.get(key) else "!! "
@@ -57,7 +60,7 @@ body = m.group(1) if m else ""
 keys = re.findall(r"s:\s*'([^']*)'", body)
 import collections
 cnt = collections.Counter(keys)
-for key in ("T", "F", "M", "R", "Q", "E", "FE"):
+for key in ns["PAGE_ORDER"]:
     n = cnt.get(key, 0)
     mark = "OK " if n == truth.get(key) else "!! "
     print("      %s %-4s 表里 %d  真实 %d" % (mark, key, n, truth.get(key, -1)))

@@ -28,14 +28,15 @@
     E: { label: 'Extra · E', banner: 'E 系列 · 补充练习与进阶' },
     F: { label: '文件 · F', banner: 'F 系列 · 文件操作基础' },
     R: { label: '相关 · R', banner: 'R 系列 · 相关信息与理论' },
-    FE: { label: '前端 · FE', banner: 'FE 系列 · 前端基础' }
+    FE: { label: '前端 · FE', banner: 'FE 系列 · 前端基础' },
+    A: { label: '进阶 · A', banner: 'A 系列 · 进阶' }
   };
 
   /* 展示顺序由项目组长按组员进度手工排优先度 —— 会变，
      必须与 tools/series_data.py 的 ORDER 保持一致 */
   /* 末尾的 FE 也要列进来 —— 它的外观自成一系，
      但同样是「一个系列」，『全部系列』里必须有它 */
-  var ORDER = ['T', 'F', 'M', 'R', 'Q', 'E', 'FE'];
+  var ORDER = ['T', 'F', 'M', 'R', 'Q', 'E', 'FE', 'A'];
 
   /* ---------- 篇目表 ---------- */
   var PAGES = [
@@ -97,6 +98,9 @@
     { f: 'fe-07.html',                      n: 'FE-07',     t: '鼠标悬停与 transition', s: 'FE' },
     { f: 'fe-08.html',                      n: 'FE-08',     t: 'JavaScript 语法初步', s: 'FE' },
     { f: 'fe-09.html',                      n: 'FE-09',     t: 'DOM 操作基础', s: 'FE' },
+
+    /* ---- A：A 系列 · 进阶 ---- */
+    { f: 'a01.html',                        n: 'A01',       t: 'HarfBuzz 及其基础用法', s: 'A' },
   ];
 
   function currentFile() {
