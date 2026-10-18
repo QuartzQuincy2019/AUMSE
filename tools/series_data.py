@@ -109,7 +109,7 @@ SERIES = {
         "num": "FE",
         "banner": "FE 系列 · 前端基础",
         "label": "前端 · FE",
-        "desc": "HTML 与 CSS：界面长什么样、怎么让它好看",
+        "desc": "HTML、CSS 与 JavaScript：页面结构、样式与脚本",
         "cls": "feseries",
     },
 
@@ -121,7 +121,7 @@ SERIES = {
         "num": "A",
         "banner": "A 系列 · 进阶",
         "label": "进阶 · A",
-        "desc": "排版引擎、字体内部与工程化：写给项目组长自己",
+        "desc": "排版引擎、字体内部与工程化",
         "cls": "aseries",
         "c1": "#faf6ea", "c2": "#fffdf6", "c3": "#8a6410", "c4": "#5f450a",
         "ink": "#1a1509",
