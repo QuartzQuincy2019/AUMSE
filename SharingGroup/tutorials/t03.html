@@ -204,30 +204,9 @@ script latn  →  aalt, ccmp, ordn          ← 拉丁字母只做基础处理
 script cyrl  →  aalt, ccmp, ordn
 script grek  →  aalt, ccmp, ordn</pre></div>
 
-<table>
-<thead><tr><th style="width:14%">特性</th><th>作用</th></tr></thead>
-<tbody>
-<tr><td class="c">isol</td><td><b>孤立形</b>：字母两边都不连</td></tr>
-<tr><td class="c">init</td><td><b>词首形</b>：右边连接后面的字母</td></tr>
-<tr><td class="c">medi</td><td><b>词中形</b>：两边都连</td></tr>
-<tr><td class="c">fina</td><td><b>词尾形</b>：左边承接前面的字母</td></tr>
-<tr><td class="c">ccmp</td><td>字形组合 / 分解（预处理的替换）</td></tr>
-<tr><td class="c">rclt</td><td><b>必需连字</b>：不做会读错，必须执行</td></tr>
-<tr><td class="c">vert</td><td>竖排替换（25 个字形带这个后缀）</td></tr>
-<tr><td class="c">aalt</td><td>全部替代字形（给用户挑选用）</td></tr>
-</tbody>
-</table>
-
-<div class="card key">
-  <div class="card-t">为什么必须是 rclt 而不是普通连字</div>
-  <p>OpenType 里连字特性分两种：<code>liga</code>（可选，关了也能读）
-  和 <code>rclt</code>（必需，关了就读错）。</p>
-  <p>蒙文的音节连写属于后者 —— 同一串字母，
-  <b>连与不连是不同的词</b>。所以它写在 <code>rclt</code> 里。</p>
-  <p><b>这也解释了我们代码里那条禁令</b>：绝对不能写
-  <code>font-feature-settings</code> 去手动打开 init/medi/fina/isol。
-  那会覆盖掉引擎本来会做的上下文判断，把连写拆散。</p>
-</div>
+<p>各特性的中文名与作用、以及「为什么必须是 <code>rclt</code> 而不是普通连字」，
+见 <a href="a01.html">A01 · HarfBuzz 及其基础用法</a> 第 11 节 ——
+那一篇讲<b>谁来执行这些特性</b>，本篇只关心<b>字体里声明了哪些</b>。</p>
 
 <h3>查表（lookup）的实际构成</h3>
 

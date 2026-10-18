@@ -22,7 +22,7 @@
   <p>手册原文一律用引用块给出，<b>专业词汇保留英文</b>；每处引用都标了章节与链接。</p>
 </div>
 
-<h2 id="s1"><span class="n">1</span>text shaping：把「字」变成「形」</h2>
+<h2 id="s1"><span class="n">1</span>text shaping：从字符码到字形序列</h2>
 
 <div class="quote">
   <p>Text shaping is the process of translating a string of character codes
@@ -54,7 +54,7 @@
   <p>输出的是编号与坐标，不是像素 —— 这一点第 5 节展开。</p>
 </div>
 
-<h2 id="s2"><span class="n">2</span>先把术语钉死</h2>
+<h2 id="s2"><span class="n">2</span>术语与定义</h2>
 
 <p>这一节集中列，后面各节不再重复解释。全部引自手册的
 <a href="https://harfbuzz.github.io/terminology.html">Terminology</a> 一章。</p>
@@ -325,7 +325,7 @@ ALEF <code>U+0627</code>）实测三支字体：</p>
 <p>合计 2900，即 <b>2.9000 em</b>（UPEM = 1000），与
 <code>report/harfbuzz-ground-truth.txt</code> 一致。</p>
 
-<h2 id="s6"><span class="n">6</span>中间那三张表</h2>
+<h2 id="s6"><span class="n">6</span>三张核心表：cmap / GSUB / GPOS</h2>
 
 <p>HarfBuzz 不「懂」任何语言。它的工作是查三张表、跑两个状态机：</p>
 
@@ -660,10 +660,60 @@ ltr →  uniFEE2/c0  uniFEDC/c1  uniFE98/c2  uniFE91/c3  uni0629/c4</pre>
   （<code>uniFEE3</code> ↔ <code>uniFEE2</code>，final ↔ initial）。</li>
 </ul>
 
-<h2 id="s11"><span class="n">11</span>特性（features）</h2>
 
-<p><code>hb_shape</code> 的第三个参数是一组 <code>hb_feature_t</code>。
-默认是空的 —— <b>空就是对的</b>。</p>
+<h2 id="s11"><span class="n">11</span>OpenType 特性</h2>
+
+<p>手册把整形拆成「查表 + 换形 + 定距」。而实际操作时，引擎只做一件事：
+<b>按 script 与 language 选出一组特性，逐条执行</b>。
+<code>hb_shape</code> 的第三个参数就是用来覆盖这组特性的。</p>
+
+<p>特性不是抽象概念 —— 它写在字体的 <code>GSUB</code> 里，按 script 分组。
+这支蒙文字体实测声明了下面这些。本节前半的清单与定义<b>搬自
+<a href="t03.html">T03 · 字体文件结构大揭秘</a> 第 4 节</b>：
+那一篇拆的是字体内部结构（lookup 怎么分布），本篇管的是<b>谁来执行</b>。</p>
+
+
+<div class="code-wrap">
+  <div class="bar"><span>这支字体在 GSUB 里声明的特性（实测）</span><button class="cp">复制</button></div>
+<pre>script <b>mong</b>  →  aalt, ccmp, <b>fina, init, isol, medi</b>, ordn, <b>rclt</b>, vert
+script DFLT  →  同上
+script latn  →  aalt, ccmp, ordn          ← 拉丁字母只做基础处理
+script cyrl  →  aalt, ccmp, ordn
+script grek  →  aalt, ccmp, ordn</pre>
+</div>
+
+<p>注意 <code>latn</code> / <code>cyrl</code> / <code>grek</code> 只做
+<code>aalt, ccmp, ordn</code> —— 同一支字体，换个 script，跑的特性集换了一整套。
+这正是第 2 节「script 决定派给哪个 shaper」的具体体现。</p>
+
+<h3>常用的八条</h3>
+
+<table>
+<thead><tr><th style="width:14%">特性</th><th>作用</th></tr></thead>
+<tbody>
+<tr><td class="c">isol</td><td><b>孤立形</b>：字母两边都不连</td></tr>
+<tr><td class="c">init</td><td><b>词首形</b>：右边连接后面的字母</td></tr>
+<tr><td class="c">medi</td><td><b>词中形</b>：两边都连</td></tr>
+<tr><td class="c">fina</td><td><b>词尾形</b>：左边承接前面的字母</td></tr>
+<tr><td class="c">ccmp</td><td>字形组合 / 分解（预处理的替换）</td></tr>
+<tr><td class="c">rclt</td><td><b>必需连字</b>：不做会读错，必须执行</td></tr>
+<tr><td class="c">vert</td><td>竖排替换（25 个字形带这个后缀）</td></tr>
+<tr><td class="c">aalt</td><td>全部替代字形（给用户挑选用）</td></tr>
+</tbody>
+</table>
+
+<div class="card key">
+  <div class="card-t">为什么必须是 rclt 而不是普通连字</div>
+  <p>OpenType 里连字特性分两种：<code>liga</code>（可选，关了也能读）
+  和 <code>rclt</code>（必需，关了就读错）。</p>
+  <p>蒙文的音节连写属于后者 —— 同一串字母，
+  <b>连与不连是不同的词</b>。所以它写在 <code>rclt</code> 里。</p>
+  <p><b>这也解释了我们代码里那条禁令</b>：绝对不能写
+  <code>font-feature-settings</code> 去手动打开 init/medi/fina/isol。
+  那会覆盖掉引擎本来会做的上下文判断，把连写拆散。</p>
+</div>
+
+<h3>默认集已经够用</h3>
 
 <div class="card key">
   <div class="card-t">不要手写特性列表</div>
@@ -717,7 +767,7 @@ UPEM     只在不给 scale 的时候才参与运算 —— 那时结果以 em �
   <p>正确做法永远是：<b>先 <code>set_scale</code>，再读结果</b>。</p>
 </div>
 
-<h2 id="s13" class="key-h key-h key-h key-h"><span class="key-mark" title="重点内容">★</span><span class="n">13</span>竖排：为什么蒙文走 ltr + 旋转</h2>
+<h2 id="s13" class="key-h key-h key-h key-h"><span class="key-mark" title="重点内容">★</span><span class="n">13</span>竖排：ltr 整形 + 整体旋转</h2>
 
 <p>HarfBuzz <b>支持</b> <code>ttb</code>（top-to-bottom）。但对这支蒙文字体，实测：</p>
 
@@ -757,7 +807,7 @@ UPEM     只在不给 scale 的时候才参与运算 —— 那时结果以 em �
   <p>这正是「方向是排版决策、取向是字形决策」两条线分开的证据。</p>
 </div>
 
-<h2 id="s14"><span class="n">14</span>落到 Qt</h2>
+<h2 id="s14"><span class="n">14</span>在 Qt 中渲染</h2>
 
 <div class="code-wrap">
   <div class="bar"><span>draw.cpp —— HB → QGlyphRun → QPainter</span><button class="cp">复制</button></div>
@@ -801,7 +851,7 @@ painter.drawGlyphRun(QPointF(0, 0), run);</pre>
   <p>本项目的导出功能走第二条。</p>
 </div>
 
-<h2 id="s15"><span class="n">15</span>性能：该缓存的三处</h2>
+<h2 id="s15"><span class="n">15</span>性能与缓存</h2>
 
 <p>整形是纯函数 —— 同样的入参永远同样的出参（第 1 节那四个自变量）。
 纯函数就能缓存：</p>
@@ -826,7 +876,7 @@ painter.drawGlyphRun(QPointF(0, 0), run);</pre>
   正确做法是按段落或按列打脏标记。</p>
 </div>
 
-<h2 id="s16"><span class="n">16</span>调试：怎么知道它选对了字形</h2>
+<h2 id="s16"><span class="n">16</span>调试与验证</h2>
 
 <table>
 <thead><tr><th style="width:24%">手段</th><th style="width:28%">拿到的</th><th>适合</th></tr></thead>
