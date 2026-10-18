@@ -24,16 +24,18 @@
   <a href="#s6">6 · 三张核心表：cmap / GSUB / GPOS</a>
   <a href="#s7">7 · 一次完整的整形</a>
   <a href="#s8">8 · cluster：编辑的最小单位</a>
-  <a href="#s9">9 · 天城文：连字、半形与视觉重排</a>
-  <a href="#s10">10 · 方向与脚本</a>
-  <a href="#s11">11 · OpenType 特性</a>
-  <a href="#s12">12 · 单位与定点数</a>
-  <a href="#s13">13 · 竖排：ltr 整形 + 整体旋转</a>
-  <a href="#s14">14 · 在 Qt 中渲染</a>
-  <a href="#s15">15 · 性能与缓存</a>
-  <a href="#s16">16 · 调试与验证</a>
-  <a href="#s17">17 · 另一套文字系统：圣书体的 quadrat</a>
-  <a href="#s18">18 · 一页速查</a>
+  <a href="#s9">9 · FVS：自由变体选择符</a>
+  <a href="#s10">10 · ZWJ：零宽连接符</a>
+  <a href="#s11">11 · 天城文：连字、半形与视觉重排</a>
+  <a href="#s12">12 · 方向与脚本</a>
+  <a href="#s13">13 · OpenType 特性</a>
+  <a href="#s14">14 · 单位与定点数</a>
+  <a href="#s15">15 · 竖排：ltr 整形 + 整体旋转</a>
+  <a href="#s16">16 · 在 Qt 中渲染</a>
+  <a href="#s17">17 · 性能与缓存</a>
+  <a href="#s18">18 · 调试与验证</a>
+  <a href="#s19">19 · 另一套文字系统：圣书体的 quadrat</a>
+  <a href="#s20">20 · 一页速查</a>
 </nav>
 
 <main>
@@ -42,8 +44,8 @@
 
 <p><span class="lang cpp">C++</span> <span class="tag">HarfBuzz</span> <span class="tag b">排版引擎</span></p>
 
-<p>T03 把字体文件拆开看过：<code>cmap</code> 是码位到字形的字典、
-<code>GSUB</code> 是替换规则、<code>GPOS</code> 是间距规则。那一篇讲的是<b>字体里有什么</b>。</p>
+<p>T03 把字体文件拆开看过：<code>cmap</code>（character to glyph mapping，字符到字形的映射表）是码位到字形的字典、
+<code>GSUB</code>（Glyph SUBstitution，字形替换）是替换规则、<code>GPOS</code>（Glyph POSitioning，字形定位）是间距规则。那一篇讲的是<b>字体里有什么</b>。</p>
 
 <p>这一篇讲<b>谁来读这些表</b>。答案是这个库自己的一句话：</p>
 
@@ -126,7 +128,7 @@
 
 <p>这条解释了为什么<b>换个文字系统，行为会变</b>：不是 HarfBuzz「聪明」，
 而是它内部按 script 派给了不同的 shaper。<b>Indic 那个 shaper 管的是天城文</b>
-（第 9 节），Arabic 那个管阿拉伯语（第 8 节），蒙古文走 USE / 默认分支。</p>
+（第 11 节），Arabic 那个管阿拉伯语（第 8 节），蒙古文走 USE（Universal Shaping Engine，通用整形引擎）/ 默认分支。</p>
 
 <h3>cluster（簇）与 grapheme（字素）</h3>
 
@@ -152,7 +154,7 @@
   <div class="card-t">别把「簇」和「字素」混用</div>
   <p>两者<b>经常重合，但不保证相同</b>。字素是文字学概念（你熟悉的那个），
   簇是整形引擎的记账单位。编辑器该按<b>簇</b>走，因为簇直接来自引擎；
-  而字素要靠 UAX #29 自己算，算出来还可能和簇边界不一致。</p>
+  而字素要靠 UAX（Unicode Annex，Unicode 标准附录）#29 自己算，算出来还可能和簇边界不一致。</p>
 </div>
 
 <h3>其余几个（后文会用到）</h3>
@@ -165,17 +167,17 @@
     与 Unicode 码位不是一一对应</td>
     <td>第 5 节：输出就是它</td></tr>
 <tr><td><b>advance</b></td><td>排下一个字形前，笔要往前走多少</td>
-    <td>第 12 节：定点数</td></tr>
+    <td>第 14 节：定点数</td></tr>
 <tr><td><b>offset</b></td><td>字形相对基线的偏移，<b>不推进笔</b></td>
     <td>第 5 节</td></tr>
 <tr><td><b>run</b></td><td>一组属性完全相同（同字体 / 同 script / 同方向 / 同语言）
     的字符</td>
     <td>第 4 节：HarfBuzz 一次只吃一个 run</td></tr>
-<tr><td><b>feature</b></td><td>OpenType 特性（<code>liga</code>、<code>rclt</code> 等），
+<tr><td><b>feature</b></td><td>OpenType（Adobe 与 Microsoft 的字体格式）特性（<code>liga</code>、<code>rclt</code> 等），
     是「跑哪几条规则」的开关</td>
-    <td>第 11 节</td></tr>
+    <td>第 13 节</td></tr>
 <tr><td><b>quadrat</b></td><td>古埃及学里指由若干圣书体符号拼成的一个方形区块</td>
-    <td>第 17 节</td></tr>
+    <td>第 19 节</td></tr>
 </tbody>
 </table>
 
@@ -251,7 +253,11 @@
   <p class="src">——<i>Buffers, language, script and direction</i></p>
 </div>
 
-<p><code>hb_buffer_t</code> 是这批 API 里唯一可变的东西。它有两个阶段：</p>
+<p>文本在网络与内存里可以是 UTF-8 / UTF-16 / UTF-32 三种编码之一 ——
+<b>UTF-16</b>（Unicode Transformation Format, 16-bit）是其中用 16 位单元（必要时用代理对）表示一个码位的那种，Windows 与 Qt 的 <code>QString</code> 用的就是它。
+HarfBuzz 的装文本接口按编码分三个：<code>add_utf8</code> / <code>add_utf16</code> / <code>add_utf32</code>。</p>
+
+<p><code>hb_buffer_t</code> 是这批 API（Application Programming Interface，应用编程接口）里唯一可变的东西。它有两个阶段：</p>
 
 <div class="mem">
   <div class="slot"><b>阶段一</b>　content_type = <code>UNICODE</code>　码位 + 每个码位的 cluster 号</div>
@@ -364,7 +370,7 @@ ALEF <code>U+0627</code>）实测三支字体：</p>
 </tbody>
 </table>
 
-<p>合计 2900，即 <b>2.9000 em</b>（UPEM = 1000），与
+<p>合计 2900，即 <b>2.9000 em</b>（UPEM，units per em，每 em 的设计单位数 = 1000），与
 <code>report/harfbuzz-ground-truth.txt</code> 一致。</p>
 
 <h2 id="s6"><span class="n">6</span>三张核心表：cmap / GSUB / GPOS</h2>
@@ -466,8 +472,8 @@ hb_buffer_destroy(buf);</pre>
   <div class="card-t">三个最常见的错</div>
   <ol>
     <li><b>忘设 <code>scale</code></b>：推进量是 em 单位，排出来小了一千倍。</li>
-    <li><b>用 <code>ttb</code> 排蒙文</b>：见第 13 节，实测每个字形都是 −1750。</li>
-    <li><b>手写 <code>feature</code> 列表</b>：等于覆盖掉默认集，连写全丢（第 11 节）。</li>
+    <li><b>用 <code>ttb</code> 排蒙文</b>：见第 15 节，实测每个字形都是 −1750。</li>
+    <li><b>手写 <code>feature</code> 列表</b>：等于覆盖掉默认集，连写全丢（第 13 节）。</li>
   </ol>
 </div>
 
@@ -488,7 +494,7 @@ hb_buffer_destroy(buf);</pre>
 <p>「indivisible unit」这三个词就是全部要点。<b>如果整形会重排或合并码位，
 就必须有一个东西记着「它们原来是一伙的」</b> —— 那就是 cluster 号。</p>
 
-<h3>实测一：蒙文的 FVS / ZWJ 都不占自己的簇</h3>
+<h3>实测一：蒙文的 FVS（Free Variation Selector，自由变体选择符）与 ZWJ（Zero Width Joiner，零宽连接符）都不占自己的簇</h3>
 
 <table>
 <thead><tr><th style="width:30%">输入</th><th style="width:12%">码位</th>
@@ -533,7 +539,7 @@ hb_buffer_destroy(buf);</pre>
 
 <h3>实测三：天城文整段并成一个簇</h3>
 
-<p>见下一节 —— 那里的 <span lang="hi">क्षि</span> 四个码位并成<b>一个</b>簇，
+<p>见第 11 节 —— 那里的 <span lang="hi">क्षि</span> 四个码位并成<b>一个</b>簇，
 是最极端的一例。</p>
 
 <div class="card key">
@@ -547,7 +553,176 @@ hb_buffer_destroy(buf);</pre>
   <p>违反任何一条，用户看到的就是「删了一个字母，屏幕上少了半个字」。</p>
 </div>
 
-<h2 id="s9"><span class="n">9</span>天城文：连字、半形与视觉重排</h2>
+
+<h2 id="s9"><span class="n">9</span>FVS：自由变体选择符</h2>
+
+<p>第 5 节说过，同一个字符可以按环境取不同字形（一对变体）。
+阿拉伯语靠四形特性解决，蒙文除了那四条，还有一套更细的机制：<b>变体选择符</b>。</p>
+
+<h3>它是什么</h3>
+
+<p><b>FVS</b>（Free Variation Selector，自由变体选择符）是 Unicode 蒙文区段里的
+四个<b>格式字符</b>：</p>
+
+<table>
+<thead><tr><th style="width:16%">码位</th><th style="width:22%">名字</th>
+<th style="width:14%">类属</th><th>作用</th></tr></thead>
+<tbody>
+<tr><td class="c">U+180B</td><td>FVS1</td><td>格式字符</td>
+    <td rowspan="4">跟在基字后面，指定用该字的<b>第 N 个变体字形</b>。
+    它<b>不是</b>一个可视字符，正常情况下不占推进量。</td></tr>
+<tr><td class="c">U+180C</td><td>FVS2</td><td>格式字符</td></tr>
+<tr><td class="c">U+180D</td><td>FVS3</td><td>格式字符</td></tr>
+<tr><td class="c">U+180F</td><td>FVS4</td><td>格式字符</td></tr>
+</tbody>
+</table>
+
+<div class="card warn">
+  <div class="card-t">U+180E 不是 FVS</div>
+  <p>U+180B–U+180D 与 U+180F 是变体选择符；<b>U+180E</b> 是
+  <b>MVS</b>（Mongolian Vowel Separator，蒙古文元音分隔符），
+  用途完全不同（分隔词内的元音，不做选形）。序号跳过 E 就是这个原因。</p>
+</div>
+
+<h3>为什么蒙文需要它</h3>
+
+<p>蒙文有一批字母，<b>同一个字在不同词里写法不同，但不是由前后字母决定的</b> ——
+而是由词的来源（蒙古语固有词 / 汉语借词 / 藏语借词）或书写习惯决定。
+这类区别没法用上下文规则（<code>rclt</code>）表达，只能由<b>录入者</b>显式指定。
+FVS 就是那个「显式指定」的入口。</p>
+
+<div class="card key">
+  <div class="card-t">编辑器必须允许插入 FVS</div>
+  <p>这不是可选功能。少了它，用户就没有办法表达那批字的第二种写法 ——
+  而<b>不同写法是不同的词</b>（见 <code>FONT_ANALYSIS.md</code> §147 的编辑器提示）。</p>
+  <p>同时它和基字<b>必须同簇</b>（第 8 节的实测）：光标不能停在两者之间，
+  退格一次要连基字一起删。</p>
+</div>
+
+<h3>实测：它到底做了什么</h3>
+
+<div class="out-wrap">
+  <div class="cap">Noto Sans Mongolian，UPEM 1000</div>
+<pre>MA 单独          字形 1 个   c0:632
+MA + FVS1        字形 2 个   c0:632  c0:770</pre>
+</div>
+
+<p>两件事值得注意：</p>
+
+<ol>
+  <li><b>簇没变</b>：两个字形都记在 <code>c0</code> —— FVS 被并进了基字的簇。</li>
+  <li><b>但也没换形</b>：第一个字形的编号与推进量（632）与单独写 MA 时完全一样；
+  第二个字形（770）是 FVS 自己占了一个位置。</li>
+</ol>
+
+<div class="card warn">
+  <div class="card-t">这是字体行为，不是 HarfBuzz 的锅</div>
+  <p>变体选择符能否生效，取决于<b>字体是否为这个组合提供了变体</b>：
+  GSUB 里有 <code>ccmp</code> 规则把「基字 + FVS」替换成变体字形，它才生效；
+  没有规则，基字就原样不动。本字体对 MA + FVS1 <b>没有提供变体</b>，
+  于是 FVS 落到自己身上。</p>
+  <p>所以判断 FVS 有没有起作用，<b>不能靠「看不看得见」</b> —— 要看字形数与字形号。
+  这也解释了为什么有些字体里 FVS 会显示成方框占位符。</p>
+</div>
+
+<h3>编辑器的三条硬要求</h3>
+
+<table>
+<thead><tr><th style="width:26%">要求</th><th>理由</th></tr></thead>
+<tbody>
+<tr><td><b>能插入</b></td><td>那是表达第二种写法的唯一手段，不是装饰</td></tr>
+<tr><td><b>能看见</b></td><td>格式字符不显示，用户不知道自己插了没有 ——
+    编辑器要给出可见提示（下划点、背景色或状态栏）</td></tr>
+<tr><td><b>连着基字</b></td><td>同簇；退格、方向键、选区都按簇走</td></tr>
+</tbody>
+</table>
+
+
+<h2 id="s10"><span class="n">10</span>ZWJ：零宽连接符</h2>
+
+<p>FVS 解决「同字不同形」，<b>ZWJ</b>（Zero Width Joiner，零宽连接符，U+200D）
+解决另一件事：<b>让引擎以为旁边有人</b>。</p>
+
+<h3>它是什么</h3>
+
+<p>ZWJ 是一个<b>零宽、可连接</b>的格式字符（U+200D）。
+「零宽」是不占推进量，「可连接」是它会参与连写判断。
+它的对偶是 <b>ZWNJ</b>（Zero Width Non-Joiner，零宽不连符，U+200C）——
+同样零宽，但作用是<b>切断</b>连写。</p>
+
+<table>
+<thead><tr><th style="width:16%">字符</th><th style="width:12%">码位</th>
+<th style="width:18%">推进量</th><th>作用</th></tr></thead>
+<tbody>
+<tr><td><b>ZWJ</b></td><td class="c">U+200D</td><td class="c">0</td>
+    <td>让两边<b>连起来</b>（或强制取某个位置形）</td></tr>
+<tr><td><b>ZWNJ</b></td><td class="c">U+200C</td><td class="c">0</td>
+    <td>让两边<b>不连</b>（打断连写）</td></tr>
+</tbody>
+</table>
+
+<h3>蒙文为什么用它</h3>
+
+<p>蒙文的字形选择<b>依赖邻居</b>：右边有人取词首形、左边有人取词尾形、两边都有人取词中形、
+两边都没有取孤立形。于是只要在某个字母的一侧塞一个 ZWJ，就能<b>骗出想要的位置形</b> ——
+哪怕那个位置本来不存在。</p>
+
+<div class="out-wrap">
+  <div class="cap">Noto Sans Mongolian，UPEM 1000</div>
+<pre>MA 单独           字形 1 个   c0:632      ← 孤立形
+MA + ZWJ          字形 2 个   c0:492 / c0:0
+                              ↑ 基字换成了 492（词首形），ZWJ 自己是 0</pre>
+</div>
+
+<p>基字从 632 变成 492 —— <b>形状变了</b>；ZWJ 自己的推进量是 0 —— <b>宽度没变</b>。
+这两个数字合起来就是「强制位置形，但不占位」。</p>
+
+<div class="card key">
+  <div class="card-t">项目里已经在用</div>
+  <p><code>web/globpreview.html</code> 的「位置形态」一节就是用这个原理做的：
+  在字母前后加 ZWJ / ZWNJ，把四种形态<b>逐格逼出来</b>，好看清字体到底提供了哪些。</p>
+  <p>那张表里每一格的码位下面都标了 <code>200D</code> 或 <code>200C</code> 的位置，
+  就是为了说明「这一格是靠什么逼出来的」。</p>
+</div>
+
+<h3>四种常见用法</h3>
+
+<table>
+<thead><tr><th style="width:30%">写法</th><th>效果</th></tr></thead>
+<tbody>
+<tr><td>字母 + ZWJ</td><td>逼成词首形（右边装作有人）</td></tr>
+<tr><td>ZWJ + 字母</td><td>逼成词尾形（左边装作有人）</td></tr>
+<tr><td>ZWJ + 字母 + ZWJ</td><td>逼成词中形（两边都装作有人）</td></tr>
+<tr><td>字母 + ZWNJ</td><td>切断连写，保持孤立形</td></tr>
+</tbody>
+</table>
+
+<div class="card warn">
+  <div class="card-t">它是格式字符，不是空格</div>
+  <p>ZWJ <b>不占宽度、不换行、不可见</b>，与空格完全不同。
+  别把它当分隔符用 —— 想分开两个词就老老实实写 U+0020。</p>
+  <p>另外它同样<b>并进前一簇</b>：与 FVS 一样，退格要连基字一起删，
+  否则会剩下一个没有基字的孤儿 ZWJ。</p>
+</div>
+
+<h3>与 FVS 的分工</h3>
+
+<table>
+<thead><tr><th style="width:14%"></th><th style="width:30%">FVS</th>
+<th style="width:26%">ZWJ</th><th>ZWNJ</th></tr></thead>
+<tbody>
+<tr><td><b>改的是</b></td><td>同一个字的<b>变体</b></td>
+    <td>连写状态（装作有邻居）</td><td>连写状态（切断）</td></tr>
+<tr><td><b>依赖</b></td><td>字体是否为该组合提供变体</td>
+    <td>引擎的连写判断</td><td>同左</td></tr>
+<tr><td><b>实测推进量</b></td><td>应为 0（本字体是 770）</td>
+    <td>0</td><td>0</td></tr>
+<tr><td><b>典型用途</b></td><td>同字异写（固有词 / 借词）</td>
+    <td>强制取某个位置形</td><td>故意不连</td></tr>
+</tbody>
+</table>
+
+<h2 id="s11"><span class="n">11</span>天城文：连字、半形与视觉重排</h2>
 
 <p>这一节用的字体是随项目分发的 <b>Shobhika</b>（IIT Bombay，OFL 1.1）。
 天城文走的是 <b>Indic shaper</b>（第 2 节那张表里的第一个），
@@ -658,7 +833,7 @@ virama（<code>U+094D</code>）自己不占字形，它的作用是「让下一�
   </table>
 </div>
 
-<h2 id="s10"><span class="n">10</span>方向与脚本</h2>
+<h2 id="s12"><span class="n">12</span>方向与脚本</h2>
 
 <p>缓冲区身上有三个属性，整形前必须正确（第 3 节引过手册：属性不同就得切成不同 run）：</p>
 
@@ -667,7 +842,9 @@ virama（<code>U+094D</code>）自己不占字形，它的作用是「让下一�
 <tbody>
 <tr><td><code>script</code></td><td><code>Mong</code> / <code>Arab</code> / <code>Deva</code></td>
     <td>决定派给哪个 shaper（第 2 节）</td></tr>
-<tr><td><code>direction</code></td><td><code>ltr</code> / <code>rtl</code> / <code>ttb</code></td>
+<tr><td><code>direction</code></td><td><code>ltr</code>（left-to-right，从左到右）/
+    <code>rtl</code>（right-to-left，从右到左）/
+    <code>ttb</code>（top-to-bottom，从上到下）</td>
     <td>决定连写朝哪边接，也决定输出顺序</td></tr>
 <tr><td><code>language</code></td><td>如 <code>mn</code></td>
     <td>影响 <code>locl</code>，多数场景可不设</td></tr>
@@ -703,7 +880,7 @@ ltr →  uniFEE2/c0  uniFEDC/c1  uniFE98/c2  uniFE91/c3  uni0629/c4</pre>
 </ul>
 
 
-<h2 id="s11"><span class="n">11</span>OpenType 特性</h2>
+<h2 id="s13"><span class="n">13</span>OpenType 特性</h2>
 
 <p>手册把整形拆成「查表 + 换形 + 定距」。而实际操作时，引擎只做一件事：
 <b>按 script 与 language 选出一组特性，逐条执行</b>。
@@ -785,7 +962,7 @@ hb_shape(font, buf, &amp;f, 1);</pre>
   不是字形内容 —— 策略模式里的「换一个策略实现」。</p>
 </div>
 
-<h2 id="s12"><span class="n">12</span>单位与定点数</h2>
+<h2 id="s14"><span class="n">14</span>单位与定点数</h2>
 
 <p>HarfBuzz 的所有度量都是<b>定点数</b>：整数除以 64 才是像素。</p>
 
@@ -809,7 +986,7 @@ UPEM     只在不给 scale 的时候才参与运算 —— 那时结果以 em �
   <p>正确做法永远是：<b>先 <code>set_scale</code>，再读结果</b>。</p>
 </div>
 
-<h2 id="s13" class="key-h key-h key-h key-h"><span class="key-mark" title="重点内容">★</span><span class="n">13</span>竖排：ltr 整形 + 整体旋转</h2>
+<h2 id="s15" class="key-h key-h key-h key-h"><span class="key-mark" title="重点内容">★</span><span class="n">15</span>竖排：ltr 整形 + 整体旋转</h2>
 
 <p>HarfBuzz <b>支持</b> <code>ttb</code>（top-to-bottom）。但对这支蒙文字体，实测：</p>
 
@@ -849,7 +1026,7 @@ UPEM     只在不给 scale 的时候才参与运算 —— 那时结果以 em �
   <p>这正是「方向是排版决策、取向是字形决策」两条线分开的证据。</p>
 </div>
 
-<h2 id="s14"><span class="n">14</span>在 Qt 中渲染</h2>
+<h2 id="s16"><span class="n">16</span>在 Qt 中渲染</h2>
 
 <div class="code-wrap">
   <div class="bar"><span>draw.cpp —— HB → QGlyphRun → QPainter</span><button class="cp">复制</button></div>
@@ -888,12 +1065,12 @@ painter.drawGlyphRun(QPointF(0, 0), run);</pre>
     <li><b>要快、要简单</b>：直接用 <code>QTextLayout</code>，
     用 <code>QTextLine::glyphRuns()</code> 取结果，不引额外依赖。</li>
     <li><b>要控制</b>：自己调 HarfBuzz，拿最原始的 <code>codepoint</code> 与
-    <code>x_advance</code>，方便做缓存、逐簇排版、导 SVG。</li>
+    <code>x_advance</code>，方便做缓存、逐簇排版、导 SVG（Scalable Vector Graphics，可缩放矢量图形）。</li>
   </ul>
   <p>本项目的导出功能走第二条。</p>
 </div>
 
-<h2 id="s15"><span class="n">15</span>性能与缓存</h2>
+<h2 id="s17"><span class="n">17</span>性能与缓存</h2>
 
 <p>整形是纯函数 —— 同样的入参永远同样的出参（第 1 节那四个自变量）。
 纯函数就能缓存：</p>
@@ -918,7 +1095,7 @@ painter.drawGlyphRun(QPointF(0, 0), run);</pre>
   正确做法是按段落或按列打脏标记。</p>
 </div>
 
-<h2 id="s16"><span class="n">16</span>调试与验证</h2>
+<h2 id="s18"><span class="n">18</span>调试与验证</h2>
 
 <table>
 <thead><tr><th style="width:24%">手段</th><th style="width:28%">拿到的</th><th>适合</th></tr></thead>
@@ -949,7 +1126,7 @@ mongol 整词       u182E.M.init 492 | u1823.O.medi 573 | u1829.AG.medi 614
   <p>要改的话，改的是「喂什么文本进去」那一行，不是逻辑。</p>
 </div>
 
-<h2 id="s17"><span class="n">17</span>另一套文字系统：圣书体的 quadrat</h2>
+<h2 id="s19"><span class="n">19</span>另一套文字系统：圣书体的 quadrat</h2>
 
 <p>前面十六节讲的都是<b>一维线性文本</b>：一串码位排成一行，难在「选哪个字形」。
 圣书体正好反过来 —— <b>选字形一步几乎不需要，难在把符号拼成方块</b>。</p>
@@ -976,7 +1153,7 @@ mongol 整词       u182E.M.init 492 | u1823.O.medi 573 | u1829.AG.medi 614
 
 <h3>MdC：把「怎么摆」写进字符串</h3>
 
-<p>渲染引擎的输入是 <b>MdC</b>（Manuel de Codage，JSesh 风格）。三个符号表达布局：</p>
+<p>渲染引擎的输入是 <b>MdC</b>（Manuel de Codage，一种古埃及学通行的编码记法，JSesh 风格）。三个符号表达布局：</p>
 
 <table>
 <thead><tr><th style="width:12%">符号</th><th style="width:26%">含义</th>
@@ -1018,7 +1195,7 @@ mongol 整词       u182E.M.init 492 | u1823.O.medi 573 | u1829.AG.medi 614
 两者的墨迹高度差三倍多，引擎得把它们塞进一个方框。</p>
 
 <div class="card note">
-  <div class="card-t">与第 9 节的天城文是同一类问题</div>
+  <div class="card-t">与第 11 节的天城文是同一类问题</div>
   <p>天城文的 i 符号<b>码位在后、字形在前</b>；圣书体的组内符号
   <b>读音有先后、摆放凭平衡</b>。两者都属于「逻辑顺序 ≠ 视觉顺序」，
   只是圣书体把它挪到了<b>二维</b>，规则是审美而非语法。</p>
@@ -1027,7 +1204,7 @@ mongol 整词       u182E.M.init 492 | u1823.O.medi 573 | u1829.AG.medi 614
 
 <h3>关键：用「墨迹」拼方阵，不能用 advance</h3>
 
-<p>第 12 节说过 advance 与墨迹是两回事。圣书体把这条推到极端 ——
+<p>第 14 节说过 advance 与墨迹是两回事。圣书体把这条推到极端 ——
 拼方阵要用<b>墨迹包围盒</b>（ink bounding box），字体给的 advance 完全不够用。</p>
 
 <p>CHEAV 的 <code>visumetrics</code> 就是这份数据（<code>EM_SQUARE = 1000</code>，
@@ -1067,7 +1244,7 @@ mongol 整词       u182E.M.init 492 | u1823.O.medi 573 | u1829.AG.medi 614
 <tr><td><b>输入</b></td><td>码位串 + 字体</td><td><b>MdC 串</b>（含布局语法）</td></tr>
 <tr><td><b>选字形</b></td><td>cmap + GSUB（重活）</td><td>查表（轻活）</td></tr>
 <tr><td><b>定位置</b></td><td>一维 advance</td><td><b>二维组排</b></td></tr>
-<tr><td><b>输出</b></td><td>字形号 + 位置 + 簇</td><td><b>DOM</b>（直接出结构）</td></tr>
+<tr><td><b>输出</b></td><td>字形号 + 位置 + 簇</td><td><b>DOM</b>（Document Object Model，文档对象模型）</td></tr>
 <tr><td><b>度量</b></td><td>字体 advance</td><td><b>墨迹包围盒</b></td></tr>
 </tbody>
 </table>
@@ -1136,7 +1313,7 @@ mongol 整词       u182E.M.init 492 | u1823.O.medi 573 | u1829.AG.medi 614
 })();
 </script>
 
-<h2 id="s18"><span class="n">18</span>一页速查</h2>
+<h2 id="s20"><span class="n">20</span>一页速查</h2>
 
 <table>
 <thead><tr><th style="width:24%">要做的事</th><th>写法</th></tr></thead>
@@ -1178,12 +1355,12 @@ mongol 整词       u182E.M.init 492 | u1823.O.medi 573 | u1829.AG.medi 614
     <li><a href="t03.html">T03 · 字体文件结构大揭秘</a>
       <span class="why">—— 本篇讲的 <code>cmap</code> / <code>GSUB</code> / <code>GPOS</code>
       在那篇是拆开看的；本篇是「谁来用它们」。</span></li>
-    <li><a href="r04.html">R04 · 国际音标（IPA）</a>
+    <li><a href="r04.html">R04 · 国际音标（IPA，International Phonetic Alphabet）</a>
       <span class="why">—— 第 5 节「音位与变体」的类比在那篇有完整展开；
       本篇用它解释 init/medi/fina。</span></li>
     <li><a href="fe-06.html">FE-06 · Writing Mode 与溢出滚动</a>
       <span class="why">—— 竖排那部分在浏览器里由 <code>writing-mode</code> 代劳；
-      对照第 13 节看，能看出引擎替你做了多少。</span></li>
+      对照第 15 节看，能看出引擎替你做了多少。</span></li>
     <li><a href="q11.html">Q11 · 线程与互斥锁</a>
       <span class="why">—— <code>hb_buffer</code> 与 <code>hb_font</code> 都不是线程安全的，
       每线程一份是硬要求。</span></li>
