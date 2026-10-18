@@ -54,6 +54,16 @@
   <p>输出的是编号与坐标，不是像素 —— 这一点第 5 节展开。</p>
 </div>
 
+<figure class="mmd">
+  <picture>
+    <source media="(prefers-color-scheme: dark)"
+            srcset="assets/img/a01-pipeline-dark.svg">
+    <img src="assets/img/a01-pipeline-light.svg" alt="流程图：文本 → bidi 分段 → 切 run → hb_buffer → hb_shape → 字形与位置与簇 → 断行 → 栅格化 → 屏幕像素"
+         width="534" height="1076" loading="lazy">
+  </picture>
+  <figcaption>图 1　整形在管线里的位置：HarfBuzz 的职责只到「字形号 + 位置 + 簇」为止</figcaption>
+</figure>
+
 <h2 id="s2"><span class="n">2</span>术语与定义</h2>
 
 <p>这一节集中列，后面各节不再重复解释。全部引自手册的
@@ -212,6 +222,16 @@
 <p>文本在网络与内存里可以是 UTF-8 / UTF-16 / UTF-32 三种编码之一 ——
 <b>UTF-16</b>（Unicode Transformation Format, 16-bit）是其中用 16 位单元（必要时用代理对）表示一个码位的那种，Windows 与 Qt 的 <code>QString</code> 用的就是它。
 HarfBuzz 的装文本接口按编码分三个：<code>add_utf8</code> / <code>add_utf16</code> / <code>add_utf32</code>。</p>
+
+<figure class="mmd">
+  <picture>
+    <source media="(prefers-color-scheme: dark)"
+            srcset="assets/img/a01-buffer-dark.svg">
+    <img src="assets/img/a01-buffer-light.svg" alt="状态图：hb_buffer 从 UNICODE 阶段经 hb_shape 变成 GLYPHS 阶段"
+         width="1042" height="348" loading="lazy">
+  </picture>
+  <figcaption>图 2　同一个缓冲区原地转换：UNICODE → GLYPHS</figcaption>
+</figure>
 
 <p><code>hb_buffer_t</code> 是这批 API（Application Programming Interface，应用编程接口）里唯一可变的东西。它有两个阶段：</p>
 
@@ -450,6 +470,16 @@ hb_buffer_destroy(buf);</pre>
 <p>「indivisible unit」这三个词就是全部要点。<b>如果整形会重排或合并码位，
 就必须有一个东西记着「它们原来是一伙的」</b> —— 那就是 cluster 号。</p>
 
+<figure class="mmd">
+  <picture>
+    <source media="(prefers-color-scheme: dark)"
+            srcset="assets/img/a01-cluster-dark.svg">
+    <img src="assets/img/a01-cluster-light.svg" alt="流程图：天城文四个码位经过 Indic shaper 变成两个字形，同属一个簇"
+         width="865" height="114" loading="lazy">
+  </picture>
+  <figcaption>图 3　簇的由来：四个码位 → 两个字形 → 一个不可分单位</figcaption>
+</figure>
+
 <h3>实测一：蒙文的 FVS（Free Variation Selector，自由变体选择符）与 ZWJ（Zero Width Joiner，零宽连接符）都不占自己的簇</h3>
 
 <table>
@@ -640,6 +670,16 @@ MA + ZWJ          字形 2 个   c0:492 / c0:0
   <p>那张表里每一格的码位下面都标了 <code>200D</code> 或 <code>200C</code> 的位置，
   就是为了说明「这一格是靠什么逼出来的」。</p>
 </div>
+
+<figure class="mmd">
+  <picture>
+    <source media="(prefers-color-scheme: dark)"
+            srcset="assets/img/a01-zwj-dark.svg">
+    <img src="assets/img/a01-zwj-light.svg" alt="流程图：不加 ZWJ 得到孤立形 632；加 ZWJ 得到词首形 492 加零宽的 ZWJ"
+         width="411" height="749" loading="lazy">
+  </picture>
+  <figcaption>图 4　ZWJ 的作用：装作右边有人，逼出词首形；自身推进量为 0</figcaption>
+</figure>
 
 <h3>四种常见用法</h3>
 
@@ -1116,7 +1156,8 @@ mongol 整词       u182E.M.init 492 | u1823.O.medi 573 | u1829.AG.medi 614
 <th>例子</th></tr></thead>
 <tbody>
 <tr><td><code>-</code></td><td><b>分 quadrat</b></td>
-    <td><code>S34-N35:AA1</code> ＝ 两个 quadrat</td></tr>
+    <td><code>S34-N35:AA1</code> ＝ 两个 quadrat（<code>S34</code> 凉鞋带 ｜
+    <code>N35</code> 水纹 ｜ <code>AA1</code> 胎盘）</td></tr>
 <tr><td><code>*</code></td><td>同层<b>并排</b></td>
     <td><code>A1*B1</code></td></tr>
 <tr><td><code>:</code></td><td>下移一层（<b>堆叠</b>）</td>
@@ -1124,23 +1165,33 @@ mongol 整词       u182E.M.init 492 | u1823.O.medi 573 | u1829.AG.medi 614
 </tbody>
 </table>
 
+<figure class="mmd">
+  <picture>
+    <source media="(prefers-color-scheme: dark)"
+            srcset="assets/img/a01-quadrat-dark.svg">
+    <img src="assets/img/a01-quadrat-light.svg" alt="流程图：MdC 串 S34-N35:AA1 拆成两个 quadrat，第二个内部分上下两层"
+         width="625" height="489" loading="lazy">
+  </picture>
+  <figcaption>图 5　MdC 串怎么拆成 quadrat：<code>-</code> 分组、<code>:</code> 堆叠</figcaption>
+</figure>
+
 <div class="egy">
-  <p class="egy-mdc">A1 <span class="egy-note">单个符号：坐着的男子</span></p>
+  <p class="egy-mdc">A1 <span class="egy-note">单个符号：坐着的男子（seated man）</span></p>
   <div class="egy-out" data-mdc="A1"></div>
 </div>
 
 <div class="egy">
-  <p class="egy-mdc">A1*B1 <span class="egy-note">同层并排</span></p>
+  <p class="egy-mdc">A1*B1 <span class="egy-note">同层并排：男子 ｜ B1 妇人</span></p>
   <div class="egy-out" data-mdc="A1*B1"></div>
 </div>
 
 <div class="egy">
-  <p class="egy-mdc">O49:X1 <span class="egy-note">上下堆叠：O49 在上，X1 在下</span></p>
+  <p class="egy-mdc">O49:X1 <span class="egy-note">上下堆叠：O49 圆形围栏 在上，X1 面包 在下</span></p>
   <div class="egy-out" data-mdc="O49:X1"></div>
 </div>
 
 <div class="egy">
-  <p class="egy-mdc">S34-N35:AA1 <span class="egy-note">两个 quadrat，组内再堆叠</span></p>
+  <p class="egy-mdc">S34-N35:AA1 <span class="egy-note">两个 quadrat：S34 凉鞋带 ｜ N35 水纹 : AA1 胎盘</span></p>
   <div class="egy-out" data-mdc="S34-N35:AA1"></div>
 </div>
 

@@ -187,9 +187,32 @@ main code, main pre, main kbd, main samp,
 /* 渲染失败的提示 */
 .egy .egy-bad{color:var(--fg-3);font-size:13px}
 
+/* ---------- 5. mermaid 图（构建期渲成 SVG，双主题各一份）----------
+   图不是运行时画的 —— tools/mmd_build.js 用无头 Edge 跑 mermaid，
+   把结果存成 assets/img/a01-<图名>-{light,dark}.svg。
+   页面里用 <picture> 让浏览器按配色自己挑一份。
+
+   为什么不用 CSS 变量统一染色：mermaid 把颜色写死在 SVG 的 style 里，
+   外部 CSS 改不动它，只能渲两份。两份都是矢量，体积可接受。
+
+   注意那张「纸」：SVG 自己的背景是透明 的，所以给 img 一层底色，
+   否则深色主题下图会浮在正文底上、边界看不清。 */
+.mmd{margin:20px 0;text-align:center}
+.mmd picture{display:inline-block;max-width:100%}
+.mmd img{display:block;max-width:100%;height:auto;margin:0 auto;
+  padding:10px 12px;border-radius:10px;
+  border:1px solid var(--line-2);background:#ffffff}
+.mmd figcaption{margin-top:7px;font-size:12.5px;line-height:1.6;
+  color:var(--fg-3)}
+.mmd figcaption code{font-size:12px}
+@media (prefers-color-scheme: dark){
+  .mmd img{background:#0b0906;border-color:#3a2c11}
+}
+
 @media (max-width:720px){
   .mem .slot{flex:1 1 50%;border-bottom:1px solid var(--line-2)}
   [lang="mn-Mong"]{font-size:21px}
   .egy{padding:8px 10px 10px}
   .egy .egy-out{min-height:60px}
+  .mmd img{padding:6px 8px}
 }

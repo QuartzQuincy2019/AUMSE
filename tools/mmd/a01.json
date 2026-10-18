@@ -1,0 +1,22 @@
+{
+  "pipeline": {
+    "title": "整形在管线里的位置",
+    "code": "flowchart TB\n  A[\"文本：一串码位\"] --> B[\"bidi 分段<br/>Unicode Bidi Algorithm\"]\n  B --> C[\"切 run<br/>按字体 / 字号 / script / 语言 / 方向\"]\n  C --> D[\"hb_buffer_t<br/>content_type = UNICODE\"]\n  D --> E[\"hb_shape()<br/>cmap 查表 → GSUB 换形 → GPOS 定距\"]\n  E --> F[\"字形号 + 位置 + 簇<br/>content_type = GLYPHS\"]\n  F --> G[\"断行与列排版<br/>UAX #14\"]\n  G --> H[\"栅格化<br/>FreeType / Skia / Qt\"]\n  H --> I([\"屏幕像素\"])\n  J[\"HarfBuzz 的职责范围<br/>只到这一步\"] -.-> F"
+  },
+  "buffer": {
+    "title": "缓冲区的两个阶段",
+    "code": "stateDiagram-v2\n  direction LR\n  state \"UNICODE<br/>码位 + cluster 号\" as U\n  state \"GLYPHS<br/>字形号 + 位置\" as G\n  [*] --> U: hb_buffer_add_utf16()\n  U --> G: hb_shape()\n  G --> [*]: hb_buffer_destroy()\n  U --> U: hb_buffer_clear_contents()\n  note right of U\n    同一个 buffer 原地转换：\n    前后的长度可以不同（连字变短、分解变长）\n  end note"
+  },
+  "cluster": {
+    "title": "簇：多个码位并成一个不可分单位",
+    "code": "flowchart LR\n  CP[\"码位（4 个）<br/>क ् ष ि\"] --> S[\"hb_shape()<br/>Indic shaper\"]\n  S --> GL[\"字形（2 个）<br/>g2304 adv 289<br/>g821 adv 830\"]\n  GL --> CL[\"同一个簇 c0<br/>光标不能停在中间<br/>退格要删掉全部 4 个码位\"]"
+  },
+  "zwj": {
+    "title": "ZWJ 怎么逼出位置形",
+    "code": "flowchart LR\n  subgraph NO[\"不加 ZWJ\"]\n    direction TB\n    a1[\"MA 单独\"] --> a2[\"孤立形<br/>adv 632\"]\n  end\n  subgraph YES[\"加一个 ZWJ\"]\n    direction TB\n    b1[\"MA + ZWJ\"] --> b2[\"引擎以为右边有人\"]\n    b2 --> b3[\"词首形<br/>adv 492\"]\n    b2 --> b4[\"ZWJ 自己<br/>adv 0\"]\n  end"
+  },
+  "quadrat": {
+    "title": "MdC 串怎么变成 quadrat",
+    "code": "flowchart TB\n  M[\"MdC 串<br/>S34-N35:AA1\"] --> Q1[\"quadrat 1<br/>S34 凉鞋带\"]\n  M --> Q2[\"quadrat 2<br/>N35:AA1\"]\n  Q2 --> UP[\"上层 N35<br/>水纹，墨迹 983×150\"]\n  Q2 --> DN[\"下层 AA1 胎盘\"]\n  Q1 --> BOX[\"每个 quadrat 拼成一个方框<br/>用墨迹包围盒算缩放，不用 advance\"]\n  UP --> BOX\n  DN --> BOX"
+  }
+}
