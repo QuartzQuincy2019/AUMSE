@@ -112,7 +112,7 @@
     'fe-01.html','fe-02.html','fe-03.html',
     'fe-04.html','fe-05.html','fe-06.html',
     'fe-07.html','fe-08.html','fe-09.html',
-    'a01.html'
+    'a01.html','a02.html'
   ];
 
   /* fe- 开头的一律算 FE（r03.html 也是 FE），其余按首字母。 */

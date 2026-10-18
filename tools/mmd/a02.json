@@ -1,0 +1,10 @@
+{
+  "routes": {
+    "title": "两条路线，同一个出口",
+    "code": "flowchart TB\n  T[\"要画的文本\"] --> A[\"路线 A：让 Qt 调 HB<br/>QTextLayout\"]\n  T --> B[\"路线 B：自己调 HB<br/>hb_buffer + hb_shape\"]\n  A --> AR[\"QTextLine::glyphRuns()\"]\n  B --> BR[\"hb_glyph_info_t + hb_glyph_position_t\"]\n  AR --> Q[\"QGlyphRun<br/>字形号 + 位置\"]\n  BR --> Q\n  Q --> D[\"QPainter::drawGlyphRun()\"]\n  Q --> P[\"QRawFont::pathForGlyph()<br/>→ QPainterPath → SVG\"]\n  classDef a fill:#fffdf6,stroke:#c8a03a,color:#1a1509\n  classDef b fill:#f7efd8,stroke:#8a6410,color:#5f450a"
+  },
+  "coords": {
+    "title": "一条 run 的坐标怎么累加",
+    "code": "flowchart LR\n  O[\"run 原点<br/>pen = 0\"] --> G1[\"字形 1<br/>画在 pen + offset\"]\n  G1 --> S1[\"pen += advance<br/>pen = 31.5\"]\n  S1 --> G2[\"字形 2<br/>画在 pen + offset\"]\n  G2 --> S2[\"pen += advance<br/>pen = 68.2\"]\n  S2 --> DOTS[\"…… 直到 run 结束\"]\n  DOTS --> W[\"总宽 = 最后一个 pen<br/>实测 186.0 px\"]\n  NOTE[\"offset 只挪这一下，<br/>不推进 pen\"] -.-> G1\n  classDef core fill:#fffdf6,stroke:#c8a03a,color:#1a1509\n  classDef side fill:#f3efe3,stroke:#cdd6e3,color:#4a5464,stroke-dasharray:4 3"
+  }
+}

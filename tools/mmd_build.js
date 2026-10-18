@@ -10,6 +10,8 @@ const path = require('path');
 
 const PORT = parseInt(process.argv[2] || '9658', 10);
 const SPEC = process.argv[3];
+// 输出文件前缀，默认 a01；A02 用 a02。
+const PREFIX = process.argv[4] || 'a01';
 const ROOT = 'E:/QKMansion/CSX10/w/UME';
 const OUT = path.join(ROOT, 'SharingGroup/tutorials/assets/img');
 const MERMAID = 'file:///C:/Users/lenovo/.dsh/profiles/desktop/node_modules/mermaid/dist/mermaid.min.js';
@@ -135,7 +137,7 @@ window.__GO__ = async function (themes, items) {
   for (const key of Object.keys(spec)) {
     for (const themeName of Object.keys(THEMES)) {
       const svg = res[key + '|' + themeName];
-      const file = path.join(OUT, 'a01-' + key + '-' + themeName + '.svg');
+      const file = path.join(OUT, PREFIX + '-' + key + '-' + themeName + '.svg');
       if (!svg || svg.startsWith('ERR:') || svg.startsWith('EXC')) {
         console.log('  !! ' + key + ' / ' + themeName + ' → '
           + String(svg).slice(0, 120));

@@ -1,0 +1,456 @@
+<p><span class="lang cpp">C++</span> <span class="tag">Qt</span> <span class="tag">HarfBuzz</span> <span class="tag b">渲染</span></p>
+
+<p>A01 讲到 <code>hb_shape()</code> 交出三样东西：<b>字形号、位置、簇</b>。
+本篇接着往下走 —— 这三样怎么变成屏幕上的黑点，以及在 Qt 里具体怎么写。</p>
+
+<div class="card note">
+  <div class="card-t">与 A01 的分工</div>
+  <p>A01 管的是「<b>整形</b>」：给定文本与字体，算出该用哪些字形、各占多宽。<br>
+  本篇管的是「<b>落笔</b>」：把这些字形号交给 Qt 的画笔，按位置画出来。</p>
+  <p>两篇的分界就是 <code>hb_shape()</code> 那一行：它之前是本篇的输入，它之后是本篇的活。</p>
+</div>
+
+<h2 id="s1"><span class="n">1</span>两条路线</h2>
+
+<p>在 Qt 里拿到字形，有两条路。它们<b>出口相同</b> —— 最后都是
+<code>QGlyphRun</code> 交给 <code>QPainter</code>。</p>
+
+<figure class="fig">
+  <picture>
+    <source media="(prefers-color-scheme: dark)" srcset="assets/img/a02-routes-dark.svg">
+    <img src="assets/img/a02-routes-light.svg"
+         alt="两条路线：QTextLayout 或自己调 hb_shape，都汇到 QGlyphRun，再由 drawGlyphRun 或 pathForGlyph 输出"
+         width="578" height="569" loading="lazy">
+  </picture>
+  <figcaption>图 1　两条路线汇到同一个出口</figcaption>
+</figure>
+
+<table>
+<thead><tr><th style="width:12%">路线</th><th style="width:30%">入口</th>
+<th style="width:26%">拿到什么</th><th>什么时候选它</th></tr></thead>
+<tbody>
+<tr><td><b>A</b></td><td><code>QTextLayout</code></td>
+    <td><code>QTextLine::glyphRuns()</code></td>
+    <td>要快、要不引额外依赖 —— <b>绝大多数场景</b></td></tr>
+<tr><td><b>B</b></td><td><code>hb_buffer</code> + <code>hb_shape</code></td>
+    <td><code>hb_glyph_info_t</code> / <code>hb_glyph_position_t</code></td>
+    <td>要逐簇控制、要缓存、要导 SVG</td></tr>
+</tbody>
+</table>
+
+<div class="card key">
+  <div class="card-t">路线 A 其实也在调 HarfBuzz</div>
+  <p><code>QTextLayout</code> 内部就是 HarfBuzz（Qt 自己编进去的）。
+  所以「用不用 HarfBuzz」不是二选一 —— 区别只是<b>谁来调</b>。</p>
+  <p>第 4 节会拿实测数字证明：Qt 交出的字形序列与推进量，与直接调
+  <code>uharfbuzz</code> 得到的结果<b>逐项一致</b>。</p>
+</div>
+
+<h2 id="s2"><span class="n">2</span>坐标模型</h2>
+
+<p>画字形只需要两个量：<b>画在哪</b>（位置）与<b>下一笔从哪开始</b>（推进）。
+两者的关系是这篇唯一必须记牢的规则：</p>
+
+<figure class="fig">
+  <picture>
+    <source media="(prefers-color-scheme: dark)" srcset="assets/img/a02-coords-dark.svg">
+    <img src="assets/img/a02-coords-light.svg"
+         alt="坐标累加示意：每个字形画在 pen 加 offset 处，画完 pen 加自己的 advance"
+         width="1611" height="216" loading="lazy">
+  </picture>
+  <figcaption>图 2　一条 run 里 pen 的累加方式</figcaption>
+</figure>
+
+<div class="code-wrap">
+  <div class="bar"><span>循环的全部真相</span><button class="cp">复制</button></div>
+<pre>pen = 0;
+for (每个字形) {
+    画在 (pen + x_offset, y_offset);   // offset 只挪这一下
+    pen += x_advance;                  // advance 推进笔
+}</pre>
+</div>
+
+<p>三个概念分清：</p>
+
+<table>
+<thead><tr><th style="width:16%">量</th><th style="width:22%">单位</th><th>含义</th></tr></thead>
+<tbody>
+<tr><td><b>advance</b></td><td>像素（已除 64）</td>
+    <td>排下一个字形前，笔往前走多少。<b>决定行宽</b></td></tr>
+<tr><td><b>offset</b></td><td>像素</td>
+    <td>字形相对 pen 偏多少。<b>不推进笔</b></td></tr>
+<tr><td><b>基线</b></td><td>像素</td>
+    <td>y 的原点。字形在基线<b>上方</b>的部分叫 ascent，下方叫 descent</td></tr>
+</tbody>
+</table>
+
+<div class="card warn">
+  <div class="card-t">y 轴方向是第一个坑</div>
+  <p>HarfBuzz 的坐标系<b> y 向上</b>（y_offset 正值往上）；Qt 的屏幕坐标
+  <b>y 向下</b>。搬运时 <code>y_offset</code> 要取负，否则重音符号会跑到字下面去。</p>
+  <p>实测这支蒙文字体在 64px 下：ascent 93、descent 19、leading 0（<code>QRawFont</code> 报的值）。</p>
+</div>
+
+<h2 id="s3"><span class="n">3</span>字体必须是同一份</h2>
+
+<p>A01 说过：字形号是<b>字体内部的下标</b>，换一个文件就是另一个字。
+所以在 Qt 这边，加载字体的方式必须与 HarfBuzz 那边<b>指向同一个文件</b>。</p>
+
+<div class="code-wrap">
+  <div class="bar"><span>font.cpp —— 两件事都要做</span><button class="cp">复制</button></div>
+<pre>/* ① 注册进 QFontDatabase：QFont(族名) 才找得到它 */
+const int id = QFontDatabase::addApplicationFont(":/fonts/NotoSansMongolian-Regular.ttf");
+
+/* ② 用**同一个文件**建 QRawFont：拿字形轮廓、字形号 */
+QRawFont raw(":/fonts/NotoSansMongolian-Regular.ttf", 64.0);</pre>
+</div>
+
+<div class="card warn">
+  <div class="card-t">只做第 ② 步会得到一个「看起来能排」的空字体</div>
+  <p>实测：只建 <code>QRawFont</code> 而不注册 <code>QFontDatabase</code>，
+  <code>QTextLayout</code> 给出 <b>6 个字形、编号全是 1</b>（<code>.notdef</code>）、
+  每个推进正好 <b>1 em</b> —— 整串排出来是一排豆腐块，而且<b>不报任何错误</b>。</p>
+  <p>原因是 <code>QFont(族名)</code> 按族名找字体，没注册就找不到，退回默认字体。
+  这个错误在日志里只有一行 <code>QFontDatabase: Cannot find font directory …</code>，
+  很容易当成无关警告划过去。</p>
+</div>
+
+<h2 id="s4" class="key-h key-h key-h key-h"><span class="key-mark" title="重点内容">★</span><span class="n">4</span>路线 A：让 Qt 调 HarfBuzz</h2>
+
+<p>两步：把文本交给 <code>QTextLayout</code> 排成行，再从行里取字形段。</p>
+
+<div class="code-wrap">
+  <div class="bar"><span>layout.cpp</span><button class="cp">复制</button></div>
+<pre>QTextLayout layout(text, font);
+QTextOption opt;
+opt.setWrapMode(QTextOption::NoWrap);       /* 整形不负责断行（A01 第 3 节） */
+layout.setTextOption(opt);
+
+layout.beginLayout();
+QTextLine line = layout.createLine();
+line.setLineWidth(10000);                    /* 一行放到无限宽 */
+layout.endLayout();
+
+for (const QGlyphRun&amp; gr : line.glyphRuns()) {
+    painter.drawGlyphRun(QPointF(0, 0), gr); /* 位置已经在 run 里 */
+}</pre>
+</div>
+
+<h3>实测：Qt 交出的就是 HarfBuzz 的结果</h3>
+
+<p>同一串 <span lang="mn-Mong">ᠮᠣᠩᠭᠣᠯ</span>（6 个码位），64px，Noto Sans Mongolian：</p>
+
+<div class="out-wrap">
+  <div class="cap">QTextLayout（Qt 6.12.0 / MinGW 13.1 / offscreen）</div>
+<pre>字形号: 1653  1202  1268  1584  1660        ← 5 个，不是 6 个
+位置  : 0.0   31.0  68.0  107.0 161.0
+行宽  : 186.0</pre>
+</div>
+
+<p>把 A01 里 <code>uharfbuzz</code> 的推进量按 64px 换算（UPEM 1000，
+所以 1 单位 = 0.064 px），再累加：</p>
+
+<table>
+<thead><tr><th style="width:22%">字形</th><th style="width:18%">HB 推进（单位）</th>
+<th style="width:18%">换算成 px</th><th style="width:20%">累加位置</th><th>Qt 给的</th></tr></thead>
+<tbody>
+<tr><td>第 1 个</td><td class="c">492</td><td class="c">31.49</td><td class="c">0.00</td><td class="c">0.0</td></tr>
+<tr><td>第 2 个</td><td class="c">573</td><td class="c">36.67</td><td class="c">31.49</td><td class="c">31.0</td></tr>
+<tr><td>第 3 个</td><td class="c">614</td><td class="c">39.30</td><td class="c">68.16</td><td class="c">68.0</td></tr>
+<tr><td>第 4 个</td><td class="c">838</td><td class="c">53.63</td><td class="c">107.46</td><td class="c">107.0</td></tr>
+<tr><td>第 5 个</td><td class="c">383</td><td class="c">24.51</td><td class="c">161.09</td><td class="c">161.0</td></tr>
+<tr><td><b>合计</b></td><td class="c"><b>2900</b></td><td class="c"><b>185.6</b></td><td></td><td class="c"><b>186.0</b></td></tr>
+</tbody>
+</table>
+
+<div class="card key">
+  <div class="card-t">两列数字对得上，说明是同一个引擎</div>
+  <p>位置逐项相同（小数被 Qt 取整到像素），总宽 185.6 ≈ 186.0。
+  这不是巧合 —— <b>Qt 调的就是 HarfBuzz</b>。</p>
+  <p>顺带确认了 A01 的结论：6 个码位 → <b>5 个字形</b>，
+  因为第 4 个字形是两个码位合成的连字。</p>
+</div>
+
+<h2 id="s5"><span class="n">5</span>路线 B：自己调 HarfBuzz</h2>
+
+<p>要让程序直接 <code>#include &lt;hb.h&gt;</code> 并链接，得自己有一份
+HarfBuzz 库。Qt 只在 <code>include/QtHarfbuzz/</code> 下带了头文件，
+<b>不带可链接的库</b>（本机实测：<code>lib</code> 目录下没有任何 harfbuzz 库）。</p>
+
+<div class="card note">
+  <div class="card-t">两条子路线</div>
+  <ul>
+    <li><b>从源码编一份</b>：HarfBuzz 是自包含的 C 库，CMake 一把过；
+    然后你的工程里就多一个 <code>harfbuzz::harfbuzz</code> 目标。</li>
+    <li><b>不链接</b>：把需要的量用别的方式拿到（例如本项目的
+    <code>report/</code> 是 Python + <code>uharfbuzz</code> 生成的）。
+    适合验证与对拍，不适合运行时。</li>
+  </ul>
+</div>
+
+<p>假设库里已经有了，从 <code>hb_</code> 的结果搬到 <code>QGlyphRun</code> 是这一段：</p>
+
+<div class="code-wrap">
+  <div class="bar"><span>bridge.cpp —— HB 的输出搬进 QGlyphRun</span><button class="cp">复制</button></div>
+<pre>QVector&lt;quint32&gt; idx;
+QVector&lt;QPointF&gt; pt;
+double pen = 0.0;
+
+for (unsigned i = 0; i &lt; n; ++i) {
+    idx &lt;&lt; info[i].codepoint;                        /* 字形号 */
+    pt  &lt;&lt; QPointF(pen + pos[i].x_offset / 64.0,
+                   -pos[i].y_offset / 64.0);          /* y 取负：屏幕向下 */
+    pen += pos[i].x_advance / 64.0;                   /* 64 = 定点精度 */
+}
+
+QGlyphRun run;
+run.setRawFont(raw);          /* 与 hb_font 同一个文件 */
+run.setGlyphIndexes(idx);
+run.setPositions(pt);         /* 这里要**绝对**位置（相对 run 原点） */
+painter.drawGlyphRun(QPointF(0, 0), run);</pre>
+</div>
+
+<div class="card warn">
+  <div class="card-t">setPositions 要的是绝对位置，不是 advance</div>
+  <p><code>positions()</code> 里每个点都是<b>相对 run 原点</b>的绝对坐标，
+  不是「相对上一个字形」的推进量。实测第一项是 <code>0.0</code>，
+  正好说明它从原点起算。</p>
+  <p>把 advance 直接塞进 <code>setPositions</code> 的结果是：所有字形挤在
+  原点附近、越画越歪，而且<b>看起来像字距问题</b>，很容易往错误方向查。</p>
+</div>
+
+<h2 id="s6"><span class="n">6</span>QGlyphRun 与 drawGlyphRun</h2>
+
+<table>
+<thead><tr><th style="width:26%">接口</th><th>作用</th></tr></thead>
+<tbody>
+<tr><td><code>setRawFont(font)</code></td><td>用哪份字体 —— 必须与整形时同一份</td></tr>
+<tr><td><code>setGlyphIndexes(ids)</code></td><td>字形号数组（<code>quint32</code>）</td></tr>
+<tr><td><code>setPositions(pts)</code></td><td>每个字形的左基线点，<b>相对 run 原点</b></td></tr>
+<tr><td><code>setBoundingRect(r)</code></td><td>可选的脏矩形，给合成器做裁剪用</td></tr>
+<tr><td><code>drawGlyphRun(origin, run)</code></td><td>把整个 run 画在 <code>origin</code> 处</td></tr>
+</tbody>
+</table>
+
+<p><code>drawGlyphRun</code> 的 <code>origin</code> 是<b>整条 run 的原点</b>，
+只加一次；run 内部的相对位置不会被它重复叠加。所以上面的代码里给的是
+<code>QPointF(0, 0)</code>，真正的定位交给画家的变换矩阵（<code>translate</code>）。</p>
+
+<h2 id="s7"><span class="n">7</span>两条路的逐像素验证</h2>
+
+<p>「<code>drawGlyphRun</code> 与 <code>layout.draw</code> 画出来一样吗？」
+实测：420×260 的图上，<b>不同像素 0 个</b>。</p>
+
+<div class="fig-row">
+  <figure class="fig">
+    <img src="assets/img/a02-textlayout.png" alt="QTextLayout::draw 画出的蒙文词"
+         width="420" height="260" loading="lazy">
+    <figcaption>① <code>layout.draw()</code></figcaption>
+  </figure>
+  <figure class="fig">
+    <img src="assets/img/a02-glyphrun.png" alt="drawGlyphRun 逐个字形段画出的同一个词"
+         width="420" height="260" loading="lazy">
+    <figcaption>② <code>drawGlyphRun()</code></figcaption>
+  </figure>
+</div>
+
+<p>两张图肉眼就一样，逐像素比较也是 0 差异。这条验证的价值在于：
+<b>它可以当成回归测试</b> —— 以后改绘制代码，跑一次比较就知道有没有改坏。</p>
+
+<div class="card tip">
+  <div class="card-t">怎么比</div>
+  <div class="code-wrap">
+  <div class="bar"><span>diff.cpp</span><button class="cp">复制</button></div>
+<pre>int diff = 0;
+for (int y = 0; y &lt; H; ++y) {
+    const QRgb* ra = (const QRgb*)a.constScanLine(y);
+    const QRgb* rb = (const QRgb*)b.constScanLine(y);
+    for (int x = 0; x &lt; W; ++x) if (ra[x] != rb[x]) ++diff;
+}
+qInfo() &lt;&lt; diff;      /* 0 = 两种画法等价 */</pre>
+  </div>
+</div>
+
+<h2 id="s8"><span class="n">8</span>反例：glyphIndexesForString 不是整形</h2>
+
+<p><code>QRawFont</code> 有个看起来正好合用的函数 ——
+<code>glyphIndexesForString(text)</code>。它<b>不能用</b>来替代整形。</p>
+
+<div class="out-wrap">
+  <div class="cap">同一串 ᠮᠣᠩᠭᠣᠯ，两种取法</div>
+<pre>QTextLayout        5 个字形：1653 1202 1268 1584 1660     ← 整形过
+glyphIndexesForString  6 个字形：1651 1197 1266 1540 1197 1659   ← 只查 cmap</pre>
+</div>
+
+<p>差别不只是数量：<b>拿这 6 个字形画出来，是六个互不相连的孤立形</b> ——
+下面这张图就是用它们画的，可以清楚看到没有连写：</p>
+
+<figure class="fig">
+  <img src="assets/img/a02-path.png"
+       alt="用未整形的字形号画出的六个蒙文字母，彼此分离、没有连写"
+       width="420" height="260" loading="lazy">
+  <figcaption>图 3　只查 <code>cmap</code> 不整形：字母之间不连，形态也不对</figcaption>
+</figure>
+
+<div class="card key">
+  <div class="card-t">为什么它只能查 cmap</div>
+  <p>这个函数做的事是「每个码位去 <code>cmap</code> 查一个字形」，
+  一步上下文分析都不做。它<b>不调 HarfBuzz</b>，
+  所以既没有 init/medi/fina，也没有连字，更没有天城文那种重排。</p>
+  <p>判断标准很简单：<b>看它有没有接受 script / direction / language 参数</b>。
+  一个接收不了这些参数的函数，不可能做整形。</p>
+</div>
+
+<h2 id="s9"><span class="n">9</span>竖排：整体旋转</h2>
+
+<p>A01 第 15 节说过：这支蒙文字体没有 <code>vmtx</code>，<code>ttb</code> 给的推进量
+是假的，只能<b>横排之后整体转 90°</b>。在 Qt 里这件事就一行 <code>rotate</code>：</p>
+
+<div class="code-wrap">
+  <div class="bar"><span>vertical.cpp</span><button class="cp">复制</button></div>
+<pre>painter.translate(width - 90, 24);   /* 旋转基点：右上角 */
+painter.rotate(90);                   /* 顺时针 90°，横排结果立起来 */
+for (const QGlyphRun&amp; gr : line.glyphRuns())
+    painter.drawGlyphRun(QPointF(0, 0), gr);</pre>
+</div>
+
+<figure class="fig">
+  <img src="assets/img/a02-vertical.png" alt="同一个词旋转 90 度后竖排的样子"
+       width="260" height="420" loading="lazy">
+  <figcaption>图 4　横排整串 <code>rotate(90)</code> 之后的效果</figcaption>
+</figure>
+
+<div class="card warn">
+  <div class="card-t">两个细节</div>
+  <p><b>① 旋转基点要挑对。</b>用右上角，整列才会往下长；
+  用原点会让文字跑到画布外面去。</p>
+  <p><b>② 标点要换字形。</b>括号、引号这类竖排时方向不同，
+  要用 <code>vert</code> 特性换成竖排变体（A01 第 15 节）。
+  只旋转不换字形，括号的开口会朝错方向。</p>
+</div>
+
+<h2 id="s10"><span class="n">10</span>取轮廓：从字形到路径</h2>
+
+<p>要描边、要做动画、要导出 SVG，就不能只画像素 —— 要拿到<b>轮廓</b>。
+<code>QRawFont::pathForGlyph()</code> 直接把字形号变成 <code>QPainterPath</code>。</p>
+
+<div class="code-wrap">
+  <div class="bar"><span>outline.cpp</span><button class="cp">复制</button></div>
+<pre>QPainterPath all;
+qreal pen = 0;
+for (quint32 g : glyphIds) {              /* 整形后的字形号 */
+    QPainterPath gp = raw.pathForGlyph(g); /* 单位是像素，已按像素大小缩放 */
+    all.addPath(gp.translated(pen, 0));
+    pen += gp.boundingRect().width() + 6;  /* 这里只是演示平铺，不是排版 */
+}
+painter.fillPath(all, QColor("#1a1509"));</pre>
+</div>
+
+<p>实测这一串 6 个字形（正是上节那些孤立形）取出来的路径：
+<b>455 个元素</b>，包围盒 <b>301.28 × 69.50</b> 像素。
+转成 SVG 的 <code>path d</code> 是 <b>4383 个字符</b> ——
+比一张 PNG 小得多，而且是矢量的。</p>
+
+<div class="card tip">
+  <div class="card-t">导出的三种形态</div>
+  <table>
+  <thead><tr><th style="width:22%">要什么</th><th>用什么</th></tr></thead>
+  <tbody>
+  <tr><td>屏幕显示</td><td><code>drawGlyphRun</code>（走字体栅格缓存，最快）</td></tr>
+  <tr><td>矢量导出</td><td><code>pathForGlyph</code> → <code>QPainterPath</code> → SVG</td></tr>
+  <tr><td>位图导出</td><td>画到 <code>QImage</code> 再 <code>save()</code></td></tr>
+  </tbody>
+  </table>
+  <p>三者用的都是<b>同一个字形号</b>，所以结果必然一致 —— 前提是字体没换。</p>
+</div>
+
+<h2 id="s11"><span class="n">11</span>性能与缓存</h2>
+
+<p>A01 第 17 节的结论在这里落地成三处缓存：</p>
+
+<table>
+<thead><tr><th style="width:22%">缓存</th><th style="width:34%">放在哪</th><th>键</th></tr></thead>
+<tbody>
+<tr><td><b>整形结果</b></td><td>自己的 <code>QHash</code></td>
+    <td>字体 + 字号 + 文本 + 特性集</td></tr>
+<tr><td><b>字形栅格</b></td><td><code>QPixmapCache</code> 或字体引擎自带</td>
+    <td>字体 + 字号 + 字形号</td></tr>
+<tr><td><b>整段排版</b></td><td><code>QTextLayout</code> 对象</td>
+    <td>段落 + 列宽</td></tr>
+</tbody>
+</table>
+
+<div class="code-wrap">
+  <div class="bar"><span>缓存的粒度</span><button class="cp">复制</button></div>
+<pre>/* 错了：每次击键都重建 QTextLayout，还把整篇重新 layout 一遍 */
+void onTextChanged() { layout.setText(fullText); relayout(); repaint(); }
+
+/* 对了：只重排受影响的那一段，其余用缓存 */
+void onTextChanged(int pos) { dirty(paragraphOf(pos)); relayoutDirty(); }</pre>
+</div>
+
+<div class="card warn">
+  <div class="card-t">三个反模式</div>
+  <ol>
+    <li><b>逐簇整形。</b>把每个簇单独送进整形，连写就断了 ——
+    与 A01 第 17 节同一个坑，只是换到 Qt 这一侧。</li>
+    <li><b>在 <code>paintEvent</code> 里建 <code>QRawFont</code>。</b>
+    它是重对象（要解析整张字体表），必须建一次存起来。</li>
+    <li><b>每次重画都 <code>pathForGlyph</code>。</b>轮廓提取比画字形贵一个量级，
+    矢量导出时才用，别放进绘制循环。</li>
+  </ol>
+</div>
+
+<h2 id="s12"><span class="n">12</span>一页速查</h2>
+
+<table>
+<thead><tr><th style="width:26%">要做的事</th><th>写法</th></tr></thead>
+<tbody>
+<tr><td>加载字体</td>
+    <td><code>addApplicationFont()</code> ＋ <code>QRawFont(同一文件, px)</code></td></tr>
+<tr><td>路线 A</td>
+    <td><code>QTextLayout</code> → <code>line.glyphRuns()</code></td></tr>
+<tr><td>路线 B</td>
+    <td><code>hb_shape()</code> → 自己拼 <code>QGlyphRun</code></td></tr>
+<tr><td>拼 QGlyphRun</td>
+    <td><code>setRawFont</code> / <code>setGlyphIndexes</code> / <code>setPositions</code></td></tr>
+<tr><td>坐标</td>
+    <td><code>pen + x_offset</code> 定位，<code>pen += x_advance</code> 推进，y 取负</td></tr>
+<tr><td>定点数</td>
+    <td>一律 <code>/ 64.0</code></td></tr>
+<tr><td>竖排</td>
+    <td><code>translate(基点)</code> ＋ <code>rotate(90)</code></td></tr>
+<tr><td>矢量导出</td>
+    <td><code>pathForGlyph()</code> → <code>QPainterPath</code> → SVG</td></tr>
+</tbody>
+</table>
+
+<div class="card key">
+  <div class="card-t">六条铁律</div>
+  <ol>
+    <li><b>字体同一份</b> —— HB 与 <code>QRawFont</code> 必须指同一个文件；
+    只建 <code>QRawFont</code> 不注册 <code>QFontDatabase</code>，会得到一排不报错的豆腐块。</li>
+    <li><b>positions 是绝对坐标</b>（相对 run 原点），不是 advance。</li>
+    <li><b>y 取负</b> —— HB 向上，屏幕向下。</li>
+    <li><b><code>glyphIndexesForString</code> 不是整形</b> —— 它不接 script/direction/language。</li>
+    <li><b>竖排自己转</b> —— 字体没有 <code>vmtx</code>，别信 <code>ttb</code> 的推进量。</li>
+    <li><b>重对象建一次</b> —— <code>QRawFont</code>、<code>QTextLayout</code> 都别放进绘制循环。</li>
+  </ol>
+</div>
+
+<div class="see-also">
+  <div class="card-t">想接着看</div>
+  <ul>
+    <li><a href="a01.html">A01 · HarfBuzz 及其基础用法</a>
+      <span class="why">—— 本篇的上一半。字形号、位置、簇从哪来，全在那一篇。</span></li>
+    <li><a href="q11.html">Q11 · 线程与互斥锁</a>
+      <span class="why">—— <code>QRawFont</code> 与 <code>hb_font</code> 都不是线程安全的，
+      渲染线程与排版线程要各持一份。</span></li>
+    <li><a href="fe-06.html">FE-06 · Writing Mode 与溢出滚动</a>
+      <span class="why">—— 同一件竖排的事，浏览器里由 <code>writing-mode</code> 代劳；
+      对照第 9 节看，能看出引擎替你做了多少。</span></li>
+    <li><a href="t03.html">T03 · 字体文件结构大揭秘</a>
+      <span class="why">—— 第 3 节说「字体必须是同一份」，
+      那篇解释了为什么换一个文件字形号就全错位。</span></li>
+  </ul>
+</div>
