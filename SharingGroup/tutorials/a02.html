@@ -468,11 +468,48 @@ glyphIndexesForString  6 个字形：1651 1197 1266 1540 1197 1659   ← 只查 
 
 <div class="code-wrap">
   <div class="bar"><span>vertical.cpp</span><button class="cp">复制</button></div>
-<pre>painter.translate(width - 90, 24);   /* 旋转基点：右上角 */
-painter.rotate(90);                   /* 顺时针 90°，横排结果立起来 */
+<pre>painter.translate(width - 90, 24);
+/*                ^^^^^   ^^  ^^
+ *                (1)     (2) (3)   —— 三者的含义见下方表格 / */
+
+painter.rotate(90);                   /* 顺时针 90°：本地 +x → 屏幕向下 */
 for (const QGlyphRun&amp; gr : line.glyphRuns())
     painter.drawGlyphRun(QPointF(0, 0), gr);</pre>
 </div>
+
+<h3>三个数各是什么</h3>
+
+<table>
+<thead><tr><th style="width:8%">编号</th><th style="width:14%">量</th>
+<th style="width:20%">例子里的值</th><th>含义</th></tr></thead>
+<tbody>
+<tr><td class="c">(1)</td><td><code>width</code></td><td>260（探针里那张 260×420 的图）</td>
+    <td><b>画布宽度</b>，来自 <code>QImage::width()</code> 或控件的 <code>width()</code>。
+    换画布尺寸它就变，所以<b>不能写死</b></td></tr>
+<tr><td class="c">(2)</td><td><code>90</code></td><td>固定值，≈ 行高的一部分</td>
+    <td><b>右边留白</b>。<code>rotate(90°)</code> 之后，本地坐标的
+    <code>−y</code>（字身在基线以上的部分）指向屏幕<b>右</b>边，
+    所以列越靠右，字身越容易出界 —— 留白就是给这段字身的</td></tr>
+<tr><td class="c">(3)</td><td><code>24</code></td><td>固定值</td>
+    <td><b>顶端留白</b>。首字的基线离画布顶边 24px，避免第一行贴着边</td></tr>
+</tbody>
+</table>
+
+<div class="card warn">
+  <div class="card-t">90 这个数是量出来的，而且偏小了 3px</div>
+  <p>这支字体 64px 下的 <code>ascent = 93</code>、<code>descent = 19</code>
+  （<code>QRawFont</code> 实测）。竖排时<b>字身占的横向宽度 = ascent</b>，
+  所以右边留白至少要 <b>93</b>；写 90 会切掉不到 3px。</p>
+  <p>稳妥的写法是<b>用行距推</b>，而不是写死数字：</p>
+  <div class="code-wrap">
+    <div class="bar"><span>不写死数字</span><button class="cp">复制</button></div>
+<pre>const qreal inset = raw.ascent() + 6;          /* 字身宽度 + 一点余量 */
+const qreal top   = 24;
+painter.translate(width - inset, top);</pre>
+  </div>
+  <p>换字号、换字体都不用改这段 —— 写死 90 的版本换个 96px 的字体就会切掉一大截。</p>
+</div>
+
 
 <figure class="fig">
   <img src="assets/img/a02-vertical.png" alt="同一个词旋转 90 度后竖排的样子"
@@ -488,6 +525,169 @@ for (const QGlyphRun&amp; gr : line.glyphRuns())
   要用 <code>vert</code> 特性换成竖排变体（A01 第 15 节）。
   只旋转不换字形，括号的开口会朝错方向。</p>
 </div>
+
+
+<h3>把基点画出来：1 个正确 + 3 个错误</h3>
+
+<p>「旋转基点选在哪儿」这件事，光看代码看不出来。下面四个面板各画一次，
+方框就是画布，超出方框的部分被自然裁掉 —— 那正是「文字跑到屏幕外」的样子。</p>
+
+<div class="rotgrid">
+  <figure class="rotfig">
+    <canvas id="rot1" width="420" height="600"></canvas>
+    <figcaption><b class="ok">✅ 正确</b><br>
+      <code>translate(w-40, 20)</code><br><code>rotate(90°)</code><br>
+      从右上角起，整列往下长</figcaption>
+  </figure>
+  <figure class="rotfig">
+    <canvas id="rot2" width="420" height="600"></canvas>
+    <figcaption><b class="bad">❌ 忘了 translate</b><br>
+      <code>rotate(90°)</code><br>
+      绕画布左上角转，字身甩到左边界外</figcaption>
+  </figure>
+  <figure class="rotfig">
+    <canvas id="rot3" width="420" height="600"></canvas>
+    <figcaption><b class="bad">❌ 基点选在右下角</b><br>
+      <code>translate(w-40, h-20)</code><br>
+      从底部继续往下，整串看不见</figcaption>
+  </figure>
+  <figure class="rotfig">
+    <canvas id="rot4" width="420" height="600"></canvas>
+    <figcaption><b class="bad">❌ 方向转反</b><br>
+      <code>rotate(-90°)</code><br>
+      往上长，出了画布顶部</figcaption>
+  </figure>
+</div>
+
+<div class="card warn">
+  <div class="card-t">「基点」决定的是整块内容的落点</div>
+  <p><code>translate</code> 之后原点跑到了新位置，<code>rotate</code> 再绕这个新原点转。
+  所以<b>先定的那个点，就是整列文字的起点</b>。</p>
+  <p>竖排蒙文要的是「右上角起、往下长」，于是基点必须落在
+  <b>右上角附近</b>：<code>x</code> 取靠右、<code>y</code> 取自上往下一点。
+  取左下角、取右下角、或者干脆不 translate，结果都是整列跑到画布外面。</p>
+</div>
+
+<p>由此也能看出上一条规则为什么成立：<b>先 translate 再 rotate</b>，
+顺序反过来的话，<code>rotate</code> 会先绕原点转，之后 <code>translate</code>
+的方向也跟着被转过去 —— 落点又跑了。Qt 的 <code>QPainter</code>
+与 canvas 的 <code>ctx</code> 在这件事上完全一致。</p>
+
+<script>
+/* 四个面板各画一次：模拟 Qt 的 translate + rotate + drawGlyphRun
+   ⚠ 坐标一律用 CSS 像素：setTransform(DPR,0,0,DPR,0,0) 之后
+   1 个单位 = 1 CSS px。第一版忘了这一步，字只有一半大、几乎看不见。 */
+(function () {
+  var WORD = "\u182E\u1823\u1829\u182D\u1823\u182F";   // ᠮᠣᠩᠭᠣᠯ
+  var DPR = Math.min(window.devicePixelRatio || 1, 2);
+  var FS = 42;          // 字号（CSS px）
+  var GAP = 10;         // 词组之间的间距
+
+  function draw(id, tx, ty, deg, ok) {
+    var cv = document.getElementById(id);
+    if (!cv) return;
+    var w = cv.clientWidth, h = cv.clientHeight;
+    if (!w || !h) return;
+    cv.width = Math.round(w * DPR);
+    cv.height = Math.round(h * DPR);
+
+    var ctx = cv.getContext("2d");
+    ctx.setTransform(DPR, 0, 0, DPR, 0, 0);   // 之后全部用 CSS px
+    ctx.clearRect(0, 0, w, h);
+
+    /* 页面底色 */
+    ctx.fillStyle = "#fffdf6";
+    ctx.fillRect(0, 0, w, h);
+
+    /* 淡网格：方便看出内容落在哪儿 */
+    ctx.strokeStyle = "rgba(20,17,10,.05)";
+    ctx.lineWidth = 1;
+    for (var gx = 30; gx < w; gx += 30) {
+      ctx.beginPath(); ctx.moveTo(gx, 0); ctx.lineTo(gx, h); ctx.stroke();
+    }
+    for (var gy = 30; gy < h; gy += 30) {
+      ctx.beginPath(); ctx.moveTo(0, gy); ctx.lineTo(w, gy); ctx.stroke();
+    }
+
+    /* 画布边框 = 「屏幕」的边界 */
+    ctx.strokeStyle = ok ? "#c8a03a" : "#c3c7d0";
+    ctx.lineWidth = 2;
+    ctx.strokeRect(1, 1, w - 2, h - 2);
+
+    /* —— 与 Qt 一一对应的三步 —— */
+    ctx.save();
+    ctx.translate(tx, ty);                    // painter.translate(tx, ty)
+    if (deg) ctx.rotate(deg * Math.PI / 180); // painter.rotate(deg)
+
+    ctx.fillStyle = "#1a1509";
+    ctx.font = FS + 'px "UME Mongolian","Noto Sans Mongolian",sans-serif';
+    ctx.textBaseline = "alphabetic";
+    /* 一条「列」：同一个词组重复三次，沿本地 x 轴排 —— 旋转后就是往下长 */
+    var adv = ctx.measureText(WORD).width + GAP;
+    for (var k = 0; k < 3; k++) {
+      ctx.fillText(WORD, k * adv, 0);         // drawGlyphRun(QPointF(0,0), run)
+    }
+    ctx.restore();
+
+    /* 基点标记：画在未旋转的坐标系里，压在最上层 */
+    ctx.strokeStyle = ok ? "#8a6410" : "#b03a2e";
+    ctx.lineWidth = 1.5;
+    ctx.beginPath();
+    ctx.moveTo(tx - 8, ty); ctx.lineTo(tx + 8, ty);
+    ctx.moveTo(tx, ty - 8); ctx.lineTo(tx, ty + 8);
+    ctx.stroke();
+    ctx.beginPath();
+    ctx.arc(tx, ty, 3.5, 0, Math.PI * 2);
+    ctx.fillStyle = ok ? "#c8a03a" : "#b03a2e";
+    ctx.fill();
+
+    /* 如果整串几乎都跑到画布外，补一句提示 ——
+       否则那一格看起来像「图没画出来」，而不是「内容出界了」。 */
+    if (!ok) {
+      var img = ctx.getImageData(0, 0, cv.width, cv.height).data;
+      var ink = 0, step = 16;
+      for (var q = 0; q < img.length; q += step) {
+        if (img[q] < 120 && img[q + 1] < 120 && img[q + 2] < 120) ink++;
+      }
+      if (ink / (img.length / step) < 0.006) {
+        ctx.fillStyle = "#b03a2e";
+        ctx.font = '600 13px "Microsoft YaHei","PingFang SC",sans-serif';
+        ctx.textAlign = "center";
+        ctx.textBaseline = "middle";
+        ctx.fillText("内容几乎全在画布外", w / 2, h / 2);
+        ctx.textAlign = "start";
+      }
+    }
+  }
+
+  function all() {
+    var cv = document.getElementById("rot1");
+    if (!cv) return;
+    var w = cv.clientWidth || 200, h = cv.clientHeight || 300;
+    draw("rot1", w - 26, 24, 90, true);       // ✅ 右上角起、rotate(90)
+    draw("rot2", 0, 0, 90, false);            // ❌ 没 translate：绕左上角转
+    draw("rot3", w - 26, h - 16, 90, false);  // ❌ 基点落在右下角：往下出界
+    draw("rot4", w - 26, 24, -90, false);     // ❌ rotate(-90)：往上出界
+    window.__rotDone = true;
+  }
+
+  function boot() {
+    if (document.fonts && document.fonts.load) {
+      document.fonts.load(FS + 'px "UME Mongolian"').then(all).catch(all);
+    } else {
+      all();
+    }
+  }
+  if (document.readyState === "complete") boot();
+  else window.addEventListener("load", boot);
+
+  var timer = null;
+  window.addEventListener("resize", function () {
+    clearTimeout(timer);
+    timer = setTimeout(all, 180);
+  });
+})();
+</script>
 
 <h2 id="s10"><span class="n">10</span>取轮廓：从字形到路径</h2>
 
