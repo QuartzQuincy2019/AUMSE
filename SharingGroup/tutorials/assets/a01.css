@@ -68,7 +68,48 @@ body.toc-open::after{content:"";position:fixed;inset:0;z-index:55;
 .mem .slot .a{font-family:var(--mono);color:var(--fg-3);font-size:11.5px}
 .mem .slot .n{font-family:var(--mono);font-weight:700;color:var(--fg-2)}
 
+/* ---------- 4. 圣书体演示块（第 15 节） ----------
+   引擎 MdCRndr 直接把 DOM 渲染进来（.mdc-* 类名由它注入），
+   这里只管外框与颜色。
+
+   ⚠ 别用 filter:invert()。字体没有「黑色墨迹」这回事 ——
+   字形颜色一律跟随 CSS 的 color。第一版写了 invert，
+   结果暗色下字形被翻成暖褐、压在近黑底上几乎看不清。
+   正确做法就是给个颜色：
+       浅色 近黑   ·   深色 暖白 */
+.egy{margin:12px 0;border:1px solid var(--line-2);border-radius:10px;
+  background:var(--sfc);padding:10px 14px 12px}
+.egy .egy-mdc{margin:0 0 6px;font:12px/1.7 var(--mono);color:var(--fg-3)}
+.egy .egy-mdc code{font-size:12px}
+.egy .egy-note{color:var(--fg-3);font-size:12px}
+.egy .egy-out{min-height:72px;display:flex;align-items:center;flex-wrap:wrap;
+  color:#14110a}
+@media (prefers-color-scheme: dark){
+  .egy .egy-out{color:#f4e8cb}
+}
+
+/* 正文里内联引用的单个圣书体字符。
+   ⚠ 不能只写 font-size —— 正文默认字体（系统 sans）没有圣书体区段，
+   会渲染成豆腐块。Windows 自带的 Segoe UI Historic 覆盖 U+13000 起，
+   再把 MdCRndr 排在前面（引擎 init 后会注册这个族名）。 */
+.egy-glyph{font-family:MdCRndr,"Segoe UI Historic","Segoe UI Symbol",serif;
+  font-size:1.6em;line-height:1;vertical-align:-3px}
+
+/* 可交互的那一块（带输入框）：底子略深一点，提示这里能改 */
+.egy.egy-live{background:var(--bg-soft);border-color:var(--line-2)}
+
+/* 输入框：与正文同色系，不喧宾夺主 */
+.egy input[type="text"]{
+  width:min(420px,100%);padding:5px 9px;border-radius:6px;
+  border:1px solid var(--line-2);background:var(--bg);color:var(--fg);
+  font:13px/1.5 var(--mono)}
+
+/* 渲染失败的提示 */
+.egy .egy-bad{color:var(--fg-3);font-size:13px}
+
 @media (max-width:720px){
   .mem .slot{flex:1 1 50%;border-bottom:1px solid var(--line-2)}
   [lang="mn-Mong"]{font-size:21px}
+  .egy{padding:8px 10px 10px}
+  .egy .egy-out{min-height:60px}
 }

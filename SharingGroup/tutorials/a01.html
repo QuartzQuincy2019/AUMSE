@@ -30,6 +30,7 @@
   <a href="#s12">12 · 性能：该缓存的三处</a>
   <a href="#s13">13 · 调试：怎么知道它选对了字形</a>
   <a href="#s14">14 · 一页速查</a>
+  <a href="#s15">15 · 换个文字系统：圣书体的四开组</a>
 </nav>
 
 <main>
@@ -498,7 +499,7 @@ hb_shape(font, buf, &amp;f, 1);</pre>
 应用侧   double px_value = pos[i].x_advance / 64.0;
          ↑ 定点数还原成像素
 
-UPEM     只在你**不给** scale 的时候才参与运算 —— 那时结果以 em 为单位</pre>
+UPEM     只在你<b>不给</b> scale 的时候才参与运算 —— 那时结果以 em 为单位</pre>
 </div>
 
 <div class="card warn">
@@ -703,6 +704,199 @@ mongol 整词       u182E.M.init 492 | u1823.O.medi 573 | u1829.AG.medi 614
   </ol>
 </div>
 
+<h2 id="s15"><span class="n">15</span>换个文字系统：圣书体的四开组</h2>
+
+<p>前面十四节讲的都是<b>一维线性文本</b>：一串码位排成一行，难在「选哪个字形」。
+圣书体正好反过来 —— <b>选字形一步几乎不需要，难在把符号拼成方块</b>。</p>
+
+<p>这一节用的引擎是 CheAV 项目的 <code>MdCRndr</code>
+（<code>assets/egypt/MdCRndr.js</code>，单文件零依赖）与
+<b>New Gardiner</b> 字体（OFL 1.1，见 <code>assets/egypt/OFL.txt</code>）。</p>
+
+<h3>一码位一静态字形，HarfBuzz 在这儿几乎空转</h3>
+
+<p>圣书体的每个符号就是一个字形，没有 init/medi/fina，没有 <code>rclt</code> 连写。
+把 <span class="egy-glyph">𓀀</span> 交给 <code>hb_shape</code>，
+出来的就是一串「原样、等宽、无替换」的结果。</p>
+
+<div class="card key">
+  <div class="card-t">所以真正的排版问题换了地方</div>
+  <p>圣书体不是「一行字」，而是<b>由若干符号组成的一个个方形区块</b>，
+  古埃及学里叫 <b>quadrat（四开组）</b>。一个区块里的符号要按
+  <b>视觉平衡</b>摆：谁在上、谁在下、谁占满、谁缩小。</p>
+  <p>这件事 HarfBuzz <b>完全不管</b> —— 它只排一维。一维整形之后，
+  还得有一层二维组排。</p>
+</div>
+
+<h3>MdC：把「怎么摆」写进字符串</h3>
+
+<p>渲染引擎的输入是 <b>MdC</b>（Manuel de Codage，JSesh 风格）。三个符号就够表达布局：</p>
+
+<table>
+<thead><tr><th style="width:12%">符号</th><th style="width:26%">含义</th>
+<th>例子</th></tr></thead>
+<tbody>
+<tr><td><code>-</code></td><td><b>分四开组</b></td>
+    <td><code>S34-N35:AA1</code> ＝ 两组</td></tr>
+<tr><td><code>*</code></td><td>同层<b>并排</b></td>
+    <td><code>A1*B1</code></td></tr>
+<tr><td><code>:</code></td><td>下移一层（<b>堆叠</b>）</td>
+    <td><code>O49:X1</code></td></tr>
+</tbody>
+</table>
+
+<div class="egy">
+  <p class="egy-mdc">A1 <span class="egy-note">单个符号：坐着的男子</span></p>
+  <div class="egy-out" data-mdc="A1"></div>
+</div>
+
+<div class="egy">
+  <p class="egy-mdc">A1*B1 <span class="egy-note">同层并排</span></p>
+  <div class="egy-out" data-mdc="A1*B1"></div>
+</div>
+
+<div class="egy">
+  <p class="egy-mdc">O49:X1 <span class="egy-note">上下堆叠：O49 在上，X1 在下</span></p>
+  <div class="egy-out" data-mdc="O49:X1"></div>
+</div>
+
+<div class="egy">
+  <p class="egy-mdc">S34-N35:AA1 <span class="egy-note">先前是你写的顺序，渲染后是两个区块</span></p>
+  <div class="egy-out" data-mdc="S34-N35:AA1"></div>
+</div>
+
+<h3>读序 ≠ 写序</h3>
+
+<p>组内符号的<b>摆放顺序</b>由视觉平衡决定，而<b>读音顺序</b>是 MdC 里写的顺序。
+上面 <code>O49:X1</code> 读作「O49 然后 X1」，但 O49 画得比 X1 大得多 ——
+两个符号的墨迹高度差了三倍多，引擎得把它们塞进一个方框里。</p>
+
+<div class="card note">
+  <div class="card-t">这和 RTL 的「逻辑序 vs 视觉序」是同一类问题</div>
+  <p>阿拉伯语的字符是<b>逻辑顺序</b>，HarfBuzz 输出的是<b>视觉顺序</b>
+  （簇号倒序，见第 7 节）。圣书体也是逻辑序 ≠ 视觉序，
+  只不过错位发生在<b>二维</b>，而且规则是审美而非语法。</p>
+  <p>HarfBuzz 一个都不管 —— 它只保证「一维的方向对」。</p>
+</div>
+
+<h3>关键：用「墨迹」拼方阵，不能用 advance</h3>
+
+<p>第 9 节说过 advance 与墨迹是两回事。圣书体把这条推到极端 ——
+拼方阵要用<b>墨迹包围盒</b>，字体给你的 advance 完全不够用。</p>
+
+<p><code>visumetrics</code> 就是这份数据（<code>EM_SQUARE = 1000</code>，
+单位是字体设计单位）：</p>
+
+<table>
+<thead><tr><th style="width:16%">Gardiner</th><th style="width:14%">Unicode</th>
+<th style="width:18%">墨迹宽</th><th style="width:18%">墨迹高</th>
+<th>形状</th></tr></thead>
+<tbody>
+<tr><td><code>N35</code></td><td class="c">U+13216</td>
+    <td class="c">983</td><td class="c"><b>150</b></td>
+    <td>水纹：极宽极扁</td></tr>
+<tr><td><code>A1</code></td><td class="c">U+13000</td>
+    <td class="c">695</td><td class="c"><b>999</b></td>
+    <td>坐人：接近满高</td></tr>
+<tr><td><code>B1</code></td><td class="c">U+13050</td>
+    <td class="c">561</td><td class="c">999</td><td>妇人：细高</td></tr>
+<tr><td><code>O49</code></td><td class="c">U+13296</td>
+    <td class="c">556</td><td class="c">584</td><td>圆形围栏：近方</td></tr>
+<tr><td><code>X1</code></td><td class="c">U+133CF</td>
+    <td class="c">494</td><td class="c">276</td><td>面包：扁</td></tr>
+</tbody>
+</table>
+
+<div class="card key">
+  <div class="card-t">换算一下就知道为什么不能用 advance</div>
+  <p>N35 的墨迹高只有 <b>150</b>，A1 是 <b>999</b> —— 差 <b>6.7 倍</b>。
+  如果按字体 advance 拼方阵，一条水纹会和一个人占同样高度，
+  整个区块立刻歪掉。</p>
+  <p>所以引擎必须<b>逐字形量墨迹</b>，再按「层高 / 层内宽度」反推缩放比。
+  这就是 <code>visual metrics</code> 这个文件存在的理由。</p>
+</div>
+
+<h3>放进源码看：它其实就是「这个项目的 umeshape」</h3>
+
+<p>对照第 12 节讲过的话 —— 竖排那部分<b>没有现成库可加载，只能自己写，且该做成独立模块</b>。
+<code>MdCRndr</code> 就是同一个位置上的东西：</p>
+
+<table>
+<thead><tr><th style="width:24%">职责</th><th style="width:36%">HarfBuzz（本项目）</th>
+<th>MdCRndr（圣书体）</th></tr></thead>
+<tbody>
+<tr><td><b>输入</b></td><td>码位串 + 字体</td><td><b>MdC 串</b>（含布局语法）</td></tr>
+<tr><td><b>选字形</b></td><td>cmap + GSUB（重活）</td><td>查表（轻活）</td></tr>
+<tr><td><b>定位置</b></td><td>一维 advance</td><td><b>二维组排</b></td></tr>
+<tr><td><b>输出</b></td><td>字形号 + 位置 + 簇</td><td><b>DOM</b>（直接出结构）</td></tr>
+<tr><td><b>度量</b></td><td>字体 advance</td><td><b>墨迹包围盒</b></td></tr>
+</tbody>
+</table>
+
+<p>注意最后一行：MdCRndr 把「排版」和「出图」<b>合并</b>成了一步（直接吐 DOM），
+而 HarfBuzz 只吐数字、把出图交给 Qt。两种切法都对，取决于谁更复杂 ——
+圣书体的二维约束太多，直接生成 DOM 反而更省事。</p>
+
+<h3>试一下</h3>
+
+<p>下面这个框可以直接改 MdC 串（<code>-</code> 分组、<code>*</code> 并排、<code>:</code> 堆叠），
+改动即时重排。写错码会显示成带框的占位符。</p>
+
+<div class="egy egy-live">
+  <p class="egy-mdc">
+    <input id="egyInput" type="text" spellcheck="false"
+           value="S34-N35:AA1" aria-label="MdC 输入">
+    <span class="egy-note">例：<code>A1*B1</code>　<code>O49:X1</code>　
+      <code>G17-R19-N35:Aa1-X1:N35-N35!-N35</code></span>
+  </p>
+  <div class="egy-out" id="egyLive"></div>
+</div>
+
+<script src="assets/egypt/MdCRndr.js"></script>
+<script>
+/* 圣书体演示：初始化引擎 → 逐个 data-mdc 渲染 → 输入框实时重排 */
+(function () {
+  if (typeof MdCRndr === "undefined") return;
+
+  MdCRndr.init({
+    fontUrl: "assets/egypt/NewGardiner.ttf",
+    fontSize: 40,
+    injectStyle: true
+  });
+
+  function paint(el, mdc, size) {
+    if (!el) return;
+    el.classList.remove("egy-bad");
+    el.innerHTML = "";
+    try {
+      MdCRndr.renderText(el, mdc, size || 40);
+    } catch (e) {
+      el.classList.add("egy-bad");
+      el.textContent = "无法解析：" + mdc;
+    }
+  }
+
+  var list = document.querySelectorAll(".egy-out[data-mdc]");
+  for (var i = 0; i < list.length; i++) {
+    paint(list[i], list[i].getAttribute("data-mdc"), 44);
+  }
+
+  var input = document.getElementById("egyInput");
+  var live = document.getElementById("egyLive");
+  if (input && live) {
+    var timer = null;
+    var run = function () {
+      paint(live, input.value.trim() || "A1", 48);
+    };
+    input.addEventListener("input", function () {
+      clearTimeout(timer);
+      timer = setTimeout(run, 160);
+    });
+    run();
+  }
+})();
+</script>
+
 <div class="see-also">
   <div class="card-t">想接着看</div>
   <ul>
@@ -731,6 +925,8 @@ UME 项目组内部教程 · A01《HarfBuzz 及其基础用法》<br>
 <b>uharfbuzz 14.6.0</b>（HarfBuzz 14.6.0）配合 <b>fontTools 4.67.0</b>，
 在 <code>Noto Sans Mongolian</code>（UPEM 1000）、<code>Segoe UI</code>、
 <code>Arial</code>、<code>Times New Roman</code> 上实际运行得出。<br>
+第 15 节的圣书体示例由 <b>MdCRndr</b> 配 <b>New Gardiner 3.06</b>
+（Mark-Jan Nederhof，OFL 1.1）实际渲染。<br>
 C++ 片段是按接口签名写的说明性代码，<b>本机未安装 HarfBuzz 开发库，未编译</b>；
 代码示例以 <b>Consolas</b> 等宽字体呈现。
 </footer>
