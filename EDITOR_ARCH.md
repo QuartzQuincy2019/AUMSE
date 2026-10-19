@@ -507,6 +507,10 @@ A02 第 7 节的逐像素比较方法。
 
 ## 7 分阶段落地
 
+> ⚠ **这一节已被 §9 修订**：如果把模型层交给 QTextDocument，
+> P1/P2 大部分不用写。原始计划留在这里作对照。
+
+
 | 阶段 | 交付 | 验收 |
 |---|---|---|
 | P1 | ① 存储 + ② 属性表（三张表）+ 2 条不变量 | 随机 10⁵ 次编辑后与朴素实现逐字相同；随机打格式后区间数不膨胀 |
@@ -554,3 +558,120 @@ A02 第 7 节的逐像素比较方法。
 第二条与第三条都**没有**重新整形；只有第一条（硬切 buffer）退化了。
 这就是 §0.3 那条硬约束的全部证据。
 
+## 9 改走 Qt 引擎：需要自己做什么
+
+> 本节修订 §7。原计划把十个角色全部自建；调查现成库之后，
+> **模型层可以整块借给 `QTextDocument`**，自建范围从「十个角色」缩到「三个半」。
+
+### 9.1 借来的部分（不写）
+
+| 角色 | 由谁提供 |
+|---|---|
+| ① 存储 | `QTextDocument`（块 + 文本，内部已做增量） |
+| ② 属性表 | `QTextCharFormat`（格式池 + 索引，不是每字符一个对象） |
+| ④ 整形 | `QTextLayout` 内部就调 HarfBuzz（A02 §4 已实测与 uharfbuzz 逐字形一致） |
+| ⑧ 事务 | `QTextDocument::beginEditBlock()` / `endEditBlock()` |
+| ⑨ 撤销栈 | `QTextDocument::undoStack()`（可以合并块内操作） |
+| ⑩ 序列化 | `QTextDocumentWriter`（HTML / ODF / Markdown） |
+| ③ 的一半 | `QTextBoundaryFinder`：Grapheme / Word / Line 三类边界 |
+| ⑥ 的一半 | `QTextLayout::hitTest()` / `QTextLine::cursorToX()`（横排坐标下） |
+
+### 9.2 必须自己写的五件
+
+**① `UmeDocumentLayout : QAbstractTextDocumentLayout`**
+
+这是核心，也是唯一的大件。要实现的纯虚函数：
+
+```
+draw(QPainter*, const PaintContext&)
+hitTest(const QPointF&, Qt::HitTestAccuracy)
+documentChanged(int from, int oldLength, int length)
+blockBoundingRect(const QTextBlock&)
+frameBoundingRect(QTextFrame*)
+documentSize()
+```
+
+**关键简化**：不需要写一个真正的竖排引擎。
+`QTextLayout` 是横排的，但**把它的「行」当成「列」用**就行：
+
+```
+每个块 → QTextLayout，lineWidth 设成「列高」（= 视口高度）
+       → 块的第 n 行，就是视觉上的第 n 列
+       → 第 n 列基线 x = firstX + n * colAdvance   （A02 §9）
+       → draw() 里：save / translate(x, top) / rotate(90°) / drawGlyphRun / restore
+```
+
+所以真正要写的是**「行 ↔ 列」的映射与几何**，不是重新实现断行。
+
+**② 视图控件 `UmeView : QAbstractScrollArea`**
+
+不用 `QTextEdit`。理由：`QTextEdit` 对布局有它自己的假设（滚动范围来自
+`documentSize()`、光标用 `QTextCursor::cursorRect()`），垂直坐标系下会和它打架。
+自己拿 `QAbstractScrollArea` + 直接调 `layout->draw()`，控制权清楚得多。
+
+要处理的：滚动条范围、可见区裁剪、双击选词、`QInputMethodEvent`（IME 预编辑）。
+
+**③ 可编辑簇表 `UmeClusterMap`**
+
+**这一条最容易漏，而且漏了会出「半个字」**：
+
+| 边界来源 | 给出什么 | 问题 |
+|---|---|---|
+| `QTextBoundaryFinder::Grapheme` | 字素簇边界（UAX #29） | **不知道 GA+O 合成了一个字形** |
+| HarfBuzz 的 cluster | 整形簇 | 不知道 FVS 该跟谁走 |
+
+两支各管一半。**可编辑簇 = 两者的并集（取更粗的那个）**：
+
+```
+字素簇边界 :  0 1 2 3 4 5 6        （每个字母各一个）
+整形簇边界 :  0 1 2 3 . 5 6        （3 和 4 合成一个字形）
+可编辑簇   :  0 1 2 3 . 5 6        ← 取交集，4 被吞掉
+```
+
+实现：拿 `QTextLine::glyphRuns()` 的 glyph cluster 反查，与
+`QTextBoundaryFinder` 的 grapheme 边界求「粗化」，缓存成一张表。
+
+**④ 簇级导航**
+
+`QTextCursor` 按码元走。不换掉它，而是在视图层拦截按键，用
+`UmeClusterMap` 算出目标偏移再 `cursor.setPosition()`。
+退格 / Delete / 方向键 / Home / End 各一条规则（A03 §16 那张表）。
+
+**⑤ 垂直标点与特性开关**
+
+字体里有 25 个 `.vert` 变体。旋转方案下，括号、引号要换成竖排字形
+（`vert` 特性），否则开口方向是错的。这是 `QTextLayout` 之上的一层修饰。
+
+### 9.3 六个已知的坑
+
+| # | 坑 | 现象 | 对策 |
+|---|---|---|---|
+| 1 | `QTextCursor::cursorRect()` 假设横排 | 光标画错位置 | 自己算（`layout->blockBoundingRect` + 列内偏移） |
+| 2 | `QTextEdit` 的滚动假设 | 滚动条范围不对 | 不用 `QTextEdit`，用 `QAbstractScrollArea` |
+| 3 | 字素簇 ≠ 整形簇 | 光标停在连字中间 | §9.2③ 的合流表 |
+| 4 | `QTextLayout` 的行高在旋转后变成列宽 | 列距算错 | 用 `ascent + descent + gap`（A02 §9），不用 `QTextLine::height()` |
+| 5 | IME 在自绘视图里要手动处理 | 预编辑串不显示 / 位置错 | 监听 `QInputMethodEvent`，把 preedit 串当临时文本排 |
+| 6 | 大文档性能未验证 | 60 万码位可能卡 | 探针要测；必要时按块惰性建 `QTextLayout` |
+
+### 9.4 五个里程碑（估 8 个工作日到可用原型）
+
+| # | 交付 | 验收 |
+|---|---|---|
+| M1 | 换掉 layout，画出**一列**竖排，滚动正常 | 字形号与 `report/harfbuzz-ground-truth.txt` 一致 |
+| M2 | 多列、换列、`hitTest()` 点击定位 | 点任意位置，`caretRect` 往返落在附近 |
+| M3 | 簇级光标（合流表） | 码位 4 不可达；退格删整簇 |
+| M4 | 撤销 + 存读（Qt 接线） | 存→读→整形结果逐字形相同 |
+| M5 | 对拍与像素回归 | 与 ground truth 全绿；A02 §7 的像素比较可用 |
+
+### 9.5 先做的探针（半天）
+
+三个假设必须先验，任何一个不成立都要换路线：
+
+1. `setDocumentLayout()` 换掉排版后，`documentSize()` 变化能否驱动滚动
+2. `QTextBoundaryFinder(Grapheme)` 在这个词上给出的边界，与 HB cluster 的差别有多大
+3. 自写 layout 的 `draw()` 里能否拿到 `QTextLine::glyphRuns()` 并旋转绘制
+
+### 9.6 一句话
+
+> **借 Qt 的模型与撤销，自写「行 → 列」的映射、可编辑簇表、簇级导航。**
+> 真正难的竖排，落在「把横排行当成竖排列」这一个转换上 —— 而不是重写排版引擎。
