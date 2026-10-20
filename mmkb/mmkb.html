@@ -231,17 +231,25 @@
         </optgroup>
       </select>
     </label>
-    <label>最小键宽 <input type="range" id="zoom" min="26" max="78" step="2" value="46"><output id="zoomOut">46px</output></label>
+    <label>缩放 <input type="range" id="zoom" min="60" max="160" step="5" value="100"><output id="zoomOut">100%</output></label>
     <button class="btn on" id="tgKbMode">键面竖排</button>
     <button class="btn" id="tgShift">显示上档</button>
     <button class="btn" id="tgOnly">只看蒙文键</button>
-    <span class="seg" id="posSeg">
-      <button class="btn on" data-pos="auto">形态·自动</button>
-      <button class="btn" data-pos="isol">独立</button>
-      <button class="btn" data-pos="init">词头</button>
-      <button class="btn" data-pos="medi">词中</button>
-      <button class="btn" data-pos="fina">词尾</button>
-    </span>
+    <label>形态
+      <select id="posSel">
+        <option value="auto">自动</option>
+        <option value="isol">独立</option>
+        <option value="init">词头</option>
+        <option value="medi">词中</option>
+        <option value="fina">词尾</option>
+      </select>
+    </label>
+    <label id="layerWrap" style="display:none">变体层
+      <select id="layerSel">
+        <option value="0">下档</option>
+        <option value="1">上档</option>
+      </select>
+    </label>
     <span class="note" id="hint">点字母键看它的变体，点其它键复制字符</span>
   </div>
   <div class="kbscroll" id="kbscroll"><div class="kb" id="kb"></div></div>
@@ -344,7 +352,7 @@ var ROWS = [
 var MAP = {};
 DUMP.forEach(function(e){ MAP[e.vk] = e; });
 
-var showShift = true, onlyMn = false, zoom = 46;
+var showShift = true, onlyMn = false, zoom = 100;   /* zoom 是百分比 */
 
 /* 形态模式：auto = 原样；其余用 ᠠ 当上下文逼出对应位置形。
    实测（Noto 字形名）：L -> .isol、L+ᠠ -> .init、ᠠ+L+ᠠ -> .medi、ᠠ+L -> .fina */
@@ -399,13 +407,11 @@ function variantHtml(cp, spec, mode){
        + (p.post ? '<span class="filler">' + p.post + '</span>' : '');
 }
 
-/* 点字母键：下档 → 上档 → 退出 */
+/* 点字母键：选中 / 取消。上档字母用工具条上的「下档 / 上档」显式切换，
+   不再靠连点循环 —— 那个循环藏得太深，用户找不到。 */
 function letterClick(vk, plain, shift){
-  var hasShift = shift && shift >= 0x1820 && shift <= 0x18AF;
   if (variantVk !== vk){
     variantVk = vk; variantLayer = 0; variantCp = plain;
-  } else if (variantLayer === 0 && hasShift){
-    variantLayer = 1; variantCp = shift;
   } else {
     variantVk = null; variantLayer = 0; variantCp = null;
   }
@@ -414,21 +420,45 @@ function letterClick(vk, plain, shift){
 
 function updateVariantHint(){
   var box = document.getElementById('kbHint');
+  var wrap = document.getElementById('layerWrap');
+  var sel = document.getElementById('layerSel');
   if (!box) return;
+
+  /* 变体层：只有「选中的键确实有上档字母」时才出现 */
+  var e = MAP[variantVk] || {};
+  var shiftLetter = (e.shift && e.shift >= 0x1820 && e.shift <= 0x18AF) ? e.shift : null;
+  if (wrap && sel){
+    if (variantCp && shiftLetter){
+      wrap.style.display = '';
+      sel.options[0].text = '下档 ' + String.fromCodePoint(e.plain);
+      sel.options[1].text = '上档 ' + String.fromCodePoint(shiftLetter);
+      sel.value = String(variantLayer);
+    } else {
+      wrap.style.display = 'none';
+    }
+  }
+
   if (variantCp){
-    var e = MAP[variantVk] || {};
-    var hasShift = e.shift && e.shift >= 0x1820 && e.shift <= 0x18AF;
     box.style.display = '';
     box.style.color = 'var(--gold)';
     box.textContent = '变体预览：' + String.fromCodePoint(variantCp)
       + '（' + hex(variantCp) + (variantLayer ? '，上档' : '，下档') + '）'
       + (posMode !== 'auto' ? '［形态 ' + posMode.toUpperCase() + '］' : '')
-      + ' —— 控制符键显示的是它的变体；'
-      + (hasShift && variantLayer === 0 ? '再点一次切到上档字母' : '再点一次退出');
+      + ' —— 控制符键显示它的变体；'
+      + (shiftLetter ? '用「变体层」切换上下档，' : '')
+      + '再点该字母键退出';
   } else {
     box.style.color = '';
   }
 }
+
+/* 变体层：下档 / 上档 */
+document.getElementById('layerSel').addEventListener('change', function(e){
+  var m = MAP[variantVk] || {};
+  variantLayer = parseInt(e.target.value, 10);
+  variantCp = variantLayer ? m.shift : m.plain;
+  build();
+});
 
 function isMn(cp){ return cp && cp >= 0x1800 && cp <= 0x18AF; }
 
@@ -493,7 +523,7 @@ function build(){
       if (vkKey && variantCp) {
         /* 只显示变体结果，键面干净；串长随形态变化，字号跟着缩 */
         var vtxt = variantPlain(variantCp, vkKey, posMode);
-        var fs = Math.max(0.20, 0.40 - 0.05 * (vtxt.length - 1));
+        var fs = Math.max(0.26, 0.52 - 0.06 * (vtxt.length - 1));
         d.title = vkKey.label + '：' + vtxt.split('').map(function(c){
           return hex(c.codePointAt(0));
         }).join(' + ');
@@ -516,9 +546,11 @@ function build(){
         var isLetterKey = p && p >= 0x1820 && p <= 0x18AF;
         if (isLetterKey && posMode !== 'auto') {
           /* 形态模式：整个键面换成「带上下文的串」，只保留左上角键名。
-             若该键正被选中且预览的是上档字母（如 ᠧ），键面也换成上档字母的形态。 */
+             字号按串长给足 —— 单字 0.58、双字 0.46、三字 0.36（u 为单位）。 */
           var cup = (isSel && variantLayer === 1 && s) ? s : p;
-          h += '<span class="pos"><i>' + posHtml(posMode, ch(cup)) + '</i></span>'
+          var fsPos = posMode === 'isol' ? 0.60 : (posMode === 'medi' ? 0.38 : 0.48);
+          h += '<span class="pos" style="font-size:calc(var(--u)*' + fsPos + ')">'
+             + '<i>' + posHtml(posMode, ch(cup)) + '</i></span>'
              + '<span class="plab">' + posMode.toUpperCase() + '</span>';
           if (isSel && variantLayer) h += '<span class="selLab">\u21E7</span>';
           d.innerHTML = h;
@@ -652,7 +684,7 @@ function buildAll(){
 
 document.getElementById('zoom').addEventListener('input', function(e){
   zoom = parseInt(e.target.value, 10);
-  document.getElementById('zoomOut').textContent = zoom + 'px';
+  document.getElementById('zoomOut').textContent = zoom + '%';
   build();
 });
 document.getElementById('tgShift').addEventListener('click', function(e){
@@ -668,13 +700,8 @@ document.getElementById('tgOnly').addEventListener('click', function(e){
 });
 
 /* 形态：自动 / 独立 / 词头 / 词中 / 词尾 */
-document.getElementById('posSeg').addEventListener('click', function(e){
-  var b = e.target.closest('button[data-pos]');
-  if (!b) return;
-  posMode = b.getAttribute('data-pos');
-  [].forEach.call(this.querySelectorAll('button'), function(x){
-    x.classList.toggle('on', x === b);
-  });
+document.getElementById('posSel').addEventListener('change', function(e){
+  posMode = e.target.value;
   build();
 });
 
@@ -722,17 +749,17 @@ typeIn.addEventListener('input', renderType);
 pvSize.addEventListener('input', renderType);
 
 /* 键宽（--u）怎么定：
-     宽屏：按容器宽度反算，让 15 个单位正好撑满一行 —— 键是正方形，整行 = 内容宽
-     窄屏：反算出来的太小就退回滑杆值（最小键宽），装不下交给横向滚动
-     紧凑模式：不放大，直接用滑杆值，靠折行排布 */
+     基准 = 按容器宽度反算，让 15 个单位正好撑满一行
+     缩放 = 滑杆百分比（100% 正好撑满；<100 变小；>100 超出并横向滚动）
+     紧凑模式：不定宽，直接用 46px × 缩放，靠折行排布 */
 function fitZoom(){
   var kb = document.getElementById('kb');
-  if (!kb) return zoom;
-  if (onlyMn) return Math.max(26, zoom);
+  var scale = zoom / 100;
+  if (!kb || onlyMn) return Math.max(22, Math.round(46 * scale));
   var avail = kb.clientWidth - 28;        /* 去掉左右 padding 14×2 */
-  if (avail <= 0) return zoom;
+  if (avail <= 0) return Math.max(22, Math.round(46 * scale));
   var fit = Math.floor((avail - 14 * 7) / 15);   /* 15 个单位 + 14 个间隙 */
-  return Math.max(26, zoom, fit);         /* 取「滑杆值」与「撑满宽度」中较大者 */
+  return Math.max(22, Math.round(fit * scale));
 }
 
 /* 滚动提示：装不下时告诉用户能左右滑 */
