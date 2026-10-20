@@ -96,6 +96,21 @@
   .kb.hz .key .mnC i,
   .kb.hz .key .mnS i{transform:none}
   .key .cp{display:none}
+  /* ---- 变体预览模式 ---- */
+  .key.vkey{background:#eef4ff;border-style:dashed;border-color:#7aa7e0}
+  .key.sel{box-shadow:0 0 0 2px var(--gold) inset;border-color:var(--gold)}
+  .key .vlab{position:absolute;top:2px;left:5px;
+             font:700 calc(var(--u)*.16)/1 Consolas,monospace;color:#2a5d9e}
+  .key .vr{position:absolute;inset:0;display:flex;align-items:center;
+           justify-content:center;line-height:1;pointer-events:none;
+           font-size:calc(var(--u)*.34);color:var(--ink);
+           font-family:var(--mnfont)}
+  .key .vr i{display:inline-block;transform:rotate(90deg);font-style:normal}
+  .kb.hz .key .vr i{transform:none}
+  @media (prefers-color-scheme: dark){
+    .key.vkey{background:#1d2740;border-color:#3d5a8a}
+    .key .vlab{color:#9dc0e5}
+  }
   /* 不可见字符（FVS / MVS / NNBSP）用文字徽标表示，不然键面是空的 */
   .key .vis{position:absolute;bottom:6px;left:50%;transform:translateX(-50%);
             font:700 calc(var(--u)*.19)/1 Consolas,monospace;letter-spacing:.02em;
@@ -201,7 +216,7 @@
     <button class="btn on" id="tgKbMode">键面竖排</button>
     <button class="btn" id="tgShift">显示上档</button>
     <button class="btn" id="tgOnly">只看蒙文键</button>
-    <span class="note" id="hint">点击任意键可复制该字符</span>
+    <span class="note" id="hint">点字母键看它的变体，点其它键复制字符</span>
   </div>
   <div class="kbscroll" id="kbscroll"><div class="kb" id="kb"></div></div>
   <div class="note" id="kbHint" style="display:none"></div>
@@ -305,6 +320,39 @@ DUMP.forEach(function(e){ MAP[e.vk] = e; });
 
 var showShift = true, onlyMn = false, zoom = 46;
 
+/* 变体预览：点字母键进入，再点同一个键退出。
+   VAR_KEYS 说明「哪些键是控制符键」，以及在变体模式下它们显示什么。 */
+var variantCp = null;
+/* 注意 variantCp 是「十进制码位」，不能直接拼进字符串 —— 要过 String.fromCodePoint。
+   before=true 表示控制符写在字母前面（ZWJ 用来取「向上连接」形）。 */
+function variantText(cp, ctl, before){
+  var s = String.fromCodePoint(cp);
+  return before ? ctl + s : s + ctl;
+}
+var VAR_KEYS = {
+  0xDE: { label:'FVS1', make:function(c){ return variantText(c, '\u180B'); } },
+  0xC0: { label:'FVS3', make:function(c){ return variantText(c, '\u180D'); } },
+  0xBD: { label:'MVS',  make:function(c){ return variantText(c, '\u180E'); } },
+  0x36: { label:'ZWNJ', make:function(c){ return variantText(c, '\u200C'); } },
+  0x38: { label:'ZWJ',  make:function(c){ return variantText(c, '\u200D', true); } }
+};
+/* FVS2 与 FVS1 同在 ' 键上；变体模式下让该键同时给出两个结果不现实，
+   所以把 FVS2 挂到 = 键（该键本来没有蒙文，正好空着）。 */
+VAR_KEYS[0xBB] = { label:'FVS2', make:function(c){ return variantText(c, '\u180C'); } };
+
+function updateVariantHint(){
+  var box = document.getElementById('kbHint');
+  if (!box) return;
+  if (variantCp){
+    box.style.display = '';
+    box.style.color = 'var(--gold)';
+    box.textContent = '变体预览：' + String.fromCodePoint(variantCp)
+      + '（' + hex(variantCp) + '）—— 控制符键上显示的是它的变体；再点一次该字母键退出';
+  } else {
+    box.style.color = '';
+  }
+}
+
 function isMn(cp){ return cp && cp >= 0x1800 && cp <= 0x18AF; }
 
 /* 不可见字符：键面上用文字徽标表示，否则那一格是空的 */
@@ -350,14 +398,34 @@ function build(){
         /* 紧凑模式：不占位，让蒙文键自己流过去 —— 手机窄屏上能排得下 */
         return;
       }
+
+      /* 变体预览模式：控制符键改成显示「选中字母 + 该控制符」的结果 */
+      var vkKey = variantCp ? (VAR_KEYS[k.vk] || null) : null;
+
       var d = document.createElement('div');
-      d.className = 'key' + (k.w ? ' wide' : '') + (hasMn ? ' mn live' : '') + (hasMn ? '' : ' dead');
+      d.className = 'key' + (k.w ? ' wide' : '') + (hasMn ? ' mn live' : '')
+                    + (hasMn ? '' : ' dead') + (vkKey && variantCp ? ' vkey' : '')
+                    + (variantCp && p === variantCp ? ' sel' : '');
       d.style.setProperty('--w', k.w || 1);
       d.title = (k.lat || k.cap || '') + '  ' +
                 (p ? hex(p) + ' ' + (NAMES[p] || JSON.stringify(ch(p))) : '') +
                 (s ? '  /  ' + hex(s) + ' ' + (NAMES[s] || JSON.stringify(ch(s))) : '');
 
       var h = '';
+      if (vkKey && variantCp) {
+        /* 只显示变体结果，键面干净 */
+        var vtxt = vkKey.make(variantCp);
+        d.title = vkKey.label + '：' + vtxt.split('').map(function(c){
+          return hex(c.codePointAt(0));
+        }).join(' + ');
+        h = '<span class="vlab">' + vkKey.label + '</span>'
+          + '<span class="vr"><i>' + esc(vtxt) + '</i></span>';
+        d.innerHTML = h;
+        d.addEventListener('click', function(){ copy(vtxt, vkKey.label); });
+        r.appendChild(d);
+        return;
+      }
+
       if (k.cap) {
         h += '<span class="cap">' + esc(k.cap) + '</span>';
       } else {
@@ -371,16 +439,26 @@ function build(){
       d.innerHTML = h;
 
       if (hasMn) {
-        d.addEventListener('click', function(){
-          var cp = (showShift && isRel(s)) ? s : p;
-          copy(ch(cp), hex(cp) + '  ' + (NAMES[cp] || ''));
-        });
+        var isLetter = p && p >= 0x1820 && p <= 0x18AF;
+        d.addEventListener('click', (function(letter, plain){
+          return function(){
+            if (letter){
+              /* 点字母键：进/出变体预览 */
+              variantCp = (variantCp === plain) ? null : plain;
+              build();
+            } else {
+              var cp = (showShift && isRel(s)) ? s : p;
+              copy(ch(cp), hex(cp) + '  ' + (NAMES[cp] || ''));
+            }
+          };
+        })(isLetter, p));
       }
       r.appendChild(d);
     });
     kb.appendChild(r);
   });
   updateScrollHint();
+  updateVariantHint();
 }
 
 function copy(txt, label){
