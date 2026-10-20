@@ -78,9 +78,12 @@
   /* 字形方向：字体里的字形是「直立」的，
      真竖排（writing-mode:vertical-lr）实际是把它顺时针转 90° —— 见 .shots/rot-test.html：
          ① 原生 = 横躺   ② +90° = 真竖排   ③ -90° = 反了
-     所以默认（键面竖排）转 +90°，切到横排时转回 0。 */
+     所以默认（键面竖排）转 +90°，切到横排时转回 0。
+
+     font-style:normal 不能省：<i> 默认斜体，Baiti / Noto 没有真斜体，
+     浏览器会合成倾斜（oblique），看起来就像字形被人拉斜了。 */
   .key .mnC i,
-  .key .mnS i{display:inline-block;transform:rotate(90deg)}
+  .key .mnS i{display:inline-block;transform:rotate(90deg);font-style:normal}
   .kb.hz .key .mnC i,
   .kb.hz .key .mnS i{transform:none}
   .key .cp{display:none}
