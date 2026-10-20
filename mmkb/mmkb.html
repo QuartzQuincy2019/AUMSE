@@ -1,0 +1,454 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>微软蒙文输入法 · 键位图</title>
+<style>
+  /* 仓库里的 Noto 作为兜底；系统装了 Menk / Baiti 时优先用它们 */
+  @font-face{
+    font-family:"UME Mongolian";
+    src:url("../font/NotoSansMongolian-Regular.ttf") format("truetype");
+    font-display:swap;
+  }
+  :root{
+    --bg:#f4f5f8; --sfc:#fff; --ink:#15181d; --dim:#68707d; --line:#d8dee8;
+    --key:#fbfcfe; --key-hi:#fff6dd; --key-bd:#c9d2e0; --gold:#8a6410;
+    --accent:#2a5d9e; --ok:#1f7a4d; --warn:#a55a10;
+  }
+  @media (prefers-color-scheme: dark){
+    :root{
+      --bg:#111318; --sfc:#191c22; --ink:#e7ebf2; --dim:#98a2b3; --line:#2b3038;
+      --key:#22262e; --key-hi:#3a3116; --key-bd:#363c46; --gold:#d4a843;
+      --accent:#79a8e0; --ok:#5cc08c; --warn:#e0a35c;
+    }
+  }
+  *{box-sizing:border-box}
+  body{margin:0;padding:22px 18px 40px;background:var(--bg);color:var(--ink);
+       font:14px/1.65 system-ui,"Microsoft YaHei",sans-serif}
+  h1{font-size:19px;margin:0 0 4px;letter-spacing:.02em}
+  .sub{color:var(--dim);font-size:12.5px;margin:0 0 18px}
+  .card{background:var(--sfc);border:1px solid var(--line);border-radius:14px;
+        padding:16px 16px 18px;margin:0 0 16px}
+  .card h2{font-size:12.5px;margin:0 0 12px;color:var(--dim);font-weight:600;
+           letter-spacing:.06em}
+  .bar{display:flex;gap:14px;align-items:center;flex-wrap:wrap;margin-bottom:12px}
+  .bar label{display:flex;align-items:center;gap:7px;font-size:12.5px;color:var(--dim)}
+  .bar input[type=range]{width:200px;accent-color:var(--gold)}
+  .btn{font:12.5px/1 system-ui,"Microsoft YaHei",sans-serif;color:var(--ink);
+       background:var(--key);border:1px solid var(--key-bd);border-radius:8px;
+       padding:7px 12px;cursor:pointer}
+  .btn:hover{background:var(--key-hi)}
+  .btn.on{background:var(--key-hi);border-color:var(--gold);color:var(--gold)}
+
+  /* ---------- 键盘 ---------- */
+  .kb{--u:46px;display:flex;flex-direction:column;gap:7px;
+      padding:14px;border:1px solid var(--line);border-radius:14px;background:var(--bg)}
+  .krow{display:flex;gap:7px}
+  .key{position:relative;height:var(--u);width:calc(var(--u)*var(--w,1));
+       background:var(--key);border:1px solid var(--key-bd);border-radius:7px;
+       display:flex;align-items:center;justify-content:center;
+       font:11px/1 Consolas,monospace;color:var(--dim);cursor:default;
+       transition:background .12s,border-color .12s;overflow:hidden}
+  .key.wide{justify-content:flex-start;padding-left:9px}
+  .key.live{cursor:pointer}
+  .key.live:hover{background:var(--key-hi);border-color:var(--gold)}
+  .key.mn{background:linear-gradient(180deg,#fffdf5,#fff8e6);border-color:#e0cf9a}
+  @media (prefers-color-scheme: dark){
+    .key.mn{background:linear-gradient(180deg,#26221a,#2e2716);border-color:#5a4a22}
+  }
+  .key .lat{position:absolute;top:4px;left:6px;font-size:10px;opacity:.75}
+  .key .latS{position:absolute;top:4px;right:6px;font-size:10px;opacity:.55}
+  .key .mnC{position:absolute;bottom:2px;left:50%;transform:translateX(-50%);
+            font-size:calc(var(--u)*.58);color:var(--ink);line-height:1;
+            font-family:"Menk Qimed Tig","Menk Qagan Tig","Mongolian Baiti","UME Mongolian",serif}
+  .key .mnS{position:absolute;top:1px;right:4px;font-size:calc(var(--u)*.40);
+            color:var(--warn);line-height:1;
+            font-family:"Menk Qimed Tig","Menk Qagan Tig","Mongolian Baiti","UME Mongolian",serif}
+  .key .cp{display:none}
+  /* 不可见字符（FVS / MVS / NNBSP）用文字徽标表示，不然键面是空的 */
+  .key .vis{position:absolute;bottom:6px;left:50%;transform:translateX(-50%);
+            font:700 calc(var(--u)*.19)/1 Consolas,monospace;letter-spacing:.02em;
+            color:#6b4fa8;background:#efe6ff;border:1px solid #cfc0f0;
+            border-radius:4px;padding:2px 4px}
+  .key .visS{position:absolute;top:1px;right:4px;
+             font:700 calc(var(--u)*.16)/1 Consolas,monospace;
+             color:#8a5a10;background:#ffeccd;border:1px solid #e6c48a;
+             border-radius:4px;padding:1px 3px}
+  @media (prefers-color-scheme: dark){
+    .key .vis{color:#c8bcf5;background:#2c2450;border-color:#4a3d7a}
+    .key .visS{color:#f0c98a;background:#3a2c12;border-color:#6a5024}
+  }
+  .key.dead{opacity:.45}
+  .key .cap{font:10px/1 system-ui,sans-serif;color:var(--dim);opacity:.8}
+
+  /* ---------- 表格 ---------- */
+  table{width:100%;border-collapse:collapse;font-size:12.5px}
+  th,td{padding:6px 8px;border-bottom:1px solid var(--line);text-align:left;
+        vertical-align:middle}
+  th{color:var(--dim);font-weight:600;font-size:11.5px;letter-spacing:.04em}
+  td.c{text-align:center}
+  code{font:11.5px Consolas,monospace;background:var(--bg);padding:1px 5px;
+       border-radius:4px;border:1px solid var(--line)}
+  .mnc{font-family:"Menk Qimed Tig","Menk Qagan Tig","Mongolian Baiti","UME Mongolian",serif;
+       font-size:22px;line-height:1;color:var(--ink)}
+  .cols{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+  @media (max-width:820px){ .cols{grid-template-columns:1fr} }
+  .tag{display:inline-block;padding:0 5px;border-radius:4px;font-size:11px;font-weight:700}
+  .tag.ctl{background:#efe6ff;color:#4a3d9e}
+  .tag.pun{background:#e6f0ff;color:#1f4f80}
+  @media (prefers-color-scheme: dark){
+    .tag.ctl{background:#2c2450;color:#b8aef0}
+    .tag.pun{background:#1c3450;color:#9dc0e5}
+  }
+  .toast{position:fixed;left:50%;bottom:26px;transform:translateX(-50%) translateY(14px);
+         background:#15181d;color:#fff;padding:9px 16px;border-radius:9px;font-size:12.5px;
+         opacity:0;transition:.2s;pointer-events:none;z-index:99}
+  .toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
+  .note{font-size:12px;color:var(--dim);line-height:1.9}
+</style>
+</head>
+<body>
+
+<h1>微软蒙文输入法 · 键位图</h1>
+<p class="sub">
+  依据 Microsoft Traditional Mongolian IME（<code>KLID 00000850</code>）实测导出，与《微软蒙古文输入法使用指南》对照。<br>
+  下档 = 直接按；上档 = 加 <b>Shift</b>。金色底 = 该键能出蒙文。
+</p>
+
+<div class="card">
+  <h2>键盘</h2>
+  <div class="bar">
+    <label>键宽 <input type="range" id="zoom" min="34" max="78" step="2" value="46"><output id="zoomOut">46px</output></label>
+    <button class="btn" id="tgShift">显示上档</button>
+    <button class="btn" id="tgOnly">只看蒙文键</button>
+    <span class="note" id="hint">点击任意键可复制该字符</span>
+  </div>
+  <div class="kb" id="kb"></div>
+</div>
+
+<div class="card">
+  <h2>元音（8 个）</h2>
+  <div class="cols">
+    <table id="vowels"></table>
+    <div class="note">
+      指南指出：第四与第五元音、第六与第七元音<b>写法完全相同</b>，靠不同键区分。<br>
+      这套布局把它们放在 <code>W/V</code> 与 <code>O/U</code> 上，而不是按字母顺序排。
+    </div>
+  </div>
+</div>
+
+<div class="card">
+  <h2>控制符与标点（7 个控制符里的 5 个在键盘上）</h2>
+  <table id="ctls"></table>
+</div>
+
+<div class="card">
+  <h2>变体怎么打（指南第 3 节）</h2>
+  <div class="cols">
+    <table id="variants"></table>
+    <div class="note">
+      <b>记法：</b><code>*</code> 就是 <code>Shift+8</code>（ZWJ，零宽度连接符），<code>'</code> 是 FVS1。<br><br>
+      规则只有一句：<b><code>*</code> 写在字母前面 → 取「向上连接」的形；写在后面 → 取「向下连接」的形；
+      前后都写 → 取独立形。</b><br><br>
+      指南还提到一个坑：它把这批控制符放在 <code>*</code>（ZWJ）上，
+      而却精扎布老师的《蒙古文编码》规定 FVS 要放在 ZWJ / ZWNJ <b>后面</b>，
+      两者顺序相反 —— 输入时以 IME 实际行为为准。
+    </div>
+  </div>
+</div>
+
+<div class="card">
+  <h2>全部码位</h2>
+  <table id="all"></table>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+var DUMP = [{"vk":8,"plain":8,"shift":8},{"vk":9,"plain":9,"shift":9},{"vk":13,"plain":13,"shift":13},{"vk":27,"plain":27,"shift":27},{"vk":32,"plain":32,"shift":32},{"vk":48,"plain":48,"shift":41},{"vk":49,"plain":49,"shift":33},{"vk":50,"plain":50,"shift":8264},{"vk":51,"plain":51,"shift":8265},{"vk":52,"plain":52,"shift":8212},{"vk":53,"plain":53,"shift":37},{"vk":54,"plain":54,"shift":8204},{"vk":55,"plain":55,"shift":6154},{"vk":56,"plain":56,"shift":8205},{"vk":57,"plain":57,"shift":40},{"vk":65,"plain":6176,"shift":null},{"vk":66,"plain":6186,"shift":null},{"vk":67,"plain":6204,"shift":6210},{"vk":68,"plain":6195,"shift":null},{"vk":69,"plain":6177,"shift":6183},{"vk":70,"plain":6201,"shift":null},{"vk":71,"plain":6189,"shift":null},{"vk":72,"plain":6188,"shift":6206},{"vk":73,"plain":6178,"shift":null},{"vk":74,"plain":6197,"shift":null},{"vk":75,"plain":6202,"shift":6203},{"vk":76,"plain":6191,"shift":6208},{"vk":77,"plain":6190,"shift":null},{"vk":78,"plain":6184,"shift":6185},{"vk":79,"plain":6181,"shift":null},{"vk":80,"plain":6187,"shift":null},{"vk":81,"plain":6196,"shift":null},{"vk":82,"plain":6199,"shift":6207},{"vk":83,"plain":6192,"shift":null},{"vk":84,"plain":6194,"shift":null},{"vk":85,"plain":6182,"shift":null},{"vk":86,"plain":6180,"shift":null},{"vk":87,"plain":6179,"shift":6200},{"vk":88,"plain":6193,"shift":null},{"vk":89,"plain":6198,"shift":null},{"vk":90,"plain":6205,"shift":6209},{"vk":96,"plain":48,"shift":null},{"vk":97,"plain":49,"shift":null},{"vk":98,"plain":50,"shift":null},{"vk":99,"plain":51,"shift":null},{"vk":100,"plain":52,"shift":null},{"vk":101,"plain":53,"shift":null},{"vk":102,"plain":54,"shift":null},{"vk":103,"plain":55,"shift":null},{"vk":104,"plain":56,"shift":null},{"vk":105,"plain":57,"shift":null},{"vk":106,"plain":42,"shift":42},{"vk":107,"plain":43,"shift":43},{"vk":109,"plain":45,"shift":45},{"vk":110,"plain":46,"shift":46},{"vk":111,"plain":47,"shift":47},{"vk":186,"plain":59,"shift":6148},{"vk":187,"plain":61,"shift":43},{"vk":188,"plain":6146,"shift":12298},{"vk":189,"plain":8239,"shift":6158},{"vk":190,"plain":6147,"shift":12299},{"vk":191,"plain":46,"shift":63},{"vk":192,"plain":6157,"shift":126},{"vk":219,"plain":12308,"shift":12296},{"vk":220,"plain":6145,"shift":124},{"vk":221,"plain":12309,"shift":12297},{"vk":222,"plain":6155,"shift":6156}];
+var NAMES = {"6144":"MONGOLIAN BIRGA","6145":"MONGOLIAN ELLIPSIS","6146":"MONGOLIAN COMMA","6147":"MONGOLIAN FULL STOP","6148":"MONGOLIAN COLON","6154":"MONGOLIAN NIRUGU","6155":"FVS1","6156":"FVS2","6157":"FVS3","6158":"MVS 元音分隔符","6159":"FVS4","6176":"A ᠠ","6177":"E ᠡ","6178":"I ᠢ","6179":"O ᠣ","6180":"U ᠤ","6181":"OE ᠥ","6182":"UE ᠦ","6183":"EE ᠧ","6184":"NA ᠨ","6185":"ANG ᠩ","6186":"BA ᠪ","6187":"PA ᠫ","6188":"QA ᠬ","6189":"GA ᠭ","6190":"MA ᠮ","6191":"LA ᠯ","6192":"SA ᠰ","6193":"SHA ᠱ","6194":"TA ᠲ","6195":"DA ᠳ","6196":"CHA ᠴ","6197":"JA ᠵ","6198":"YA ᠶ","6199":"RA ᠷ","6200":"WA ᠸ","6201":"FA ᠹ","6202":"KA ᠺ","6203":"KHA ᠻ","6204":"TSA ᠼ","6205":"ZA ᠽ","6206":"HAA ᠾ","6207":"ZRA ᠿ","6208":"LHA ᡀ","6209":"ZHI ᡁ","6210":"CHI ᡂ","8239":"NNBSP 窄不间断空格","12298":"《","12299":"》"};
+
+/* 键盘几何：每行 [{vk, w, cap}]，w 为宽度单位（1u = 标准键） */
+var ROWS = [
+  [
+    {vk:0xC0,lat:'`'},
+    {vk:0x31,lat:'1'},{vk:0x32,lat:'2'},{vk:0x33,lat:'3'},{vk:0x34,lat:'4'},
+    {vk:0x35,lat:'5'},{vk:0x36,lat:'6'},{vk:0x37,lat:'7'},{vk:0x38,lat:'8'},
+    {vk:0x39,lat:'9'},{vk:0x30,lat:'0'},{vk:0xBD,lat:'-'},{vk:0xBB,lat:'='},
+    {vk:0x08,w:2,cap:'Backspace'}
+  ],
+  [
+    {vk:0x09,w:1.5,cap:'Tab'},
+    {vk:0x51,lat:'Q'},{vk:0x57,lat:'W'},{vk:0x45,lat:'E'},{vk:0x52,lat:'R'},
+    {vk:0x54,lat:'T'},{vk:0x59,lat:'Y'},{vk:0x55,lat:'U'},{vk:0x49,lat:'I'},
+    {vk:0x4F,lat:'O'},{vk:0x50,lat:'P'},
+    {vk:0xDB,lat:'['},{vk:0xDD,lat:']'},{vk:0xDC,w:1.5,lat:'\\'}
+  ],
+  [
+    {vk:0x14,w:1.75,cap:'Caps'},
+    {vk:0x41,lat:'A'},{vk:0x53,lat:'S'},{vk:0x44,lat:'D'},{vk:0x46,lat:'F'},
+    {vk:0x47,lat:'G'},{vk:0x48,lat:'H'},{vk:0x4A,lat:'J'},{vk:0x4B,lat:'K'},
+    {vk:0x4C,lat:'L'},
+    {vk:0xBA,lat:';'},{vk:0xDE,lat:"'"},
+    {vk:0x0D,w:2.25,cap:'Enter'}
+  ],
+  [
+    {vk:0x10,w:2.25,cap:'Shift'},
+    {vk:0x5A,lat:'Z'},{vk:0x58,lat:'X'},{vk:0x43,lat:'C'},{vk:0x56,lat:'V'},
+    {vk:0x42,lat:'B'},{vk:0x4E,lat:'N'},{vk:0x4D,lat:'M'},
+    {vk:0xBC,lat:','},{vk:0xBE,lat:'.'},{vk:0xBF,lat:'/'},
+    {vk:0x10,w:2.75,cap:'Shift'}
+  ],
+  [
+    {vk:0x11,w:1.25,cap:'Ctrl'},{vk:0x5B,w:1.25,cap:'Win'},
+    {vk:0x12,w:1.25,cap:'Alt'},{vk:0x20,w:6.25,cap:'Space'},
+    {vk:0x12,w:1.25,cap:'Alt'},{vk:0x5D,w:1.25,cap:'Win'},
+    {vk:0x5C,w:1.25,cap:'Menu'},{vk:0x11,w:1.25,cap:'Ctrl'}
+  ]
+];
+
+/* 每个 VK 的字符（直接来自实测 dump） */
+var MAP = {};
+DUMP.forEach(function(e){ MAP[e.vk] = e; });
+
+var showShift = true, onlyMn = false, zoom = 46;
+
+function isMn(cp){ return cp && cp >= 0x1800 && cp <= 0x18AF; }
+
+/* 不可见字符：键面上用文字徽标表示，否则那一格是空的 */
+var VIS = {
+  0x180B:'FVS1', 0x180C:'FVS2', 0x180D:'FVS3', 0x180E:'MVS', 0x180F:'FVS4',
+  0x202F:'NNBSP', 0x200B:'ZWSP', 0x200C:'ZWNJ', 0x200D:'ZWJ', 0x00A0:'NBSP'
+};
+/* 与蒙文有关的键（含 NNBSP / ZWNJ / ZWJ 这种控制符） */
+function isRel(cp){
+  return cp && ((cp >= 0x1800 && cp <= 0x18AF) || cp === 0x202F ||
+                cp === 0x200C || cp === 0x200D);
+}
+function mark(cp, cls){
+  if (VIS[cp]) return '<span class="' + cls + '">' + VIS[cp] + '</span>';
+  return '<span class="' + cls + '">' + esc(ch(cp)) + '</span>';
+}
+
+function ch(cp){ return cp ? String.fromCodePoint(cp) : ''; }
+function hex(cp){ return 'U+' + cp.toString(16).toUpperCase().padStart(4,'0'); }
+
+function esc(s){
+  return String(s).replace(/[&<>"]/g, function(c){
+    return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c];
+  });
+}
+
+function build(){
+  var kb = document.getElementById('kb');
+  kb.style.setProperty('--u', zoom + 'px');
+  kb.innerHTML = '';
+
+  ROWS.forEach(function(row){
+    var r = document.createElement('div');
+    r.className = 'krow';
+    row.forEach(function(k){
+      var e = MAP[k.vk] || {};
+      var p = e.plain, s = e.shift;
+      var hasMn = isRel(p) || isRel(s);
+      if (onlyMn && !hasMn) {
+        var sp = document.createElement('div');
+        sp.style.width = 'calc(' + zoom + 'px * ' + (k.w||1) + ')';
+        sp.style.flex = '0 0 auto';
+        r.appendChild(sp);
+        return;
+      }
+      var d = document.createElement('div');
+      d.className = 'key' + (k.w ? ' wide' : '') + (hasMn ? ' mn live' : '') + (hasMn ? '' : ' dead');
+      d.style.setProperty('--w', k.w || 1);
+      d.title = (k.lat || k.cap || '') + '  ' +
+                (p ? hex(p) + ' ' + (NAMES[p] || JSON.stringify(ch(p))) : '') +
+                (s ? '  /  ' + hex(s) + ' ' + (NAMES[s] || JSON.stringify(ch(s))) : '');
+
+      var h = '';
+      if (k.cap) {
+        h += '<span class="cap">' + esc(k.cap) + '</span>';
+      } else {
+        h += '<span class="lat">' + esc(k.lat) + '</span>';
+        if (s && !isRel(s)) h += '<span class="latS">' + esc(ch(s)) + '</span>';
+      }
+      if (hasMn) {
+        if (isRel(p)) h += mark(p, VIS[p] ? 'vis' : 'mnC');
+        if (showShift && isRel(s)) h += mark(s, VIS[s] ? 'visS' : 'mnS');
+      }
+      d.innerHTML = h;
+
+      if (hasMn) {
+        d.addEventListener('click', function(){
+          var cp = (showShift && isRel(s)) ? s : p;
+          copy(ch(cp), hex(cp) + '  ' + (NAMES[cp] || ''));
+        });
+      }
+      r.appendChild(d);
+    });
+    kb.appendChild(r);
+  });
+}
+
+function copy(txt, label){
+  if (navigator.clipboard && navigator.clipboard.writeText) {
+    navigator.clipboard.writeText(txt).then(function(){ toast('已复制 ' + label); },
+                                            function(){ toast(label); });
+  } else {
+    toast(label);
+  }
+}
+var toastTimer = null;
+function toast(msg){
+  var t = document.getElementById('toast');
+  t.textContent = msg;
+  t.classList.add('show');
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(function(){ t.classList.remove('show'); }, 1500);
+}
+
+/* ---- 元音表：按指南的编号 ---- */
+var VOWELS = [
+  [1,'a',  'A',      0x1820],
+  [2,'e',  'E',      0x1821],
+  [3,'i',  'I',      0x1822],
+  [4,'o',  'W',      0x1823],
+  [5,'u',  'V',      0x1824],
+  [6,'ö',  'O',      0x1825],
+  [7,'ü',  'U',      0x1826],
+  [8,'ee', 'Shift+E',0x1827]
+];
+
+function buildVowels(){
+  var h = '<tr><th style="width:56px">序号</th><th style="width:64px">字形</th>'
+        + '<th style="width:64px">音</th><th>键位</th><th>码位</th></tr>';
+  VOWELS.forEach(function(v){
+    h += '<tr><td class="c">' + v[0] + '</td>'
+       + '<td class="c"><span class="mnc">' + ch(v[3]) + '</span></td>'
+       + '<td class="c">' + v[1] + '</td>'
+       + '<td><code>' + v[2] + '</code></td>'
+       + '<td><code>' + hex(v[3]) + '</code></td></tr>';
+  });
+  document.getElementById('vowels').innerHTML = h;
+}
+
+/* ---- 控制符与标点 ---- */
+var CTLS = [
+  [0x180B, "'",        'FVS1 变体选择符 1', '选同一字母的第二种形态'],
+  [0x180C, "Shift+'",  'FVS2 变体选择符 2', '第三种形态'],
+  [0x180D, '`',        'FVS3 变体选择符 3', '第四种形态'],
+  [0x180E, 'Shift+-',  'MVS 元音分隔符',    '让前一字母取词末形、后一字母独立成形 —— 「帽子」的来源'],
+  [0x202F, '-',        'NNBSP 窄不间断空格','指南称「蒙古文空格」：不是词边界，但前后字母各取相应形态'],
+  [0x200D, 'Shift+8',  'ZWJ 零宽度连接符',  '指南称「星号 *」：同一字母打不同形态时靠它定位，见下一节'],
+  [0x200C, 'Shift+6',  'ZWNJ 零宽度禁连符','指南称「三角 ^」：强制断开连写，让字母按单写形态出现'],
+  [0x180A, 'Shift+7',  'NIRUGU 蒙古文尼如古','连接用的竖线，把上下字符联成一体，常用于拉长字形'],
+  [0x1800, '（未占用）','BIRGA 蒙古文开篇号', '本节布局没给它键位'],
+  [0x1801, '\\',       'ELLIPSIS 省略号',   '四个点'],
+  [0x1802, ',',        'COMMA 逗号',        '᠂'],
+  [0x1803, '.',        'FULL STOP 句号',    '᠃'],
+  [0x1804, 'Shift+;',  'COLON 冒号',        '᠄']
+];
+
+function buildCtls(){
+  var h = '<tr><th style="width:74px">键</th><th style="width:46px">字形</th>'
+        + '<th style="width:190px">名称</th><th>说明</th><th style="width:74px">码位</th></tr>';
+  CTLS.forEach(function(c){
+    var kind = (c[0] >= 0x1800 && c[0] <= 0x180F) ? 'ctl' : 'pun';
+    var cls  = (c[0] >= 0x180B && c[0] <= 0x180F) ? 'ctl' : 'pun';
+    h += '<tr><td><code>' + (c[1] || '—') + '</code></td>'
+       + '<td class="c"><span class="mnc">' + (c[0] === 0x202F ? '␣' : ch(c[0])) + '</span></td>'
+       + '<td><span class="tag ' + cls + '">' + (c[0] <= 0x180F ? '控制符' : '标点') + '</span> ' + c[2] + '</td>'
+       + '<td class="note">' + c[3] + '</td>'
+       + '<td><code>' + hex(c[0]) + '</code></td></tr>';
+  });
+  document.getElementById('ctls').innerHTML = h;
+}
+
+/* ---- 全部码位 ---- */
+function buildAll(){
+  var rows = DUMP.filter(function(e){ return isMn(e.plain) || isMn(e.shift); });
+  var h = '<tr><th style="width:70px">VK</th><th style="width:56px">键</th>'
+        + '<th style="width:56px">下档</th><th>码位</th>'
+        + '<th style="width:56px">上档</th><th>码位</th></tr>';
+  var LAT = {};
+  ROWS.forEach(function(r){ r.forEach(function(k){ if (k.lat) LAT[k.vk] = k.lat; }); });
+  rows.forEach(function(e){
+    h += '<tr><td><code>0x' + e.vk.toString(16).toUpperCase() + '</code></td>'
+       + '<td class="c"><b>' + (LAT[e.vk] || '') + '</b></td>'
+       + '<td class="c">' + (isMn(e.plain) ? '<span class="mnc">' + ch(e.plain) + '</span>' : '—') + '</td>'
+       + '<td><code>' + (e.plain ? hex(e.plain) : '—') + '</code>'
+       + (e.plain && NAMES[e.plain] ? ' <span class="note">' + NAMES[e.plain] + '</span>' : '') + '</td>'
+       + '<td class="c">' + (isMn(e.shift) ? '<span class="mnc">' + ch(e.shift) + '</span>' : '—') + '</td>'
+       + '<td><code>' + (e.shift ? hex(e.shift) : '—') + '</code>'
+       + (e.shift && NAMES[e.shift] ? ' <span class="note">' + NAMES[e.shift] + '</span>' : '') + '</td></tr>';
+  });
+  document.getElementById('all').innerHTML = h;
+}
+
+document.getElementById('zoom').addEventListener('input', function(e){
+  zoom = parseInt(e.target.value, 10);
+  document.getElementById('zoomOut').textContent = zoom + 'px';
+  build();
+});
+document.getElementById('tgShift').addEventListener('click', function(e){
+  showShift = !showShift;
+  e.target.classList.toggle('on', showShift);
+  e.target.textContent = showShift ? '显示上档' : '隐藏上档';
+  build();
+});
+document.getElementById('tgOnly').addEventListener('click', function(e){
+  onlyMn = !onlyMn;
+  e.target.classList.toggle('on', onlyMn);
+  build();
+});
+
+/* ---- 变体输入法：以 ᠠ 为例（指南第 3 节） ---- */
+var VARIANTS = [
+  ['a',    '第一种独立形（默认）'],
+  ["a'",   '第二种独立形（加 FVS1）'],
+  ['a*',   '向下连接的形'],
+  ['*a',   '向上连接的形'],
+  ['*a*',  '独立形'],
+  ["*a'*", '独立形 + 变体 1'],
+  ['*a"*', '独立形 + 变体 2']
+];
+
+/* 记法里的拉丁字母要换成真正的蒙文码位，否则排出来是英文字母 */
+var LAT2MN = {
+  a:0x1820, e:0x1821, i:0x1822, w:0x1823, v:0x1824, o:0x1825, u:0x1826, E:0x1827,
+  n:0x1828, N:0x1829, b:0x182A, p:0x182B, h:0x182C, g:0x182D, m:0x182E, l:0x182F,
+  s:0x1830, x:0x1831, t:0x1832, d:0x1833, q:0x1834, j:0x1835, y:0x1836, r:0x1837,
+  W:0x1838, f:0x1839, k:0x183A, K:0x183B, c:0x183C, z:0x183D, H:0x183E, R:0x183F,
+  L:0x1840, Z:0x1841, C:0x1842
+};
+
+function buildVariants(){
+  var h = '<tr><th style="width:86px">按键</th><th style="width:74px">结果</th><th>说明</th></tr>';
+  VARIANTS.forEach(function(v){
+    /* 把记法翻译成真正的码位再排版：* = ZWJ, ' = FVS1, " = FVS2, 字母 = 蒙文 */
+    var real = '';
+    for (var i = 0; i < v[0].length; i++){
+      var c = v[0][i];
+      if (c === '*') real += '\u200D';
+      else if (c === "'") real += '\u180B';
+      else if (c === '"') real += '\u180C';
+      else if (LAT2MN[c]) real += String.fromCodePoint(LAT2MN[c]);
+      else real += c;
+    }
+    h += '<tr><td><code>' + esc(v[0]) + '</code></td>'
+       + '<td class="c"><span class="mnc">' + esc(real) + '</span></td>'
+       + '<td class="note">' + v[1] + '</td></tr>';
+  });
+  document.getElementById('variants').innerHTML = h;
+}
+
+build();
+buildVowels();
+buildVariants();
+buildCtls();
+buildAll();
+document.getElementById('tgShift').classList.add('on');
+</script>
+</body>
+</html>
