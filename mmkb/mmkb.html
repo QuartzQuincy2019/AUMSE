@@ -49,7 +49,9 @@
        background:var(--key);border:1px solid var(--key-bd);border-radius:7px;
        display:flex;align-items:center;justify-content:center;
        font:11px/1 Consolas,monospace;color:var(--dim);cursor:default;
-       transition:background .12s,border-color .12s;overflow:hidden}
+       transition:background .12s,border-color .12s;
+       /* 不要 hidden：字号调大时蒙文字形会超出键框，裁掉就是错的 */
+       overflow:visible}
   .key.wide{justify-content:flex-start;padding-left:9px}
   .key.live{cursor:pointer}
   .key.live:hover{background:var(--key-hi);border-color:var(--gold)}
@@ -59,11 +61,14 @@
   }
   .key .lat{position:absolute;top:4px;left:6px;font-size:10px;opacity:.75}
   .key .latS{position:absolute;top:4px;right:6px;font-size:10px;opacity:.55}
-  .key .mnC{position:absolute;bottom:2px;left:50%;transform:translateX(-50%);
-            font-size:calc(var(--u)*.58);color:var(--ink);line-height:1;
+  /* 蒙文字形：铺满整格用 flex 居中，不靠 bottom 定位 ——
+     靠 bottom 贴边时，字形的 descender 会跑到键框外面被裁掉。 */
+  .key .mnC{position:absolute;inset:0;display:flex;align-items:center;
+            justify-content:center;line-height:1;pointer-events:none;
+            font-size:calc(var(--u)*.52);color:var(--ink);
             font-family:"Menk Qimed Tig","Menk Qagan Tig","Mongolian Baiti","UME Mongolian",serif}
-  .key .mnS{position:absolute;top:1px;right:4px;font-size:calc(var(--u)*.40);
-            color:var(--warn);line-height:1;
+  .key .mnS{position:absolute;top:1px;right:4px;font-size:calc(var(--u)*.38);
+            color:var(--warn);line-height:1;pointer-events:none;
             font-family:"Menk Qimed Tig","Menk Qagan Tig","Mongolian Baiti","UME Mongolian",serif}
   .key .cp{display:none}
   /* 不可见字符（FVS / MVS / NNBSP）用文字徽标表示，不然键面是空的 */
