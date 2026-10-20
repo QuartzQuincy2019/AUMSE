@@ -114,8 +114,11 @@
             font-family:var(--mnfont)}
   .key .pos i{display:inline-block;transform:rotate(90deg);font-style:normal}
   .kb.hz .key .pos i{transform:none}
-  .key .pos .filler{color:var(--dim);opacity:.5}
-  .key .pos .target{color:var(--ink)}
+  /* 填充字统一置灰：形态键（.pos）和变体键（.vr）都要，别只写一半 */
+  .key .pos .filler,
+  .key .vr .filler{color:var(--dim);opacity:.45}
+  .key .pos .target,
+  .key .vr .target{color:var(--ink)}
   .key .plab{position:absolute;bottom:2px;right:4px;
              font:700 calc(var(--u)*.15)/1 Consolas,monospace;color:var(--gold)}
   /* 选中且当前预览的是上档字母时，右上角标一个 ⇧ */
