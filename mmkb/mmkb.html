@@ -107,6 +107,19 @@
            font-family:var(--mnfont)}
   .key .vr i{display:inline-block;transform:rotate(90deg);font-style:normal}
   .kb.hz .key .vr i{transform:none}
+  /* ---- 形态模式：键面直接排「带上下文的串」，看到的就是该形态 ─--- */
+  .key .pos{position:absolute;inset:0;display:flex;align-items:center;
+            justify-content:center;line-height:1;pointer-events:none;
+            font-size:calc(var(--u)*.30);color:var(--ink);
+            font-family:var(--mnfont)}
+  .key .pos i{display:inline-block;transform:rotate(90deg);font-style:normal}
+  .kb.hz .key .pos i{transform:none}
+  .key .pos .filler{color:var(--dim);opacity:.5}
+  .key .pos .target{color:var(--ink)}
+  .key .plab{position:absolute;bottom:2px;right:4px;
+             font:700 calc(var(--u)*.15)/1 Consolas,monospace;color:var(--gold)}
+  .seg{display:inline-flex;gap:4px}
+  .seg .btn{padding:6px 9px;font-size:12px}
   @media (prefers-color-scheme: dark){
     .key.vkey{background:#1d2740;border-color:#3d5a8a}
     .key .vlab{color:#9dc0e5}
@@ -216,6 +229,13 @@
     <button class="btn on" id="tgKbMode">键面竖排</button>
     <button class="btn" id="tgShift">显示上档</button>
     <button class="btn" id="tgOnly">只看蒙文键</button>
+    <span class="seg" id="posSeg">
+      <button class="btn on" data-pos="auto">形态·自动</button>
+      <button class="btn" data-pos="isol">独立</button>
+      <button class="btn" data-pos="init">词头</button>
+      <button class="btn" data-pos="medi">词中</button>
+      <button class="btn" data-pos="fina">词尾</button>
+    </span>
     <span class="note" id="hint">点字母键看它的变体，点其它键复制字符</span>
   </div>
   <div class="kbscroll" id="kbscroll"><div class="kb" id="kb"></div></div>
@@ -319,6 +339,21 @@ var MAP = {};
 DUMP.forEach(function(e){ MAP[e.vk] = e; });
 
 var showShift = true, onlyMn = false, zoom = 46;
+
+/* 形态模式：auto = 原样；其余用 ᠠ 当上下文逼出对应位置形。
+   实测（Noto 字形名）：L -> .isol、L+ᠠ -> .init、ᠠ+L+ᠠ -> .medi、ᠠ+L -> .fina */
+var posMode = 'auto';
+/* 上下文里的 ᠠ 只是「填充」，用灰色标出来，好让目标字母一眼可辨。
+   注意：只是改颜色，不拆 run —— 按 A03 的实测，改颜色不会打断整形；
+   只有包成 inline-block 才会硬切。 */
+function posHtml(mode, letter){
+  var F = '<span class="filler">\u1820</span>';
+  var T = '<span class="target">' + esc(letter) + '</span>';
+  if (mode === 'isol') return T;
+  if (mode === 'init') return T + F;
+  if (mode === 'medi') return F + T + F;
+  return F + T;                       /* fina */
+}
 
 /* 变体预览：点字母键进入，再点同一个键退出。
    VAR_KEYS 说明「哪些键是控制符键」，以及在变体模式下它们显示什么。 */
@@ -433,6 +468,18 @@ function build(){
         if (s && !isRel(s)) h += '<span class="latS">' + esc(ch(s)) + '</span>';
       }
       if (hasMn) {
+        var isLetterKey = p && p >= 0x1820 && p <= 0x18AF;
+        if (isLetterKey && posMode !== 'auto') {
+          /* 形态模式：整个键面换成「带上下文的串」，只保留左上角键名 */
+          h += '<span class="pos"><i>' + posHtml(posMode, ch(p)) + '</i></span>'
+             + '<span class="plab">' + posMode.toUpperCase() + '</span>';
+          d.innerHTML = h;
+          d.addEventListener('click', (function(letter){
+            return function(){ variantCp = (variantCp === letter) ? null : letter; build(); };
+          })(p));
+          r.appendChild(d);
+          return;
+        }
         if (isRel(p)) h += mark(p, VIS[p] ? 'vis' : 'mnC');
         if (showShift && isRel(s)) h += mark(s, VIS[s] ? 'visS' : 'mnS');
       }
@@ -570,6 +617,17 @@ document.getElementById('tgShift').addEventListener('click', function(e){
 document.getElementById('tgOnly').addEventListener('click', function(e){
   onlyMn = !onlyMn;
   e.target.classList.toggle('on', onlyMn);
+  build();
+});
+
+/* 形态：自动 / 独立 / 词头 / 词中 / 词尾 */
+document.getElementById('posSeg').addEventListener('click', function(e){
+  var b = e.target.closest('button[data-pos]');
+  if (!b) return;
+  posMode = b.getAttribute('data-pos');
+  [].forEach.call(this.querySelectorAll('button'), function(x){
+    x.classList.toggle('on', x === b);
+  });
   build();
 });
 
