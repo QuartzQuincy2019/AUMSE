@@ -104,6 +104,13 @@
 
 <div class="card">
   <h2>③ 几支字体各排一遍</h2>
+  <div class="pvbar">
+    <label class="pvl">字号
+      <input type="range" id="sizeAll" min="16" max="200" step="2" value="54">
+      <output id="sizeAllOut">54px</output>
+    </label>
+    <span class="hint">这一个滑杆同时控制下面五格和 ⑤ 的预览框</span>
+  </div>
   <div class="grid">
     <div class="pane">
       <div class="fam" id="f0">Menk Qagan Tig</div>
@@ -172,12 +179,14 @@
           <option>Mongolian Baiti</option>
           <option value="UME Mongolian">Noto Sans Mongolian（仓库内）</option>
           <option>Menksoft2007（老编码，无 GSUB）</option>
+          <!-- 兜底永远放最后 -->
+          <option value="">不指定（系统兜底）</option>
         </optgroup>
       </select>
     </label>
     <label class="pvl">字号
-      <input type="range" id="pvSize" min="16" max="200" step="2" value="64">
-      <output id="pvSizeOut">64px</output>
+      <output id="pvSizeOut">54px</output>
+      <span class="hint">（用 ③ 的滑杆调）</span>
     </label>
     <span class="hint" id="pvInfo"></span>
   </div>
@@ -202,33 +211,52 @@
   var verdictEl = document.getElementById('verdict');
   var panes = [0,1,2,3,4].map(function(i){ return document.getElementById('p'+i); });
   var pvFont = document.getElementById('pvFont');
-  var pvSize = document.getElementById('pvSize');
+  var sizeAll = document.getElementById('sizeAll');
+  var sizeAllOut = document.getElementById('sizeAllOut');
   var pvSizeOut = document.getElementById('pvSizeOut');
   var pvOut = document.getElementById('pvOut');
   var pvText = document.getElementById('pvText');
   var pvInfo = document.getElementById('pvInfo');
   var lastText = '';
 
-  // 预览框：字体 / 字号 都可调，文字跟着 ① 走
+  // 一个滑杆管全部：③ 的五格 + ⑤ 的预览框
+  function applySize(){
+    var size = parseInt(sizeAll.value, 10);
+    sizeAllOut.textContent = size + 'px';
+    pvSizeOut.textContent = size + 'px';
+
+    // 五格的框高跟着字号长，免得大字被裁
+    var boxH = Math.min(420, Math.max(150, Math.round(size * 2.2 + 40)));
+    panes.forEach(function(p){
+      p.style.fontSize = size + 'px';
+      p.style.height = boxH + 'px';
+    });
+
+    pvText.style.fontSize = size + 'px';
+  }
+
+  // 预览框：字体跟着下拉走，字号跟着 ③ 的滑杆，文字跟着 ①
   function renderPreview(){
     var fam = pvFont.value;
-    var size = parseInt(pvSize.value, 10);
-    pvSizeOut.textContent = size + 'px';
-    pvText.style.fontFamily = '"' + fam + '", serif';
-    pvText.style.fontSize = size + 'px';
+    pvText.style.fontFamily = fam ? '"' + fam + '", serif' : 'serif';
     pvText.textContent = lastText || '（在 ① 里输入）';
+    applySize();
 
     // 字体到底有没有生效：装没装、有没有回退
+    if (!fam){
+      pvInfo.textContent = '';
+      return;
+    }
     var ok = false;
+    var size = parseInt(sizeAll.value, 10);
     try { ok = document.fonts.check(size + 'px "' + fam + '"'); } catch(e) { ok = false; }
     if (fam === 'UME Mongolian') ok = true;   // @font-face，check() 对它恒为 false
     pvInfo.textContent = ok ? '' : '⚠ 该字体未安装，浏览器已回退到别的字体';
-    pvInfo.className = ok ? 'hint' : 'hint' ;
     pvInfo.style.color = ok ? '' : 'var(--red)';
   }
 
   pvFont.addEventListener('change', renderPreview);
-  pvSize.addEventListener('input', renderPreview);
+  sizeAll.addEventListener('input', applySize);
 
   var NAMES = {
     0x180B:'FVS1', 0x180C:'FVS2', 0x180D:'FVS3',
