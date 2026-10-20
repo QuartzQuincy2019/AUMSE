@@ -118,6 +118,9 @@
   .key .pos .target{color:var(--ink)}
   .key .plab{position:absolute;bottom:2px;right:4px;
              font:700 calc(var(--u)*.15)/1 Consolas,monospace;color:var(--gold)}
+  /* 选中且当前预览的是上档字母时，右上角标一个 ⇧ */
+  .key .selLab{position:absolute;top:2px;right:4px;
+               font:700 calc(var(--u)*.19)/1 Consolas,monospace;color:var(--gold)}
   .seg{display:inline-flex;gap:4px}
   .seg .btn{padding:6px 9px;font-size:12px}
   @media (prefers-color-scheme: dark){
@@ -355,34 +358,70 @@ function posHtml(mode, letter){
   return F + T;                       /* fina */
 }
 
-/* 变体预览：点字母键进入，再点同一个键退出。
-   VAR_KEYS 说明「哪些键是控制符键」，以及在变体模式下它们显示什么。 */
-var variantCp = null;
-/* 注意 variantCp 是「十进制码位」，不能直接拼进字符串 —— 要过 String.fromCodePoint。
-   before=true 表示控制符写在字母前面（ZWJ 用来取「向上连接」形）。 */
-function variantText(cp, ctl, before){
-  var s = String.fromCodePoint(cp);
-  return before ? ctl + s : s + ctl;
-}
+/* 变体预览：点字母键进入；同一键再点切到上档字母（如 ᠧ / ᠩ）；第三次退出。
+   VAR_KEYS 说明哪些键是控制符键，以及变体插在哪。 */
+var variantCp = null;      /* 正在预览的码位（十进制） */
+var variantVk = null;      /* 来自哪个键，用来做「同一键循环」 */
+var variantLayer = 0;      /* 0 = 下档字母，1 = 上档字母 */
+
 var VAR_KEYS = {
-  0xDE: { label:'FVS1', make:function(c){ return variantText(c, '\u180B'); } },
-  0xC0: { label:'FVS3', make:function(c){ return variantText(c, '\u180D'); } },
-  0xBD: { label:'MVS',  make:function(c){ return variantText(c, '\u180E'); } },
-  0x36: { label:'ZWNJ', make:function(c){ return variantText(c, '\u200C'); } },
-  0x38: { label:'ZWJ',  make:function(c){ return variantText(c, '\u200D', true); } }
+  0xDE: { label:'FVS1', ctl:'\u180B' },
+  0xC0: { label:'FVS3', ctl:'\u180D' },
+  0xBD: { label:'MVS',  ctl:'\u180E' },
+  0x36: { label:'ZWNJ', ctl:'\u200C' },
+  0x38: { label:'ZWJ',  ctl:'\u200D', before:true }
 };
 /* FVS2 与 FVS1 同在 ' 键上；变体模式下让该键同时给出两个结果不现实，
    所以把 FVS2 挂到 = 键（该键本来没有蒙文，正好空着）。 */
-VAR_KEYS[0xBB] = { label:'FVS2', make:function(c){ return variantText(c, '\u180C'); } };
+VAR_KEYS[0xBB] = { label:'FVS2', ctl:'\u180C' };
+
+/* 把变体串按当前形态拼出来：控制符紧跟字母，外层再套 ᠠ 上下文。
+   这样切换形态时，变体会跟着变 —— 词中就是词中的那个变体。 */
+function variantParts(cp, spec, mode){
+  var L = String.fromCodePoint(cp);
+  var core = spec.before ? spec.ctl + L : L + spec.ctl;
+  if (mode === 'init') return { pre:'', core:core, post:'\u1820' };
+  if (mode === 'medi') return { pre:'\u1820', core:core, post:'\u1820' };
+  if (mode === 'fina') return { pre:'\u1820', core:core, post:'' };
+  return { pre:'', core:core, post:'' };            /* auto / isol */
+}
+function variantPlain(cp, spec, mode){
+  var p = variantParts(cp, spec, mode);
+  return p.pre + p.core + p.post;
+}
+function variantHtml(cp, spec, mode){
+  var p = variantParts(cp, spec, mode);
+  return (p.pre ? '<span class="filler">' + p.pre + '</span>' : '')
+       + '<span class="target">' + esc(p.core) + '</span>'
+       + (p.post ? '<span class="filler">' + p.post + '</span>' : '');
+}
+
+/* 点字母键：下档 → 上档 → 退出 */
+function letterClick(vk, plain, shift){
+  var hasShift = shift && shift >= 0x1820 && shift <= 0x18AF;
+  if (variantVk !== vk){
+    variantVk = vk; variantLayer = 0; variantCp = plain;
+  } else if (variantLayer === 0 && hasShift){
+    variantLayer = 1; variantCp = shift;
+  } else {
+    variantVk = null; variantLayer = 0; variantCp = null;
+  }
+  build();
+}
 
 function updateVariantHint(){
   var box = document.getElementById('kbHint');
   if (!box) return;
   if (variantCp){
+    var e = MAP[variantVk] || {};
+    var hasShift = e.shift && e.shift >= 0x1820 && e.shift <= 0x18AF;
     box.style.display = '';
     box.style.color = 'var(--gold)';
     box.textContent = '变体预览：' + String.fromCodePoint(variantCp)
-      + '（' + hex(variantCp) + '）—— 控制符键上显示的是它的变体；再点一次该字母键退出';
+      + '（' + hex(variantCp) + (variantLayer ? '，上档' : '，下档') + '）'
+      + (posMode !== 'auto' ? '［形态 ' + posMode.toUpperCase() + '］' : '')
+      + ' —— 控制符键显示的是它的变体；'
+      + (hasShift && variantLayer === 0 ? '再点一次切到上档字母' : '再点一次退出');
   } else {
     box.style.color = '';
   }
@@ -438,9 +477,10 @@ function build(){
       var vkKey = variantCp ? (VAR_KEYS[k.vk] || null) : null;
 
       var d = document.createElement('div');
+      var isSel = variantVk === k.vk;
       d.className = 'key' + (k.w ? ' wide' : '') + (hasMn ? ' mn live' : '')
                     + (hasMn ? '' : ' dead') + (vkKey && variantCp ? ' vkey' : '')
-                    + (variantCp && p === variantCp ? ' sel' : '');
+                    + (isSel ? ' sel' : '');
       d.style.setProperty('--w', k.w || 1);
       d.title = (k.lat || k.cap || '') + '  ' +
                 (p ? hex(p) + ' ' + (NAMES[p] || JSON.stringify(ch(p))) : '') +
@@ -448,13 +488,15 @@ function build(){
 
       var h = '';
       if (vkKey && variantCp) {
-        /* 只显示变体结果，键面干净 */
-        var vtxt = vkKey.make(variantCp);
+        /* 只显示变体结果，键面干净；串长随形态变化，字号跟着缩 */
+        var vtxt = variantPlain(variantCp, vkKey, posMode);
+        var fs = Math.max(0.20, 0.40 - 0.05 * (vtxt.length - 1));
         d.title = vkKey.label + '：' + vtxt.split('').map(function(c){
           return hex(c.codePointAt(0));
         }).join(' + ');
         h = '<span class="vlab">' + vkKey.label + '</span>'
-          + '<span class="vr"><i>' + esc(vtxt) + '</i></span>';
+          + '<span class="vr" style="font-size:calc(var(--u)*' + fs.toFixed(3) + ')">'
+          + '<i>' + variantHtml(variantCp, vkKey, posMode) + '</i></span>';
         d.innerHTML = h;
         d.addEventListener('click', function(){ copy(vtxt, vkKey.label); });
         r.appendChild(d);
@@ -470,35 +512,37 @@ function build(){
       if (hasMn) {
         var isLetterKey = p && p >= 0x1820 && p <= 0x18AF;
         if (isLetterKey && posMode !== 'auto') {
-          /* 形态模式：整个键面换成「带上下文的串」，只保留左上角键名 */
-          h += '<span class="pos"><i>' + posHtml(posMode, ch(p)) + '</i></span>'
+          /* 形态模式：整个键面换成「带上下文的串」，只保留左上角键名。
+             若该键正被选中且预览的是上档字母（如 ᠧ），键面也换成上档字母的形态。 */
+          var cup = (isSel && variantLayer === 1 && s) ? s : p;
+          h += '<span class="pos"><i>' + posHtml(posMode, ch(cup)) + '</i></span>'
              + '<span class="plab">' + posMode.toUpperCase() + '</span>';
+          if (isSel && variantLayer) h += '<span class="selLab">\u21E7</span>';
           d.innerHTML = h;
-          d.addEventListener('click', (function(letter){
-            return function(){ variantCp = (variantCp === letter) ? null : letter; build(); };
-          })(p));
+          d.addEventListener('click', (function(vk, plain, shift){
+            return function(){ letterClick(vk, plain, shift); };
+          })(k.vk, p, s));
           r.appendChild(d);
           return;
         }
         if (isRel(p)) h += mark(p, VIS[p] ? 'vis' : 'mnC');
         if (showShift && isRel(s)) h += mark(s, VIS[s] ? 'visS' : 'mnS');
       }
+      if (isSel && variantLayer) h += '<span class="selLab">\u21E7</span>';
       d.innerHTML = h;
 
       if (hasMn) {
         var isLetter = p && p >= 0x1820 && p <= 0x18AF;
-        d.addEventListener('click', (function(letter, plain){
+        d.addEventListener('click', (function(vk, letter, plain, shift){
           return function(){
             if (letter){
-              /* 点字母键：进/出变体预览 */
-              variantCp = (variantCp === plain) ? null : plain;
-              build();
+              letterClick(vk, plain, shift);       /* 下档 → 上档 → 退出 */
             } else {
               var cp = (showShift && isRel(s)) ? s : p;
               copy(ch(cp), hex(cp) + '  ' + (NAMES[cp] || ''));
             }
           };
-        })(isLetter, p));
+        })(k.vk, isLetter, p, s));
       }
       r.appendChild(d);
     });
