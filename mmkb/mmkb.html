@@ -43,14 +43,23 @@
   .btn.on{background:var(--key-hi);border-color:var(--gold);color:var(--gold)}
 
   /* ---------- 键盘 ---------- */
-  /* 窄屏不再把键压小，改成保持可读尺寸 + 横向滚动 */
+  /* 宽屏：键盘宽度跟视口走，键位等比撑满（--u 只当最小键宽）。
+     窄屏：装不下就保持键大、由 .kbscroll 横向滚动。 */
   .kbscroll{overflow-x:auto;overflow-y:hidden;padding:2px 0 8px;
             scrollbar-width:thin}
-  .kb{--u:46px;display:flex;flex-direction:column;gap:7px;width:max-content;
+  .kb{--u:46px;display:flex;flex-direction:column;gap:7px;
+      width:100%;box-sizing:border-box;   /* 让 padding 与边框算进 100% 里 */
       padding:14px;border:1px solid var(--line);border-radius:14px;background:var(--bg)}
-  .kb.compact{width:auto}          /* 只看蒙文键时按容器宽度折行 */
-  .krow{display:flex;gap:7px;flex-wrap:wrap}
-  .key{position:relative;height:var(--u);width:calc(var(--u)*var(--w,1));
+  /* 每行默认不折行：装不下就交给 .kbscroll 横向滚；
+     只有「只看蒙文键」的紧凑模式才折行。 */
+  .krow{display:flex;gap:7px;flex-wrap:nowrap}
+  .kb.compact .krow{flex-wrap:wrap}
+  /* 键宽：--u 是「最小键宽」，容器更宽时按键位权重（--w）等比撑满整行。
+     全部 box-sizing:border-box，1px 边框算在宽度里，不会把行撑出容器。 */
+  .key{position:relative;box-sizing:border-box;
+       height:var(--u);
+       flex:var(--w,1) 1 0;
+       min-width:calc(var(--u)*var(--w,1));
        background:var(--key);border:1px solid var(--key-bd);border-radius:7px;
        display:flex;align-items:center;justify-content:center;
        font:11px/1 Consolas,monospace;color:var(--dim);cursor:default;
@@ -188,7 +197,7 @@
         </optgroup>
       </select>
     </label>
-    <label>键宽 <input type="range" id="zoom" min="26" max="78" step="2" value="46"><output id="zoomOut">46px</output></label>
+    <label>最小键宽 <input type="range" id="zoom" min="26" max="78" step="2" value="46"><output id="zoomOut">46px</output></label>
     <button class="btn on" id="tgKbMode">键面竖排</button>
     <button class="btn" id="tgShift">显示上档</button>
     <button class="btn" id="tgOnly">只看蒙文键</button>
@@ -529,10 +538,18 @@ document.getElementById('tgMode').addEventListener('click', function(e){
 typeIn.addEventListener('input', renderType);
 pvSize.addEventListener('input', renderType);
 
-/* 窄屏策略：不再把键压小，保持可读尺寸，装不下就横向滚动。
-   只有「只看蒙文键」的紧凑模式才按容器宽度折行。 */
+/* 键宽（--u）怎么定：
+     宽屏：按容器宽度反算，让 15 个单位正好撑满一行 —— 键是正方形，整行 = 内容宽
+     窄屏：反算出来的太小就退回滑杆值（最小键宽），装不下交给横向滚动
+     紧凑模式：不放大，直接用滑杆值，靠折行排布 */
 function fitZoom(){
-  return Math.max(26, zoom);
+  var kb = document.getElementById('kb');
+  if (!kb) return zoom;
+  if (onlyMn) return Math.max(26, zoom);
+  var avail = kb.clientWidth - 28;        /* 去掉左右 padding 14×2 */
+  if (avail <= 0) return zoom;
+  var fit = Math.floor((avail - 14 * 7) / 15);   /* 15 个单位 + 14 个间隙 */
+  return Math.max(26, zoom, fit);         /* 取「滑杆值」与「撑满宽度」中较大者 */
 }
 
 /* 滚动提示：装不下时告诉用户能左右滑 */
