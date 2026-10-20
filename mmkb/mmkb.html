@@ -71,9 +71,14 @@
   .key .mnS{position:absolute;top:1px;right:4px;font-size:calc(var(--u)*.38);
             color:var(--warn);line-height:1;pointer-events:none;
             font-family:var(--mnfont)}
-  /* 横排：字形本来是按竖排画的（顺时针转了 90°），这里转回来 */
+  /* 字形方向：字体里的字形是「直立」的，
+     真竖排（writing-mode:vertical-lr）实际是把它顺时针转 90° —— 见 .shots/rot-test.html：
+         ① 原生 = 横躺   ② +90° = 真竖排   ③ -90° = 反了
+     所以默认（键面竖排）转 +90°，切到横排时转回 0。 */
+  .key .mnC i,
+  .key .mnS i{display:inline-block;transform:rotate(90deg)}
   .kb.hz .key .mnC i,
-  .kb.hz .key .mnS i{display:inline-block;transform:rotate(-90deg)}
+  .kb.hz .key .mnS i{transform:none}
   .key .cp{display:none}
   /* 不可见字符（FVS / MVS / NNBSP）用文字徽标表示，不然键面是空的 */
   .key .vis{position:absolute;bottom:6px;left:50%;transform:translateX(-50%);
