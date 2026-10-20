@@ -12,6 +12,7 @@
     font-display:swap;
   }
   :root{
+    --mnfont:"Menk Qimed Tig","Menk Qagan Tig","Mongolian Baiti","UME Mongolian",serif;
     --bg:#f4f5f8; --sfc:#fff; --ink:#15181d; --dim:#68707d; --line:#d8dee8;
     --key:#fbfcfe; --key-hi:#fff6dd; --key-bd:#c9d2e0; --gold:#8a6410;
     --accent:#2a5d9e; --ok:#1f7a4d; --warn:#a55a10;
@@ -44,7 +45,7 @@
   /* ---------- 键盘 ---------- */
   .kb{--u:46px;display:flex;flex-direction:column;gap:7px;
       padding:14px;border:1px solid var(--line);border-radius:14px;background:var(--bg)}
-  .krow{display:flex;gap:7px}
+  .krow{display:flex;gap:7px;flex-wrap:wrap}
   .key{position:relative;height:var(--u);width:calc(var(--u)*var(--w,1));
        background:var(--key);border:1px solid var(--key-bd);border-radius:7px;
        display:flex;align-items:center;justify-content:center;
@@ -66,10 +67,13 @@
   .key .mnC{position:absolute;inset:0;display:flex;align-items:center;
             justify-content:center;line-height:1;pointer-events:none;
             font-size:calc(var(--u)*.52);color:var(--ink);
-            font-family:"Menk Qimed Tig","Menk Qagan Tig","Mongolian Baiti","UME Mongolian",serif}
+            font-family:var(--mnfont)}
   .key .mnS{position:absolute;top:1px;right:4px;font-size:calc(var(--u)*.38);
             color:var(--warn);line-height:1;pointer-events:none;
-            font-family:"Menk Qimed Tig","Menk Qagan Tig","Mongolian Baiti","UME Mongolian",serif}
+            font-family:var(--mnfont)}
+  /* 横排：字形本来是按竖排画的（顺时针转了 90°），这里转回来 */
+  .kb.hz .key .mnC i,
+  .kb.hz .key .mnS i{display:inline-block;transform:rotate(-90deg)}
   .key .cp{display:none}
   /* 不可见字符（FVS / MVS / NNBSP）用文字徽标表示，不然键面是空的 */
   .key .vis{position:absolute;bottom:6px;left:50%;transform:translateX(-50%);
@@ -95,7 +99,7 @@
   td.c{text-align:center}
   code{font:11.5px Consolas,monospace;background:var(--bg);padding:1px 5px;
        border-radius:4px;border:1px solid var(--line)}
-  .mnc{font-family:"Menk Qimed Tig","Menk Qagan Tig","Mongolian Baiti","UME Mongolian",serif;
+  .mnc{font-family:var(--mnfont);
        font-size:22px;line-height:1;color:var(--ink)}
   .cols{display:grid;grid-template-columns:1fr 1fr;gap:16px}
   @media (max-width:820px){ .cols{grid-template-columns:1fr} }
@@ -111,6 +115,30 @@
          opacity:0;transition:.2s;pointer-events:none;z-index:99}
   .toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
   .note{font-size:12px;color:var(--dim);line-height:1.9}
+
+  /* ---------- 试打 ---------- */
+  #typeIn{width:100%;min-height:64px;padding:10px 12px;border:1px solid var(--line);
+          border-radius:9px;background:var(--bg);color:var(--ink);resize:vertical;
+          font:16px/1.6 var(--mnfont);margin-bottom:12px}
+  .pv{height:280px;border:1px solid var(--line);border-radius:11px;background:var(--bg);
+      overflow:auto;padding:16px;text-align:center;color:var(--ink)}
+  .pv .pvtext{display:inline-block;writing-mode:vertical-lr;direction:ltr;
+              line-height:1.15;white-space:pre-wrap;text-align:left;
+              font-family:var(--mnfont)}
+  .pv.h .pvtext{writing-mode:horizontal-tb;text-align:center}
+
+  /* ---------- 窄屏 ---------- */
+  @media (max-width:640px){
+    body{padding:12px 8px 28px}
+    .card{padding:12px 11px 14px;border-radius:11px}
+    .bar{gap:9px}
+    .bar input[type=range]{width:130px}
+    .pvl select,#fontSel{max-width:170px}
+    th,td{padding:5px 5px;font-size:12px}
+    .mnc{font-size:19px}
+    .pv{height:220px}
+    h1{font-size:17px}
+  }
 </style>
 </head>
 <body>
@@ -124,12 +152,48 @@
 <div class="card">
   <h2>键盘</h2>
   <div class="bar">
-    <label>键宽 <input type="range" id="zoom" min="34" max="78" step="2" value="46"><output id="zoomOut">46px</output></label>
+    <label>字体
+      <select id="fontSel">
+        <optgroup label="Menk（蒙科立）">
+          <option>Menk Qimed Tig</option>
+          <option>Menk Qagan Tig</option>
+          <option>Menk Hawang Tig</option>
+          <option>Menk Amglang Tig</option>
+          <option>Menk Narin Tig</option>
+          <option>Menk Har_a Tig</option>
+          <option>Menk BudunTig</option>
+          <option>Menk Qimig Tig</option>
+          <option>Menk Sidam Tig</option>
+          <option>Menk Svlbiya Tig</option>
+          <option>Menk Tegus Tig</option>
+          <option>Menk Vran Tig</option>
+          <option>Menk Xvsiga Tig</option>
+        </optgroup>
+        <optgroup label="其它">
+          <option>Mongolian Baiti</option>
+          <option value="UME Mongolian">Noto Sans Mongolian（仓库内）</option>
+          <option value="">不指定（系统兜底）</option>
+        </optgroup>
+      </select>
+    </label>
+    <label>键宽 <input type="range" id="zoom" min="26" max="78" step="2" value="46"><output id="zoomOut">46px</output></label>
+    <button class="btn on" id="tgKbMode">键面竖排</button>
     <button class="btn" id="tgShift">显示上档</button>
     <button class="btn" id="tgOnly">只看蒙文键</button>
     <span class="note" id="hint">点击任意键可复制该字符</span>
   </div>
   <div class="kb" id="kb"></div>
+</div>
+
+<div class="card">
+  <h2>试打</h2>
+  <div class="bar">
+    <button class="btn on" id="tgMode">竖排</button>
+    <label>字号 <input type="range" id="pvSize" min="18" max="96" step="2" value="40"><output id="pvSizeOut">40px</output></label>
+    <span class="note">切到「微软蒙文」布局后在这里直接打字；字形随上面的字体选择变化</span>
+  </div>
+  <textarea id="typeIn" placeholder="在这里试打，例如 ᠠᠬ᠎ᠠ" spellcheck="false"></textarea>
+  <div class="pv" id="pvOut"><span class="pvtext" id="pvText"></span></div>
 </div>
 
 <div class="card">
@@ -233,7 +297,8 @@ function isRel(cp){
 }
 function mark(cp, cls){
   if (VIS[cp]) return '<span class="' + cls + '">' + VIS[cp] + '</span>';
-  return '<span class="' + cls + '">' + esc(ch(cp)) + '</span>';
+  /* 字形包一层 <i>：横排时只转字，不转整块定位盒 */
+  return '<span class="' + cls + '"><i>' + esc(ch(cp)) + '</i></span>';
 }
 
 function ch(cp){ return cp ? String.fromCodePoint(cp) : ''; }
@@ -247,7 +312,8 @@ function esc(s){
 
 function build(){
   var kb = document.getElementById('kb');
-  kb.style.setProperty('--u', zoom + 'px');
+  var u = fitZoom();                 /* 窄屏时按可用宽度收缩 */
+  kb.style.setProperty('--u', u + 'px');
   kb.innerHTML = '';
 
   ROWS.forEach(function(row){
@@ -258,10 +324,7 @@ function build(){
       var p = e.plain, s = e.shift;
       var hasMn = isRel(p) || isRel(s);
       if (onlyMn && !hasMn) {
-        var sp = document.createElement('div');
-        sp.style.width = 'calc(' + zoom + 'px * ' + (k.w||1) + ')';
-        sp.style.flex = '0 0 auto';
-        r.appendChild(sp);
+        /* 紧凑模式：不占位，让蒙文键自己流过去 —— 手机窄屏上能排得下 */
         return;
       }
       var d = document.createElement('div');
@@ -408,6 +471,66 @@ document.getElementById('tgOnly').addEventListener('click', function(e){
   build();
 });
 
+/* ---- 键面横排 / 竖排 ---- */
+document.getElementById('tgKbMode').addEventListener('click', function(e){
+  var kb = document.getElementById('kb');
+  var horiz = !kb.classList.contains('hz');
+  kb.classList.toggle('hz', horiz);
+  e.target.textContent = horiz ? '键面横排' : '键面竖排';
+});
+
+/* ---- 字体选择：同时管键面字形、表格字形、试打区 ---- */
+document.getElementById('fontSel').addEventListener('change', function(e){
+  var fam = e.target.value;
+  document.documentElement.style.setProperty(
+    '--mnfont', fam ? '"' + fam + '", serif' : 'serif');
+  var ok = fam ? (fam === 'UME Mongolian' ||
+      (function(){ try { return document.fonts.check('16px "' + fam + '"'); }
+                    catch(x){ return false; } })()) : true;
+  var hint = document.getElementById('hint');
+  hint.textContent = ok ? '点击任意键可复制该字符'
+                        : '⚠ 该字体未安装，浏览器已回退';
+  hint.style.color = ok ? '' : 'var(--red)';
+});
+
+/* ---- 试打：横排 / 竖排 ---- */
+var pvText = document.getElementById('pvText');
+var pvOut = document.getElementById('pvOut');
+var typeIn = document.getElementById('typeIn');
+var pvSize = document.getElementById('pvSize');
+var pvSizeOut = document.getElementById('pvSizeOut');
+
+function renderType(){
+  pvText.textContent = typeIn.value || '（在上面输入）';
+  pvText.style.fontSize = pvSize.value + 'px';
+  pvSizeOut.textContent = pvSize.value + 'px';
+}
+document.getElementById('tgMode').addEventListener('click', function(e){
+  var horiz = !pvOut.classList.contains('h');
+  pvOut.classList.toggle('h', horiz);
+  e.target.textContent = horiz ? '横排' : '竖排';
+  e.target.classList.toggle('on', !horiz);
+});
+typeIn.addEventListener('input', renderType);
+pvSize.addEventListener('input', renderType);
+
+/* 窄屏：键宽按可用宽度收缩，保证 15 个单位刚好放下；
+   紧凑模式（只看蒙文键）时不需要缩那么多，给个下限保住可读性。 */
+function fitZoom(){
+  var kb = document.getElementById('kb');
+  if (!kb) return zoom;
+  var avail = kb.clientWidth - 30;          /* .kb 左右 padding 各 14 + 边框 */
+  if (avail <= 0) return zoom;
+  if (onlyMn) return Math.min(zoom, Math.max(26, Math.floor(avail / 8)));
+  var maxU = Math.floor((avail - 14 * 7) / 15);
+  return Math.max(16, Math.min(zoom, maxU));
+}
+var fitTimer = null;
+window.addEventListener('resize', function(){
+  clearTimeout(fitTimer);
+  fitTimer = setTimeout(build, 160);
+});
+
 /* ---- 变体输入法：以 ᠠ 为例（指南第 3 节） ---- */
 var VARIANTS = [
   ['a',    '第一种独立形（默认）'],
@@ -453,6 +576,7 @@ buildVowels();
 buildVariants();
 buildCtls();
 buildAll();
+renderType();
 document.getElementById('tgShift').classList.add('on');
 </script>
 </body>
