@@ -48,7 +48,7 @@
     .cp.pua{background:#2c2450;border-color:#5a4a9e;color:#b8aef0}
     .cp.letter{background:#1c3450;border-color:#2f5a8a;color:#9dc0e5}
   }
-  .grid{display:grid;grid-template-columns:repeat(4,1fr);gap:10px}
+  .grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(148px,1fr));gap:10px}
   @media (max-width:760px){ .grid{grid-template-columns:repeat(2,1fr)} }
   .pane{border:1px solid var(--line);border-radius:10px;padding:10px;text-align:center}
   .pane .fam{font:11px/1.5 Consolas,monospace;color:var(--dim);margin-bottom:8px;
@@ -58,6 +58,20 @@
              writing-mode:vertical-lr;direction:ltr}
   .pane .fam .warnfont{color:var(--red)}
   .verdict{font-size:13px;line-height:1.9}
+  /* ---- 字体预览 ---- */
+  .pvbar{display:flex;gap:18px;align-items:center;flex-wrap:wrap;margin-bottom:12px}
+  .pvl{display:flex;align-items:center;gap:8px;font-size:13px;color:var(--dim)}
+  .pvl select{font:13px/1.4 system-ui,"Microsoft YaHei",sans-serif;color:var(--ink);
+              background:var(--bg);border:1px solid var(--line);border-radius:7px;
+              padding:5px 8px;max-width:250px}
+  .pvl input[type=range]{width:190px;accent-color:#8a6410}
+  .pvl output{font:12px Consolas,monospace;color:var(--ink);min-width:52px}
+  /* 注意：预览框自己不要用 flex —— flex + vertical-lr 会让子项排布跑偏，
+     而且居中溢出时会裁掉两端。用一个内层块承担竖排，外层只管滚动与居中。 */
+  .pv{height:330px;border:1px solid var(--line);border-radius:10px;background:var(--bg);
+      overflow:auto;padding:16px;text-align:center;color:var(--ink)}
+  .pv .pvtext{display:inline-block;writing-mode:vertical-lr;direction:ltr;
+              line-height:1.1;white-space:pre-wrap;text-align:left}
   .verdict .tag{display:inline-block;padding:0 6px;border-radius:4px;font-weight:700;
                 font-size:12px}
   .tag.bad{background:#fde8e4;color:#8c2f22}
@@ -89,23 +103,27 @@
 </div>
 
 <div class="card">
-  <h2>③ 四支字体各排一遍</h2>
+  <h2>③ 几支字体各排一遍</h2>
   <div class="grid">
     <div class="pane">
       <div class="fam" id="f0">Menk Qagan Tig</div>
       <div class="out" style="font-family:'Menk Qagan Tig',serif" id="p0"></div>
     </div>
     <div class="pane">
-      <div class="fam" id="f1">Mongolian Baiti</div>
-      <div class="out" style="font-family:'Mongolian Baiti',serif" id="p1"></div>
+      <div class="fam" id="f1">Menk Qimed Tig</div>
+      <div class="out" style="font-family:'Menk Qimed Tig',serif" id="p1"></div>
     </div>
     <div class="pane">
-      <div class="fam" id="f2">Noto Sans Mongolian（仓库内）</div>
-      <div class="out" style="font-family:'UME Mongolian','Noto Sans Mongolian',serif" id="p2"></div>
+      <div class="fam" id="f2">Mongolian Baiti</div>
+      <div class="out" style="font-family:'Mongolian Baiti',serif" id="p2"></div>
     </div>
     <div class="pane">
-      <div class="fam" id="f3">不指定（系统兜底）</div>
-      <div class="out" style="font-family:serif" id="p3"></div>
+      <div class="fam" id="f3">Noto Sans Mongolian（仓库内）</div>
+      <div class="out" style="font-family:'UME Mongolian','Noto Sans Mongolian',serif" id="p3"></div>
+    </div>
+    <div class="pane">
+      <div class="fam" id="f4">不指定（系统兜底）</div>
+      <div class="out" style="font-family:serif" id="p4"></div>
     </div>
   </div>
 </div>
@@ -116,7 +134,58 @@
 </div>
 
 <div class="card">
-  <h2>⑤ 自查用</h2>
+  <h2>⑤ 字体预览</h2>
+  <div class="pvbar">
+    <label class="pvl">字体
+      <select id="pvFont">
+        <optgroup label="Menk（蒙科立）">
+          <option>Menk Qagan Tig</option>
+          <option selected>Menk Qimed Tig</option>
+          <option>Menk Hawang Tig</option>
+          <option>Menk Amglang Tig</option>
+          <option>Menk Narin Tig</option>
+          <option>Menk Har_a Tig</option>
+          <option>Menk BudunTig</option>
+          <option>Menk Doroge Tig</option>
+          <option>Menk Egulen Tig</option>
+          <option>Menk Erihe Tig</option>
+          <option>Menk Garqag Tig</option>
+          <option>Menk Hvlvsvn Tig</option>
+          <option>Menk Lhundb Tig</option>
+          <option>Menk Mcdvnbar Tig</option>
+          <option>Menk OnqaHar_a Tig</option>
+          <option>Menk Qimig Tig</option>
+          <option>Menk Qingming Tig</option>
+          <option>Menk Scnin Tig</option>
+          <option>Menk Sidam Tig</option>
+          <option>Menk Svgvnag Tig</option>
+          <option>Menk Svlbiya Tig</option>
+          <option>Menk Tegus Tig</option>
+          <option>Menk Tenigun Tig</option>
+          <option>Menk Tvgvrai Tig</option>
+          <option>Menk Ujug Tig</option>
+          <option>Menk Vran Tig</option>
+          <option>Menk Vyangga Tig</option>
+          <option>Menk Xvsiga Tig</option>
+        </optgroup>
+        <optgroup label="其它">
+          <option>Mongolian Baiti</option>
+          <option value="UME Mongolian">Noto Sans Mongolian（仓库内）</option>
+          <option>Menksoft2007（老编码，无 GSUB）</option>
+        </optgroup>
+      </select>
+    </label>
+    <label class="pvl">字号
+      <input type="range" id="pvSize" min="16" max="200" step="2" value="64">
+      <output id="pvSizeOut">64px</output>
+    </label>
+    <span class="hint" id="pvInfo"></span>
+  </div>
+  <div class="pv" id="pvOut"><span class="pvtext" id="pvText"></span></div>
+</div>
+
+<div class="card">
+  <h2>⑥ 自查用</h2>
   <p class="hint">
     相关码位：<code>U+180B</code> FVS1、<code>U+180C</code> FVS2、<code>U+180D</code> FVS3、
     <code>U+180E</code> MVS、<code>U+180F</code> FVS4。<br>
@@ -131,7 +200,35 @@
   var inEl = document.getElementById('in');
   var codesEl = document.getElementById('codes');
   var verdictEl = document.getElementById('verdict');
-  var panes = [0,1,2,3].map(function(i){ return document.getElementById('p'+i); });
+  var panes = [0,1,2,3,4].map(function(i){ return document.getElementById('p'+i); });
+  var pvFont = document.getElementById('pvFont');
+  var pvSize = document.getElementById('pvSize');
+  var pvSizeOut = document.getElementById('pvSizeOut');
+  var pvOut = document.getElementById('pvOut');
+  var pvText = document.getElementById('pvText');
+  var pvInfo = document.getElementById('pvInfo');
+  var lastText = '';
+
+  // 预览框：字体 / 字号 都可调，文字跟着 ① 走
+  function renderPreview(){
+    var fam = pvFont.value;
+    var size = parseInt(pvSize.value, 10);
+    pvSizeOut.textContent = size + 'px';
+    pvText.style.fontFamily = '"' + fam + '", serif';
+    pvText.style.fontSize = size + 'px';
+    pvText.textContent = lastText || '（在 ① 里输入）';
+
+    // 字体到底有没有生效：装没装、有没有回退
+    var ok = false;
+    try { ok = document.fonts.check(size + 'px "' + fam + '"'); } catch(e) { ok = false; }
+    if (fam === 'UME Mongolian') ok = true;   // @font-face，check() 对它恒为 false
+    pvInfo.textContent = ok ? '' : '⚠ 该字体未安装，浏览器已回退到别的字体';
+    pvInfo.className = ok ? 'hint' : 'hint' ;
+    pvInfo.style.color = ok ? '' : 'var(--red)';
+  }
+
+  pvFont.addEventListener('change', renderPreview);
+  pvSize.addEventListener('input', renderPreview);
 
   var NAMES = {
     0x180B:'FVS1', 0x180C:'FVS2', 0x180D:'FVS3',
@@ -154,7 +251,9 @@
 
   function render(){
     var s = inEl.value;
+    lastText = s;
     panes.forEach(function(p){ p.textContent = s; });
+    renderPreview();
 
     if (!s){
       codesEl.innerHTML = '<span class="hint">（空）</span>';
@@ -214,7 +313,7 @@
     // 只查系统字体；第三格是 @font-face 挂进来的 "UME Mongolian"，
     // document.fonts.check 对它返回 false（换成 document.fonts.ready 也一样），
     // 所以不标它 —— 它必然会加载，标错了反而误导。
-    var fams = ['Menk Qagan Tig', 'Mongolian Baiti', null];
+    var fams = ['Menk Qagan Tig', 'Menk Qimed Tig', 'Mongolian Baiti', null, null];
     function mark(){
       fams.forEach(function(fam, i){
         var el = document.getElementById('f' + i);
