@@ -1,0 +1,201 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>FVS 探针 —— 蒙文「帽子」为什么会丢</title>
+<style>
+  :root{
+    --bg:#f7f8fa; --sfc:#fff; --ink:#16181d; --dim:#667; --line:#dfe4ec;
+    --gold:#8a6410; --red:#b03a2e; --blue:#2a5d9e; --green:#1f7a4d;
+  }
+  @media (prefers-color-scheme: dark){
+    :root{ --bg:#14161a; --sfc:#1c1f25; --ink:#e8ebf0; --dim:#98a2b3;
+           --line:#2c313a; --gold:#d4a843; --red:#e0705f; --blue:#79a8e0; --green:#5cc08c; }
+  }
+  *{box-sizing:border-box}
+  body{margin:0;padding:22px;background:var(--bg);color:var(--ink);
+       font:14px/1.7 system-ui,"Microsoft YaHei",sans-serif}
+  h1{font-size:18px;margin:0 0 4px}
+  .sub{color:var(--dim);font-size:13px;margin:0 0 18px}
+  .card{background:var(--sfc);border:1px solid var(--line);border-radius:12px;
+        padding:14px 16px;margin:0 0 14px}
+  .card h2{font-size:13px;margin:0 0 10px;color:var(--dim);font-weight:600;
+           letter-spacing:.04em}
+  textarea{width:100%;min-height:88px;padding:10px 12px;border:1px solid var(--line);
+           border-radius:8px;background:var(--bg);color:var(--ink);resize:vertical;
+           font:16px/1.6 "Menk Qagan Tig","Mongolian Baiti",system-ui,sans-serif;
+           writing-mode:horizontal-tb}
+  .codes{font:13px/2 Consolas,monospace;word-break:break-all}
+  .cp{display:inline-block;margin:0 3px 3px 0;padding:1px 6px;border-radius:5px;
+      background:var(--bg);border:1px solid var(--line)}
+  .cp.fvs{background:#fff3d6;border-color:#e0b85a;color:#7a5410;font-weight:700}
+  .cp.cf{background:#fde8e4;border-color:#e59a8c;color:#8c2f22;font-weight:700}
+  .cp.pua{background:#e8e4fd;border-color:#a79ae5;color:#4a3d9e;font-weight:700}
+  .cp.letter{background:#e8f2fd;border-color:#9dc0e5;color:#1f4f80}
+  @media (prefers-color-scheme: dark){
+    .cp.fvs{background:#4a3a12;border-color:#8a6a2a;color:#f0cc7a}
+    .cp.cf{background:#4a201c;border-color:#8a3a30;color:#f0a094}
+    .cp.pua{background:#2c2450;border-color:#5a4a9e;color:#b8aef0}
+    .cp.letter{background:#1c3450;border-color:#2f5a8a;color:#9dc0e5}
+  }
+  .grid{display:grid;grid-template-columns:repeat(4,1fr);gap:10px}
+  @media (max-width:760px){ .grid{grid-template-columns:repeat(2,1fr)} }
+  .pane{border:1px solid var(--line);border-radius:10px;padding:10px;text-align:center}
+  .pane .fam{font:11px/1.5 Consolas,monospace;color:var(--dim);margin-bottom:8px;
+             min-height:28px}
+  .pane .out{height:150px;display:flex;align-items:center;justify-content:center;
+             overflow:hidden;font-size:54px;line-height:1.05;
+             writing-mode:vertical-lr;direction:ltr}
+  .verdict{font-size:13px;line-height:1.9}
+  .verdict .tag{display:inline-block;padding:0 6px;border-radius:4px;font-weight:700;
+                font-size:12px}
+  .tag.bad{background:#fde8e4;color:#8c2f22}
+  .tag.ok{background:#e3f5ea;color:#1f7a4d}
+  .tag.warn{background:#fff3d6;color:#7a5410}
+  @media (prefers-color-scheme: dark){
+    .tag.bad{background:#4a201c;color:#f0a094}
+    .tag.ok{background:#123a26;color:#5cc08c}
+    .tag.warn{background:#4a3a12;color:#f0cc7a}
+  }
+  code{font:12.5px Consolas,monospace;background:var(--bg);padding:1px 5px;
+       border-radius:4px;border:1px solid var(--line)}
+  .hint{color:var(--dim);font-size:12.5px}
+</style>
+</head>
+<body>
+
+<h1>FVS 探针</h1>
+<p class="sub">把从蒙科立输入法里打出来的词粘到下面，看它到底带没带变体选择符、有没有被换成老编码。</p>
+
+<div class="card">
+  <h2>① 粘贴</h2>
+  <textarea id="in" placeholder="在这里粘贴，例如：ᠮᠣᠩᠭᠣᠯ" spellcheck="false"></textarea>
+</div>
+
+<div class="card">
+  <h2>② 码位</h2>
+  <div class="codes" id="codes"><span class="hint">（空）</span></div>
+</div>
+
+<div class="card">
+  <h2>③ 四支字体各排一遍</h2>
+  <div class="grid">
+    <div class="pane">
+      <div class="fam">Menk Qagan Tig</div>
+      <div class="out" style="font-family:'Menk Qagan Tig',serif" id="p0"></div>
+    </div>
+    <div class="pane">
+      <div class="fam">Mongolian Baiti</div>
+      <div class="out" style="font-family:'Mongolian Baiti',serif" id="p1"></div>
+    </div>
+    <div class="pane">
+      <div class="fam">Noto Sans Mongolian</div>
+      <div class="out" style="font-family:'Noto Sans Mongolian','UME Mongolian',serif" id="p2"></div>
+    </div>
+    <div class="pane">
+      <div class="fam">不指定（系统兜底）</div>
+      <div class="out" style="font-family:serif" id="p3"></div>
+    </div>
+  </div>
+</div>
+
+<div class="card">
+  <h2>④ 结论</h2>
+  <div class="verdict" id="verdict"><span class="hint">等输入。</span></div>
+</div>
+
+<div class="card">
+  <h2>⑤ 自查用</h2>
+  <p class="hint">
+    相关码位：<code>U+180B</code> FVS1、<code>U+180C</code> FVS2、<code>U+180D</code> FVS3、
+    <code>U+180E</code> MVS、<code>U+180F</code> FVS4。<br>
+    它们都是 <b>Cf（格式字符）</b>：看不见、但决定字形。<b>很多输入框、网页表单、数据库字段会「清理」Cf，
+    一清就把帽子清掉了。</b><br>
+    另外 <code>U+E000–U+F8FF</code> 是私用区：如果看到这里的码位，说明文本是<b>蒙科立老编码</b>，不是 Unicode 蒙文。
+  </p>
+</div>
+
+<script>
+(function(){
+  var inEl = document.getElementById('in');
+  var codesEl = document.getElementById('codes');
+  var verdictEl = document.getElementById('verdict');
+  var panes = [0,1,2,3].map(function(i){ return document.getElementById('p'+i); });
+
+  var NAMES = {
+    0x180B:'FVS1', 0x180C:'FVS2', 0x180D:'FVS3',
+    0x180E:'MVS',  0x180F:'FVS4',
+    0x200C:'ZWNJ', 0x200D:'ZWJ', 0xFEFF:'BOM'
+  };
+
+  function classify(cp){
+    if (cp >= 0xE000 && cp <= 0xF8FF) return 'pua';
+    if (cp === 0x180B || cp === 0x180C || cp === 0x180D || cp === 0x180E || cp === 0x180F)
+      return 'fvs';
+    if (cp === 0x200C || cp === 0x200D || cp === 0xFEFF || cp === 0x2060) return 'cf';
+    if (cp >= 0x1820 && cp <= 0x18AF) return 'letter';
+    return '';
+  }
+
+  function hex(cp){
+    return 'U+' + cp.toString(16).toUpperCase().padStart(4,'0');
+  }
+
+  function render(){
+    var s = inEl.value;
+    panes.forEach(function(p){ p.textContent = s; });
+
+    if (!s){
+      codesEl.innerHTML = '<span class="hint">（空）</span>';
+      verdictEl.innerHTML = '<span class="hint">等输入。</span>';
+      return;
+    }
+
+    var items = [], counts = {fvs:0, pua:0, cf:0, letter:0};
+    for (var i = 0; i < s.length; i++){
+      var cp = s.codePointAt(i);
+      if (cp > 0xFFFF) i++;
+      var cls = classify(cp);
+      if (counts[cls] !== undefined) counts[cls]++;
+      var label = hex(cp);
+      if (NAMES[cp]) label += ' ' + NAMES[cp];
+      items.push('<span class="cp ' + cls + '" title="' + (NAMES[cp]||'') + '">'
+                 + label + '</span>');
+    }
+    codesEl.innerHTML = items.join('');
+
+    var v = [];
+    if (counts.pua > 0){
+      v.push('<span class="tag bad">私用区 ' + counts.pua + ' 个</span> '
+        + '这段文本是<b>蒙科立老编码</b>，不是 Unicode 蒙文。别的程序把它当未定义字符，'
+        + '要么显示成方块，要么整段丢字。得先转码到 U+1820 区间。');
+    }
+    if (counts.fvs > 0){
+      v.push('<span class="tag warn">FVS ' + counts.fvs + ' 个</span> '
+        + '文本里带着变体选择符 —— 字形就靠它选。'
+        + '如果粘贴后这里变成 0，说明<b>被某个环节清掉了</b>，帽子就是这么丢的。');
+    }
+    if (counts.fvs === 0 && counts.pua === 0 && counts.letter > 0){
+      v.push('<span class="tag ok">纯蒙文字母，无 FVS</span> '
+        + '说明输入法没写变体选择符，形态完全由字体决定：'
+        + 'Menk 会按 <code>_FINA_BP</code> 之类的规则选形，Noto 就只给一种。');
+    }
+    if (!v.length){
+      v.push('<span class="hint">没看到蒙文字母。</span>');
+    }
+    v.push('<div class="hint" style="margin-top:8px">'
+      + '字母 ' + counts.letter + ' 个 ／ FVS ' + counts.fvs + ' 个 ／ '
+      + '私用区 ' + counts.pua + ' 个</div>');
+    verdictEl.innerHTML = v.join('<br>');
+  }
+
+  inEl.addEventListener('input', render);
+
+  // 从剪贴板粘贴时，浏览器不会改内容；但如果是从某个「会清理」的程序复制过来的，
+  // 丢失在复制那一步就发生了 —— 所以这里只如实显示拿到的码位。
+  render();
+})();
+</script>
+</body>
+</html>
