@@ -413,7 +413,7 @@ Unicode 里这两个都有独立码位：
        alt="鲍培转写辅音表手写稿：左栏为基本辅音，右栏为借词辅音">
   <figcaption><b>鲍培转写的辅音表</b>（手写稿）。左栏是<b>基本辅音</b>，
   右栏是处理借词时才用的<b>借词辅音</b>。
-  注意 <code>q/k</code>、<code>γ/g</code>、<code>č/ǰ</code> 三处<b>上下叠写</b> ——
+  注意第一行 <code>q/k</code> 与 <code>γ/g</code> <b>两处</b>是<b>上下叠写</b>的 ——
   它们表示同一组字母在<b>不同元音环境</b>里的两种写法，不是两个不同的音。</figcaption>
 </div>
 
@@ -536,6 +536,97 @@ Unicode 里这两个都有独立码位：
   <p>所以我们必须按<b>字素簇</b>处理 —— 让 FVS / MVS
   <b>黏附到前一个字素</b>上。这正是 <code>UMCompos</code> 里
   UAX #29 那段代码在做的事。</p>
+</div>
+
+<!-- ============================================================ -->
+<h3 class="key-h">★ 两张原表：元音字母表与辅音字母表</h3>
+
+<p>前面三节讲的「位置形」「转写」「键位」，最后都收在这两张表上。
+它们扫描自教材书页 —— <b>一个字母一列，四种形态并列</b>，
+是这套教程里信息密度最高的两页。</p>
+
+<div class="card warn">
+  <div class="card-t">重要程度：元音表必看，辅音表按需查</div>
+  <p><b>元音字母表 ★★★</b> —— 只有 7 列，但后面所有内容都建在它上面：
+  元音和谐、阳性词 / 阴性词，还有 <code>o / u</code> 与 <code>ö / ü</code>
+  这两对<b>写法几乎一样、只能靠键位区分</b>的坑，全在这一页。</p>
+  <p><b>辅音字母表 ★★</b> —— 26 个字母分上下两段排，<b>不必背</b>，
+  写代码时按需查形态即可。但表头那几行得认清，否则会读错。</p>
+</div>
+
+<p>先把表头认清楚，再看字：</p>
+
+<table>
+<thead><tr><th style="width:20%">行</th><th>是什么意思</th>
+  <th style="width:30%">用的时候注意</th></tr></thead>
+<tbody>
+<tr><td><b>（书面语读音<br>拉丁转写）</b></td>
+    <td>这一行用的是<b>鲍培转写</b>（页边注着「鲍培=」）。元音表里是
+        <code>a e i o u ö ü</code>；辅音表上段是
+        <code>n b p q γ m l s š t d č ǰ</code></td>
+    <td><b>同一个符号在两行里可能指不同的字母</b> ——
+        这一行的 <code>q</code> 是 <code>ᠬ</code>，
+        而 KBD 那一行的 <code>q</code> 是 <code>ᠴ</code></td></tr>
+<tr><td><b>KBD</b></td>
+    <td>输入法键位。元音表这一行是
+        <code>a</code> <code>e,E</code> <code>i</code> <code>w</code>
+        <code>v</code> <code>o</code> <code>u</code>；
+        辅音表上段这一行是 <code>n b p h g m l s x t d q j</code></td>
+    <td>逗号表示两个键都给这个字母；<b>大写 = 加 Shift</b>。
+        KBD 行标的是<b>按键上的字母</b>，所以和上一行写法不同：
+        鲍培 <code>q</code> 按 <code>h</code>、<code>γ</code> 按 <code>g</code>、
+        <code>š</code> 按 <code>x</code>、<code>č</code> 按 <code>q</code></td></tr>
+<tr><td><b>标准音</b></td>
+    <td>方括号里的国际音标（IPA），标注实际读音</td>
+    <td>只作参考，<b>不能拿它反推码位</b>（见本节末尾的提示卡）</td></tr>
+<tr><td><b>词首 / 词中 / 词末</b></td>
+    <td>同一个字母在词的不同位置<b>换形状</b></td>
+    <td>这就是 §2 讲的「位置形」；编码时始终是<b>同一个码位</b></td></tr>
+<tr><td><b>单独写法 isol</b></td>
+    <td>只出现在元音表最后一行：字母<b>不与其他字母相连</b>时怎么写</td>
+    <td>排版孤立形时用得上</td></tr>
+</tbody>
+</table>
+
+<div class="fig wide">
+  <img src="assets/img/t01-vowels.jpg"
+       alt="蒙古文元音字母表：七个元音的词首、词中、词末与单独写法，附鲍培转写、键位与标准音">
+  <figcaption><b>★ 必看 —— 元音字母表</b>（教材第 4 页）。
+  七列从左到右是 <code>a e i o u ö ü</code>。
+  <b>第 4、5 列（<code>o</code> 与 <code>u</code>）写法几乎一样，
+  第 6、7 列（<code>ö</code> 与 <code>ü</code>）也一样</b> ——
+  区别只在键位：第 4、5 列是 <code>w</code> 与 <code>v</code>，
+  第 6、7 列是 <code>o</code> 与 <code>u</code>。
+  图上还注了 <code>NS = Noto Sans Mongolian</code>：
+  最后一行「单独写法」是拿这支字体排出来对照的。</figcaption>
+</div>
+
+<div class="fig wide">
+  <img src="assets/img/t01-consonants.jpg"
+       alt="蒙古文辅音字母表：二十六个辅音字母的词首、词中、词末写法，附鲍培转写、键位与标准音">
+  <figcaption><b>★★ 常用参照 —— 辅音字母表</b>（教材第 6 页，分上下两段排）。
+  每段各有<b>两行手写字母</b>，别混着读：
+  <b>上面一行是鲍培转写</b>（页边注着「鲍培=」），
+  上段 <code>n b p q γ m l s š t d č ǰ</code>、
+  下段 <code>y r w ng f k c z h r lh zh ch</code>；
+  <b>下面一行是 KBD 键位</b>，上段 <code>n b p h g m l s x t d q j</code>、
+  下段 <code>y r W N f k c z H R L Z C</code>（大写 = 加 Shift）。
+  两行同一列写法不同，是因为 KBD 行直接标<b>按键上的字母</b>：
+  鲍培 <code>q</code> 按 <code>h</code>、<code>γ</code> 按 <code>g</code>、
+  <code>š</code> 按 <code>x</code>、<code>č</code> 按 <code>q</code>、<code>ǰ</code> 按 <code>j</code>。
+  也正因为如此，<code>q</code> 这个符号在<b>两行里指的不是同一个字母</b>
+  —— 鲍培 <code>q</code> 是 <code>ᠬ</code>，KBD <code>q</code> 是 <code>ᠴ</code>。</figcaption>
+</div>
+
+<div class="card tip">
+  <div class="card-t">这两张表最容易被读错的两处</div>
+  <p><b>「标准音」不能拿来定码位。</b>
+  同一个 IPA 往往对应两个码位 —— <code>o</code> 与 <code>u</code> 都是圆唇后元音，
+  <code>ö</code> 与 <code>ü</code> 都是圆唇前元音。
+  真正决定存哪个码位的是<b>词源与元音和谐</b>，不是读音。</p>
+  <p><b>「位置形」不是四个码位。</b>
+  词首、词中、词末、单独，始终是<b>同一个码位</b>，
+  只是字体按上下文换形状。这一点在 T02 里展开。</p>
 </div>
 
 <!-- ============================================================ -->

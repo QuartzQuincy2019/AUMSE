@@ -4,6 +4,17 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <title>微软蒙文输入法 · 键位图</title>
+<script>
+/* 主题：自动跟随系统，也可手动钉成浅色 / 深色。
+   同步执行，避免先闪一下浅色再变深。 */
+(function(){
+  try{
+    var t = localStorage.getItem('mmkb.theme') || 'auto';
+    if (t === 'dark' || (t === 'auto' && matchMedia('(prefers-color-scheme: dark)').matches))
+      document.documentElement.classList.add('dark');
+  }catch(e){}
+})();
+</script>
 <style>
   /* 仓库里的 Noto 作为兜底；系统装了 Menk / Baiti 时优先用它们 */
   @font-face{
@@ -17,12 +28,15 @@
     --key:#fbfcfe; --key-hi:#fff6dd; --key-bd:#c9d2e0; --gold:#8a6410;
     --accent:#2a5d9e; --ok:#1f7a4d; --warn:#a55a10;
   }
-  @media (prefers-color-scheme: dark){
-    :root{
-      --bg:#111318; --sfc:#191c22; --ink:#e7ebf2; --dim:#98a2b3; --line:#2b3038;
-      --key:#22262e; --key-hi:#3a3116; --key-bd:#363c46; --gold:#d4a843;
-      --accent:#79a8e0; --ok:#5cc08c; --warn:#e0a35c;
-    }
+  /* 深色原先只挂在 prefers-color-scheme 上 —— 系统是浅色的人根本看不到。
+     现在改成 <html class="dark">，head 里那段脚本按「自动 / 浅色 / 深色」
+     决定要不要加这个类，工具栏上的「主题」按钮负责切换。 */
+  html.dark{
+    color-scheme:dark;
+    /* 与 kbdglyf.html 共用同一套暗色值，两页并排看底色一致 */
+    --bg:#12151a; --sfc:#1a1e24; --ink:#e8ecf3; --dim:#a6b0bf; --line:#2d333c;
+    --key:#20242b; --key-hi:#3a3116; --key-bd:#333a45; --gold:#e0b45e;
+    --accent:#7fa9e0; --ok:#5cc08c; --warn:#e0a35c;
   }
   *{box-sizing:border-box}
   body{margin:0;padding:22px 18px 40px;background:var(--bg);color:var(--ink);
@@ -41,6 +55,12 @@
        padding:7px 12px;cursor:pointer}
   .btn:hover{background:var(--key-hi)}
   .btn.on{background:var(--key-hi);border-color:var(--gold);color:var(--gold)}
+  /* 下拉框原先没写样式，深色下是浏览器默认的白底黑字，很扎眼 */
+  select{background:var(--key);color:var(--ink);border:1px solid var(--key-bd);
+         border-radius:7px;padding:4px 7px;
+         font:12.5px/1.3 system-ui,"Microsoft YaHei",sans-serif}
+  html.dark select{color-scheme:dark}
+  html.dark select option{background:var(--key);color:var(--ink)}
 
   /* ---------- 键盘 ---------- */
   /* 宽屏：键盘宽度跟视口走，键位等比撑满（--u 只当最小键宽）。
@@ -70,9 +90,7 @@
   .key.live{cursor:pointer}
   .key.live:hover{background:var(--key-hi);border-color:var(--gold)}
   .key.mn{background:linear-gradient(180deg,#fffdf5,#fff8e6);border-color:#e0cf9a}
-  @media (prefers-color-scheme: dark){
-    .key.mn{background:linear-gradient(180deg,#26221a,#2e2716);border-color:#5a4a22}
-  }
+  html.dark .key.mn{background:linear-gradient(180deg,#26221a,#2e2716);border-color:#5a4a22}
   .key .lat{position:absolute;top:4px;left:6px;font-size:10px;opacity:.75}
   .key .latS{position:absolute;top:4px;right:6px;font-size:10px;opacity:.55}
   /* 蒙文字形：铺满整格用 flex 居中，不靠 bottom 定位 ——
@@ -126,10 +144,8 @@
                font:700 calc(var(--u)*.19)/1 Consolas,monospace;color:var(--gold)}
   .seg{display:inline-flex;gap:4px}
   .seg .btn{padding:6px 9px;font-size:12px}
-  @media (prefers-color-scheme: dark){
-    .key.vkey{background:#1d2740;border-color:#3d5a8a}
-    .key .vlab{color:#9dc0e5}
-  }
+  html.dark .key.vkey{background:#1d2740;border-color:#3d5a8a}
+  html.dark .key .vlab{color:#9dc0e5}
   /* 不可见字符（FVS / MVS / NNBSP）用文字徽标表示，不然键面是空的 */
   .key .vis{position:absolute;bottom:6px;left:50%;transform:translateX(-50%);
             font:700 calc(var(--u)*.19)/1 Consolas,monospace;letter-spacing:.02em;
@@ -139,10 +155,8 @@
              font:700 calc(var(--u)*.16)/1 Consolas,monospace;
              color:#8a5a10;background:#ffeccd;border:1px solid #e6c48a;
              border-radius:4px;padding:1px 3px}
-  @media (prefers-color-scheme: dark){
-    .key .vis{color:#c8bcf5;background:#2c2450;border-color:#4a3d7a}
-    .key .visS{color:#f0c98a;background:#3a2c12;border-color:#6a5024}
-  }
+  html.dark .key .vis{color:#c8bcf5;background:#2c2450;border-color:#4a3d7a}
+  html.dark .key .visS{color:#f0c98a;background:#3a2c12;border-color:#6a5024}
   .key.dead{opacity:.45}
   .key .cap{font:10px/1 system-ui,sans-serif;color:var(--dim);opacity:.8}
 
@@ -161,10 +175,8 @@
   .tag{display:inline-block;padding:0 5px;border-radius:4px;font-size:11px;font-weight:700}
   .tag.ctl{background:#efe6ff;color:#4a3d9e}
   .tag.pun{background:#e6f0ff;color:#1f4f80}
-  @media (prefers-color-scheme: dark){
-    .tag.ctl{background:#2c2450;color:#b8aef0}
-    .tag.pun{background:#1c3450;color:#9dc0e5}
-  }
+  html.dark .tag.ctl{background:#2c2450;color:#b8aef0}
+  html.dark .tag.pun{background:#1c3450;color:#9dc0e5}
   .toast{position:fixed;left:50%;bottom:26px;transform:translateX(-50%) translateY(14px);
          background:#15181d;color:#fff;padding:9px 16px;border-radius:9px;font-size:12.5px;
          opacity:0;transition:.2s;pointer-events:none;z-index:99}
@@ -235,6 +247,7 @@
     <button class="btn on" id="tgKbMode">键面竖排</button>
     <button class="btn" id="tgShift">显示上档</button>
     <button class="btn" id="tgOnly">只看蒙文键</button>
+    <button class="btn" id="tgTheme" title="自动跟随系统 / 钉成浅色 / 钉成深色">主题：自动</button>
     <label>形态
       <select id="posSel">
         <option value="auto">自动</option>
@@ -712,6 +725,31 @@ document.getElementById('tgKbMode').addEventListener('click', function(e){
   kb.classList.toggle('hz', horiz);
   e.target.textContent = horiz ? '键面横排' : '键面竖排';
 });
+
+/* ---- 主题：自动 → 浅色 → 深色 三态循环 ----
+   深色只由 <html class="dark"> 控制，head 里那段已按偏好先打过类。 */
+(function(){
+  var ORDER = ['auto', 'light', 'dark'];
+  var NAME = {auto:'主题：自动', light:'主题：浅色', dark:'主题：深色'};
+  var mq = matchMedia('(prefers-color-scheme: dark)');
+  var btn = document.getElementById('tgTheme');
+
+  function read(){ try{ return localStorage.getItem('mmkb.theme') || 'auto'; }catch(e){ return 'auto'; } }
+  function apply(t){
+    var dark = (t === 'dark') || (t === 'auto' && mq.matches);
+    document.documentElement.classList.toggle('dark', dark);
+    btn.textContent = NAME[t];
+    btn.classList.toggle('on', t !== 'auto');
+    try{ localStorage.setItem('mmkb.theme', t); }catch(e){}
+  }
+
+  apply(read());
+  btn.addEventListener('click', function(){
+    apply(ORDER[(ORDER.indexOf(read()) + 1) % ORDER.length]);
+  });
+  /* 系统主题变了、且当前是「自动」，要跟着变 */
+  mq.addEventListener('change', function(){ if(read() === 'auto') apply('auto'); });
+})();
 
 /* ---- 字体选择：同时管键面字形、表格字形、试打区 ---- */
 document.getElementById('fontSel').addEventListener('change', function(e){

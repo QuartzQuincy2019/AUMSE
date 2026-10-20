@@ -182,6 +182,58 @@ main{flex:1;display:flex;min-height:0}
 ::-webkit-scrollbar-track{background:#12151b}
 ::-webkit-scrollbar-thumb{background:#333a47;border-radius:6px;border:2px solid #12151b}
 ::-webkit-scrollbar-thumb:hover{background:#434b5c}
+
+/* ===================================================================
+   窄屏适配（≤ 760px）
+   桌面是「左输入 380px | 右预览」两栏。手机上左栏固定 380px，
+   预览只剩不到 10px，会被整个挤出屏幕 ——
+   实测 390px 视口下文档宽 584px，横向多出 194px。
+   窄屏改成上下两段：上输入、下预览，用 flex-basis 分比例。
+   =================================================================== */
+@media (max-width:760px){
+  /* 手机浏览器的地址栏会把 100% 撑出屏幕，有 dvh 就用 dvh */
+  #app{height:100dvh}
+
+  header{gap:6px;padding:6px 9px}
+  .brand{font-size:14px}
+  .brand small{display:none}          /* 手机上省一行给正文 */
+  .tools{margin-left:0;width:100%;gap:5px}
+  .tools .sep{display:none}
+  .tools label{font-size:11.5px}
+  #fs{width:70px !important}
+  header button{padding:4px 8px;font-size:12px}
+
+  main{flex-direction:column}
+  #pane-left{width:auto;min-width:0;flex:0 0 38%;height:auto;
+    border-right:0;border-bottom:1px solid var(--line)}
+  #pane-right{flex:1 1 auto;min-height:0}
+  .pane-head{padding:5px 9px;font-size:11.5px}
+  .pane-head b{font-size:12px}
+  #rtag{display:none}                 /* 「· 列自左向右（vertical-lr）」是给桌面看的说明 */
+  #raw{padding:10px 11px;font-size:17px;line-height:1.75}
+  .hint{display:none}                 /* 这句话会再挤掉一行输入区 */
+  #vwrap{padding:12px 10px}
+
+  #palette{height:31vh;max-height:210px}
+  /* 分类标签在手机上会折成 4 行（约 90px），把字符面板挤没了；
+     改成一行横向滚动 */
+  .tabs{padding:5px 8px;gap:4px;flex-wrap:nowrap;overflow-x:auto;
+    scrollbar-width:none;-ms-overflow-style:none}
+  .tabs::-webkit-scrollbar{display:none}
+  .tab{padding:3px 8px;font-size:12px;flex:0 0 auto}
+  #palbody{padding:7px 8px}
+  .grid{grid-template-columns:repeat(auto-fill,minmax(52px,1fr));gap:4px}
+  #palnotice{padding:3px 9px;font-size:10.5px;gap:8px}
+  #status{padding:3px 9px;font-size:10.5px;gap:4px 12px}
+  #tstat{display:none}                /* 「示例：… 点导出」 那行在手机上换成 4 行状态，不值 */
+
+  /* 导出对话框：两栏改一栏，预览降到 150px */
+  .dlg{width:96vw;max-height:92vh}
+  .dlg .cnt{flex-direction:column;gap:10px;padding:12px}
+  #preview{min-height:150px;align-items:center}
+  /* 桌面是「高度撑满、宽度自动」，手机上会横向溢出要拖动，改成整幅缩进框内 */
+  #preview svg{width:100%;height:100%;max-width:100%;max-height:100%}
+}
 </style>
 <script src="UMCompos.js"></script>
 <script src="project-config.js"></script>

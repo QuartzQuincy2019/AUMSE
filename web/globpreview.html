@@ -117,11 +117,34 @@ tbody th .cp{display:block;font-family:var(--mono);font-size:10px;
 #loanTable th:first-child{width:190px}
 #loanTable td{width:auto}
 
+/* 连字测试表：每格上下两排（连写 / 对照），所以格子比矩阵那几张高一点 */
+#ligTable{table-layout:fixed}
+#ligTable th:first-child{width:108px}
+#ligTable thead th,#ligTable tbody th{padding:6px 10px}
+#ligTable td.cell{height:auto;width:auto;padding:8px 5px 7px}
+/* .gl 是 writing-mode:vertical-lr 的块，宽度只有一列那么窄；
+   不包 flex 的话它会贴在单元格左边（视觉上就是「贴着表格左边缘」）。
+   flex 列 + align-items:center 把它摆正，虚线也能拉满整格。 */
+.ligbox{display:flex;flex-direction:column;align-items:center;width:100%}
+.ligcell .gl{line-height:1.05;padding:0 3px}
+.ligcell .lig-fuse{font-size:calc(26px * var(--mn-scale,1))}
+/* 对照那一版：两字各占一段（各自成形，不可能再连上），
+   用虚线跟测试对象隔开，段间给自己一段真实间距。
+   Qimed 的字形很长，间距要按字号走，不能用固定 px。 */
+.lig-ref{display:flex;justify-content:center;gap:calc(7px * var(--mn-scale,1));
+  width:100%;margin-top:calc(6px * var(--mn-scale,1));
+  padding-top:calc(5px * var(--mn-scale,1));border-top:1px dashed var(--line)}
+.ligcell .lig-sep{font-size:calc(19px * var(--mn-scale,1));opacity:.45}
+
+/* 表头的键位小标：鲍培转写下面单独一行，不与名字抢宽度 */
+.hkey{display:block;font-family:var(--mono);font-size:11px;line-height:1.5;
+  color:var(--fg-3);letter-spacing:.02em}
+
 /* 矩阵表头也放字形：最上行与最左列的单字要能看到它自己长什么样，
    否则只有 A / E / I 这些拉丁名，看不出对应哪个字形 */
 .hglyph{font-size:calc(24px * var(--mn-scale,1));line-height:1.15;display:block;margin:0 auto}
 thead th .hglyph{margin:2px auto 5px}
-.hname{display:block;font-size:12px;line-height:1.4}
+.hname{display:block;font-size:15.5px;line-height:1.35;font-weight:600;color:var(--fg-2)}
 #vowelTable tbody th{text-align:center}
 #vowelTable tbody th .hglyph{margin:2px auto 4px}
 #vowelTable thead th{padding:6px 4px}
@@ -309,7 +332,55 @@ thead th .hglyph{margin:2px auto 5px}
   </p>
   <div class="tscroll"><table id="fvsTable"></table></div>
 
-  <h2><span class="n">5</span>自由输入</h2>
+  <h2><span class="n">5</span>连字测试<span class="tag-l">辅音 + 元音，两笔并成一笔了吗</span></h2>
+  <p class="lead">
+    辅音接元音时，字体可能把两笔<b>并成一个字形</b>（连字），也可能只是让两笔各自换个形态。
+    每格上下两排：<b>上排直接连写</b>，<b>下排用 <code>U+200C</code> 强行断开</b>，
+    断开后两字各自取独立形，中间留出断口 —— 这一排只是<b>对照物</b>，不参与判定。
+    <b>判断只看形状</b>：上排如果少了一道笔画的交接、整体是<b>第三种形状</b>，
+    就是真的合成了一个字形，而不是两笔并排。
+    悬停看到的是<b>两字中形之和 vs 连写</b>的实测行宽（两个数，不是这一格的），差值为正说明连写更窄。
+  </p>
+  <div class="ctl" style="margin:0 0 10px">上下文
+    <button class="ctx3" data-ligctx="iso">独立</button>
+    <button class="ctx3" data-ligctx="init">上形</button>
+    <button class="ctx3" data-ligctx="medi">中形</button>
+    <button class="ctx3" data-ligctx="fina">下形</button>
+  </div>
+  <div class="tscroll"><table id="ligTable"></table></div>
+  <p class="hint">
+    下排不是另一个码位，就是把同一对<b>拆成两段分别渲染</b>（各取独立形），
+    中间那段间距是页面给的、不是字体的，所以任何一支字体都连不上。
+    点格子可以打标记。宽度<b>别拿上下两排去量</b> —— 要量就点悬停给的那两个数。
+  </p>
+
+  <div class="notes" style="margin-top:16px">
+    <b>三个实测过的例子</b>（字形名由 HarfBuzz 跑出来，不是目测）
+    <table style="margin-top:9px;font-size:12.5px">
+      <thead><tr><th style="width:20%">串</th>
+        <th style="width:48%">字形序列</th><th>结论</th></tr></thead>
+      <tbody>
+        <tr><td><span class="gl" lang="mn-Mong">ᠨᠡᠮᠡᠬᠦ</span></td>
+            <td><code>u1828.N.init</code> <code>u1821.A.medi</code>
+                <code>u182E.M.medi</code> <code>u1821.A.medi</code>
+                <code>u182C_u1826.GO.fina</code></td>
+            <td><b>是连字</b>：末两笔 ᠬ + ᠦ 并成一个字形</td></tr>
+        <tr><td><span class="gl" lang="mn-Mong">ᠭᠡᠷ</span></td>
+            <td><code>u182D_u1821.GA.init</code> <code>u1837.R.fina</code></td>
+            <td><b>是连字</b>：ᠭ + ᠡ 并成一个字形</td></tr>
+        <tr><td><span class="gl" lang="mn-Mong">ᠠᠬ᠎ᠠ</span></td>
+            <td><code>u1820.AA.init</code> <code>u182C.H.fina</code>
+                <code>mvs.narrow</code> <code>u1820.Aa.isol</code></td>
+            <td><b>不是连字</b>：<code>MVS</code> 只把 ᠬ 拉到下形，再起一个新字</td></tr>
+      </tbody>
+    </table>
+    <p style="margin:9px 0 0;color:var(--fg-3);font-size:12px">
+      注意 <b>ᠭᠠ 反而不合形</b>（<code>u182D.Hx.init</code> + <code>u1820.A.fina</code>）——
+      同一支字体里，合不合形要按<b>具体那一对</b>看，不能按字母推论。
+    </p>
+  </div>
+
+  <h2><span class="n">6</span>自由输入</h2>
   <p class="lead">把任意串贴进来，看它怎么连；下方列出码位，零宽与变体选择符单独标色。</p>
   <textarea class="ipt" id="inp" spellcheck="false"
     placeholder="在这里输入或粘贴蒙文…">ᠮᠣᠩᠭᠣᠯ ᠪᠢᠴᠢᠭ ᠤᠨ ᠲᠣᠯᠢ</textarea>
@@ -415,10 +486,40 @@ const CTX = {
   medi: s => ZWJ + s + ZWJ,
   fina: s => ZWJ + s
 };
+
+/* ---------------------------------------------------------------------
+   表头统一用「鲍培转写 + 键位」。
+   原来用的是 N / Ŋ / Γ / Ʒ 这一套大写名，和教材「KBD=」那一行对不上，
+   看表的人得自己换算一次；现在与 kbdglyf.html 用同一套符号。
+   p = 鲍培转写（q/k、γ/g 是一个字母的两个读音，写在一起）
+   k = 键位，取自教材 KBD 行：大写字母 = 加 Shift
+   ------------------------------------------------------------------ */
+const NAME = {
+  0x1820:{p:"a",  k:"A"},  0x1821:{p:"e",  k:"E"},  0x1822:{p:"i",  k:"I"},
+  0x1823:{p:"o",  k:"W"},  0x1824:{p:"u",  k:"V"},  0x1825:{p:"ö",  k:"O"},
+  0x1826:{p:"ü",  k:"U"},  0x1827:{p:"ē",  k:"E"},
+  0x1828:{p:"n",  k:"N"},  0x1829:{p:"ng", k:"N"},  0x182A:{p:"b",  k:"B"},
+  0x182B:{p:"p",  k:"P"},  0x182C:{p:"q·k",k:"H"},  0x182D:{p:"γ·g",k:"G"},
+  0x182E:{p:"m",  k:"M"},  0x182F:{p:"l",  k:"L"},  0x1830:{p:"s",  k:"S"},
+  0x1831:{p:"š",  k:"X"},  0x1832:{p:"t",  k:"T"},  0x1833:{p:"d",  k:"D"},
+  0x1834:{p:"č",  k:"Q"},  0x1835:{p:"ǰ",  k:"J"},  0x1836:{p:"y",  k:"Y"},
+  0x1837:{p:"r",  k:"R"},  0x1838:{p:"w",  k:"W"},  0x1839:{p:"f",  k:"F"},
+  0x183A:{p:"k",  k:"K"},  0x183B:{p:"kh", k:""},   0x183C:{p:"c",  k:"C"},
+  0x183D:{p:"z",  k:"Z"},  0x183E:{p:"h",  k:"H"},  0x183F:{p:"ž",  k:"R"},
+  0x1840:{p:"lh", k:"L"},  0x1841:{p:"zh", k:"Z"},  0x1842:{p:"ch", k:"C"}
+};
+const nm = cp => NAME[cp] || { p: "U+" + hex(cp), k: "" };
+/* 表头块：鲍培转写 + 键位小标 + 可选的补充说明 */
+function headName(cp, sub){
+  const n = nm(cp);
+  return '<span class="hname">' + n.p + "</span>"
+    + (n.k ? '<span class="hkey">键 ' + n.k + "</span>" : "")
+    + (sub ? '<span class="thsub">' + sub + "</span>" : "");
+}
 /* 借词字母可能是多码位（如 š + h），上下文要按整串套 */
 const CTXc = (ctx, cps) => CTX[ctx](cps.map(ch).join(""));
 
-const state = { ctx:"medi", showCp:true };
+const state = { ctx:"medi", ligCtx:"medi", showCp:true };
 
 /* ---------------- 量宽（只用于悬停提示） ---------------- */
 /* 也跟着 --mn-scale 放大：否则换一支字号换算不同的字体，
@@ -495,15 +596,16 @@ function buildPos(){
 
   const tb = document.createElement("tbody");
   const groups = [
-    ["元音", VOWELS.map(v => [v[0], v[1] + " · " + v[2]])],
-    ["辅音", CONS.map(c => [c[0], c[1]])]
+    ["元音", VOWELS.map(v => [v[0], v[2]])],   /* 第二项是阴阳性 */
+    ["辅音", CONS.map(c => [c[0], ""])]
   ];
   groups.forEach(([g, list]) => {
-    list.forEach(([cp, name]) => {
+    list.forEach(([cp, tone]) => {
       const tr = document.createElement("tr");
       const th = document.createElement("th");
-      th.innerHTML = name + '<span class="cp">U+' + hex(cp) + "</span>";
+      th.innerHTML = headName(cp, tone) + '<span class="cp">U+' + hex(cp) + "</span>";
       tr.appendChild(th);
+      const label = nm(cp).p + (tone ? "（" + tone + "）" : "");
       ["iso","init","medi","fina"].forEach(k => {
         const cps = k === "iso"  ? [cp]
                   : k === "init" ? [cp, 0x200D]
@@ -511,7 +613,7 @@ function buildPos(){
                   : [0x200D, cp];
         const key = k + ":" + cp;
         tr.appendChild(cell(CTX[k](ch(cp)), cps.map(hex).join(" "),
-          key, name + " · " + {iso:"独立",init:"上形",medi:"中形",fina:"下形"}[k]));
+          key, label + " · " + {iso:"独立",init:"上形",medi:"中形",fina:"下形"}[k]));
       });
       tb.appendChild(tr);
     });
@@ -530,9 +632,8 @@ function buildVowel(){
   hr.appendChild(c0);
   VOWELS.forEach(v => {
     const th = document.createElement("th");
-    th.title = v[1] + "　U+" + hex(v[0]);
-    th.innerHTML = glyphHtml(v[0])
-      + '<span class="hname">' + v[1] + "</span>"
+    th.title = nm(v[0]).p + "　键 " + nm(v[0]).k + "　U+" + hex(v[0]);
+    th.innerHTML = glyphHtml(v[0]) + headName(v[0])
       + '<span class="cp">U+' + hex(v[0]) + "</span>";
     hr.appendChild(th);
   });
@@ -543,16 +644,15 @@ function buildVowel(){
   VOWELS.forEach(a => {
     const tr = document.createElement("tr");
     const th = document.createElement("th");
-    th.title = a[1] + "　U+" + hex(a[0]);
-    th.innerHTML = glyphHtml(a[0])
-      + '<span class="hname">' + a[1] + "</span>"
+    th.title = nm(a[0]).p + "　键 " + nm(a[0]).k + "　U+" + hex(a[0]);
+    th.innerHTML = glyphHtml(a[0]) + headName(a[0])
       + '<span class="cp">U+' + hex(a[0]) + "</span>";
     tr.appendChild(th);
     VOWELS.forEach(b => {
       const td = cell(CTX[state.ctx](ch(a[0]) + ch(b[0])),
         hex(a[0]) + " " + hex(b[0]),
-        "pair:" + a[0] + "-" + b[0], a[1] + " + " + b[1]);
-      td.title = a[1] + " + " + b[1] + "　" + widthNote(a[0], b[0]);
+        "pair:" + a[0] + "-" + b[0], nm(a[0]).p + " + " + nm(b[0]).p);
+      td.title = nm(a[0]).p + " + " + nm(b[0]).p + "　" + widthNote(a[0], b[0]);
       tr.appendChild(td);
     });
     tb.appendChild(tr);
@@ -614,14 +714,14 @@ function buildFvs(){
   VOWELS.forEach(v => {
     const tr = document.createElement("tr");
     const th = document.createElement("th");
-    th.innerHTML = v[1] + '<span class="cp">U+' + hex(v[0]) + "</span>";
+    th.innerHTML = headName(v[0]) + '<span class="cp">U+' + hex(v[0]) + "</span>";
     tr.appendChild(th);
     tr.appendChild(cell(CTX[state.ctx](ch(v[0])), hex(v[0]),
-      "fvs:" + v[0] + ":0", v[1] + " 无 FVS"));
+      "fvs:" + v[0] + ":0", nm(v[0]).p + " 无 FVS"));
     FVS.forEach((f, i) => {
       tr.appendChild(cell(CTX[state.ctx](ch(v[0]) + ch(f)),
         hex(v[0]) + " " + hex(f),
-        "fvs:" + v[0] + ":" + (i + 1), v[1] + " + FVS" + (i + 1)));
+        "fvs:" + v[0] + ":" + (i + 1), nm(v[0]).p + " + FVS" + (i + 1)));
     });
     tb.appendChild(tr);
   });
@@ -648,6 +748,114 @@ function updateInput(){
   });
 }
 
+/* ---------------- ⑥ 连字测试：辅音 × 元音 ---------------- */
+/* 上下文按「辅音与元音各自的位置」给，这是教材的读法：
+     独立  辅 + 元                  辅上形(init) + 元下形(fina)
+     上形  辅 + 元 + ZWJ            辅上形 + 元中形
+     中形  ZWJ + 辅 + 元 + ZWJ      辅中形 + 元中形
+     下形  ZWJ + 辅 + 元            辅中形 + 元下形
+   ⚠ 串首不要放 ZWNJ/ZWJ —— 渲染器会补一个 U+25CC「孤立组合符」虚线圆，
+     看着像多出来一个字。要断就在两字之间断。
+   实测（Noto，ᠨ+ᠠ）：
+     c+v+ZWJ      → N.init  A.medi
+     ZWJ+c+v+ZWJ  → N.medi  A.medi
+     ZWJ+c+v      → N.medi  A.fina
+     裸 c+v       → N.init  A.fina
+   —— 不是把整对套同一个 CTX，那样辅音和元音位置永远同进同退。 */
+const LIGCTX = {
+  iso:  (c, v) => c + v,
+  init: (c, v) => c + v + ZWJ,
+  medi: (c, v) => ZWJ + c + v + ZWJ,
+  fina: (c, v) => ZWJ + c + v
+};
+
+function buildLig(){
+  const T = document.getElementById("ligTable");
+  T.innerHTML = "";
+  const ctx = LIGCTX[state.ligCtx] || LIGCTX.medi;
+
+  const thead = document.createElement("thead");
+  const hr = document.createElement("tr");
+  const c0 = document.createElement("th");
+  c0.innerHTML = '辅音 × 元音<span class="thsub">键位 · 鲍培</span>';
+  hr.appendChild(c0);
+  VOWELS.forEach(v => {
+    const th = document.createElement("th");
+    th.title = nm(v[0]).p + "　键 " + nm(v[0]).k + "　U+" + hex(v[0]);
+    /* 表头里的单字也用同一套上下文，否则看表头和看格子是两种形态 */
+    th.innerHTML = '<span class="gl hglyph" lang="mn-Mong">'
+      + CTX[state.ligCtx](ch(v[0])) + "</span>" + headName(v[0]);
+    hr.appendChild(th);
+  });
+  thead.appendChild(hr);
+  T.appendChild(thead);
+
+  const tb = document.createElement("tbody");
+  CONS.forEach(([cc]) => {
+    const tr = document.createElement("tr");
+    const th = document.createElement("th");
+    th.title = nm(cc).p + "　键 " + nm(cc).k + "　U+" + hex(cc);
+    th.innerHTML = '<span class="gl hglyph" lang="mn-Mong">'
+      + CTX[state.ligCtx](ch(cc)) + "</span>" + headName(cc);
+    tr.appendChild(th);
+
+    VOWELS.forEach(([vc]) => {
+      const td = document.createElement("td");
+      td.className = "cell ligcell";
+
+      const f = document.createElement("span");
+      f.className = "gl lig-fuse";
+      f.lang = "mn-Mong";
+      f.textContent = ctx(ch(cc), ch(vc));
+
+      /* 对照物固定为「两字各自独立」，不跟着上下文变 ——
+         否则一换上下文，参照系也跟着动，等于没比。
+
+         这里**不用 ZWNJ 拼一串**，而是把两个字放进两个 span：
+         ZWNJ 在多数字体里确实能断开（Qimed: U1828_ISOL + U1820_ISOL），
+         但 Qimed 这类长字形即使中间隔了空格，墨迹仍会碰到一起，
+         看上去像连着的。拆成两段各自成形，再给一个真实的 CSS 间距，
+         无论哪支字体都不会再粘上。 */
+      const ref = document.createElement("div");
+      ref.className = "lig-ref";
+      [ch(cc), ch(vc)].forEach(t => {
+        const sp = document.createElement("span");
+        sp.className = "gl lig-sep";
+        sp.lang = "mn-Mong";
+        sp.textContent = t;
+        ref.appendChild(sp);
+      });
+
+      /* 两个 .gl 都是 writing-mode:vertical-lr 的块，直接塞进 td 会各自贴左边；
+         包一层 flex 列，才能居中，也让虚线分隔能拉满整格 */
+      const box = document.createElement("div");
+      box.className = "ligbox";
+      box.appendChild(f);
+      box.appendChild(ref);
+      td.appendChild(box);
+
+      const label = nm(cc).p + " + " + nm(vc).p;
+      /* 宽度提示走 widthNote()（两字中形之和 vs 连写），**不能**拿这一格的
+         断开版去量 —— 实测浏览器会给 ZWNJ 额外加一段前进量
+         （Noto 100px 字号下多出约 59px），拿它比出来的差值全是噪声。 */
+      td.addEventListener("mouseenter", () => {
+        if (td.dataset.w) return;
+        td.dataset.w = "1";
+        td.title = label + "　U+" + hex(cc) + " " + hex(vc) + "\n"
+          + widthNote(cc, vc);
+      });
+
+      const key = "lig:" + cc + "-" + vc;
+      td.addEventListener("click", () => toggleMark(td, key, label));
+      if (marks.has(key)) td.classList.add("marked");
+
+      tr.appendChild(td);
+    });
+    tb.appendChild(tr);
+  });
+  T.appendChild(tb);
+}
+
 /* ---------------- 交互 ---------------- */
 function setCtx(k){
   state.ctx = k;
@@ -657,7 +865,9 @@ function setCtx(k){
   buildFvs();
 }
 
-function rebuildAll(){ buildPos(); buildVowel(); buildLoan(); buildFvs(); updateInput(); }
+function rebuildAll(){
+  buildPos(); buildVowel(); buildLoan(); buildFvs(); buildLig(); updateInput();
+}
 
 /* =====================================================================
    字体表 —— 本页唯一要维护的字体清单
@@ -944,6 +1154,15 @@ document.querySelectorAll(".ctx2").forEach(b =>
     b.classList.add("on");
     updateInput();
   }));
+
+/* 连字测试自己的上下文切换：只重建第 6 节，别把整页拖一遍 */
+document.querySelectorAll(".ctx3").forEach(b =>
+  b.addEventListener("click", () => {
+    document.querySelectorAll(".ctx3").forEach(x => x.classList.remove("on"));
+    b.classList.add("on");
+    state.ligCtx = b.dataset.ligctx;
+    buildLig();
+  }));
 document.getElementById("inp").addEventListener("input", updateInput);
 
 /* ---------------- 启动 ---------------- */
@@ -978,6 +1197,7 @@ document.getElementById("inp").addEventListener("input", updateInput);
   }
 
   document.querySelector('.ctx[data-ctx="medi"]').classList.add("on");
+  document.querySelector('.ctx3[data-ligctx="medi"]').classList.add("on");
   document.querySelector('.ctx2[data-ctx="raw"]').classList.add("on");
 
   rebuildAll();
