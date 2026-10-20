@@ -590,7 +590,7 @@ document.getElementById('fontSel').addEventListener('change', function(e){
       (function(){ try { return document.fonts.check('16px "' + fam + '"'); }
                     catch(x){ return false; } })()) : true;
   var hint = document.getElementById('hint');
-  hint.textContent = ok ? '点击任意键可复制该字符'
+  hint.textContent = ok ? '点字母键看它的变体，点其它键复制字符'
                         : '⚠ 该字体未安装，浏览器已回退';
   hint.style.color = ok ? '' : 'var(--red)';
 });
