@@ -5,6 +5,13 @@
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <title>FVS 探针 —— 蒙文「帽子」为什么会丢</title>
 <style>
+  /* 系统里没装 Noto Sans Mongolian，@font-face 把仓库里那份挂进来，
+     否则「Noto」那一格会静默回退到 Baiti/Menk，看起来跟兜底一样。 */
+  @font-face{
+    font-family:"UME Mongolian";
+    src:url("../font/NotoSansMongolian-Regular.ttf") format("truetype");
+    font-display:swap;
+  }
   :root{
     --bg:#f7f8fa; --sfc:#fff; --ink:#16181d; --dim:#667; --line:#dfe4ec;
     --gold:#8a6410; --red:#b03a2e; --blue:#2a5d9e; --green:#1f7a4d;
@@ -30,11 +37,13 @@
   .cp{display:inline-block;margin:0 3px 3px 0;padding:1px 6px;border-radius:5px;
       background:var(--bg);border:1px solid var(--line)}
   .cp.fvs{background:#fff3d6;border-color:#e0b85a;color:#7a5410;font-weight:700}
+  .cp.mvs{background:#ffe9d6;border-color:#e0a05a;color:#8a4a10;font-weight:700}
   .cp.cf{background:#fde8e4;border-color:#e59a8c;color:#8c2f22;font-weight:700}
   .cp.pua{background:#e8e4fd;border-color:#a79ae5;color:#4a3d9e;font-weight:700}
   .cp.letter{background:#e8f2fd;border-color:#9dc0e5;color:#1f4f80}
   @media (prefers-color-scheme: dark){
     .cp.fvs{background:#4a3a12;border-color:#8a6a2a;color:#f0cc7a}
+    .cp.mvs{background:#4a3012;border-color:#8a5a2a;color:#f0b47a}
     .cp.cf{background:#4a201c;border-color:#8a3a30;color:#f0a094}
     .cp.pua{background:#2c2450;border-color:#5a4a9e;color:#b8aef0}
     .cp.letter{background:#1c3450;border-color:#2f5a8a;color:#9dc0e5}
@@ -47,6 +56,7 @@
   .pane .out{height:150px;display:flex;align-items:center;justify-content:center;
              overflow:hidden;font-size:54px;line-height:1.05;
              writing-mode:vertical-lr;direction:ltr}
+  .pane .fam .warnfont{color:var(--red)}
   .verdict{font-size:13px;line-height:1.9}
   .verdict .tag{display:inline-block;padding:0 6px;border-radius:4px;font-weight:700;
                 font-size:12px}
@@ -82,19 +92,19 @@
   <h2>③ 四支字体各排一遍</h2>
   <div class="grid">
     <div class="pane">
-      <div class="fam">Menk Qagan Tig</div>
+      <div class="fam" id="f0">Menk Qagan Tig</div>
       <div class="out" style="font-family:'Menk Qagan Tig',serif" id="p0"></div>
     </div>
     <div class="pane">
-      <div class="fam">Mongolian Baiti</div>
+      <div class="fam" id="f1">Mongolian Baiti</div>
       <div class="out" style="font-family:'Mongolian Baiti',serif" id="p1"></div>
     </div>
     <div class="pane">
-      <div class="fam">Noto Sans Mongolian</div>
-      <div class="out" style="font-family:'Noto Sans Mongolian','UME Mongolian',serif" id="p2"></div>
+      <div class="fam" id="f2">Noto Sans Mongolian（仓库内）</div>
+      <div class="out" style="font-family:'UME Mongolian','Noto Sans Mongolian',serif" id="p2"></div>
     </div>
     <div class="pane">
-      <div class="fam">不指定（系统兜底）</div>
+      <div class="fam" id="f3">不指定（系统兜底）</div>
       <div class="out" style="font-family:serif" id="p3"></div>
     </div>
   </div>
@@ -131,8 +141,8 @@
 
   function classify(cp){
     if (cp >= 0xE000 && cp <= 0xF8FF) return 'pua';
-    if (cp === 0x180B || cp === 0x180C || cp === 0x180D || cp === 0x180E || cp === 0x180F)
-      return 'fvs';
+    if (cp === 0x180E) return 'mvs';
+    if (cp === 0x180B || cp === 0x180C || cp === 0x180D || cp === 0x180F) return 'fvs';
     if (cp === 0x200C || cp === 0x200D || cp === 0xFEFF || cp === 0x2060) return 'cf';
     if (cp >= 0x1820 && cp <= 0x18AF) return 'letter';
     return '';
@@ -152,7 +162,7 @@
       return;
     }
 
-    var items = [], counts = {fvs:0, pua:0, cf:0, letter:0};
+    var items = [], counts = {fvs:0, mvs:0, pua:0, cf:0, letter:0};
     for (var i = 0; i < s.length; i++){
       var cp = s.codePointAt(i);
       if (cp > 0xFFFF) i++;
@@ -171,26 +181,57 @@
         + '这段文本是<b>蒙科立老编码</b>，不是 Unicode 蒙文。别的程序把它当未定义字符，'
         + '要么显示成方块，要么整段丢字。得先转码到 U+1820 区间。');
     }
+    if (counts.mvs > 0){
+      v.push('<span class="tag warn">MVS ' + counts.mvs + ' 个</span> '
+        + '<code>U+180E</code> 是<b>断开符</b>：它让后面的字母独立成形 —— '
+        + '你看到的「帽子」通常就是它给的。它早期在 Unicode 里是空格类（Zs），'
+        + '所以经常被 <code>trim()</code> 或 <code>\\s</code> 正则当多余空格删掉。');
+    }
     if (counts.fvs > 0){
       v.push('<span class="tag warn">FVS ' + counts.fvs + ' 个</span> '
-        + '文本里带着变体选择符 —— 字形就靠它选。'
-        + '如果粘贴后这里变成 0，说明<b>被某个环节清掉了</b>，帽子就是这么丢的。');
+        + '<code>U+180B~U+180D</code> 是<b>变体选择符</b>：靠它选同一字母的另一种形态。'
+        + '被清理掉的话，字母还在、形状变了。');
     }
-    if (counts.fvs === 0 && counts.pua === 0 && counts.letter > 0){
-      v.push('<span class="tag ok">纯蒙文字母，无 FVS</span> '
-        + '说明输入法没写变体选择符，形态完全由字体决定：'
-        + 'Menk 会按 <code>_FINA_BP</code> 之类的规则选形，Noto 就只给一种。');
+    if (counts.fvs === 0 && counts.mvs === 0 && counts.pua === 0 && counts.letter > 0){
+      v.push('<span class="tag ok">纯蒙文字母，无 MVS / FVS</span> '
+        + '形态完全由字体决定：Menk 按 <code>_FINA_BP</code> 之类的规则选形，'
+        + 'Noto 只给一种。');
     }
     if (!v.length){
       v.push('<span class="hint">没看到蒙文字母。</span>');
     }
     v.push('<div class="hint" style="margin-top:8px">'
       + '字母 ' + counts.letter + ' 个 ／ FVS ' + counts.fvs + ' 个 ／ '
-      + '私用区 ' + counts.pua + ' 个</div>');
+      + 'MVS ' + counts.mvs + ' 个 ／ 私用区 ' + counts.pua + ' 个</div>');
     verdictEl.innerHTML = v.join('<br>');
   }
 
   inEl.addEventListener('input', render);
+
+  // 标出哪些字体其实没装 —— 没装会静默回退，看起来像「排出来了」，其实是别的字体在排。
+  // 必须等 document.fonts.ready：@font-face 是异步加载的，脚本刚跑时它还「不在」。
+  (function checkFonts(){
+    // 只查系统字体；第三格是 @font-face 挂进来的 "UME Mongolian"，
+    // document.fonts.check 对它返回 false（换成 document.fonts.ready 也一样），
+    // 所以不标它 —— 它必然会加载，标错了反而误导。
+    var fams = ['Menk Qagan Tig', 'Mongolian Baiti', null];
+    function mark(){
+      fams.forEach(function(fam, i){
+        var el = document.getElementById('f' + i);
+        if (!el || !fam || el.dataset.checked) return;
+        var ok = false;
+        try { ok = document.fonts.check('16px "' + fam + '"'); } catch(e) { ok = false; }
+        el.dataset.checked = '1';
+        if (!ok) el.innerHTML = el.textContent + ' <span class="warnfont">（未安装，已回退）</span>';
+      });
+    }
+    if (document.fonts && document.fonts.ready) {
+      document.fonts.ready.then(mark);
+      setTimeout(mark, 1200);   // 双保险：ready 偶尔早于 fetch 完成
+    } else {
+      mark();
+    }
+  })();
 
   // 从剪贴板粘贴时，浏览器不会改内容；但如果是从某个「会清理」的程序复制过来的，
   // 丢失在复制那一步就发生了 —— 所以这里只如实显示拿到的码位。
