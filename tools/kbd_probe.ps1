@@ -1,3 +1,19 @@
+# kbd_probe.ps1  --  show what each key produces under an installed keyboard layout
+#
+# Why: Mongolian layouts put FVS / MVS on modifier combos, and the positions differ
+#      between layouts. Guessing is useless -- ask the OS.
+#
+# How: LoadKeyboardLayout + ToUnicodeEx (wFlags 0x04 = do not touch key state),
+#      walking VK 8..254 across five modifier states.
+#
+# Usage:
+#     powershell -NoProfile -ExecutionPolicy Bypass -File tools\kbd_probe.ps1
+#     $env:KBD_WANT = '1820,182C,180E'        # optional: only these codepoints
+#     powershell -NoProfile -ExecutionPolicy Bypass -File tools\kbd_probe.ps1
+#
+# Note: keep this file ASCII-only. Windows PowerShell 5.1 reads .ps1 without a BOM
+#       as ANSI, so Chinese comments get mangled and the whole script fails to parse.
+
 $ErrorActionPreference = 'Stop'
 
 Add-Type -TypeDefinition @"
@@ -53,7 +69,17 @@ $states = @(
     @{ L = 'altgr';     S = $false; C = $true;  A = $true  }
 )
 
-$want = 0x180B, 0x180C, 0x180D, 0x180E, 0x180F, 0x1820
+# default: the whole Mongolian block; KBD_WANT narrows it
+$want = 0x1800..0x18AF
+if ($env:KBD_WANT) {
+    $parsed = @()
+    foreach ($part in ($env:KBD_WANT -split '[,;\s]+')) {
+        if ($part -match '^(0x)?([0-9A-Fa-f]{2,6})$') {
+            $parsed += [Convert]::ToInt32($matches[2], 16)
+        }
+    }
+    if ($parsed.Count -gt 0) { $want = $parsed }
+}
 
 foreach ($lay in $layouts) {
     $hkl = [KbdProbe]::LoadKeyboardLayout($lay.Id, 0x00000001)
@@ -62,6 +88,7 @@ foreach ($lay in $layouts) {
     foreach ($s in $states) {
         $ks = KeyState $s.S $s.C $s.A
         foreach ($vk in 8..254) {
+            # skip the modifier keys themselves
             if ($vk -eq 0x10 -or $vk -eq 0x11 -or $vk -eq 0x12 -or $vk -eq 0x14) { continue }
             if ($vk -ge 0x5B -and $vk -le 0x5D) { continue }
             $res = [KbdProbe]::Probe($hkl, [uint32]$vk, $ks)
