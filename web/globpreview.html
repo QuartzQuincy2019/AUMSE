@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="zh-CN">
 <head>
 <meta charset="utf-8">
@@ -257,6 +257,46 @@ thead th .hglyph{margin:2px auto 5px}
   .head-in #fstat{display:none}   /* 窄屏上字体状态先让位 */
 }
 
+  /* ---------- 音节测试（第 2 节） ---------- */
+  .subh{font-size:14px;font-weight:600;margin:20px 0 8px;color:var(--fg)}
+  .subh:first-of-type{margin-top:10px}
+  .sylbar{gap:14px;flex-wrap:wrap;margin:0 0 10px}
+  .sylbar label{display:flex;align-items:center;gap:6px;font-size:12.5px;
+                color:var(--fg-3);white-space:nowrap}
+  .sylbar select{font:12.5px/1.3 inherit;padding:3px 6px;border-radius:6px;
+                 border:1px solid var(--line);background:var(--bg-soft);
+                 color:var(--fg);max-width:100%}
+  .sylnow{font-size:12px;color:var(--fg-3)}
+  .sylgrid{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));
+           gap:10px;margin:0 0 8px}
+  .sylcell{border:1px solid var(--line);border-radius:10px;
+           background:var(--bg-soft);padding:10px 6px 8px;text-align:center;
+           display:flex;flex-direction:column;align-items:center;min-height:184px}
+  .sylcell .t{font-size:11.5px;line-height:1.5;color:var(--fg-3);margin-bottom:6px}
+  .sylcell .sg{display:inline-block;height:auto;min-height:104px;
+    font-family:var(--mn-font,"UME Mongolian"),serif;
+    font-size:calc(36px * var(--mn-scale,1));line-height:1;
+    writing-mode:vertical-lr;direction:ltr;text-orientation:mixed}
+  body.h-mode .sylcell .sg{writing-mode:horizontal-tb;height:auto;min-height:44px}
+  .sylcell .cp2{font-family:var(--mono);font-size:10px;
+                color:var(--fg-3);margin-top:6px;letter-spacing:.02em}
+
+  /* 连字格在窄屏不能被压成一条缝，宁可横向滚 */
+  @media (max-width:900px){
+    /* 固定布局会按容器均分列宽，把格子压到比内容还窄 —— 内容就会压到相邻格上。
+       窄屏改成自动布局 + 内容宽度，装不下让 .tscroll 横向滚。 */
+    #ligTable{table-layout:auto;width:auto;min-width:max-content}
+    #ligTable th:first-child{width:auto;min-width:92px}
+    #ligTable .ligbox{min-width:86px}
+    #ligTable td.cell{padding:6px 3px}
+  }
+  @media (max-width:640px){
+    .sylgrid{grid-template-columns:repeat(2,1fr);gap:8px}
+    .sylcell .sg{height:96px;font-size:calc(30px * var(--mn-scale,1))}
+    .sylbar{gap:8px;row-gap:8px}
+    .sylbar label{flex:1 1 100%;justify-content:space-between}
+    .sylbar select{flex:1 1 auto;min-width:0}
+  }
 </style>
 </head>
 <body>
@@ -293,32 +333,40 @@ thead th .hglyph{margin:2px auto 5px}
   </p>
   <div class="tscroll"><table class="pos-t" id="posTable"></table></div>
 
-  <h2><span class="n">2</span>元音组合矩阵<span class="tag-l">8 × 8，行 × 列</span></h2>
+  <h2><span class="n">2</span>音节测试<span class="tag-l">CV · CVC · CVV</span></h2>
   <p class="lead">
-    行是前一个元音、列是后一个元音，单元格里渲染这一对。
-    用下面的「上下文」切换，看同一对处在不同位置时是否长出不同字形。
-    <b>悬停能看到这一对的实际行宽</b>（与两字各自中形的行宽之和比较）—— 那只是线索，不是判据。
+    三种音节各成一个模块，<b>下拉互不影响</b>；字形跟着顶栏的字体走。
   </p>
-  <div class="ctl" style="margin:0 0 10px">上下文
-    <button class="ctx" data-ctx="iso">独立</button>
-    <button class="ctx" data-ctx="init">上形</button>
-    <button class="ctx" data-ctx="medi">中形</button>
-    <button class="ctx" data-ctx="fina">下形</button>
+
+  <h3 class="subh">① CV　一个辅音 + 一个元音<span class="thsub">例词 tabu（五）</span></h3>
+  <div class="ctl sylbar">
+    <label>辅音<select id="cvC"></select></label>
+    <label>元音<select id="cvV"></select></label>
+    <span class="sylnow" id="cvNow"></span>
   </div>
-  <div class="tscroll"><table id="vowelTable"></table></div>
-  <p class="hint">点任意单元格可以打标记（✱），用来记下你怀疑「这里生成了新字形」的组合；顶部可复制标记清单。</p>
+  <div class="sylgrid" id="cvGrid"></div>
+
+  <h3 class="subh">② CVC　音节末辅音<span class="thsub">例词 monggol（蒙古）</span></h3>
+  <div class="ctl sylbar">
+    <label>辅音<select id="cvcC"></select></label>
+    <label>元音<select id="cvcV"></select></label>
+    <label>音节末辅音<select id="cvcC2"></select></label>
+  </div>
+  <div class="sylgrid" id="cvcGrid"></div>
+
+  <h3 class="subh">③ CVV　音节末元音<span class="thsub">例词 taulai（兔子）</span></h3>
+  <div class="ctl sylbar">
+    <label>辅音<select id="cvvC"></select></label>
+    <label>元音 V1<select id="cvvV"></select></label>
+    <label>音节末元音 V2<select id="cvvV2"></select></label>
+  </div>
+  <div class="sylgrid" id="cvvGrid"></div>
 
   <h2><span class="n">3</span>借词辅音<span class="tag-l">阿礼嘎礼字母</span></h2>
   <p class="lead">
-    鲍培表第二栏的 f k h lh dz ts zh ch sh rh 是<b>借词辅音</b>，
-    为转写汉语、藏语、梵语借词而设。
-    其中 <b>zh / ch / sh / rh 四个是「基字 + 下加的 r」（ᠷ <code>U+1837</code>）</b> ——
-    字形上看就是基字下面再接一笔 r 的转角，依次是
-    <b>Ƶ <code>1841</code></b>、<b>Ç <code>1842</code></b>、
-    <b>Š <code>1831</code></b>、<b>Ʒ <code>183F</code></b>。
-    <b>lh 例外</b>，它是「l + 小 h」（<code>U+1840</code>）。
-    注意别拿预组合的 <code>1841 ZHI</code>／<code>1842 CHI</code>／<code>183F ZRA</code>
-    当这四个字 —— 它们都比手写稿<b>少了下面那笔 r</b>。
+    鲍培表第二栏的 f k h lh dz ts 是<b>借词辅音</b>，为转写汉语、藏语、梵语借词而设。
+    <b>zh / ch / sh / rh 暂时隐藏</b> —— 这四个「基字 + 下加的 r」的写法还有疑问，
+    核对完教材原表再放回来。
   </p>
   <div class="tscroll"><table id="loanTable"></table></div>
 
@@ -461,13 +509,11 @@ const LOANS = [
   [[0x1839],        "f",  "FA"],
   [[0x183A],        "k",  "KA"],
   [[0x183B],        "h",  "KHA"],
-  [[0x1840],        "lh", "LHA = l + 小 h"],
   [[0x183D],        "dz", "ZA"],
   [[0x183C],        "ts", "TSA"],
-  [[0x1841, R],     "zh", "Ƶ + 下加 r"],
-  [[0x1842, R],     "ch", "Ç + 下加 r"],
-  [[0x1831, R],     "sh", "š + 下加 r"],
-  [[0x183F, R],     "rh", "Ʒ + 下加 r"]
+  /* zh / ch / sh / rh 暂时隐藏：这四个「基字 + 下加 r」的写法存疑，
+     核对完教材原表再放回来。 */
+  [[0x1840],        "lh", "LHA = l + 小 h"]
 ];
 
 const CONS = [
@@ -621,43 +667,148 @@ function buildPos(){
   T.appendChild(tb);
 }
 
-/* ---------------- ② 元音组合矩阵 ---------------- */
-function buildVowel(){
-  const T = document.getElementById("vowelTable");
-  T.innerHTML = "";
-  const thead = document.createElement("thead");
-  const hr = document.createElement("tr");
-  const c0 = document.createElement("th");
-  c0.textContent = "行 × 列";
-  hr.appendChild(c0);
-  VOWELS.forEach(v => {
-    const th = document.createElement("th");
-    th.title = nm(v[0]).p + "　键 " + nm(v[0]).k + "　U+" + hex(v[0]);
-    th.innerHTML = glyphHtml(v[0]) + headName(v[0])
-      + '<span class="cp">U+' + hex(v[0]) + "</span>";
-    hr.appendChild(th);
-  });
-  thead.appendChild(hr);
-  T.appendChild(thead);
+/* ---------------- ② 音节测试：CV / CVC / CVV ---------------- */
+/* 三个模块各有自己的下拉，互不影响；字形统一走顶栏的 --mn-font */
+/* ᠩ（ng）只作音节末辅音，不作词首 —— 所以初始辅音表里没有它 */
+const SYL_CONS = [
+  [0x1828,'n'],[0x182A,'b'],[0x182B,'p'],[0x182C,'q·k'],
+  [0x182D,'γ·g'],[0x182E,'m'],[0x182F,'l'],[0x1830,'s'],[0x1831,'š'],
+  [0x1832,'t'],[0x1833,'d'],[0x1834,'č'],[0x1835,'ǰ'],[0x1836,'y'],
+  [0x1837,'r'],[0x1838,'w'],[0x1839,'f'],[0x183A,'k'],[0x183B,'kh'],
+  [0x183C,'c'],[0x183D,'z'],[0x183E,'h'],[0x183F,'ž'],[0x1840,'lh'],
+  [0x1841,'zh'],[0x1842,'ch']
+];
+/* 音节末辅音可以多一个 ᠩ */
+const SYL_FIN = [[0x1829,'ng']].concat(SYL_CONS);
+const SYL_VOW = [
+  [0x1820,'a'],[0x1821,'e'],[0x1822,'i'],[0x1823,'o'],
+  [0x1824,'u'],[0x1825,'ö'],[0x1826,'ü'],[0x1827,'ē']
+];
 
-  const tb = document.createElement("tbody");
-  VOWELS.forEach(a => {
-    const tr = document.createElement("tr");
-    const th = document.createElement("th");
-    th.title = nm(a[0]).p + "　键 " + nm(a[0]).k + "　U+" + hex(a[0]);
-    th.innerHTML = glyphHtml(a[0]) + headName(a[0])
-      + '<span class="cp">U+' + hex(a[0]) + "</span>";
-    tr.appendChild(th);
-    VOWELS.forEach(b => {
-      const td = cell(CTX[state.ctx](ch(a[0]) + ch(b[0])),
-        hex(a[0]) + " " + hex(b[0]),
-        "pair:" + a[0] + "-" + b[0], nm(a[0]).p + " + " + nm(b[0]).p);
-      td.title = nm(a[0]).p + " + " + nm(b[0]).p + "　" + widthNote(a[0], b[0]);
-      tr.appendChild(td);
+function sylFill(sel, list, withNone){
+  if (!sel) return;
+  sel.replaceChildren();
+  if (withNone){
+    const o = document.createElement("option");
+    o.value = ""; o.textContent = "无";
+    sel.appendChild(o);
+  }
+  for (const [cp, name] of list){
+    const o = document.createElement("option");
+    o.value = String(cp); o.textContent = name;
+    sel.appendChild(o);
+  }
+}
+
+const SYL_ZWJ = "\u200D";
+const SYL_NAME = { iso:"独立", init:"词首", medi:"词中", fina:"词尾" };
+
+function sylCp(str){
+  return Array.from(str).map(c => c.codePointAt(0).toString(16).toUpperCase())
+    .filter(h => h !== "200D" && h !== "200C").join(" ");
+}
+
+function sylCell(title, str){
+  const d = document.createElement("div");
+  d.className = "sylcell";
+  const t1 = document.createElement("div");
+  t1.className = "t"; t1.textContent = title;
+  const g = document.createElement("span");
+  g.className = "sg"; g.lang = "mn-Mong"; g.textContent = str;
+  const cp = document.createElement("div");
+  cp.className = "cp2"; cp.textContent = sylCp(str);
+  d.appendChild(t1); d.appendChild(g); d.appendChild(cp);
+  return d;
+}
+
+function sylRead(id){
+  const el = document.getElementById(id);
+  return (el && el.value) ? String.fromCodePoint(Number(el.value)) : null;
+}
+
+/* ① CV：辅音与元音各自换位置 */
+function renderCv(){
+  const C = sylRead("cvC"), V = sylRead("cvV");
+  const box = document.getElementById("cvGrid");
+  if (!C || !V || !box) return;
+  const forms = {
+    iso:  C + V,
+    init: C + V + SYL_ZWJ,
+    medi: SYL_ZWJ + C + V + SYL_ZWJ,
+    fina: SYL_ZWJ + C + V
+  };
+  box.replaceChildren();
+  ["iso","init","medi","fina"].forEach(k => box.appendChild(sylCell(SYL_NAME[k], forms[k])));
+  const now = document.getElementById("cvNow");
+  if (now) now.textContent = "当前：" + C + V + "　U+" + sylCp(C + V).replace(" ", " U+");
+}
+
+/* ② CVC：元音恒取 medi，首尾两个辅音随位置变 */
+function renderCvc(){
+  const C = sylRead("cvcC"), V = sylRead("cvcV"), C2 = sylRead("cvcC2");
+  const box = document.getElementById("cvcGrid");
+  if (!C || !V || !box) return;
+  box.replaceChildren();
+  if (!C2){
+    const p = document.createElement("p");
+    p.className = "hint"; p.textContent = "选一个音节末辅音。";
+    box.appendChild(p);
+    return;
+  }
+  const forms = {
+    iso:  C + V + C2,
+    init: C + V + C2 + SYL_ZWJ,
+    medi: SYL_ZWJ + C + V + C2 + SYL_ZWJ,
+    fina: SYL_ZWJ + C + V + C2
+  };
+  ["iso","init","medi","fina"].forEach(k => box.appendChild(sylCell(SYL_NAME[k], forms[k])));
+}
+
+/* ③ CVV：V1 恒取 medi */
+function renderCvv(){
+  const C = sylRead("cvvC"), V = sylRead("cvvV"), V2 = sylRead("cvvV2");
+  const box = document.getElementById("cvvGrid");
+  if (!C || !V || !box) return;
+  box.replaceChildren();
+  if (!V2){
+    const p = document.createElement("p");
+    p.className = "hint"; p.textContent = "选一个音节末元音。";
+    box.appendChild(p);
+    return;
+  }
+  const forms = {
+    iso:  C + V + V2,
+    init: C + V + V2 + SYL_ZWJ,
+    medi: SYL_ZWJ + C + V + V2 + SYL_ZWJ,
+    fina: SYL_ZWJ + C + V + V2
+  };
+  ["iso","init","medi","fina"].forEach(k => box.appendChild(sylCell(SYL_NAME[k], forms[k])));
+}
+
+function buildSyllables(){
+  sylFill(document.getElementById("cvC"),  SYL_CONS, false);
+  sylFill(document.getElementById("cvV"),  SYL_VOW,  false);
+  sylFill(document.getElementById("cvcC"), SYL_CONS, false);
+  sylFill(document.getElementById("cvcV"), SYL_VOW,  false);
+  sylFill(document.getElementById("cvcC2"),SYL_FIN,  true);
+  sylFill(document.getElementById("cvvC"), SYL_CONS, false);
+  sylFill(document.getElementById("cvvV"), SYL_VOW,  false);
+  sylFill(document.getElementById("cvvV2"),SYL_VOW,  true);
+  /* 默认：CV = b+u（tabu）、CVC = m+o+ng（monggol）、CVV = l+a+i（taulai） */
+  const set = (id, v) => { const el = document.getElementById(id); if (el) el.value = String(v); };
+  set("cvC", 0x182A);  set("cvV", 0x1824);
+  set("cvcC", 0x182E); set("cvcV", 0x1823); set("cvcC2", 0x1829);
+  set("cvvC", 0x182F); set("cvvV", 0x1820); set("cvvV2", 0x1822);
+  ["cvC","cvV","cvcC","cvcV","cvcC2","cvvC","cvvV","cvvV2"].forEach(id => {
+    const el = document.getElementById(id);
+    if (el) el.addEventListener("change", ev => {
+      const n = id.slice(0, 3);
+      if (n === "cvC" || n === "cvV") renderCv();
+      if (n === "cvc") renderCvc();
+      if (n === "cvv") renderCvv();
     });
-    tb.appendChild(tr);
   });
-  T.appendChild(tb);
+  renderCv(); renderCvc(); renderCvv();
 }
 
 /* ---------------- ②b 借词辅音 ---------------- */
@@ -861,12 +1012,11 @@ function setCtx(k){
   state.ctx = k;
   document.querySelectorAll(".ctx").forEach(b =>
     b.classList.toggle("on", b.dataset.ctx === k));
-  buildVowel();
   buildFvs();
 }
 
 function rebuildAll(){
-  buildPos(); buildVowel(); buildLoan(); buildFvs(); buildLig(); updateInput();
+  buildPos(); buildLoan(); buildSyllables(); buildFvs(); buildLig(); updateInput();
 }
 
 /* =====================================================================
@@ -1188,17 +1338,19 @@ document.getElementById("inp").addEventListener("input", updateInput);
   buildFontOptions();
 
   /* 3) 默认用内置字体 */
-  document.getElementById("fontsel").value = "UME Mongolian";
-  applyFont("UME Mongolian");
+  document.getElementById("fontsel").value = "Menk Qimed Tig";
+  applyFont("Menk Qimed Tig");
 
   if (!builtinOk){
     st.textContent = "内置字体未加载";
     st.style.color = "var(--red)";
   }
 
-  document.querySelector('.ctx[data-ctx="medi"]').classList.add("on");
-  document.querySelector('.ctx3[data-ligctx="medi"]').classList.add("on");
-  document.querySelector('.ctx2[data-ctx="raw"]').classList.add("on");
+  /* 默认按压：元音组合矩阵那一节已换成音节测试，.ctx 可能不存在 */
+  const mark = (sel, cls) => { const el = document.querySelector(sel); if (el) el.classList.add(cls); };
+  mark('.ctx[data-ctx="medi"]', "on");
+  mark('.ctx3[data-ligctx="medi"]', "on");
+  mark('.ctx2[data-ctx="raw"]', "on");
 
   rebuildAll();
 })();

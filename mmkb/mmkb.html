@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="zh-CN">
 <head>
 <meta charset="utf-8">
@@ -68,7 +68,7 @@
   .kbscroll{overflow-x:auto;overflow-y:hidden;padding:2px 0 8px;
             scrollbar-width:thin}
   .kb{--u:46px;display:flex;flex-direction:column;gap:7px;
-      width:100%;box-sizing:border-box;   /* 让 padding 与边框算进 100% 里 */
+      width:max-content;min-width:100%;box-sizing:border-box;   /* 键面比容器宽时，灰底要跟着长，否则灰底只盖住一部分 */
       padding:14px;border:1px solid var(--line);border-radius:14px;background:var(--bg)}
   /* 每行默认不折行：装不下就交给 .kbscroll 横向滚；
      只有「只看蒙文键」的紧凑模式才折行。 */
@@ -160,6 +160,19 @@
   .key.dead{opacity:.45}
   .key .cap{font:10px/1 system-ui,sans-serif;color:var(--dim);opacity:.8}
 
+
+  /* ---------- 字形规律：图片并排 ---------- */
+  .figrow{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin:12px 0 4px}
+  .figrow figure{margin:0}
+  .figrow img{width:100%;height:auto;display:block;border:1px solid var(--line);
+              border-radius:10px;background:#fff}
+  .figrow figcaption{font-size:11.5px;color:var(--dim);margin-top:5px;line-height:1.6}
+  .figrow.one{grid-template-columns:1fr}
+  .figrow.one img{max-width:640px;margin:0 auto}
+  @media (max-width:820px){ .figrow{grid-template-columns:1fr} }
+  .ok{color:var(--ok);font-weight:700}
+  .half{color:var(--warn);font-weight:700}
+
   /* ---------- 表格 ---------- */
   table{width:100%;border-collapse:collapse;font-size:12.5px}
   th,td{padding:6px 8px;border-bottom:1px solid var(--line);text-align:left;
@@ -201,6 +214,20 @@
     .bar{gap:9px}
     .bar input[type=range]{width:130px}
     .pvl select,#fontSel{max-width:170px}
+    /* label 里的中文不要逐字竖排 */
+    .bar label,.bar span{white-space:nowrap;min-width:0}
+    .bar label{flex-wrap:wrap;row-gap:6px}
+    .bar label > select{flex:0 1 auto;min-width:0;max-width:100%}
+    select,#fontSel{max-width:100%}
+    .card,.kbscroll{max-width:100%}
+    /* 手机上每个下拉各占一行，避免标签被挤成竖排 */
+    @media (max-width:560px){
+      .bar label{flex:1 1 100%;justify-content:space-between}
+      .bar label > select{flex:1 1 auto;min-width:0;max-width:calc(100% - 74px)}
+    }
+    .bar{row-gap:10px}
+    .note,.card p{overflow-wrap:anywhere}
+    .figrow figcaption{font-size:11px}
     th,td{padding:5px 5px;font-size:12px}
     .mnc{font-size:19px}
     .pv{height:220px}
@@ -210,9 +237,9 @@
 </head>
 <body>
 
-<h1>微软蒙文输入法 · 键位图</h1>
+<h1>蒙文输入法 · 键位图</h1>
 <p class="sub">
-  依据 Microsoft Traditional Mongolian IME（<code>KLID 00000850</code>）实测导出，与《微软蒙古文输入法使用指南》对照。<br>
+  三种蒙文布局实测导出（工具条「键位表」切换），与《微软蒙古文输入法使用指南》对照。<br>
   下档 = 直接按；上档 = 加 <b>Shift</b>。金色底 = 该键能出蒙文。
 </p>
 
@@ -248,6 +275,13 @@
     <button class="btn" id="tgShift">显示上档</button>
     <button class="btn" id="tgOnly">只看蒙文键</button>
     <button class="btn" id="tgTheme" title="自动跟随系统 / 钉成浅色 / 钉成深色">主题：自动</button>
+    <label>键位表
+      <select id="layoutSel" title="本机装了两套蒙文键盘布局，W 与 C 两个键的映射不同">
+        <option value="b2">Microsoft 传统蒙古语(标准) TMS</option>
+        <option value="std">微软 08500850（o=W u=V ö=O ü=U wa=Shift+W）</option>
+        <option value="d5">IME F0D50850（o=O u=U ö=Q ü=W wa=V）</option>
+      </select>
+    </label>
     <label>形态
       <select id="posSel">
         <option value="auto">自动</option>
@@ -311,6 +345,104 @@
   </div>
 </div>
 
+<div class="card" id="shapes">
+  <h2>字形规律（学习笔记 + 实测核对）</h2>
+
+  <p class="note">
+    2026-10-27 学习笔记 + 实测核对（三支字体各跑一遍 HarfBuzz）。
+    记号：<span class="ok">✓</span> 成立 · <span class="half">△</span> 分字体 · ✗ 不成立。
+  </p>
+
+  <table>
+    <thead><tr><th style="width:30%">规律</th><th style="width:8%">核对</th><th>实测</th></tr></thead>
+    <tbody>
+      <tr><td>元音三分：阳性 <code>a o u</code>／阴性 <code>e ö ü</code>／中性 <code>i</code></td>
+          <td class="c"><span class="ok">✓</span></td>
+          <td>与元音表一致。<code>i</code> 两边都能接，所以它既不算阳性也不算阴性</td></tr>
+
+      <tr><td>多数辅音接 <code>o/u/ö/ü</code> 时，medi 与 fina 同形</td>
+          <td class="c"><span class="half">△</span></td>
+          <td><b>h 三支字体都是例外；g 只在 Baiti / Qimed 例外</b>
+              （Noto 的 g 接 o/u/ö/ü 同取 <code>GO</code> 类）</td></tr>
+
+      <tr><td>多数辅音接 <code>a/e</code> 时，isol / init / medi / fina 四形全同</td>
+          <td class="c"><span class="ok">✓</span></td>
+          <td>三支字体一致：27 个辅音里只有 <code>h</code>、<code>g</code> 不同形</td></tr>
+
+      <tr><td><code>h/g</code> 接 ö/ü 时发生明显的字形合并</td>
+          <td class="c"><span class="half">△</span></td>
+          <td>Noto 是真连字（<code>h+ö</code> → <code>u182C_u1825.GO</code>）；
+              Baiti / Qimed 不合字，改用专用形</td></tr>
+
+      <tr><td><code>h/g</code> 接阳性元音时只差 2 个字点</td>
+          <td class="c"><span class="ok">✓</span></td>
+          <td>Qimed 最清楚：h 与 g 接同一元音取<b>同一形状类</b>
+              （<code>MA</code>／<code>SS</code>／<code>GD</code>），差别只在基字</td></tr>
+
+      <tr><td><code>ha</code> 与 <code>he</code> 不同形</td>
+          <td class="c"><span class="ok">✓</span></td>
+          <td>Noto：<code>ha</code> = <code>H.init</code>+<code>A.fina</code> 两字，
+              <code>he</code> = <code>u182C_u1821.GAa.isol</code> 一字</td></tr>
+
+      <tr><td>音节末硬辅音 <code>n</code> 的词中形 = 1 个字牙，与 <code>a</code> 的词中形一样</td>
+          <td class="c"><span class="ok">✓</span></td>
+          <td><code>u1828.<b>A</b>.medi</code> 与 <code>u1820.<b>A</b>.medi</code>
+              —— 形状类名都是 <code>A</code></td></tr>
+    </tbody>
+  </table>
+
+  <div class="note" style="margin-top:14px">
+    <b>h 与 g 的 medi 形状，逐个元音看</b>（形状类由 HarfBuzz 给出）<br>
+    <code>h</code>：a <b>H</b> · e <b>GA</b> · i <b>GI</b> · o <b>H</b> · u <b>H</b> · ö <b>GO</b> · ü <b>GO</b><br>
+    <code>g</code>：a <b>GA</b> · e <b>GA</b> · i <b>GI</b> · o <b>GO</b> · u <b>GO</b> · ö <b>GO</b> · ü <b>GO</b><br>
+    <code>h</code> 接 a/o/u 都用 <code>H</code>（笔记里说的「退化成 2 个字牙」），
+    接 e 变 <code>GA</code>、ö/ü 变 <code>GO</code>；<code>g</code> 接阳性元音就合字了，比 <code>h</code> 更早变形。
+  </div>
+
+  <div class="note" style="margin-top:12px">
+    <b>一个音节可以是</b>：辅音 + 元音；辅音 + 元音 + <b>音节末辅音</b>（末辅音分软硬）；
+    辅音 + 元音 + <b>音节末元音</b>（两个元音书面上合成双元音）。上面的 ①②③ 三段就是这三种。
+  </div>
+
+  <div class="figrow">
+    <figure>
+      <img src="img/ha_ga.png" alt="ha 行与 ga 行在四种位置、七个元音前的写法对比">
+      <figcaption><b>ha / ga 行写法对比</b>：纵轴是原型 / 词首 / 词中 / 词尾，
+        横轴是七个元音。红字那几列（a、o、u）是阳性，蓝绿（e、i、ö、ü）是阴性 / 中性。</figcaption>
+    </figure>
+    <figure>
+      <img src="img/syl1.jpg" alt="na、pa、ba、ha、ma 行的四位置手写范式">
+      <figcaption><b>na / pa / ba / ha / ma</b> 四位置手写范式。
+        右下角那段批注就是这节的骨架：接阳性元音时中、尾退化成 2 个字牙；
+        接 ö/ü 时合形；ha 与 he 不同形。</figcaption>
+    </figure>
+  </div>
+
+  <div class="figrow">
+    <figure>
+      <img src="img/syl2.jpg" alt="la、sa、ta→da、cha、ya、ja 的四位置手写范式">
+      <figcaption><b>la / sa / ta→da / cha / ya / ja</b>。注意 ta 那两行旁边的
+        「→da」：说明同一批字牙在软硬不同的词里会取不同形态。</figcaption>
+    </figure>
+    <figure>
+      <img src="img/syl3.jpg" alt="音节末辅音与软硬辅音的例词">
+      <figcaption><b>音节末辅音 / 软硬辅音</b>。这一页是拿例词回头看形态：
+        <code>[xeb]~/xew/</code>、<code>[sedüb]~/sedüw/</code>、<code>[sabxa]</code>、
+        <code>[bogda]</code>、<code>[jirüg]</code>、<code>[nagadxu]</code> 等。</figcaption>
+    </figure>
+  </div>
+
+  <p class="note" style="margin-top:10px">
+    ⚠ 四张图是手写原稿，<b>不是本页渲染的</b>。要对照字体里的实际形状，
+    用上面的键盘 + 「试打」，或到 <code>globpreview.html</code> 的
+    <a href="../web/globpreview.html">位置形态 / 连字测试</a> 两节看。
+  </p>
+<div class="note" style="margin-top:12px">
+    <b>q / k 与 γ / g 怎么写、怎么读</b>（音标、码位、书面语与口语的差别）见
+    <a href="../SharingGroup/tutorials/t01.html#s4">T01 第 4 节</a>。
+  </div>
+</div>
+
 <div class="card">
   <h2>全部码位</h2>
   <table id="all"></table>
@@ -319,7 +451,19 @@
 <div class="toast" id="toast"></div>
 
 <script>
-var DUMP = [{"vk":8,"plain":8,"shift":8},{"vk":9,"plain":9,"shift":9},{"vk":13,"plain":13,"shift":13},{"vk":27,"plain":27,"shift":27},{"vk":32,"plain":32,"shift":32},{"vk":48,"plain":48,"shift":41},{"vk":49,"plain":49,"shift":33},{"vk":50,"plain":50,"shift":8264},{"vk":51,"plain":51,"shift":8265},{"vk":52,"plain":52,"shift":8212},{"vk":53,"plain":53,"shift":37},{"vk":54,"plain":54,"shift":8204},{"vk":55,"plain":55,"shift":6154},{"vk":56,"plain":56,"shift":8205},{"vk":57,"plain":57,"shift":40},{"vk":65,"plain":6176,"shift":null},{"vk":66,"plain":6186,"shift":null},{"vk":67,"plain":6204,"shift":6210},{"vk":68,"plain":6195,"shift":null},{"vk":69,"plain":6177,"shift":6183},{"vk":70,"plain":6201,"shift":null},{"vk":71,"plain":6189,"shift":null},{"vk":72,"plain":6188,"shift":6206},{"vk":73,"plain":6178,"shift":null},{"vk":74,"plain":6197,"shift":null},{"vk":75,"plain":6202,"shift":6203},{"vk":76,"plain":6191,"shift":6208},{"vk":77,"plain":6190,"shift":null},{"vk":78,"plain":6184,"shift":6185},{"vk":79,"plain":6181,"shift":null},{"vk":80,"plain":6187,"shift":null},{"vk":81,"plain":6196,"shift":null},{"vk":82,"plain":6199,"shift":6207},{"vk":83,"plain":6192,"shift":null},{"vk":84,"plain":6194,"shift":null},{"vk":85,"plain":6182,"shift":null},{"vk":86,"plain":6180,"shift":null},{"vk":87,"plain":6179,"shift":6200},{"vk":88,"plain":6193,"shift":null},{"vk":89,"plain":6198,"shift":null},{"vk":90,"plain":6205,"shift":6209},{"vk":96,"plain":48,"shift":null},{"vk":97,"plain":49,"shift":null},{"vk":98,"plain":50,"shift":null},{"vk":99,"plain":51,"shift":null},{"vk":100,"plain":52,"shift":null},{"vk":101,"plain":53,"shift":null},{"vk":102,"plain":54,"shift":null},{"vk":103,"plain":55,"shift":null},{"vk":104,"plain":56,"shift":null},{"vk":105,"plain":57,"shift":null},{"vk":106,"plain":42,"shift":42},{"vk":107,"plain":43,"shift":43},{"vk":109,"plain":45,"shift":45},{"vk":110,"plain":46,"shift":46},{"vk":111,"plain":47,"shift":47},{"vk":186,"plain":59,"shift":6148},{"vk":187,"plain":61,"shift":43},{"vk":188,"plain":6146,"shift":12298},{"vk":189,"plain":8239,"shift":6158},{"vk":190,"plain":6147,"shift":12299},{"vk":191,"plain":46,"shift":63},{"vk":192,"plain":6157,"shift":126},{"vk":219,"plain":12308,"shift":12296},{"vk":220,"plain":6145,"shift":124},{"vk":221,"plain":12309,"shift":12297},{"vk":222,"plain":6155,"shift":6156}];
+var DUMP_STD = [{"vk":8,"plain":8,"shift":8},{"vk":9,"plain":9,"shift":9},{"vk":13,"plain":13,"shift":13},{"vk":27,"plain":27,"shift":27},{"vk":32,"plain":32,"shift":32},{"vk":48,"plain":48,"shift":41},{"vk":49,"plain":49,"shift":33},{"vk":50,"plain":50,"shift":8264},{"vk":51,"plain":51,"shift":8265},{"vk":52,"plain":52,"shift":8212},{"vk":53,"plain":53,"shift":37},{"vk":54,"plain":54,"shift":8204},{"vk":55,"plain":55,"shift":6154},{"vk":56,"plain":56,"shift":8205},{"vk":57,"plain":57,"shift":40},{"vk":65,"plain":6176,"shift":null},{"vk":66,"plain":6186,"shift":null},{"vk":67,"plain":6204,"shift":6210},{"vk":68,"plain":6195,"shift":null},{"vk":69,"plain":6177,"shift":6183},{"vk":70,"plain":6201,"shift":null},{"vk":71,"plain":6189,"shift":null},{"vk":72,"plain":6188,"shift":6206},{"vk":73,"plain":6178,"shift":null},{"vk":74,"plain":6197,"shift":null},{"vk":75,"plain":6202,"shift":6203},{"vk":76,"plain":6191,"shift":6208},{"vk":77,"plain":6190,"shift":null},{"vk":78,"plain":6184,"shift":6185},{"vk":79,"plain":6181,"shift":null},{"vk":80,"plain":6187,"shift":null},{"vk":81,"plain":6196,"shift":null},{"vk":82,"plain":6199,"shift":6207},{"vk":83,"plain":6192,"shift":null},{"vk":84,"plain":6194,"shift":null},{"vk":85,"plain":6182,"shift":null},{"vk":86,"plain":6180,"shift":null},{"vk":87,"plain":6179,"shift":6200},{"vk":88,"plain":6193,"shift":null},{"vk":89,"plain":6198,"shift":null},{"vk":90,"plain":6205,"shift":6209},{"vk":96,"plain":48,"shift":null},{"vk":97,"plain":49,"shift":null},{"vk":98,"plain":50,"shift":null},{"vk":99,"plain":51,"shift":null},{"vk":100,"plain":52,"shift":null},{"vk":101,"plain":53,"shift":null},{"vk":102,"plain":54,"shift":null},{"vk":103,"plain":55,"shift":null},{"vk":104,"plain":56,"shift":null},{"vk":105,"plain":57,"shift":null},{"vk":106,"plain":42,"shift":42},{"vk":107,"plain":43,"shift":43},{"vk":109,"plain":45,"shift":45},{"vk":110,"plain":46,"shift":46},{"vk":111,"plain":47,"shift":47},{"vk":186,"plain":59,"shift":6148},{"vk":187,"plain":61,"shift":43},{"vk":188,"plain":6146,"shift":12298},{"vk":189,"plain":8239,"shift":6158},{"vk":190,"plain":6147,"shift":12299},{"vk":191,"plain":46,"shift":63},{"vk":192,"plain":6157,"shift":126},{"vk":219,"plain":12308,"shift":12296},{"vk":220,"plain":6145,"shift":124},{"vk":221,"plain":12309,"shift":12297},{"vk":222,"plain":6155,"shift":6156},{"vk":231,"plain":0,"shift":0}];
+var DUMP_B2 = [{"vk":8,"plain":8,"shift":8},{"vk":9,"plain":9,"shift":9},{"vk":13,"plain":13,"shift":13},{"vk":27,"plain":27,"shift":27},{"vk":32,"plain":32,"shift":32},{"vk":48,"plain":48,"shift":41},{"vk":49,"plain":49,"shift":65045},{"vk":50,"plain":50,"shift":8264},{"vk":51,"plain":51,"shift":8265},{"vk":52,"plain":52,"shift":null},{"vk":53,"plain":53,"shift":37},{"vk":54,"plain":54,"shift":8204},{"vk":55,"plain":55,"shift":6154},{"vk":56,"plain":56,"shift":8205},{"vk":57,"plain":57,"shift":40},{"vk":65,"plain":6176,"shift":null},{"vk":66,"plain":6186,"shift":null},{"vk":67,"plain":6196,"shift":6204},{"vk":68,"plain":6195,"shift":null},{"vk":69,"plain":6177,"shift":6183},{"vk":70,"plain":6201,"shift":null},{"vk":71,"plain":6189,"shift":null},{"vk":72,"plain":6188,"shift":6206},{"vk":73,"plain":6178,"shift":null},{"vk":74,"plain":6197,"shift":null},{"vk":75,"plain":6202,"shift":6203},{"vk":76,"plain":6191,"shift":6208},{"vk":77,"plain":6190,"shift":null},{"vk":78,"plain":6184,"shift":6185},{"vk":79,"plain":6181,"shift":null},{"vk":80,"plain":6187,"shift":null},{"vk":81,"plain":6179,"shift":6210},{"vk":82,"plain":6199,"shift":6207},{"vk":83,"plain":6192,"shift":null},{"vk":84,"plain":6194,"shift":null},{"vk":85,"plain":6182,"shift":null},{"vk":86,"plain":6180,"shift":null},{"vk":87,"plain":6200,"shift":null},{"vk":88,"plain":6193,"shift":null},{"vk":89,"plain":6198,"shift":null},{"vk":90,"plain":6205,"shift":6209},{"vk":96,"plain":48,"shift":null},{"vk":97,"plain":49,"shift":null},{"vk":98,"plain":50,"shift":null},{"vk":99,"plain":51,"shift":null},{"vk":100,"plain":52,"shift":null},{"vk":101,"plain":53,"shift":null},{"vk":102,"plain":54,"shift":null},{"vk":103,"plain":55,"shift":null},{"vk":104,"plain":56,"shift":null},{"vk":105,"plain":57,"shift":null},{"vk":106,"plain":42,"shift":42},{"vk":107,"plain":43,"shift":43},{"vk":109,"plain":45,"shift":45},{"vk":110,"plain":46,"shift":46},{"vk":111,"plain":47,"shift":47},{"vk":186,"plain":65044,"shift":6148},{"vk":187,"plain":61,"shift":43},{"vk":188,"plain":6146,"shift":12298},{"vk":189,"plain":8239,"shift":6158},{"vk":190,"plain":6147,"shift":12299},{"vk":191,"plain":183,"shift":65046},{"vk":192,"plain":6157,"shift":126},{"vk":219,"plain":91,"shift":12296},{"vk":220,"plain":6145,"shift":65073},{"vk":221,"plain":93,"shift":12297},{"vk":222,"plain":6155,"shift":6156},{"vk":231,"plain":0,"shift":0}];
+var DUMP_D5 = [{"vk":8,"plain":8,"shift":8},{"vk":9,"plain":9,"shift":9},{"vk":13,"plain":13,"shift":13},{"vk":27,"plain":27,"shift":27},{"vk":32,"plain":32,"shift":32},{"vk":48,"plain":6160,"shift":41},{"vk":49,"plain":6161,"shift":33},{"vk":50,"plain":6162,"shift":64},{"vk":51,"plain":6163,"shift":35},{"vk":52,"plain":6164,"shift":36},{"vk":53,"plain":6165,"shift":37},{"vk":54,"plain":6166,"shift":8366},{"vk":55,"plain":6167,"shift":47},{"vk":56,"plain":6168,"shift":42},{"vk":57,"plain":6169,"shift":40},{"vk":65,"plain":6176,"shift":null},{"vk":66,"plain":6186,"shift":null},{"vk":67,"plain":6196,"shift":6204},{"vk":68,"plain":6195,"shift":null},{"vk":69,"plain":6177,"shift":6183},{"vk":70,"plain":6201,"shift":6157},{"vk":71,"plain":6189,"shift":6159},{"vk":72,"plain":6188,"shift":6206},{"vk":73,"plain":6178,"shift":62},{"vk":74,"plain":6197,"shift":6207},{"vk":75,"plain":6203,"shift":6202},{"vk":76,"plain":6191,"shift":6208},{"vk":77,"plain":6190,"shift":null},{"vk":78,"plain":6184,"shift":6185},{"vk":79,"plain":6179,"shift":171},{"vk":80,"plain":6187,"shift":187},{"vk":81,"plain":6181,"shift":null},{"vk":82,"plain":6199,"shift":8204},{"vk":83,"plain":6192,"shift":6210},{"vk":84,"plain":6194,"shift":8205},{"vk":85,"plain":6180,"shift":60},{"vk":86,"plain":6200,"shift":null},{"vk":87,"plain":6182,"shift":null},{"vk":88,"plain":6193,"shift":null},{"vk":89,"plain":6198,"shift":null},{"vk":90,"plain":6205,"shift":6209},{"vk":96,"plain":48,"shift":null},{"vk":97,"plain":49,"shift":null},{"vk":98,"plain":50,"shift":null},{"vk":99,"plain":51,"shift":null},{"vk":100,"plain":52,"shift":null},{"vk":101,"plain":53,"shift":null},{"vk":102,"plain":54,"shift":null},{"vk":103,"plain":55,"shift":null},{"vk":104,"plain":56,"shift":null},{"vk":105,"plain":57,"shift":null},{"vk":106,"plain":42,"shift":42},{"vk":107,"plain":43,"shift":43},{"vk":109,"plain":45,"shift":45},{"vk":110,"plain":46,"shift":46},{"vk":111,"plain":47,"shift":47},{"vk":186,"plain":6155,"shift":58},{"vk":187,"plain":61,"shift":43},{"vk":188,"plain":6146,"shift":6145},{"vk":189,"plain":45,"shift":95},{"vk":190,"plain":6147,"shift":6149},{"vk":191,"plain":6158,"shift":63},{"vk":192,"plain":6144,"shift":126},{"vk":219,"plain":91,"shift":123},{"vk":220,"plain":6154,"shift":8239},{"vk":221,"plain":93,"shift":125},{"vk":222,"plain":6156,"shift":8220},{"vk":231,"plain":0,"shift":0}];
+
+/* 本机实测装了三套蒙文布局（GetKeyboardLayoutList + ToUnicodeEx 全键导出）：
+     std 08500850   微软布局           o=W  u=V  oe=O  ue=U  wa=Shift+W
+     b2  F0B20850   IME 布局           o=Q  u=V  oe=O  ue=U  wa=W
+     d5  F0D50850   IME 布局（另一套）  o=O  u=U  oe=Q  ue=W  wa=V；数字键改蒙文数字
+   默认 b2 —— 本项目机器实测按 q 出 U+1823，就是这一套。 */
+var LAYOUT_DUMP = { std: DUMP_STD, b2: DUMP_B2, d5: DUMP_D5 };
+var LAYOUT_NAME = { std: '微软 08500850', b2: 'IME F0B20850', d5: 'IME F0D50850' };
+var kbLayout = 'b2';
+var DUMP = LAYOUT_DUMP[kbLayout];
 var NAMES = {"6144":"MONGOLIAN BIRGA","6145":"MONGOLIAN ELLIPSIS","6146":"MONGOLIAN COMMA","6147":"MONGOLIAN FULL STOP","6148":"MONGOLIAN COLON","6154":"MONGOLIAN NIRUGU","6155":"FVS1","6156":"FVS2","6157":"FVS3","6158":"MVS 元音分隔符","6159":"FVS4","6176":"A ᠠ","6177":"E ᠡ","6178":"I ᠢ","6179":"O ᠣ","6180":"U ᠤ","6181":"OE ᠥ","6182":"UE ᠦ","6183":"EE ᠧ","6184":"NA ᠨ","6185":"ANG ᠩ","6186":"BA ᠪ","6187":"PA ᠫ","6188":"QA ᠬ","6189":"GA ᠭ","6190":"MA ᠮ","6191":"LA ᠯ","6192":"SA ᠰ","6193":"SHA ᠱ","6194":"TA ᠲ","6195":"DA ᠳ","6196":"CHA ᠴ","6197":"JA ᠵ","6198":"YA ᠶ","6199":"RA ᠷ","6200":"WA ᠸ","6201":"FA ᠹ","6202":"KA ᠺ","6203":"KHA ᠻ","6204":"TSA ᠼ","6205":"ZA ᠽ","6206":"HAA ᠾ","6207":"ZRA ᠿ","6208":"LHA ᡀ","6209":"ZHI ᡁ","6210":"CHI ᡂ","8239":"NNBSP 窄不间断空格","12298":"《","12299":"》"};
 
 /* 键盘几何：每行 [{vk, w, cap}]，w 为宽度单位（1u = 标准键） */
@@ -363,9 +507,19 @@ var ROWS = [
 
 /* 每个 VK 的字符（直接来自实测 dump） */
 var MAP = {};
-DUMP.forEach(function(e){ MAP[e.vk] = e; });
+function rebuildMap(){
+  MAP = {};
+  DUMP.forEach(function(e){ MAP[e.vk] = e; });
+}
+rebuildMap();
 
 var showShift = true, onlyMn = false, zoom = 100;   /* zoom 是百分比 */
+
+/* 本机实测装了两套蒙文键盘布局，除下面两个键外完全相同：
+     08500850（标准）  W → ᠣ ／ Shift+W → ᠸ      C → ᠼ ／ Shift+C → ᡂ
+     00020850（MNS）   W → ᠸ（无上档）            C → ᠴ ／ Shift+C → ᠼ
+   默认按标准表；切到 MNS 时只覆盖这两个键。 */
+
 
 /* 形态模式：auto = 原样；其余用 ᠠ 当上下文逼出对应位置形。
    实测（Noto 字形名）：L -> .isol、L+ᠠ -> .init、ᠠ+L+ᠠ -> .medi、ᠠ+L -> .fina */
@@ -706,6 +860,28 @@ document.getElementById('tgShift').addEventListener('click', function(e){
   e.target.textContent = showShift ? '显示上档' : '隐藏上档';
   build();
 });
+document.getElementById('layoutSel').addEventListener('change', function(e){
+  kbLayout = e.target.value;
+  DUMP = LAYOUT_DUMP[kbLayout];
+  try{ localStorage.setItem('mmkb.layout', kbLayout); }catch(err){}
+  rebuildMap();
+  build();
+  buildVowels();
+  buildVariants();
+  buildCtls();
+  buildAll();
+});
+/* remember the chosen layout */
+(function(){
+  try{
+    var saved = localStorage.getItem('mmkb.layout');
+    if (saved && LAYOUT_DUMP[saved]){
+      kbLayout = saved;
+      DUMP = LAYOUT_DUMP[saved];
+      document.getElementById('layoutSel').value = saved;
+    }
+  }catch(err){}
+})();
 document.getElementById('tgOnly').addEventListener('click', function(e){
   onlyMn = !onlyMn;
   e.target.classList.toggle('on', onlyMn);
@@ -790,14 +966,19 @@ pvSize.addEventListener('input', renderType);
      基准 = 按容器宽度反算，让 15 个单位正好撑满一行
      缩放 = 滑杆百分比（100% 正好撑满；<100 变小；>100 超出并横向滚动）
      紧凑模式：不定宽，直接用 46px × 缩放，靠折行排布 */
+/* 键的最小边长：手机窄屏上不能为了塞下整排把键压到看不清，
+   宁可让键面横向滚动（.kbscroll 本来就是滚动容器） */
+function minU(){
+  return (window.matchMedia && window.matchMedia('(max-width:640px)').matches) ? 34 : 24;
+}
 function fitZoom(){
   var kb = document.getElementById('kb');
   var scale = zoom / 100;
-  if (!kb || onlyMn) return Math.max(22, Math.round(46 * scale));
+  if (!kb || onlyMn) return Math.max(minU(), Math.round(46 * scale));
   var avail = kb.clientWidth - 28;        /* 去掉左右 padding 14×2 */
-  if (avail <= 0) return Math.max(22, Math.round(46 * scale));
+  if (avail <= 0) return Math.max(minU(), Math.round(46 * scale));
   var fit = Math.floor((avail - 14 * 7) / 15);   /* 15 个单位 + 14 个间隙 */
-  return Math.max(22, Math.round(fit * scale));
+  return Math.max(minU(), Math.round(fit * scale));
 }
 
 /* 滚动提示：装不下时告诉用户能左右滑 */

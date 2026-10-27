@@ -506,6 +506,48 @@ Unicode 里这两个都有独立码位：
   </ol>
 </div>
 
+<h3>同一个字母，两种转写：q / k 与 γ / g</h3>
+
+<p><b>转写跟着「字」走，不跟着现代读音走。</b>这四个符号 = 两个字母 × 两种元音环境：</p>
+
+<table>
+<thead><tr><th style="width:10%">转写</th><th style="width:12%">音标</th>
+  <th style="width:16%">码位</th><th>条件</th></tr></thead>
+<tbody>
+<tr><td class="c"><b>q</b></td><td class="c">[x]</td><td class="c">U+182C ᠬ</td>
+    <td>清音 · 后接阳性元音 <code>a o u</code></td></tr>
+<tr><td class="c"><b>k</b></td><td class="c">[k]</td><td class="c">U+182C ᠬ</td>
+    <td>清音 · 后接阴性元音 <code>e ö ü</code></td></tr>
+<tr><td class="c"><b>γ</b></td><td class="c">[ɣ]</td><td class="c">U+182D ᠭ</td>
+    <td>浊音 · 后接阳性元音</td></tr>
+<tr><td class="c"><b>g</b></td><td class="c">[g]</td><td class="c">U+182D ᠭ</td>
+    <td>浊音 · 后接阴性元音</td></tr>
+</tbody>
+</table>
+
+<p>看表就能读出两件事：<b>q / k 是同一个码位</b>（差别来自元音环境），
+<b>q / γ 是两个码位</b>（差别在清浊）。三个词各占一种情况：</p>
+
+<table>
+<thead><tr><th style="width:24%">写法</th><th style="width:18%">转写</th><th>说明</th></tr></thead>
+<tbody>
+<tr><td class="c"><span class="umc-inline" data-word="cinggis"></span></td>
+    <td class="c">Činggis</td><td><code>ᠭ</code> 在 <code>i</code> 前，取 g</td></tr>
+<tr><td class="c"><span class="umc-inline" data-word="qagan"></span></td>
+    <td class="c">qaγan</td><td>清音 <code>ᠬ</code> 与浊音 <code>ᠭ</code> 在同一个词里并存</td></tr>
+<tr><td class="c"><span class="umc-inline" data-word="qayisang"></span></td>
+    <td class="c">Qayisang</td><td><code>ᠬ</code> 在 <code>a</code> 前，取 q</td></tr>
+</tbody>
+</table>
+
+<div class="card warn">
+  <div class="card-t">书面语与口语是两行信息，不能互相替代</div>
+  <p><code>qaγan</code> 在现代喀尔喀读 <code>/xaːn/</code>：词中的 <code>γ</code> 脱落，
+  前面的元音补偿延长。转写仍写 <code>qaγan</code>，因为它记的是<b>字</b> ——
+  把 γ 写成零或写成冒号，那就成了记音，纸面上的字母丢了一个。</p>
+  <p>所以引用文献用<b>转写</b>（qaγan），标注发音用<b>音标</b>（/xaːn/）。</p>
+</div>
+
 <h3>变体选择符：转写表里最特殊的一行</h3>
 
 <p>方案表里还有四个不对应可见字母的码位：</p>
@@ -774,6 +816,9 @@ UME 项目组内部教程 · 理论系列 T01《初识回鹘蒙文》<br>
     '\u0161':"\u1831",          /* š */
     '\u010d':"\u1834",          /* č */
     '\u01f0':"\u1835",          /* ǰ */
+    cinggis: "\u1834\u1822\u1829\u182D\u1822\u1830",   /* Činggis */
+    qagan:   "\u182C\u1820\u182D\u1820\u1828",               /* qaγan */
+    qayisang:"\u182C\u1820\u1836\u1822\u1830\u1820\u1829",  /* Qayisang */
     monggul: "\u182E\u1823\u1829\u182D\u1824\u182F",
     bicig:   "\u182A\u1822\u183C\u1822\u182D",
     sain:    "\u1830\u1820\u1822\u1828",
