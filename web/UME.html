@@ -101,6 +101,10 @@ main{flex:1;display:flex;min-height:0}
 
 #vtext.use-baiti{font-family:"Mongolian Baiti","UME Mongolian",serif;
   font-size:calc(var(--vfont-size) * 1.35)}
+/* Menk Qimed Tig：字面比内置略大，等墨迹高度约 1.18 倍（同 globpreview 的缩放表）。
+   和 Baiti 一样只点族名 —— 蒙科立字体不许进仓库。 */
+#vtext.use-qimed{font-family:"Menk Qimed Tig","UME Mongolian",serif;
+  font-size:calc(var(--vfont-size) * 1.18)}
 .pane-head .vsel{color:var(--fg-dim);font-size:12px;display:flex;align-items:center;gap:5px}
 .pane-head .vsel select{padding:2px 6px;font-size:12px}
 .pane-head .vsel.unavailable{opacity:.62}
@@ -273,6 +277,7 @@ main{flex:1;display:flex;min-height:0}
         <select id="vfont" title="切换预览所用的蒙文字体">
           <option value="ume">UME Mongolian（内置）</option>
           <option value="baiti">Mongolian Baiti（本机）</option>
+          <option value="qimed">Menk Qimed Tig（本机）</option>
         </select>
       </label>
       <span id="vfinfo" class="vfinfo"></span>
@@ -940,18 +945,21 @@ const VFONT_KEY = "ume.previewFont";
 const VFONT_INFO = {
   /* 下拉框本身已经写明了字体与版本，这里只补充「下拉框说不出来」的信息 */
   ume:   { text:"", warn:false },
-  baiti: { text:"仅影响预览；导出仍内嵌内置字体", warn:false }
+  baiti: { text:"仅影响预览；导出仍内嵌内置字体", warn:false },
+  qimed: { text:"仅影响预览；导出仍内嵌内置字体", warn:false }
 };
-let vfontReady = { ume:true, baiti:false };
+let vfontReady = { ume:true, baiti:false, qimed:false };
 
 function applyPreviewFont(v){
-  if (v !== "baiti") v = "ume";
+  if (v !== "baiti" && v !== "qimed") v = "ume";
   $("vtext").classList.toggle("use-baiti", v === "baiti");
+  $("vtext").classList.toggle("use-qimed", v === "qimed");
   $("vfont").value = v;
 
   /* 只在标题栏这一格里写状态，不碰 #rtstat（那是 sync() 的地盘） */
   const info = VFONT_INFO[v];
-  const na = (v === "baiti" && !vfontReady.baiti);
+  const na = ((v === "baiti" && !vfontReady.baiti) ||
+              (v === "qimed" && !vfontReady.qimed));
   $("vfinfo").textContent = na ? "未安装，已回退内置" : info.text;
   $("vfinfo").classList.toggle("warn", na || info.warn);
 
@@ -960,6 +968,7 @@ function applyPreviewFont(v){
 
 function initPreviewFont(){
   vfontReady.baiti = localFontAvailable("Mongolian Baiti");
+  vfontReady.qimed = localFontAvailable("Menk Qimed Tig");
 
   const sel = $("vfont");
   const optB = sel.querySelector('option[value="baiti"]');
@@ -967,6 +976,14 @@ function initPreviewFont(){
     optB.textContent = "Mongolian Baiti（本机 v5.54）";
   }else{
     optB.textContent = "Mongolian Baiti（本机未安装）";
+  }
+  const optQ = sel.querySelector('option[value="qimed"]');
+  if (vfontReady.qimed){
+    optQ.textContent = "Menk Qimed Tig（本机）";
+  }else{
+    optQ.textContent = "Menk Qimed Tig（本机未安装）";
+  }
+  if (!vfontReady.baiti && !vfontReady.qimed){
     $("vselWrap").classList.add("unavailable");
   }
 
@@ -975,6 +992,7 @@ function initPreviewFont(){
   let saved = "ume";
   try{ saved = localStorage.getItem(VFONT_KEY) || "ume"; }catch(e){}
   if (saved === "baiti" && !vfontReady.baiti) saved = "ume";
+  if (saved === "qimed" && !vfontReady.qimed) saved = "ume";
   applyPreviewFont(saved);
 }
 
