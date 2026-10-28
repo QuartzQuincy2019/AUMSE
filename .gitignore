@@ -106,3 +106,5 @@ $RECYCLE.BIN/
 .dsh-vision-router/
 # 验证时生成的截图（不入库）
 /.shots/
+# 临时参考资料（字体清单、键位 XML、截图等），不进仓库
+/refs/

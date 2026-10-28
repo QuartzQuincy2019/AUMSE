@@ -1,4 +1,4 @@
-# -*- coding: utf-8 -*-
+﻿# -*- coding: utf-8 -*-
 """重建导航页（index.html / home.html）。
 
 **篇目数据不在这个文件里** —— 唯一数据源是 tools/series_data.py。
@@ -89,7 +89,7 @@ header h1{font-size:29px;margin:0 0 6px}
 header .sub{color:var(--fg-3);font-size:14px;margin:0 0 4px}
 header .meta{color:var(--fg-3);font-size:13px;margin:0}
 /* 工具入口：编辑器 / 造形测试 / 键位图。auto-fit 让 2 个或 3 个都排得匀 */
-.tools{display:grid;grid-template-columns:repeat(auto-fit,minmax(230px,1fr));gap:12px;margin:20px 0 6px}
+.tools{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:12px;margin:20px 0 6px}
 .tools .tool{display:flex;flex-direction:column;gap:3px;text-decoration:none;
   border:1px solid var(--line-2);border-radius:12px;padding:13px 16px;
   background:var(--bg-soft);color:var(--fg);transition:border-color .16s,box-shadow .16s,transform .16s}

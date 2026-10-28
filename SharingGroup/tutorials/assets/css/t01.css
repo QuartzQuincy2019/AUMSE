@@ -87,3 +87,35 @@
    套默认的 .fig（限宽 360px）会小到看不清，另开一档。 */
 .fig.wide img{max-width:min(760px,100%)}
 @media (max-width:720px){.fig.wide img{max-width:100%}}
+
+/* =====================================================================
+   项目组长留言（首页 .lead-msg 的同一套观感，本页自带一份）
+   —— 用 .card.key 的金色底，正文改用宋体加粗，结尾右对齐署名，
+      目的是让它在一屏文字里**跳出来**。
+   ================================================================== */
+.lead-msg{margin:24px 0 18px;padding:20px 22px 18px;
+  border-width:2px;border-left-width:9px;
+  box-shadow:0 5px 20px var(--t-shadow,rgba(154,107,10,.14))}
+.lead-msg .card-t{
+  display:inline-block;margin:0 0 14px;padding:4px 14px;border-radius:999px;
+  background:linear-gradient(135deg,var(--t-gold-2,#e0b23f),var(--t-gold-3,#a8760f));
+  color:#241a03;font-size:13px;font-weight:700;letter-spacing:.10em}
+.lead-msg .lead-msg-b{
+  margin:0;
+  font-family:SimSun,"Songti SC","Noto Serif CJK SC","Source Han Serif SC",serif;
+  font-weight:700;font-size:clamp(15.5px,1.9vw,18px);line-height:2.05;letter-spacing:.02em}
+.lead-msg .lead-msg-d{
+  margin:14px 0 0;text-align:right;
+  font-family:SimSun,"Songti SC","Noto Serif CJK SC",serif;
+  font-weight:700;font-size:13.5px;letter-spacing:.06em;color:var(--fg-3)}
+@media (max-width:640px){
+  .lead-msg{padding:16px 15px 14px;border-left-width:7px}
+  .lead-msg .lead-msg-b{line-height:1.95}
+}
+
+/* 留言里的示例：蒙文原词用蒙文字体，转写与音标走等宽体 ——
+   正文用宋体，宋体没有 γ，回退字体字宽不一，会排成「qa γ an」。 */
+.lead-msg .lead-mn{
+  font-family:"UME Mongolian","Noto Sans Mongolian",serif;
+  font-size:1.02em;letter-spacing:0}
+.lead-msg code{font-size:.92em;letter-spacing:0}

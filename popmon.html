@@ -1,0 +1,1514 @@
+﻿<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>popmon · 转写 → 回鹘蒙文</title>
+<script>
+/* 主题：自动跟随系统，也可手动钉成浅色 / 深色（与 kbdglyf / mmkb 同一套做法） */
+(function(){
+  try{
+    var t = localStorage.getItem('popmon.theme') || 'auto';
+    var dark = t === 'dark' || (t === 'auto' && window.matchMedia
+      && window.matchMedia('(prefers-color-scheme: dark)').matches);
+    if (dark) document.documentElement.className = 'dark';
+  }catch(e){}
+})();
+</script>
+<style>
+@font-face{
+  font-family:"UME Mongolian";
+  src:url("font/NotoSansMongolian-Regular.ttf") format("truetype");
+  font-weight:400;font-style:normal;font-display:block;
+}
+:root{
+  --bg:#fbf9f4; --sfc:#fff; --sfc2:#f6f1e6; --line:#e2d9c6; --line2:#cfc2a6;
+  --fg:#241d10; --fg2:#4a402c; --fg3:#7a6d52;
+  --gold:#9a6b0a; --gold2:#c8901a; --soft:#fdf7e8;
+  --btn:#9a6b0a; --btn-line:#9a6b0a; --btn-fg:#fff;
+  --mono:"Cascadia Mono",Consolas,"SF Mono",ui-monospace,monospace;
+  /* 转写用衬线体：蒙古学文献里的拉丁转写习惯就是这么排的 */
+  --tr:"Times New Roman",Times,"Nimbus Roman",serif;
+  --kfg:#3d2b00; --kbg:#ffe9b8; --kbd:#d8b45e;
+  --ok:#1a7f45; --warn:#a86a12;
+}
+html.dark{
+  --bg:#12151a; --sfc:#1a1e24; --sfc2:#20242b; --line:#2d333c; --line2:#3a424e;
+  --fg:#e8ecf3; --fg2:#b9c2d0; --fg3:#8b96a8;
+  --gold:#e0b45e; --gold2:#f0c877; --soft:#241d0c;
+  /* 暗色下主按钮不能再用亮金底 —— 刺眼且白字看不清，改成深底浅字 */
+  --btn:#6d5318; --btn-line:#8a6a1f; --btn-fg:#f3dfae;
+  --kfg:#ffe6a6; --kbg:#33290f; --kbd:#6b5520;
+  --ok:#4fc98d; --warn:#e0a63a;
+}
+*{box-sizing:border-box}
+body{
+  margin:0;padding:26px 20px 60px;background:var(--bg);color:var(--fg);
+  font:14px/1.7 system-ui,"Segoe UI","Microsoft YaHei",sans-serif;
+}
+main{max-width:1180px;margin:0 auto}
+h1{font-size:20px;margin:0 0 6px;letter-spacing:.02em}
+.sub{margin:0 0 20px;color:var(--fg3);font-size:13px;line-height:1.9}
+.sub code{font-family:var(--tr);font-size:13px}
+.bar{
+  display:flex;flex-wrap:wrap;gap:10px;align-items:center;
+  padding:14px 16px;margin:0 0 18px;
+  background:var(--sfc);border:1px solid var(--line);border-radius:14px;
+}
+.bar label{display:flex;align-items:center;gap:6px;font-size:12.5px;color:var(--fg3);
+  white-space:nowrap;min-width:0;max-width:100%}
+.bar label:first-child{flex:1 1 340px;min-width:0}
+input[type=text]{
+  font:32px/1.3 var(--tr);padding:7px 14px;min-width:0;width:100%;flex:1 1 220px;
+  letter-spacing:.01em;
+  border:1px solid var(--line2);border-radius:9px;background:var(--sfc2);color:var(--fg);
+}
+input[type=text]:focus{outline:2px solid var(--gold2);outline-offset:1px}
+select,button{font:12.5px/1.4 inherit;padding:6px 10px;border-radius:8px;
+  border:1px solid var(--line2);background:var(--sfc2);color:var(--fg);cursor:pointer}
+button.primary{background:var(--btn);border-color:var(--btn-line);color:var(--btn-fg);font-weight:600}
+button.primary:hover{background:var(--btn-line);border-color:var(--btn-line)}
+button:hover{border-color:var(--gold2)}
+.hint{font-size:12px;color:var(--fg3);margin:6px 0 0;line-height:1.8}
+
+.fontwarn{
+  margin:0 0 14px;padding:12px 16px;font-size:12.5px;line-height:1.9;
+  background:#fdf3e2;border:1px solid #e6c98a;border-left:5px solid #c8901a;
+  border-radius:10px;color:#5a4515;
+}
+html.dark .fontwarn{
+  background:#2b2210;border-color:#5c4a1e;border-left-color:#e0b45e;color:#e8d9b0;
+}
+.fontwarn b{color:#8a5a00}
+html.dark .fontwarn b{color:#f0c877}
+.fontwarn code{font-family:var(--mono);font-size:12px}
+
+.duo{
+  display:grid;grid-template-columns:1fr 1fr;gap:14px;align-items:start;
+  margin:0 0 14px;
+}
+.duo .col{min-width:0;display:flex;flex-direction:column;gap:14px}
+/* 列内各块自己不再带外边距，间距交给 gap */
+.duo .notice,.duo .bar,.duo .rarebar{margin:0}
+.duo .rarebar{flex:1 1 auto}
+@media (max-width:1080px){
+  .duo{grid-template-columns:1fr}
+  /* 窄屏：预览在上、变体在下（沿用原来的顺序） */
+  .stage{grid-template-columns:1fr}
+  .stage .result{grid-column:1;grid-row:1}
+  .stage .rows{grid-column:1;grid-row:2}
+  .stage .result .pv{min-height:380px}
+}
+
+.notice{
+  margin:0 0 14px;padding:12px 16px;font-size:12.5px;line-height:1.9;
+  background:#fdf3e2;border:1px solid #e6c98a;border-left:5px solid #c8901a;
+  border-radius:10px;color:#5a4515;
+}
+html.dark .notice{background:#2b2210;border-color:#5c4a1e;border-left-color:#e0b45e;color:#e8d9b0}
+.notice b{color:#8a5a00}
+html.dark .notice b{color:#f0c877}
+.notice b:first-child{
+  display:inline-block;margin-right:8px;padding:1px 9px;border-radius:999px;
+  background:#c8901a;color:#fff;font-size:11.5px;letter-spacing:.08em;
+}
+html.dark .notice b:first-child{background:#8a6a1f;color:#f3dfae}
+.notice code{font-family:var(--tr);font-size:13.5px}
+
+/* 极其重要：红框 + 更大的字，和普通提示区分开 */
+.notice.critical{
+  background:#fdecea;border:2px solid #d94f3d;border-left:6px solid #c0392b;
+  color:#5c1a12;font-size:13.5px;line-height:2.1;
+}
+html.dark .notice.critical{
+  background:#2e1513;border-color:#8a3529;border-left-color:#d94f3d;color:#f2d5cf;
+}
+.notice.critical b{color:#a5281a}
+html.dark .notice.critical b{color:#ff8a76}
+.notice.critical b:first-child{
+  background:#c0392b;color:#fff;font-size:12px;letter-spacing:.1em;
+}
+html.dark .notice.critical b:first-child{background:#c0392b;color:#fff}
+.notice.critical .crit-t{
+  font-weight:700;font-size:13.5px;color:#8f2318;
+}
+html.dark .notice.critical .crit-t{color:#ff9c8a}
+.notice.critical code{
+  background:#fff;border:1px solid #e0a79e;padding:0 6px;border-radius:4px;
+  font-size:15px;color:#a5281a;
+}
+html.dark .notice.critical code{background:#3a1a16;border-color:#8a3529;color:#ffb0a0}
+
+.rarebar{
+  display:flex;flex-wrap:wrap;gap:6px;align-items:center;
+  padding:10px 14px;margin:0 0 14px;
+  background:var(--sfc);border:1px solid var(--line);border-radius:12px;
+}
+.rarebar{flex-direction:column;align-items:stretch;gap:2px}
+.rarebar .rline{display:flex;flex-wrap:wrap;gap:6px;align-items:center;width:100%}
+.rarebar .rname{
+  font-size:11.5px;font-weight:700;color:var(--gold);letter-spacing:.04em;
+  min-width:56px;
+}
+.rarebar .rl:first-of-type{margin-left:2px}
+.rarebar .rl{
+  font-size:11.5px;color:var(--fg3);letter-spacing:.06em;
+  margin:0 2px 0 8px;white-space:nowrap;
+}
+.rarebar .rl:first-child{margin-left:0}
+.rarebar button{
+  font:17px/1 var(--tr);padding:5px 11px;border-radius:8px;
+  border:1px solid var(--line2);background:var(--sfc2);color:var(--fg);
+  cursor:pointer;min-width:34px;
+}
+.rarebar button:hover{border-color:var(--gold2);background:var(--soft)}
+.rarebar button:active{transform:translateY(1px)}
+.rarebar .hint{margin-left:auto}
+
+.parse.inline{
+  margin:2px 0 0;padding:0;border:0;background:none;border-radius:0;
+  font-size:11px;line-height:1.9;color:var(--fg3);
+  letter-spacing:.02em;overflow-wrap:anywhere;
+}
+.parse.inline b{font-size:12.5px}
+.parse{
+  font-family:var(--mono);font-size:12.5px;line-height:2.1;
+  padding:12px 16px;margin:0 0 18px;
+  background:var(--sfc);border:1px solid var(--line);border-radius:12px;
+  color:var(--fg2);overflow-wrap:anywhere;
+}
+.parse b{color:var(--gold);font-weight:700;font-family:var(--tr);font-size:14px}
+.parse .arrow{color:var(--fg3);margin:0 6px}
+.parse .bad{color:#c0392b;font-weight:700}
+
+/* 宽屏：左边变体选择，右边窄而长的预览框 */
+.stage{display:grid;grid-template-columns:220px minmax(0,1fr);gap:14px;align-items:start}
+.stage .result{grid-column:1;grid-row:1}
+.stage .sider{grid-column:2;grid-row:1;display:flex;flex-direction:column;gap:12px;min-width:0}
+.stage .rows{margin:0;display:flex;flex-direction:column;gap:10px}
+.metacard{
+  background:var(--sfc);border:1px solid var(--line);border-radius:16px;
+  padding:16px 20px;display:flex;flex-direction:column;gap:10px;
+}
+
+.result{
+  display:flex;flex-direction:column;gap:12px;align-items:stretch;
+  background:var(--sfc);border:1px solid var(--line);border-radius:16px;
+  padding:12px;margin:0;
+}
+.metacard .cps{font-family:var(--mono);font-size:12px;color:var(--fg3);letter-spacing:.02em}
+.result .pv{
+  /* 竖排写在里层：外层 flex 才能把字形真正居中 */
+  flex:0 0 auto;display:flex;
+  /* 顶端对齐，再留一点上内边距，字形不会贴到边框 */
+  align-items:flex-start;justify-content:center;
+  width:196px;max-width:100%;min-height:560px;
+  margin:0 auto;overflow:auto;
+  background:var(--sfc2);border-radius:12px;padding:26px 8px 16px;
+}
+.pvstack{position:relative;display:block;line-height:1}
+.pvbase{display:block}
+.pvdye{position:absolute;left:0;top:0;pointer-events:none}
+.sw{display:inline-flex;align-items:center;gap:6px;font-size:12.5px;color:var(--fg3);
+  white-space:nowrap;cursor:pointer}
+.sw input{width:16px;height:16px;accent-color:var(--gold);cursor:pointer;margin:0}
+
+.result .pv span{
+  font-family:var(--mn-font,"UME Mongolian"),"Noto Sans Mongolian",serif;
+  font-size:calc(76px * var(--mn-scale,1));line-height:1;
+  writing-mode:vertical-lr;text-orientation:mixed;display:inline-block;
+}
+.result .meta{min-width:0;display:flex;flex-direction:column;gap:2px}
+.result .cps{
+  font-family:var(--mono);font-size:11px;color:var(--fg3);
+  letter-spacing:.02em;overflow-wrap:anywhere;line-height:1.9;
+}
+.result .act{display:flex;gap:8px;margin-top:12px;flex-wrap:wrap}
+.xsch{margin:2px 0 4px;font-size:12px;line-height:1.4;color:var(--fg2);
+  display:flex;flex-direction:column;gap:2px}
+.xsch .k{display:flex;align-items:baseline;gap:14px}
+.xsch .k > b{
+  font-weight:600;font-size:12px;color:var(--fg3);min-width:64px;letter-spacing:.04em;
+}
+.xsch span{font-family:var(--tr);font-size:34px;line-height:1.25;color:var(--fg)}
+.xsch em.unk{font-size:22px}
+.xsch b{color:var(--gold);font-weight:600;margin-right:6px}
+.xsch i{font-style:normal;color:var(--fg3);margin:0 10px 0 2px}
+.xsch em.unk{
+  font-style:normal;font-family:inherit;font-size:12px;font-weight:600;
+  color:#b23a2e;background:#fdecea;border:1px solid #f0a89f;
+  border-radius:999px;padding:1px 9px;cursor:help;
+}
+html.dark .xsch em.unk{color:#f0806f;background:#2e1a18;border-color:#7a3730}
+/* 标准写法 = 绿；改过 = 红 */
+.result{border-width:2px}
+.result.is-std{border-color:#3f9b62;box-shadow:0 0 0 3px rgba(63,155,98,.10)}
+.result.is-custom{border-color:#c0392b;box-shadow:0 0 0 3px rgba(192,57,43,.10)}
+.badge{
+  display:inline-block;margin:0 0 8px;padding:3px 12px;border-radius:999px;
+  font-size:12px;font-weight:700;letter-spacing:.04em;
+}
+/* ⚠ 作者样式里的 display:inline-block 会盖掉 [hidden] 的 display:none，
+   必须显式关掉，否则「库外词」也会挂着上一次留下的绿标 */
+.badge[hidden]{display:none}
+.result.is-std .badge{background:#e6f5ec;color:#1a7f45;border:1px solid #9bd3b2}
+.result.is-custom .badge{background:#fdecea;color:#c0392b;border:1px solid #f0a89f}
+html.dark .result.is-std .badge{background:#13291f;color:#4fc98d;border-color:#2c6046}
+html.dark .result.is-custom .badge{background:#2e1a18;color:#f07a6c;border-color:#7a3730}
+html.dark .result.is-std{border-color:#3f9b62}
+html.dark .result.is-custom{border-color:#c0392b}
+
+.rows{display:flex;flex-direction:column;gap:10px;margin:0 0 6px}
+.row{
+  display:flex;flex-wrap:wrap;gap:8px;align-items:center;
+  background:var(--sfc);border:1px solid var(--line);border-radius:12px;
+  padding:10px 14px;
+}
+.row .lab{
+  font-size:12.5px;color:var(--fg2);min-width:150px;white-space:nowrap;
+}
+.row .lab b{
+  color:var(--gold);font-family:var(--tr);
+  font-size:22px;line-height:1;letter-spacing:.01em;
+  display:inline-block;vertical-align:-3px;margin:0 1px;
+}
+.row .opts{display:flex;flex-wrap:wrap;gap:6px}
+.row button{
+  font-size:12.5px;padding:5px 11px;border-radius:999px;
+  border:1px solid var(--line2);background:var(--sfc2);color:var(--fg2);cursor:pointer;
+}
+.row button.on{
+  background:var(--btn);border-color:var(--btn-line);color:var(--btn-fg);font-weight:600;
+}
+.row button:hover{border-color:var(--gold2)}
+.row .sub{font-size:11px;color:var(--fg3);margin-left:6px}
+.empty{
+  padding:34px 16px;text-align:center;color:var(--fg3);font-size:13px;
+  background:var(--sfc);border:1px dashed var(--line2);border-radius:14px;
+}
+.note{
+  margin:22px 0 0;padding:14px 16px;font-size:12.5px;line-height:1.9;
+  background:var(--soft);border:1px solid var(--line);border-radius:12px;color:var(--fg2);
+}
+.note h2{font-size:13px;margin:0 0 8px;color:var(--gold);letter-spacing:.04em}
+.note ul{margin:0;padding-left:20px}
+.note code{font-family:var(--tr);font-size:13px}
+.note code.cp{font-family:var(--mono);font-size:12px}
+.toast{
+  position:fixed;left:50%;bottom:28px;transform:translateX(-50%) translateY(20px);
+  background:var(--fg);color:var(--bg);padding:9px 18px;border-radius:999px;
+  font-size:12.5px;opacity:0;pointer-events:none;transition:.22s;z-index:9;
+}
+.toast.on{opacity:1;transform:translateX(-50%) translateY(0)}
+@media (max-width:720px){
+  .bar{padding:12px}
+  /* 输入框那一格独占一行，方案/按钮排到下一行，避免横向溢出 */
+  .bar label:first-child{flex:1 1 100%;flex-wrap:wrap}
+  .bar label:first-child span{white-space:nowrap}
+  .bar label:first-child input{flex:1 1 100%;margin-left:0}
+  .rarebar{padding:10px 12px}
+  .rarebar .hint{margin-left:0;flex:1 1 100%}
+}
+@media (max-width:640px){
+  body{padding:16px 12px 48px}
+  .cards{grid-template-columns:repeat(2,1fr);gap:10px}
+  .card .g{min-height:96px;font-size:calc(28px * var(--mn-scale,1))}
+  input[type=text]{min-width:0;flex:1 1 100%}
+}
+
+/* ============ 窄屏 ============ */
+@media (max-width:1080px){
+  .duo{grid-template-columns:1fr}
+  .stage{grid-template-columns:1fr}
+  .stage .result{grid-column:1;grid-row:1}
+  .stage .sider{grid-column:1;grid-row:2}
+  .result .pv{min-height:300px}
+}
+@media (max-width:760px){
+  /* 输入行：标签一行、输入框独占一行、方案与按钮排第三行 */
+  .bar{padding:12px 14px;gap:8px}
+  .bar label:first-child{flex:1 1 100%;flex-wrap:wrap;white-space:normal}
+  .bar label:first-child input{flex:1 1 100%}
+  .bar .primary{flex:1 1 auto}
+  .rarebar{padding:10px 12px}
+  .rarebar .hint{margin-left:0;flex:1 1 100%}
+  .metacard{padding:14px}
+  .xsch span{font-size:26px}
+  .xsch .k > b{min-width:56px}
+  .row{padding:10px 12px;gap:6px}
+  .row .lab{flex:1 1 100%}
+  .result .pv{min-height:260px}
+  .notice,.notice.critical{padding:11px 13px;font-size:12.5px}
+}
+@media (max-width:520px){
+  main{padding-left:12px;padding-right:12px}
+  h1{font-size:20px}
+  .sub{font-size:12px}
+  .xsch span{font-size:21px}
+  .xsch .k > b{min-width:50px;font-size:11px}
+  .act button{flex:1 1 100%}
+  .rarebar button{padding:5px 9px;font-size:15px}
+  .rarebar .rname{min-width:auto;margin-right:4px}
+  .row button{padding:4px 9px;font-size:12px}
+  .result .pv{min-height:220px}
+}
+</style>
+</head>
+<body>
+<main>
+
+<h1>popmon · 转写 → 回鹘蒙文</h1>
+<p class="sub">
+  输入<b>转写</b>（如 <code>monggol</code>），下面列出所有可能的<b>回鹘蒙文写法</b>，
+  逐条比对后点「复制」拿走。转写是<b>一对多</b>的 —— 同一个音可能有单字母写法，也可能要拆成两个码位。
+</p>
+
+<div class="bar">
+  <label><span id="inpLabel">联合转写</span>
+    <input type="text" id="inp" value="monggol" spellcheck="false"
+           placeholder="例如 qaγan / monggol / činggis">
+  </label>
+  <label>方案
+    <select id="schemeSel">
+      <option value="cmn">联合转写（默认）</option>
+      <option value="poppe">鲍培转写</option>
+    </select>
+  </label>
+  <button class="primary" id="btnGo">转换</button>
+</div>
+
+<div class="duo" id="duo">
+  <div class="col col-l">
+    <div class="bar">
+  <label>字体
+    <select id="fontsel">
+      <option value="Mongolian Baiti">Mongolian Baiti（本机 · 标准）</option>
+      <option value="Menk Qimed Tig">Menk Qimed Tig（本机 · 不推荐）</option>
+      <option value="UME Mongolian">UME Mongolian（内置 Noto · 不推荐）</option>
+    </select>
+  </label>
+  <label class="sw"><input type="checkbox" id="dyeChk"> 染字</label>
+  <label>主题
+    <select id="themeSel">
+      <option value="auto">自动</option>
+      <option value="light">浅色</option>
+      <option value="dark">深色</option>
+    </select>
+  </label>
+  <span class="hint">字体只按族名引用，不打包（蒙科立 / 微软字体不可再分发）</span>
+</div>
+
+    <div class="rarebar" id="rarebar"></div>
+  </div>
+  <div class="col col-r">
+    <div class="notice" id="notice">
+  <b>注意</b>录入词汇时，在<b>联合转写</b>模式下，请手动替换：<br>
+  · 高莲花《蒙古语短语结构》中使用的 <code>ŋ</code> 改为 <code>ng</code>，
+    <code>h</code> 改为 <code>x</code>；<br>
+  · 特格希都愣《蒙古语构词法研究》中使用的 <code>h</code> 替换为 <code>x</code>。
+</div>
+
+    <div class="notice critical">
+  <b>极其重要</b><span class="crit-t">怎么认出资料用的是哪种转写</span><br>
+  出现独有字母 <code>q</code> 和 <code>γ</code> 的是 <b>鲍培转写</b>；<br>
+  出现独有字母 <code>x</code> 和 <code>ë</code> 的是 <b>联合转写</b>。
+</div>
+  </div>
+</div>
+
+<div class="fontwarn" id="fontWarn" hidden></div>
+
+<div class="stage">
+  <div class="result">
+    <div class="pv" id="pv">
+      <div class="pvstack" id="pvStack">
+        <span class="pvbase" lang="mn-Mong"></span>
+      </div>
+    </div>
+  </div>
+
+  <div class="sider">
+    <div class="metacard">
+      <div class="badge" id="badge" hidden></div>
+      <div class="cps" id="cps"></div>
+      <div class="parse inline" id="parse">在上面输入转写后按「转换」。</div>
+      <div class="xsch" id="xsch"></div>
+      <div class="act">
+        <button class="primary" id="btnCopy">复制这个词</button>
+        <button id="btnCopyCm" title="复制这个词的联合转写（中国—蒙古国联合蒙文转写）">复制联合转写</button>
+        <button id="btnReset">全部回到默认</button>
+      </div>
+    </div>
+
+    <div class="rows" id="rows"></div>
+  </div>
+</div>
+
+<div class="note">
+  <h2>这个工具怎么判读</h2>
+  <ul>
+    <li><b>两套方案</b>，默认<b>联合转写</b>（中国—蒙古国联合蒙文转写，2005）：
+      固定 <code>x</code>=<code>ᠬ</code>、<code>g</code>=<code>ᠭ</code>、<code>k</code>=<code>ᠺ</code>（蒙古语词里几乎不会用到 ᠺ）。
+      本项目词条最终都归到这套写法。<b>鲍培转写</b>按元音和谐分写 q/k、γ/g，对照教材时切到它。</li>
+
+    <li><b>不用 h 写 ᠬ</b>。本工具里 <code>h</code> 就是 <code>ᠾ</code>（<code>U+183E</code>，阿礼嘎礼 h），
+      所以用 <code>h</code> 写 ᠬ 的资料必须先手动改成 <code>x</code> —— 见页面上方的提示。</li>
+
+    <li><b>结果框里同时给出两种转写</b>：<b>联合转写 ︱ 鲍培</b>，点「复制联合转写」直接拿走拉丁串。
+      判定不了的时候写「<b>不确定</b>」，不给可能错的写法 ——
+      原因见下面「鲍培的 q/k」一条。</li>
+
+    <li><b>转写是一对多的</b>：<code>ng</code>、<code>lh</code>、<code>zh</code>、<code>ch</code>、<code>sh</code>、<code>rh</code>
+      既可以写成单字母，也可以拆成两笔（后者常带一个下加的 r），两种都会列出来，
+      比对字形后自己选。</li>
+
+    <li><b>q/k 与 γ/g 各是同一个码位</b>（<code>U+182C</code> / <code>U+182D</code>），
+      字面上靠<b>字点</b>区别，那个差别由 <b>FVS</b> 控制，所以每个字母都列出「默认 / 第N变体」供比对。
+      鲍培的 q/k、γ/g 按<b>就近元音</b>判定：每个 ᠬ/ᠭ 看后面最近的元音，a/o/u 读 q/γ，e/ö/ü 读 k/g。
+      <b>词内阴阳元音混用</b>（可能是合成词，看不出构件边界，如 <code>köke|qota</code>）或
+      <b>ᠬ 后面是 i</b> 时判不了 —— 这时写「不确定」，不给猜测。</li>
+
+    <li><b>控制符记号</b>（两套方案通用，也是联合转写方案表规定的）：
+      <code>'</code> FVS1 · <code>"</code> FVS2 · <code>`</code> FVS3 · <code>*</code> ZWJ ·
+      <code>-</code> NNBSP · <code>_</code> MVS。</li>
+
+    <li><b>后缀一律断开，不看首音</b>：<code>-a</code>（与位格）、<code>-i</code>／<code>-yi</code>（宾格）、
+      <code>-gi</code>（宾格）、<code>-ber</code>／<code>-ier</code>（凭借格）在教材里都带缝。
+      所以 <code>-</code> 一律转 NNBSP（<code>U+202F</code>），笔面上断开但不断行；
+      输入 <code>qan-a</code> 得到的是「ᠬᠠᠨ + U+202F + ᠠ」。旧文献要 MVS 时用 <code>_</code>。</li>
+
+    <li><b>变体是「按字体 + 按位置」实测的</b>。换字体，按钮栏会跟着变；
+      同一字母在词首、词中、词尾能用的 FVS 也不相同。
+      例如 <code>ᠭ</code>（<code>U+182D</code>）词中：Noto 有第 1/3/4 变体，Baiti 有 1/2/3/4，Qimed 只有 1/2/3。
+      每行行尾标着当前算的是哪个位置（isol / init / medi / fina）。</li>
+
+    <li><b>FVS 一次只加在一个字母上</b>。同一个词里两个字母都要 FVS 时，本工具不会把组合全列出来（会变成 4ⁿ），
+      需要逐个试完再自己拼回去。换了字体，同一串 FVS 也未必有同样的字形 —— 那是字体差别。</li>
+
+    <li><b>字体：以 Baiti 为准</b>。另外两支能用但各有坑，选中时页面会提示
+      （Qimed 在词缀分隔处会丢 <code>ᠬ</code> 的两点；Noto 把 <code>ᠭ</code>+<code>ᠣ</code> 合成连字并省掉两点）。</li>
+
+    <li><b>复制走的是纯文本码位</b>，粘贴后用什么字体由你的编辑器决定。</li>
+  </ul>
+</div>
+
+</main>
+<div class="toast" id="toast"></div>
+
+<script>
+/* ====================================================================
+   鲍培转写 → 码位
+   每个 token 给出一到多种写法（alts），每种写法是一串码位。
+   变体总表就是各 token 写法的笛卡尔积。
+   ==================================================================== */
+const T_POPPE = {
+  /* 元音 */
+  'a':  { p:[0x1820], alts:[[0x1820]],                     d:'a' },
+  'e':  { p:[0x1821], alts:[[0x1821]],                     d:'e' },
+  'i':  { p:[0x1822], alts:[[0x1822]],                     d:'i' },
+  'o':  { p:[0x1823], alts:[[0x1823]],                     d:'o' },
+  'u':  { p:[0x1824], alts:[[0x1824]],                     d:'u' },
+  'ö':  { p:[0x1825], alts:[[0x1825]],                     d:'ö' },
+  'ü':  { p:[0x1826], alts:[[0x1826]],                     d:'ü' },
+  'ē':  { p:[0x1827], alts:[[0x1827]],                     d:'ē（借词长音）' },
+
+  /* 单码位辅音 */
+  'n':  { p:[0x1828], alts:[[0x1828]],                     d:'n' },
+  'b':  { p:[0x182A], alts:[[0x182A]],                     d:'b' },
+  'p':  { p:[0x182B], alts:[[0x182B]],                     d:'p' },
+  'm':  { p:[0x182E], alts:[[0x182E]],                     d:'m' },
+  'l':  { p:[0x182F], alts:[[0x182F]],                     d:'l' },
+  's':  { p:[0x1830], alts:[[0x1830]],                     d:'s' },
+  'š':  { p:[0x1831], alts:[[0x1831]],                     d:'š' },
+  't':  { p:[0x1832], alts:[[0x1832]],                     d:'t' },
+  'd':  { p:[0x1833], alts:[[0x1833]],                     d:'d' },
+  'č':  { p:[0x1834], alts:[[0x1834]],                     d:'č' },
+  'ǰ':  { p:[0x1835], alts:[[0x1835]],                     d:'ǰ' },
+  'j':  { p:[0x1835], alts:[[0x1835]],                     d:'ǰ（j 是 ASCII 别名）' },
+  'y':  { p:[0x1836], alts:[[0x1836]],                     d:'y' },
+  'r':  { p:[0x1837], alts:[[0x1837]],                     d:'r' },
+  'w':  { p:[0x1838], alts:[[0x1838]],                     d:'w' },
+  'f':  { p:[0x1839], alts:[[0x1839]],                     d:'f（借词）' },
+  'k':  { p:[0x182C], alts:[[0x182C]],                     d:'k（与 q 同码位）' },
+  'q':  { p:[0x182C], alts:[[0x182C]],                     d:'q（与 k 同码位）' },
+  'g':  { p:[0x182D], alts:[[0x182D]],                     d:'g（与 γ 同码位）' },
+  'γ':  { p:[0x182D], alts:[[0x182D]],                     d:'γ（与 g 同码位）' },
+  'ɣ':  { p:[0x182D], alts:[[0x182D]],                     d:'γ（与 g 同码位）' },
+  'h':  { p:[0x183E], alts:[[0x183E]],                     d:'h（借词）' },
+  'c':  { p:[0x183C], alts:[[0x183C]],                     d:'c（ts，借词）' },
+  'z':  { p:[0x183D], alts:[[0x183D]],                     d:'z' },
+
+  /* 联合转写的控制符记号：FVS1 ' · FVS2 " · FVS3 ` · ZWJ * */
+  "'":  { p:[0x180B], alts:[[0x180B]], d:'FVS1', ctrl:true },
+  '"':  { p:[0x180C], alts:[[0x180C]], d:'FVS2', ctrl:true },
+  '`':  { p:[0x180D], alts:[[0x180D]], d:'FVS3', ctrl:true },
+  '*':  { p:[0x200D], alts:[[0x200D]], d:'ZWJ', ctrl:true },
+
+  /* 词缀分隔符：转写里的 "-" 不是连字符，是 NNBSP（U+202F）。
+     蒙古文用它把词干和词缀分开 —— 字面上没有笔画，但会断开连写。 */
+  '-':  { p:[0x202F], alts:[[0x202F]], d:'词缀分隔符 NNBSP', ctrl:true },
+  '‐':  { p:[0x202F], alts:[[0x202F]], d:'词缀分隔符 NNBSP', ctrl:true },
+  '–':  { p:[0x202F], alts:[[0x202F]], d:'词缀分隔符 NNBSP', ctrl:true },
+  /* 下划线 = MVS（U+180E）。和 "-" 排出来在 Noto / Baiti 里一样，
+     但在 Qimed 里是另一套字形（_MEDI_MVS）；旧文献严格转录时用它。 */
+  '_':  { p:[0x180E], alts:[[0x180E]], d:'元音分隔符 MVS', ctrl:true },
+
+  /* 多写法：单字母 ／ 拆两笔 */
+  'ng': { p:[0x1829], alts:[[0x1829],[0x1828,0x182D]],
+          d:'ng', tips:{0:'单字母 ᠩ',1:'拆成 n + g'} },
+  'kh': { p:[0x183B], alts:[[0x183B]],
+          d:'kh（借词）' },
+  'lh': { p:[0x1840], alts:[[0x1840],[0x182F,0x183E]],
+          d:'lh', tips:{0:'单个 ᠯᠾ',1:'拆成 l + h'} },
+  'zh': { p:[0x1841], alts:[[0x1841,0x1837],[0x1841]],
+          d:'zh（借词）',
+          tips:{0:'Ƶ + 下加 r（手写稿的样子）',1:'预组合 Ƶ，<em>少了下面那笔 r</em>，存疑'} },
+  'ch': { p:[0x1842], alts:[[0x1842,0x1837],[0x1842]],
+          d:'ch（借词）',
+          tips:{0:'Ç + 下加 r（手写稿的样子）',1:'预组合 Ç，<em>少了下面那笔 r</em>，存疑'} },
+  'sh': { p:[0x1831,0x1837], alts:[[0x1831,0x1837]],
+          d:'sh（借词）', tips:{0:'š + 下加 r'} },
+  'rh': { p:[0x183F,0x1837], alts:[[0x183F,0x1837],[0x183F]],
+          d:'rh（借词）',
+          tips:{0:'Ʒ + 下加 r',1:'预组合 Ʒ，<em>少了下面那笔 r</em>，存疑'} }
+};
+
+/* 联合转写（中国—蒙古国联合蒙文转写，ISO/TC 46/WG 3 2005）
+   数据取自 tools/_cnmn_table.json 的 generic 列。
+   与鲍培最大的不同：x = ᠬ(U+182C)、g = ᠭ(U+182D)、k = ᠺ(U+183A) ——
+   k 是独立码位，不再和 ᠬ 共用一个字。 */
+const T_CMN = {
+  'a': { p:[0x1820], alts:[[0x1820]], d:'a' },
+  'e': { p:[0x1821], alts:[[0x1821]], d:'e' },
+  'i': { p:[0x1822], alts:[[0x1822]], d:'i' },
+  'o': { p:[0x1823], alts:[[0x1823]], d:'o' },
+  'u': { p:[0x1824], alts:[[0x1824]], d:'u' },
+  'ö': { p:[0x1825], alts:[[0x1825]], d:'ö' },
+  'ü': { p:[0x1826], alts:[[0x1826]], d:'ü' },
+  'ë': { p:[0x1827], alts:[[0x1827]], d:'ë' },
+  'n': { p:[0x1828], alts:[[0x1828]], d:'n' },
+  'ng': { p:[0x1829], alts:[[0x1829]], d:'ng' },
+  'b': { p:[0x182A], alts:[[0x182A]], d:'b' },
+  'p': { p:[0x182B], alts:[[0x182B]], d:'p' },
+  'x': { p:[0x182C], alts:[[0x182C]], d:'x' },
+  'g': { p:[0x182D], alts:[[0x182D]], d:'g' },
+  'm': { p:[0x182E], alts:[[0x182E]], d:'m' },
+  'l': { p:[0x182F], alts:[[0x182F]], d:'l' },
+  's': { p:[0x1830], alts:[[0x1830]], d:'s' },
+  'š': { p:[0x1831], alts:[[0x1831]], d:'š' },
+  't': { p:[0x1832], alts:[[0x1832]], d:'t' },
+  'd': { p:[0x1833], alts:[[0x1833]], d:'d' },
+  'č': { p:[0x1834], alts:[[0x1834]], d:'č' },
+  'ǰ': { p:[0x1835], alts:[[0x1835]], d:'ǰ' },
+  'y': { p:[0x1836], alts:[[0x1836]], d:'y' },
+  'r': { p:[0x1837], alts:[[0x1837]], d:'r' },
+  'w': { p:[0x1838], alts:[[0x1838]], d:'w' },
+  'f': { p:[0x1839], alts:[[0x1839]], d:'f' },
+  'k': { p:[0x183A], alts:[[0x183A]], d:'k' },
+  'ḳ': { p:[0x183B], alts:[[0x183B]], d:'ḳ' },
+  'c': { p:[0x183C], alts:[[0x183C]], d:'c' },
+  'z': { p:[0x183D], alts:[[0x183D]], d:'z' },
+  'h': { p:[0x183E], alts:[[0x183E]], d:'h' },
+  'ž': { p:[0x183F], alts:[[0x183F]], d:'ž' },
+  'lh': { p:[0x1840], alts:[[0x1840]], d:'lh' },
+  'ẑ': { p:[0x1841], alts:[[0x1841]], d:'ẑ' },
+  'ĉ': { p:[0x1842], alts:[[0x1842]], d:'ĉ' },
+  'ː': { p:[0x1843], alts:[[0x1843]], d:'ː' },
+  'é': { p:[0x1844], alts:[[0x1844]], d:'é' },
+  'í': { p:[0x1845], alts:[[0x1845]], d:'í' },
+  'ó': { p:[0x1846], alts:[[0x1846]], d:'ó' },
+  'ú': { p:[0x1847], alts:[[0x1847]], d:'ú' },
+  'ő': { p:[0x1848], alts:[[0x1848]], d:'ő' },
+  'ű': { p:[0x1849], alts:[[0x1849]], d:'ű' },
+  'ṅ': { p:[0x184A], alts:[[0x184A]], d:'ṅ' },
+  'ḃ': { p:[0x184B], alts:[[0x184B]], d:'ḃ' },
+  'ṗ': { p:[0x184C], alts:[[0x184C]], d:'ṗ' },
+  'ẋ': { p:[0x184D], alts:[[0x184D]], d:'ẋ' },
+  'ġ': { p:[0x184E], alts:[[0x184E]], d:'ġ' },
+  'ṁ': { p:[0x184F], alts:[[0x184F]], d:'ṁ' },
+  'ṫ': { p:[0x1850], alts:[[0x1850]], d:'ṫ' },
+  'ḋ': { p:[0x1851], alts:[[0x1851]], d:'ḋ' },
+  'ċ': { p:[0x1852], alts:[[0x1852]], d:'ċ' },
+  'j': { p:[0x1853], alts:[[0x1853]], d:'j' },
+  'ć': { p:[0x1854], alts:[[0x1854]], d:'ć' },
+  'ẏ': { p:[0x1855], alts:[[0x1855]], d:'ẏ' },
+  'ẇ': { p:[0x1856], alts:[[0x1856]], d:'ẇ' },
+  'ḱ': { p:[0x1857], alts:[[0x1857]], d:'ḱ' },
+  'ģ': { p:[0x1858], alts:[[0x1858]], d:'ģ' },
+  'ḣ': { p:[0x1859], alts:[[0x1859]], d:'ḣ' },
+  'ĵ': { p:[0x185A], alts:[[0x185A]], d:'ĵ' },
+  'ń': { p:[0x185B], alts:[[0x185B]], d:'ń' },
+  'ź': { p:[0x185C], alts:[[0x185C]], d:'ź' },
+  'è': { p:[0x185D], alts:[[0x185D]], d:'è' },
+  'ì': { p:[0x185E], alts:[[0x185E]], d:'ì' },
+  'ï': { p:[0x185F], alts:[[0x185F]], d:'ï' },
+  'ȕ': { p:[0x1860], alts:[[0x1860]], d:'ȕ' },
+  'ū': { p:[0x1861], alts:[[0x1861]], d:'ū' },
+  'ň': { p:[0x1862], alts:[[0x1862]], d:'ň' },
+  'ǩ': { p:[0x1863], alts:[[0x1863]], d:'ǩ' },
+  'ǧ': { p:[0x1864], alts:[[0x1864]], d:'ǧ' },
+  'ẍ': { p:[0x1865], alts:[[0x1865]], d:'ẍ' },
+  'ṕ': { p:[0x1866], alts:[[0x1866]], d:'ṕ' },
+  'ś': { p:[0x1867], alts:[[0x1867]], d:'ś' },
+  'ṭ': { p:[0x1868], alts:[[0x1868]], d:'ṭ' },
+  'ḍ': { p:[0x1869], alts:[[0x1869]], d:'ḍ' },
+  'ƶ': { p:[0x186A], alts:[[0x186A]], d:'ƶ' },
+  'ƒ': { p:[0x186B], alts:[[0x186B]], d:'ƒ' },
+  'ĝ': { p:[0x186C], alts:[[0x186C]], d:'ĝ' },
+  'x̊': { p:[0x186D], alts:[[0x186D]], d:'x̊' },
+  'ts': { p:[0x186E], alts:[[0x186E]], d:'ts' },
+  'dz': { p:[0x186F], alts:[[0x186F]], d:'dz' }
+};
+
+/* 控制符两套方案通用：从 T_POPPE 里把标了 ctrl 的搬过来 */
+Object.keys(T_POPPE).forEach(k => { if (T_POPPE[k].ctrl) T_CMN[k] = T_POPPE[k]; });
+
+/* 两套方案的表 + 当前选择（默认联合转写 —— 本项目词条最终都归到它） */
+const SCHEMES = {
+  cmn:   { name: '联合转写', table: T_CMN },
+  poppe: { name: '鲍培转写', table: T_POPPE }
+};
+let scheme = 'cmn';
+let dyeOn = false;            /* 染字开关 */
+const curTable = () => SCHEMES[scheme].table;
+
+/* 最长匹配优先：先试 2 个字符，再试 1 个 */
+const MAX_LEN = 2;
+
+/* 录入者常把专名首字母大写，或把 ǰ / š / č 写成大写的；
+   统一折成小写再解析，'γ' 也接受 'Γ'。 */
+const NORM = { 'Č':'č','Š':'š','ǰ':'ǰ','Ǳ':'ǰ','Ö':'ö','Ü':'ü','Ē':'ē','Ë':'ē','Γ':'γ',
+                'ɣ':'γ'  /* 拉丁 gamma 也折成希腊 gamma，否则标准写法库对不上 */ };
+
+function normalize(str){
+  let s = '';
+  for (const ch of str){
+    if (NORM[ch]) s += NORM[ch];
+    else s += ch.toLowerCase();
+  }
+  return s;
+}
+
+function tokenize(str){
+  const out = [];
+  let i = 0;
+  while (i < str.length){
+    let hit = null;
+    for (let len = MAX_LEN; len >= 1; len--){
+      const seg = str.substr(i, len);
+      const tb = curTable();
+      if (tb[seg]){ hit = { raw: seg, def: tb[seg] }; i += len; break; }
+    }
+    if (!hit){
+      out.push({ raw: str[i], def: null });
+      i += 1;
+    } else {
+      out.push(hit);
+    }
+  }
+  return out;
+}
+
+function cpStr(cps){
+  return cps.map(c => 'U+' + c.toString(16).toUpperCase().padStart(4, '0')).join(' ');
+}
+
+/* 哪些「字体 × 码位 × 位置」真的换字形 —— 逐字体、逐位置实测。
+   同一串码位在三支字体里的变体并不相同，例如 U+182D（γ/g）词中：
+     Noto 1,3,4　　Baiti 1,2,3,4　　Qimed 1,2,3
+   换字体就换表，所以按钮跟着变。
+   FVS1–4 = U+180B / U+180C / U+180D / U+180F
+   （U+180E 是 MVS「元音分隔符」，不是变体选择符，别混进来）。 */
+const FVS_BY_FONT = {
+  "UME Mongolian": {
+    6176:{isol:[1,2],init:[1],medi:[1],fina:[1]},
+    6177:{isol:[1],init:[1],fina:[1]},
+    6178:{isol:[1,2],init:[1],medi:[1,2]},
+    6179:{medi:[1],fina:[1]},
+    6180:{isol:[1,2],init:[1],medi:[1],fina:[1]},
+    6181:{isol:[1],medi:[1,2],fina:[1,2]},
+    6182:{isol:[1,2,3],init:[1],medi:[1,2],fina:[1,2]},
+    6184:{isol:[1,2],init:[1,2],medi:[1,3],fina:[1,3]},
+    6186:{fina:[1]},
+    6188:{isol:[1,2,4],init:[1,2,4],medi:[1,3,4],fina:[1]},
+    6189:{isol:[1,2,4],init:[1,2,4],medi:[1,3,4],fina:[1,3]},
+    6191:{isol:[1],init:[1]},
+    6192:{fina:[1,2]},
+    6193:{isol:[1],init:[1],medi:[1]},
+    6194:{medi:[1]},
+    6195:{isol:[1],init:[1],medi:[1],fina:[1]},
+    6197:{isol:[1],fina:[1]},
+    6198:{isol:[1],init:[1],medi:[1,2]},
+    6200:{medi:[1],fina:[1]},
+    6202:{fina:[1]},
+    6212:{medi:[1]},
+    6213:{init:[1],medi:[1,3]},
+    6214:{medi:[1]},
+    6215:{isol:[1],medi:[1,2],fina:[1,2]},
+    6216:{medi:[2]},
+    6217:{isol:[1],medi:[1],fina:[1]},
+    6220:{isol:[1],init:[1],medi:[1]},
+    6221:{isol:[1],init:[1],medi:[1]},
+    6222:{isol:[1],init:[1],medi:[1,2]},
+    6236:{isol:[1],init:[1],medi:[1],fina:[1]},
+    6237:{medi:[1],fina:[1,2,3]},
+    6238:{isol:[1],medi:[1]},
+    6240:{medi:[1],fina:[1,2,3]},
+    6243:{isol:[1],init:[1],medi:[1,2]},
+    6244:{isol:[1],init:[1],medi:[1,3]},
+    6245:{isol:[1],init:[1],medi:[1]},
+    6248:{isol:[1],init:[2],medi:[2,3]},
+    6249:{isol:[1,2],init:[1,3],medi:[1]},
+    6255:{init:[1],medi:[1]},
+    6259:{isol:[1],medi:[1,2],fina:[1]},
+    6260:{isol:[1,2],init:[1,2],medi:[1,2,4],fina:[1,2]},
+    6261:{isol:[1],init:[1],medi:[1]},
+    6262:{isol:[1],init:[1],medi:[1]},
+    6290:{isol:[1],init:[1],medi:[1]},
+    6298:{medi:[1]}
+  },
+  "Mongolian Baiti": {
+    6176:{isol:[1,2,3],init:[1,2],medi:[1],fina:[1,2]},
+    6177:{isol:[1,2],init:[1],fina:[1,2]},
+    6178:{isol:[1,2,3],init:[1,2],medi:[1,2,3]},
+    6179:{medi:[1],fina:[1,2]},
+    6180:{isol:[1,2,3],init:[1,2],medi:[1],fina:[1,2]},
+    6181:{isol:[1],medi:[1,2,3],fina:[1,2,3]},
+    6182:{isol:[1,2,3],init:[1,2],medi:[1,2,3],fina:[1,2,3]},
+    6184:{isol:[1],init:[1,2,3],medi:[1,2],fina:[1,2]},
+    6186:{fina:[1]},
+    6188:{isol:[1,2,4],init:[1,2,3,4],medi:[1,2,3,4],fina:[1]},
+    6189:{isol:[1,2,4],init:[1,2,3,4],medi:[1,2,3,4],fina:[1,2,3]},
+    6191:{isol:[1],init:[1]},
+    6192:{fina:[1,2]},
+    6193:{isol:[1],init:[1,2],medi:[1,2]},
+    6194:{medi:[1,2]},
+    6195:{isol:[1],init:[1,2],medi:[1,2],fina:[1]},
+    6197:{isol:[1],fina:[1]},
+    6198:{isol:[1],init:[1,2],medi:[1,2,3]},
+    6200:{medi:[1],fina:[1]},
+    6202:{fina:[1]},
+    6212:{medi:[1]},
+    6213:{init:[1],medi:[1,2,3],fina:[1,2]},
+    6214:{medi:[1]},
+    6215:{isol:[1],medi:[1,2,3],fina:[1,2,3]},
+    6216:{medi:[1,2],fina:[1]},
+    6217:{isol:[1],medi:[1],fina:[1,2]},
+    6220:{isol:[1],init:[1],medi:[1]},
+    6221:{isol:[1],init:[1,2,3],medi:[1,2]},
+    6222:{isol:[1],init:[1,2],medi:[1,2,3]},
+    6229:{isol:[1],init:[1],medi:[1]},
+    6230:{medi:[1],fina:[1]},
+    6233:{medi:[1,2]},
+    6236:{isol:[1],init:[1],medi:[1]},
+    6237:{medi:[1,2],fina:[1,2,3,4]},
+    6238:{isol:[1,2],medi:[2,3],fina:[1,2,3]},
+    6240:{medi:[1,2],fina:[1,2,3,4]},
+    6243:{isol:[1,2],init:[1,2,3],medi:[1,2,3,4],fina:[1,2,3]},
+    6244:{isol:[1],init:[1,2],medi:[1,2,3]},
+    6245:{isol:[1],init:[1,2],medi:[1,2]},
+    6246:{isol:[1],init:[1],medi:[1]},
+    6248:{isol:[1],init:[1,2],medi:[1,2,3]},
+    6249:{isol:[1],init:[1,2],medi:[1,2]},
+    6259:{isol:[1,2],medi:[2,3],fina:[1,2,3,4]},
+    6260:{isol:[1,2],init:[1,2,3],medi:[1,2,3,4],fina:[1,2,3]},
+    6261:{isol:[1],init:[1],medi:[1]},
+    6262:{isol:[1],init:[1,2],medi:[1,2]},
+    6272:{isol:[1],init:[1],medi:[1],fina:[1]},
+    6273:{isol:[1],init:[1],medi:[1],fina:[1]},
+    6279:{fina:[1]},
+    6286:{isol:[1],init:[1],medi:[1]},
+    6290:{isol:[1],init:[1],medi:[1]},
+    6298:{medi:[1]}
+  },
+  "Menk Qimed Tig": {
+    6176:{isol:[1],init:[1],medi:[1,2],fina:[1]},
+    6177:{init:[1],fina:[1]},
+    6178:{medi:[1]},
+    6179:{medi:[1],fina:[1]},
+    6180:{medi:[1],fina:[1]},
+    6181:{isol:[1],medi:[1,2],fina:[1]},
+    6182:{isol:[1],medi:[1,2],fina:[1]},
+    6184:{init:[1],medi:[1,2],fina:[2]},
+    6185:{init:[1,2,3,4],medi:[1,2,3,4]},
+    6186:{init:[1,2,3,4],medi:[1,2,3,4],fina:[1]},
+    6187:{init:[1,2,3,4],medi:[1,2,3,4]},
+    6188:{isol:[1,2],init:[1],medi:[1,2,3],fina:[1]},
+    6189:{isol:[1,2],init:[1],medi:[1,2,3],fina:[1,2]},
+    6192:{fina:[1]},
+    6194:{medi:[1]},
+    6195:{init:[1],medi:[1],fina:[1]},
+    6197:{medi:[1]},
+    6198:{init:[1],medi:[1,2]},
+    6200:{medi:[1],fina:[1]},
+    6201:{init:[1,2,3,4],medi:[1,2,3,4]},
+    6202:{init:[1,2,3,4],medi:[1,2,3,4]},
+    6203:{init:[1,2,3,4],medi:[1,2,3,4]},
+    6272:{isol:[1],init:[1],medi:[1],fina:[1]},
+    6273:{isol:[1],init:[1],medi:[1],fina:[1]},
+    6281:{init:[1,2,3,4],medi:[1,2,3,4]}
+  }
+};
+
+/* 当前字体对应的表；换字体时由 applyFont 换掉 */
+let fvsTable = FVS_BY_FONT["UME Mongolian"];
+
+/* 标准写法库：键是归一化后的鲍培串，值是每个字母的选择 [alt, fvs]。
+   收录的都是已经核对过的词形；不在表里的词照常出按钮，只是不标绿。
+   要加词只改这一处 —— 按字母顺序写 [alt序号, fvs编号]，全默认就是 [0,0]。 */
+/* ⚠ 标准写法功能已停用（2026-10-28，改用联合转写 + 两方案互转）。
+   代码与数据都留着，需要恢复时把 STANDARD_ENABLED 改成 true 即可。
+const STANDARD_DISABLED_BEGIN */
+const STANDARD_ENABLED = false;
+
+const STANDARD = {
+  'qaγan':    [[0,0],[0,0],[0,0],[0,0],[0,0]],                 /* ᠬᠠᠭᠠᠨ */
+  'monggol':  [[0,0],[0,0],[0,0],[0,0],[0,0],[0,0]],           /* ᠮᠣᠩᠭᠣᠯ */
+  'činggis':  [[0,0],[0,0],[0,0],[0,0],[0,0],[0,0]],           /* ᠴᠢᠩᠭᠢᠰ */
+  'qayisang': [[0,0],[0,0],[0,0],[0,0],[0,0],[0,0],[0,0]],     /* ᠬᠠᠶᠢᠰᠠᠩ */
+  'sayin':    [[0,0],[0,0],[0,0],[0,0],[0,0]],                 /* ᠰᠠᠶᠢᠨ */
+  'tabu':     [[0,0],[0,0],[0,0],[0,0]],                       /* ᠲᠠᠪᠤ */
+  'taulai':   [[0,0],[0,0],[0,0],[0,0],[0,0],[0,0]],           /* ᠲᠠᠤᠯᠠᠢ */
+  'kikü':     [[0,0],[0,0],[0,0],[0,0]],                       /* ᠬᠢᠬᠦ  kikü */
+  'qan-a':    [[0,0],[0,0],[0,0],[0,0],[0,0]]                  /* ᠬᠠᠨ᠎ᠠ  qan-a（NNBSP） */,
+  'gölöge': [[0,0],[0,0],[0,0],[0,0],[0,0],[0,0]],   /* 182D 1825 182F 1825 182D 1821 */
+  'šegelekü': [[0,0],[0,0],[0,0],[0,0],[0,0],[0,0],[0,0],[0,0]],   /* 1831 1821 182D 1821 182F 1821 182C 1826 */
+  'bošog-a': [[0,0],[0,0],[0,0],[0,0],[0,0],[0,0],[0,0]],   /* 182A 1823 1831 1823 182D 202F 1820 */
+  'döröge': [[0,0],[0,0],[0,0],[0,0],[0,0],[0,0]],   /* 1833 1825 1837 1825 182D 1821 */
+  'čag': [[0,0],[0,0],[0,0]],   /* 1834 1820 182D */
+  'čečeg': [[0,0],[0,0],[0,0],[0,0],[0,0]],   /* 1834 1821 1834 1821 182D */
+  'čugur': [[0,0],[0,0],[0,0],[0,0],[0,0]],   /* 1834 1824 182D 1824 1837 */
+  'ǰang': [[0,0],[0,0],[0,0]],   /* 1835 1820 1829 */
+  'ǰaqidal': [[0,0],[0,0],[0,0],[0,0],[0,0],[0,0],[0,0]],   /* 1835 1820 182C 1822 1833 1820 182F */
+  'ǰogos': [[0,0],[0,0],[0,0],[0,0],[0,0]],   /* 1835 1823 182D 1823 1830 */
+  'ǰobaniqu': [[0,0],[0,0],[0,0],[0,0],[0,0],[0,0],[0,0],[0,0]],   /* 1835 1823 182A 1820 1828 1822 182C 1824 */
+  'nagadqu':  [[0,0],[0,0],[0,0],[0,0],[0,0],[0,0],[0,0]],  /* 1828 1820 182D 1820 1833 182C 1824  nagadqu */
+  'qurud':    [[0,0],[0,0],[0,0],[0,0],[0,0]],              /* 182C 1824 1837 1824 1833  qurud 奶豆腐 */
+  'kündü':    [[0,0],[0,0],[0,0],[0,0],[0,0]],              /* 182C 1826 1828 1833 1826  kündü */
+  'toγ-a':    [[0,0],[0,0],[0,0],[0,0],[0,0]],              /* 1823 182D 202F 1820  toγ-a 数字 */
+  'qoriy-a':  [[0,0],[0,0],[0,0],[0,0],[0,0],[0,0],[0,0]],  /* 182C 1823 1837 1822 1836 202F 1820  qoriy-a 院子 */
+  'jirγuγ-a': [[0,0],[0,0],[0,0],[0,0],[0,0],[0,0],[0,0],[0,0]]  /* 1835 1822 1837 182D 1824 182D 202F 1820  jirγuγ-a 六 */
+};
+
+/* 只有 Baiti 作为标准预览字体；另两支各有一个坑，选中时按支给提示 */
+const FONT_WARN = {
+  'Menk Qimed Tig':
+    '<b>Qimed 不建议作为标准预览字体</b>：在 <code>qan-a</code> 这类词缀分隔处，' +
+    '它把 <code>ᠨ</code> 排成独立形，同时<b>丢掉 <code>ᠬ</code> 上的两点</b>，与教材写法不符。' +
+    '词中间的正常位置它没有问题 —— 差别只在分隔符前后。',
+  'UME Mongolian':
+    '<b>Noto 不建议作为标准预览字体</b>：它把手写体里分开排的 ' +
+    '<code>ᠭ</code> + <code>ᠣ</code> 合成一个连字，并<b>省掉那两点</b> —— ' +
+    '而这两点正是 <code>ᠭ</code> 与 <code>ᠬ</code> 的区别。教材、蒙科立输入法都不这样写。' +
+    '若必须用，每个 <code>ᠭ</code> 都要加 <b>FVS1</b> 才有点。'
+};
+
+/* 位置的四个中文名，按钮栏里跟着英文一起显示 */
+const POS_CN = { isol:'独立形', init:'词首形', medi:'词中形', fina:'词尾形' };
+
+/* 生成候选：
+   ① 先按「拼写变体」（ng / lh / zh … 单字母还是拆两笔）做笛卡尔积；
+   ② 再给每个「对 FVS 有反应」的字母**单独**加一次 FVS ——
+      一次只改一个字母，既能看全所有变体，也不会 4^n 爆炸。 */
+function combine(tokens){
+  let base = [ [] ];
+  for (const tk of tokens){
+    if (!tk.def) continue;
+    const next = [];
+    for (const prefix of base){
+      for (const alt of tk.def.alts){
+        next.push(prefix.concat([ { tok: tk, cps: alt, fvs: 0 } ]));
+      }
+    }
+    base = next;
+    if (base.length > 32) base = base.slice(0, 32);
+  }
+
+  const out = base.map(combo => ({ segs: combo, fvsOn: null }));
+  for (const combo of base){
+    combo.forEach((seg, i) => {
+      if (seg.cps.length !== 1) return;          /* 多码位的段（zh / sh …）不挂 FVS */
+      const ok = FVS_OK[seg.cps[0]];
+      if (!ok) return;
+      for (const n of ok){
+        const copy = combo.map(s => Object.assign({}, s));
+        copy[i] = Object.assign({}, copy[i], { fvs: n });
+        out.push({ segs: copy, fvsOn: { index: i, n: n } });
+      }
+    });
+  }
+  return out.slice(0, 60);
+}
+
+const $ = id => document.getElementById(id);
+
+function esc(s){
+  return String(s).replace(/[&<>"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+}
+
+/* 当前解析结果与每一段的用户选择 */
+let state = { raw: null, tokens: [], picks: [], pos: [] };
+
+/* 只有「输入的串变了」或「段数变了」才重置选择 ——
+   否则点一下变体按钮，render() 一重建就被打回默认，按钮等于没用。 */
+function buildState(raw){
+  const tokens = tokenize(raw).filter(t => t.def);
+  if (state.raw !== raw || state.picks.length !== tokens.length){
+    state.raw = raw;
+    const std = (STANDARD_ENABLED && scheme === 'poppe') ? STANDARD[raw] : null;
+    /* 有标准写法就按标准预选，没有就全默认 */
+    state.picks = tokens.map((tk, i) => {
+      const c = (std && std[i]) || [0, 0];
+      return { alt: c[0] || 0, fvs: c[1] || 0 };
+    });
+  }
+  state.tokens = tokens;
+}
+
+/* 标准写法的码位序列（用来和当前选择比对） */
+function standardCps(raw, tokens){
+  const std = (STANDARD_ENABLED && scheme === 'poppe') ? STANDARD[raw] : null;
+  if (!std) return null;
+  const out = [];
+  tokens.forEach((tk, i) => {
+    const c = std[i] || [0, 0];
+    const alt = tk.def.alts[c[0] || 0];
+    if (!alt) return;
+    out.push(...alt);
+    if (c[1]) out.push(0x180A + c[1]);
+  });
+  return out;
+}
+
+function segCps(i){
+  const tk = state.tokens[i], p = state.picks[i];
+  const alt = tk.def.alts[p.alt] || tk.def.alts[0];
+  const out = alt.slice();
+  if (p.fvs) out.push(0x180A + p.fvs);
+  return out;
+}
+
+/* 把字符插到光标处；没有光标（从未聚焦）就追加到末尾 */
+function insertAtCursor(ch){
+  const el = $('inp');
+  const s = (typeof el.selectionStart === 'number') ? el.selectionStart : el.value.length;
+  const e = (typeof el.selectionEnd === 'number') ? el.selectionEnd : el.value.length;
+  el.value = el.value.slice(0, s) + ch + el.value.slice(e);
+  const pos = s + ch.length;
+  try{ el.setSelectionRange(pos, pos); }catch(err){}
+  el.focus();
+  render();
+}
+
+/* ---------------- 三方案互转 ----------------
+   反向表：码位 → 该方案的首选写法。取自上面的正向表（取第一条）。
+   鲍培的 q/k、γ/g 是同一个码位，反向时按**元音和谐**猜：
+   词里有 a o u → 阳性用 q/γ；否则阴性用 k/g。 */
+const REV = { poppe: {}, cmn: {} };
+(function buildRev(){
+  const src = { poppe: T_POPPE, cmn: T_CMN };
+  Object.keys(src).forEach(sc => {
+    const tb = src[sc];
+    Object.keys(tb).forEach(k => {
+      const cp = tb[k].p && tb[k].p[0];
+      if (!cp) return;
+      if (REV[sc][cp] === undefined) REV[sc][cp] = k;
+    });
+  });
+  /* 控制符统一记法 */
+  [['poppe'], ['cmn']].forEach(([sc]) => {
+    REV[sc][0x202F] = '-';
+    REV[sc][0x180E] = '_';
+    REV[sc][0x180B] = "'";
+    REV[sc][0x180C] = '"';
+    REV[sc][0x180D] = '`';
+    REV[sc][0x200D] = '*';
+  });
+})();
+
+/* 阳性元音 a o u；阴性 e ö ü；i 中性（自身不能定清浊） */
+const BACK  = [0x1820, 0x1823, 0x1824];
+const FRONT = [0x1821, 0x1825, 0x1826];
+const NEUT  = 0x1822;                       /* i */
+
+/* 往后找最近的元音：返回 'back' / 'front' / 'i' / null */
+function nextVowel(cps, from){
+  for (let k = from + 1; k < cps.length; k++){
+    const c = cps[k];
+    if (BACK.indexOf(c) >= 0) return 'back';
+    if (FRONT.indexOf(c) >= 0) return 'front';
+    if (c === NEUT) return 'i';
+  }
+  return null;
+}
+/* 往前找最近的元音 */
+function prevVowel(cps, from){
+  for (let k = from - 1; k >= 0; k--){
+    const c = cps[k];
+    if (BACK.indexOf(c) >= 0) return 'back';
+    if (FRONT.indexOf(c) >= 0) return 'front';
+    if (c === NEUT) return 'i';
+  }
+  return null;
+}
+
+/* 不常用字母：两套方案各一行，都常显 —— 录入时经常要混着用 */
+const RARE = [
+  { name: '鲍培',     v: ['ö','ü','ē'], c: ['č','ǰ','š','γ'] },
+  { name: '联合转写', v: ['ö','ü','ë'], c: ['č','ǰ','š','ž','ḳ','ẑ','ĉ'] }
+];
+const TIP = {
+  'ö':'U+00F6','ü':'U+00FC','ē':'U+0113','ë':'U+00EB',
+  'č':'U+010D','ǰ':'U+01F0','š':'U+0161','γ':'U+03B3',
+  'ž':'U+017E','ḳ':'U+1E33','ẑ':'U+1E91','ĉ':'U+0109'
+};
+
+function renderRareBar(){
+  const bar = document.getElementById('rarebar');
+  if (!bar) return;
+  const btn = c => '<button data-ins="' + c + '" title="' + (TIP[c] || '') + '">' + c + '</button>';
+  bar.innerHTML = RARE.map(g =>
+    '<div class="rline">' +
+      '<span class="rname">' + g.name + '</span>' +
+      '<span class="rl">元音</span>' + g.v.map(btn).join('') +
+      '<span class="rl">辅音</span>' + g.c.map(btn).join('') +
+    '</div>'
+  ).join('') + '<div class="rline"><span class="hint">点一下插到光标处</span></div>';
+}
+
+/* 鲍培表里没有的码位，给个兜底写法，免得互转行出现「·」 */
+const EXTRA = {
+  0x183A: 'k', 0x183B: 'ḳ', 0x183C: 'c', 0x183D: 'z', 0x183E: 'h',
+  0x183F: 'ž', 0x1840: 'lh', 0x1841: 'ẑ', 0x1842: 'ĉ', 0x1843: 'ː'
+};
+
+/* 判定这个词的 ᠬ/ᠭ 清浊能不能确定。返回 null = 确定；否则返回原因。 */
+function whyUnsure(cps){
+  const hasVelar = cps.some(c => c === 0x182C || c === 0x182D);
+  if (!hasVelar) return null;
+
+  let nb = 0, nf = 0;
+  cps.forEach(c => {
+    if (BACK.indexOf(c) >= 0) nb++;
+    if (FRONT.indexOf(c) >= 0) nf++;
+  });
+  /* 词内阴阳混用 —— 至少有一道构词边界（合成词），而这条边界在字形上看不见：
+     ᠬᠥᠬᠡᠬᠣᠲᠠ = köke|qota 就是连写的。此时谁都可能读错。 */
+  if (nb > 0 && nf > 0) return '词内阴阳元音混用（可能是合成词，看不出构件边界）';
+
+  /* ᠬ/ᠭ 后面是 i 或没有元音，前面也定不了 */
+  for (let k = 0; k < cps.length; k++){
+    const c = cps[k];
+    if (c !== 0x182C && c !== 0x182D) continue;
+    let cls = nextVowel(cps, k);
+    if (cls === 'back' || cls === 'front') continue;
+    const pv = prevVowel(cps, k);
+    if (pv === 'back' || pv === 'front') continue;
+    return 'ᠬ/ᠭ 后面是 i，前后都定不了清浊';
+  }
+  return null;
+}
+
+/* 返回转写串；判定不了就返回 null —— 宁可不给，也不给一个可能错的。 */
+function toScheme(cps, sc){
+  if (whyUnsure(cps)) return null;
+
+  const rev = REV[sc] || {};
+  let out = '';
+
+  cps.forEach((c, idx) => {
+    let s = rev[c];
+
+    if (sc !== 'cmn' && (c === 0x182C || c === 0x182D)){
+      /* 就近判定：看后面最近的元音。
+         a/o/u → 阳性 q/γ；e/ö/ü → 阴性 k/g；
+         后面是 i 或没有元音时，退回前面最近的元音（上面已保证这里一定定得下来）。 */
+      let cls = nextVowel(cps, idx);
+      if (cls !== 'back' && cls !== 'front') cls = prevVowel(cps, idx);
+      if (c === 0x182C) s = (cls === 'back') ? 'q' : 'k';
+      else              s = (cls === 'back') ? 'γ' : 'g';
+    }
+    else if (sc !== 'cmn' && c === 0x1827){
+      s = 'ē';
+    }
+
+    if (s === undefined) s = EXTRA[c];
+    out += (s === undefined) ? '·' : s;
+  });
+
+  return out;
+}
+
+/* 每个 token 的位置（isol / init / medi / fina） */
+function computePos(){
+  const n = state.tokens.length;
+  const pos = new Array(n).fill('medi');
+  const baseCps = i => {
+    const tk = state.tokens[i], p = state.picks[i];
+    return tk.def.alts[p.alt] || tk.def.alts[0];
+  };
+  const flush = (s, e) => {           /* [s, e) */
+    const len = e - s;
+    for (let k = 0; k < len; k++){
+      const i = s + k;
+      pos[i] = (len === 1) ? 'isol'
+             : (k === 0) ? 'init'
+             : (k === len - 1) ? 'fina'
+             : 'medi';
+    }
+  };
+  let start = 0;
+  for (let i = 0; i < n; i++){
+    const cps = baseCps(i);
+    if (cps.length === 1 && (cps[0] === 0x202F || cps[0] === 0x180E)){
+      flush(start, i); start = i + 1;
+    }
+  }
+  flush(start, n);
+  return pos;
+}
+
+function allCps(){
+  const out = [];
+  for (let i = 0; i < state.tokens.length; i++) out.push(...segCps(i));
+  return out;
+}
+
+/* ---------------- 染字 ----------------
+   要点：整串只排一次版（底板 span 保持完整，连写不受影响），
+   上色靠的是「同一张字的彩色副本」——内容、字体、位置都完全一致，
+   再用 clip-path 只露出某个字那一段。副本之间看不出接缝，
+   因为它们的字形完全重合，只是颜色不同。 */
+const DYE = ['#c0392b','#1a7f45','#1f6fb2','#a0522d','#8e44ad',
+             '#b8860b','#0f8b8d','#c2185b','#2e7d32','#5d4037'];
+
+function paintDye(){
+  const stack = $('pvStack');
+  if (!stack) return;
+  const base = stack.querySelector('.pvbase');
+  stack.querySelectorAll('.pvdye').forEach(n => n.remove());
+  if (!dyeOn || !base) return;
+  const text = base.textContent || '';
+  if (!text) return;
+
+  const node = base.firstChild;
+  if (!node) return;
+  const rg = document.createRange();
+  const box = base.getBoundingClientRect();
+
+  /* 每个字在竖排里占的纵向区间 */
+  const bands = [];
+  for (let k = 0; k < text.length; k++){
+    rg.setStart(node, k);
+    rg.setEnd(node, k + 1);
+    const r = rg.getBoundingClientRect();
+    if (r.height > 0.5) bands.push({ top: r.top, bottom: r.bottom });
+  }
+  if (!bands.length) return;
+
+  bands.forEach((b, i) => {
+    /* 用相邻字的中点当分界，避免切线落在笔画中间 */
+    const top = (i === 0) ? 0 : (b.top + bands[i-1].bottom) / 2 - box.top;
+    const bottom = (i === bands.length - 1) ? 0
+      : box.bottom - (b.bottom + bands[i+1].top) / 2;
+    const el = document.createElement('span');
+    el.className = 'pvbase pvdye';
+    el.setAttribute('lang', 'mn-Mong');
+    el.textContent = text;
+    el.style.color = DYE[i % DYE.length];
+    el.style.clipPath = 'inset(' + Math.max(top, 0).toFixed(2) + 'px 0 '
+                      + Math.max(bottom, 0).toFixed(2) + 'px 0)';
+    stack.appendChild(el);
+  });
+}
+
+function render(){
+  const raw = normalize($('inp').value.trim());
+  const tokensAll = tokenize(raw);
+  const bad = tokensAll.filter(t => !t.def);
+
+  /* 解析行 */
+  let ph;
+  if (!raw){
+    ph = '在上面输入转写后按「转换」。';
+  } else {
+    ph = tokensAll.map(t => {
+      if (!t.def) return '<span class="bad">' + esc(t.raw) + '</span>';
+      const first = t.def.alts[0];
+      const extra = t.def.alts.length > 1 ? '（' + t.def.alts.length + ' 种写法）' : '';
+      return '<b>' + esc(t.raw) + '</b><span class="arrow">→</span>' + cpStr(first) + extra;
+    }).join(' ｜ ');
+    if (bad.length) ph += '<br><span class="bad">无法识别：' + bad.map(t => esc(t.raw)).join(' ') + '</span>';
+  }
+  $('parse').innerHTML = ph;
+
+  const rows = $('rows');
+  rows.innerHTML = '';
+
+  if (!raw || bad.length){
+    $('pv').querySelector('.pvbase').textContent = '';
+    /* 染字的彩色副本也得一起清掉，否则会留在空预览上 */
+    $('pv').querySelectorAll('.pvdye').forEach(n => n.remove());
+    $('cps').textContent = '';
+    /* 标记也要一起清掉，否则上个词留下的「标准写法」会挂在这里 */
+    document.querySelector('.result').classList.remove('is-std', 'is-custom');
+    $('badge').hidden = true;
+    $('badge').textContent = '';
+    rows.innerHTML = '<div class="row"><div class="lab">' +
+      (bad.length ? '有无法识别的字符，先把它们去掉或改写成鲍培转写。'
+                  : '输入转写后，这里会出现可选的变体。') + '</div></div>';
+    return;
+  }
+
+  buildState(raw);
+
+  /* 预览 */
+  const cps = allCps();
+  $('pv').querySelector('.pvbase').textContent = String.fromCodePoint(...cps);
+  paintDye();
+  $('cps').textContent = cpStr(cps);
+
+  
+
+/* 三方案互转（标准写法已停用，这块取而代之） */
+  const xsch = $('xsch');
+  if (xsch){
+    const cell = v => (v === null)
+      ? '<em class="unk" title="' + esc(whyUnsure(cps) || '') + '">不确定</em>'
+      : '<span>' + esc(v) + '</span>';
+    const line = (name, v) => '<div class="k"><b>' + name + '</b>' + cell(v) + '</div>';
+    xsch.innerHTML =
+      line('联合转写', toScheme(cps, 'cmn')) +
+      line('鲍培', toScheme(cps, 'poppe'));
+  }
+
+  /* 绿 = 与标准写法一致；红 = 录入者改过；无色 = 这个词还没有标准写法 */
+  const box = document.querySelector('.result');
+  const badge = $('badge');
+  const stdCps = standardCps(raw, state.tokens);
+  box.classList.remove('is-std', 'is-custom');
+  if (!stdCps){
+    badge.hidden = true;
+    badge.textContent = '';
+  } else {
+    const same = stdCps.length === cps.length && stdCps.every((v, k) => v === cps[k]);
+    badge.hidden = false;
+    badge.textContent = same ? '标准写法' : '已改动（非标准写法）';
+    box.classList.add(same ? 'is-std' : 'is-custom');
+  }
+
+  /* 位置：一个词里首=init、中=medi、尾=fina；单字母时是 isol。
+     NNBSP（词缀分隔符）把串切成几段，每段各自算位置。 */
+  state.pos = computePos();
+
+  /* 每个字母一行（只有真的有变体才出行） */
+  state.tokens.forEach((tk, i) => {
+    const def = tk.def;
+    const pick = state.picks[i];
+    const rowsHtml = [];
+
+    /* ① 拼写变体：单字母还是拆两笔 */
+    if (def.alts.length > 1){
+      const btns = def.alts.map((alt, k) => {
+        const tip = (def.tips && def.tips[k]) || cpStr(alt);
+        return '<button data-i="' + i + '" data-alt="' + k + '"'
+             + (pick.alt === k ? ' class="on"' : '') + '>' + tip + '</button>';
+      }).join('');
+      rowsHtml.push('<div class="row"><div class="lab">第 ' + (i + 1) + ' 个 <b>'
+        + esc(tk.raw) + '</b>　拼写</div><div class="opts">' + btns + '</div></div>');
+    }
+
+    /* ② FVS 变体：单码位 + 这个「码位 × 位置」实测真的有变体才出 */
+    const alt = def.alts[pick.alt] || def.alts[0];
+    const pos = state.pos[i] || 'isol';
+    const avail = (alt.length === 1 && fvsTable[alt[0]] && fvsTable[alt[0]][pos]) || null;
+    if (avail){
+      const opts = [0].concat(avail);
+      const btns = opts.map(n => {
+        const lab = n === 0 ? '默认' : '第' + n + '变体';
+        const title = n === 0
+          ? '不加 FVS'
+          : 'FVS' + n + ' · U+' + (0x180A + n).toString(16).toUpperCase();
+        return '<button data-i="' + i + '" data-fvs="' + n + '" title="' + title + '"'
+             + (pick.fvs === n ? ' class="on"' : '') + '>' + lab + '</button>';
+      }).join('');
+      rowsHtml.push('<div class="row"><div class="lab">第 ' + (i + 1) + ' 个 <b>'
+        + esc(tk.raw) + '</b>　字形变体选择 <span class="sub">'
+        + (POS_CN[pos] || pos) + ' ' + pos + '</span></div>'
+        + '<div class="opts">' + btns + '</div></div>');
+    }
+
+    rowsHtml.forEach(h => rows.insertAdjacentHTML('beforeend', h));
+  });
+
+  if (!rows.children.length){
+    rows.innerHTML = '<div class="row"><div class="lab">这个词没有可选变体，直接复制即可。</div></div>';
+  }
+
+  rows.querySelectorAll('button[data-alt]').forEach(b => {
+    b.addEventListener('click', () => {
+      state.picks[+b.dataset.i].alt = +b.dataset.alt;
+      state.picks[+b.dataset.i].fvs = 0;      /* 换拼写就把 FVS 归零 */
+      render();
+    });
+  });
+  rows.querySelectorAll('button[data-fvs]').forEach(b => {
+    b.addEventListener('click', () => {
+      state.picks[+b.dataset.i].fvs = +b.dataset.fvs;
+      render();
+    });
+  });
+}
+
+function copy(text){
+  const ok = () => {
+    toast('已复制 ' + text);
+  };
+  if (navigator.clipboard && navigator.clipboard.writeText){
+    navigator.clipboard.writeText(text).then(ok, () => fallback());
+  } else {
+    fallback();
+  }
+  function fallback(){
+    const ta = document.createElement('textarea');
+    ta.value = text;
+    ta.style.position = 'fixed';
+    ta.style.opacity = '0';
+    document.body.appendChild(ta);
+    ta.select();
+    let done = false;
+    try{ done = document.execCommand('copy'); }catch(e){}
+    document.body.removeChild(ta);
+    if (done){ ok(); return; }
+    /* 两条路都不通（常见于浏览器不给剪贴板权限）：
+       直接把卡片里的字形选中，用户按一次 Ctrl+C 即可 */
+    const g = document.querySelector('#pv span');
+    if (g){
+      const r = document.createRange();
+      r.selectNodeContents(g);
+      const sel = window.getSelection();
+      sel.removeAllRanges();
+      sel.addRange(r);
+    }
+    toast('已选中，按 Ctrl+C 复制');
+  }
+}
+
+let toastTimer = null;
+function toast(msg){
+  const el = $('toast');
+  el.textContent = msg;
+  el.classList.add('on');
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(() => el.classList.remove('on'), 1600);
+}
+
+/* ---------- 字体 ---------- */
+const FONT_SCALE = {
+  'UME Mongolian': 1.00,
+  'Mongolian Baiti': 1.14,
+  'Menk Qimed Tig': 1.18
+};
+
+function applyFont(fam){
+  /* 只改变量：卡片是每次输入都重建的，逐个贴内联样式救不了新节点 */
+  document.documentElement.style.setProperty('--mn-font', '"' + fam + '"');
+  document.documentElement.style.setProperty('--mn-scale', String(FONT_SCALE[fam] || 1));
+  /* 变体表是按字体实测的 —— 换了字体就得换表，并把按钮栏重画一次 */
+  fvsTable = FVS_BY_FONT[fam] || {};
+  /* 只有 Baiti 不提示；另两支各有各的坑 */
+  const warn = document.getElementById('fontWarn');
+  if (warn){
+    const msg = FONT_WARN[fam];
+    warn.hidden = !msg;
+    warn.innerHTML = msg || '';
+  }
+  try{ localStorage.setItem('popmon.font', fam); }catch(e){}
+  if (document.readyState !== 'loading') render();
+}
+
+/* ---------- 主题 ---------- */
+function applyTheme(v){
+  const dark = v === 'dark' || (v === 'auto' && window.matchMedia
+    && window.matchMedia('(prefers-color-scheme: dark)').matches);
+  document.documentElement.classList.toggle('dark', !!dark);
+  try{ localStorage.setItem('popmon.theme', v); }catch(e){}
+}
+
+/* ---------- 启动 ---------- */
+(function init(){
+  $('btnGo').addEventListener('click', render);
+  $('schemeSel').addEventListener('change', e => {
+    scheme = e.target.value;
+    $('inpLabel').textContent = SCHEMES[scheme].name;
+    renderRareBar();
+    /* 换方案 = 换记号体系，之前的选择统统作废 */
+    state.raw = null;
+    state.picks = [];
+    render();
+  });
+  $('dyeChk').addEventListener('change', e => {
+    dyeOn = !!e.target.checked;
+    try{ localStorage.setItem('popmon.dye', dyeOn ? '1' : '0'); }catch(err){}
+    paintDye();
+  });
+  /* 窗口尺寸变了，切片位置会失效，重算一次 */
+  window.addEventListener('resize', () => { if (dyeOn) paintDye(); });
+
+  try{
+    dyeOn = localStorage.getItem('popmon.dye') === '1';
+    $('dyeChk').checked = dyeOn;
+  }catch(err){}
+
+  $('btnCopy').addEventListener('click', () => {
+    const s = $('pv').querySelector('span').textContent;
+    if (!s){ toast('先输入转写'); return; }
+    copy(s);
+  });
+
+  $('btnCopyCm').addEventListener('click', () => {
+    const s = $('pv').querySelector('span').textContent;
+    if (!s){ toast('先输入转写'); return; }
+    const cm = toScheme(allCps(), 'cmn');
+    /* 判定不了就不给 —— 复制一个可能错的转写比不给更糟 */
+    if (cm === null){ toast('这个词的转写不确定，无法给出联合转写'); return; }
+    copy(cm);
+  });
+  /* 不常用字母：按钮会随方案重画，所以用事件委托 */
+  const rarebar = document.getElementById('rarebar');
+  rarebar.addEventListener('mousedown', e => {
+    if (e.target.closest('button[data-ins]')) e.preventDefault();
+  });
+  rarebar.addEventListener('click', e => {
+    const b = e.target.closest('button[data-ins]');
+    if (b) insertAtCursor(b.dataset.ins);
+  });
+  renderRareBar();
+
+  $('btnReset').addEventListener('click', () => {
+    state.picks = state.picks.map(() => ({ alt: 0, fvs: 0 }));
+    render();
+  });
+  $('inp').addEventListener('input', render);
+  $('inp').addEventListener('keydown', e => {
+    if (e.key === 'Enter'){ e.preventDefault(); render(); }
+  });
+
+  let savedFont = 'Mongolian Baiti';
+  try{ savedFont = localStorage.getItem('popmon.font') || savedFont; }catch(e){}
+  if (!FONT_SCALE[savedFont]) savedFont = 'Mongolian Baiti';
+  $('fontsel').value = savedFont;
+  applyFont(savedFont);
+  $('fontsel').addEventListener('change', e => applyFont(e.target.value));
+
+  let savedTheme = 'auto';
+  try{ savedTheme = localStorage.getItem('popmon.theme') || 'auto'; }catch(e){}
+  $('themeSel').value = savedTheme;
+  applyTheme(savedTheme);
+  $('themeSel').addEventListener('change', e => applyTheme(e.target.value));
+
+  render();
+})();
+</script>
+</body>
+</html>
