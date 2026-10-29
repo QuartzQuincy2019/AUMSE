@@ -529,7 +529,7 @@ html.dark .result.is-custom{border-color:#c0392b}
       <code>köke|qota</code>）时才写「<b>不确定</b>」，不给猜测。</li>
 
     <li><b>控制符记号</b>（两套方案通用，也是联合转写方案表规定的）：
-      <code>'</code> FVS1 · <code>"</code> FVS2 · <code>`</code> FVS3 · <code>*</code> ZWJ ·
+      <code>'</code> FVS1 · <code>"</code> FVS2 · <code>`</code> FVS3 · <code>^</code> FVS4 · <code>*</code> ZWJ ·
       <code>-</code> NNBSP · <code>_</code> MVS。</li>
 
     <li><b>后缀一律断开，不看首音</b>：<code>-a</code>（与位格）、<code>-i</code>／<code>-yi</code>（宾格）、
@@ -598,10 +598,11 @@ const T_POPPE = {
   'c':  { p:[0x183C], alts:[[0x183C]],                     d:'c（ts，借词）' },
   'z':  { p:[0x183D], alts:[[0x183D]],                     d:'z' },
 
-  /* 联合转写的控制符记号：FVS1 ' · FVS2 " · FVS3 ` · ZWJ * */
-  "'":  { p:[0x180B], alts:[[0x180B]], d:'FVS1', ctrl:true },
-  '"':  { p:[0x180C], alts:[[0x180C]], d:'FVS2', ctrl:true },
-  '`':  { p:[0x180D], alts:[[0x180D]], d:'FVS3', ctrl:true },
+  /* 联合转写的控制符记号：FVS1 ' · FVS2 " · FVS3 ` · FVS4 ^ · ZWJ * */
+  "'":  { p:[0x180B], alts:[[0x180B]], d:'FVS1', ctrl:true, fvs:1 },
+  '"':  { p:[0x180C], alts:[[0x180C]], d:'FVS2', ctrl:true, fvs:2 },
+  '`':  { p:[0x180D], alts:[[0x180D]], d:'FVS3', ctrl:true, fvs:3 },
+  '^':  { p:[0x180F], alts:[[0x180F]], d:'FVS4', ctrl:true, fvs:4 },
   '*':  { p:[0x200D], alts:[[0x200D]], d:'ZWJ', ctrl:true },
 
   /* 词缀分隔符：转写里的 "-" 不是连字符，是 NNBSP（U+202F）。
@@ -725,6 +726,11 @@ const T_CMN = {
 /* 控制符两套方案通用：从 T_POPPE 里把标了 ctrl 的搬过来 */
 Object.keys(T_POPPE).forEach(k => { if (T_POPPE[k].ctrl) T_CMN[k] = T_POPPE[k]; });
 
+/* FVS 号 → 码位。注意 FVS4 是 U+180F，不是 0x180A+4（那是 MVS）。 */
+const FVS_CP  = { 1:0x180B, 2:0x180C, 3:0x180D, 4:0x180F };
+/* FVS 号 → 输入框里的写法 */
+const FVS_KEY = { 1:"'",    2:'"',    3:'`',    4:'^' };
+
 /* 两套方案的表 + 当前选择（默认联合转写 —— 本项目词条最终都归到它） */
 const SCHEMES = {
   cmn:   { name: '联合转写', table: T_CMN },
@@ -742,10 +748,19 @@ const MAX_LEN = 2;
 const NORM = { 'Č':'č','Š':'š','ǰ':'ǰ','Ǳ':'ǰ','Ö':'ö','Ü':'ü','Ē':'ē','Ë':'ē','Γ':'γ',
                 'ɣ':'γ'  /* 拉丁 gamma 也折成希腊 gamma，否则标准写法库对不上 */ };
 
+/* 中文输入法常把撇号打成弯的（’ ‘ ʼ ′ ＇）、引号打成弯的（“ ” ″ ＂）。
+   它们长得像 ' 和 "，但码位完全不同 —— 不折成 ASCII 的话，会被当成
+   无法识别的字符，整词预览直接变空，看上去就像「不支持 FVS」。 */
+const QUOTES = {
+  '‘':"'", '’':"'", 'ʼ':"'", '′':"'", '＇':"'",
+  '“':'"', '”':'"', '″':'"', '＂':'"'
+};
+
 function normalize(str){
   let s = '';
   for (const ch of str){
-    if (NORM[ch]) s += NORM[ch];
+    if (QUOTES[ch]) s += QUOTES[ch];
+    else if (NORM[ch]) s += NORM[ch];
     else s += ch.toLowerCase();
   }
   return s;
@@ -1013,15 +1028,31 @@ let state = { raw: null, tokens: [], picks: [], pos: [] };
 
 /* 只有「输入的串变了」或「段数变了」才重置选择 ——
    否则点一下变体按钮，render() 一重建就被打回默认，按钮等于没用。 */
+/* 输入框里写在字母后面的 ' " ` ^ 就是给那个字母选 FVS1–4。
+   折进前一个字母，这样「输入框」和「变体按钮」表示的是同一件事。 */
+function foldFvs(toks){
+  const out = [];
+  for (let k = 0; k < toks.length; k++){
+    const tk = toks[k];
+    const prev = out[out.length - 1];
+    if (tk.def && tk.def.fvs && prev && prev.def && !prev.def.ctrl){
+      out[out.length - 1] = Object.assign({}, prev, { fvs: tk.def.fvs });
+      continue;
+    }
+    out.push(Object.assign({}, tk));
+  }
+  return out;
+}
+
 function buildState(raw){
-  const tokens = tokenize(raw).filter(t => t.def);
+  const tokens = foldFvs(tokenize(raw)).filter(t => t.def);
   if (state.raw !== raw || state.picks.length !== tokens.length){
     state.raw = raw;
     const std = (STANDARD_ENABLED && scheme === 'poppe') ? STANDARD[raw] : null;
     /* 有标准写法就按标准预选，没有就全默认 */
     state.picks = tokens.map((tk, i) => {
       const c = (std && std[i]) || [0, 0];
-      return { alt: c[0] || 0, fvs: c[1] || 0 };
+      return { alt: c[0] || 0, fvs: tk.fvs || c[1] || 0 };
     });
   }
   state.tokens = tokens;
@@ -1037,7 +1068,7 @@ function standardCps(raw, tokens){
     const alt = tk.def.alts[c[0] || 0];
     if (!alt) return;
     out.push(...alt);
-    if (c[1]) out.push(0x180A + c[1]);
+    if (c[1]) out.push(FVS_CP[c[1]] || FVS_CP[1]);
   });
   return out;
 }
@@ -1046,8 +1077,22 @@ function segCps(i){
   const tk = state.tokens[i], p = state.picks[i];
   const alt = tk.def.alts[p.alt] || tk.def.alts[0];
   const out = alt.slice();
-  if (p.fvs) out.push(0x180A + p.fvs);
+  if (p.fvs) out.push(FVS_CP[p.fvs] || FVS_CP[1]);
   return out;
+}
+
+/* 把当前每个字母的 FVS 选择写回输入框 ——
+   输入框就是「转写」的唯一真相：互转、复制联合转写都读它。 */
+function syncInputFromPicks(){
+  const el = inp;
+  if (!el) return;
+  const s = state.tokens.map((tk, i) => {
+    const p = state.picks[i] || {};
+    return tk.raw + (FVS_KEY[p.fvs] || '');
+  }).join('');
+  if (s === el.value) return;
+  el.value = s;
+  state.raw = normalize(s);       /* 让 buildState 认为「串没变」，保住各字母的选择 */
 }
 
 /* 把字符插到光标处；没有光标（从未聚焦）就追加到末尾 */
@@ -1084,6 +1129,7 @@ const REV = { poppe: {}, cmn: {} };
     REV[sc][0x180B] = "'";
     REV[sc][0x180C] = '"';
     REV[sc][0x180D] = '`';
+    REV[sc][0x180F] = '^';
     REV[sc][0x200D] = '*';
   });
 })();
@@ -1516,7 +1562,7 @@ function render(){
         const lab = n === 0 ? '默认' : '第' + n + '变体';
         const title = n === 0
           ? '不加 FVS'
-          : 'FVS' + n + ' · U+' + (0x180A + n).toString(16).toUpperCase();
+          : 'FVS' + n + ' · U+' + (FVS_CP[n] || 0).toString(16).toUpperCase();
         return '<button data-i="' + i + '" data-fvs="' + n + '" title="' + title + '"'
              + (pick.fvs === n ? ' class="on"' : '') + '>' + lab + '</button>';
       }).join('');
@@ -1537,12 +1583,14 @@ function render(){
     b.addEventListener('click', () => {
       state.picks[+b.dataset.i].alt = +b.dataset.alt;
       state.picks[+b.dataset.i].fvs = 0;      /* 换拼写就把 FVS 归零 */
+      syncInputFromPicks();
       render();
     });
   });
   rows.querySelectorAll('button[data-fvs]').forEach(b => {
     b.addEventListener('click', () => {
       state.picks[+b.dataset.i].fvs = +b.dataset.fvs;
+      syncInputFromPicks();
       render();
     });
   });
