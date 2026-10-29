@@ -1,0 +1,391 @@
+/* r05.css —— R05《词汇录入规范》沿用 R 系列皮肤（复制自 r04.css，按需再改） */
+/* ---------- R 系列主色 ---------- */:root{
+  --r-main:#d1435b;
+  --r-deep:#a02b40;
+  --r-bright:#ef7288;
+  --r-pale:#f7a8b6;
+  --r-soft-strong:#ef7288;
+  --r-chiplight:color-mix(in srgb, #d1435b 12%, #fff);
+  /* 强调色改用红：.card.key 的标题、行内 .k、.tag.v */
+  --violet:#a02b40;
+  --violet-soft:color-mix(in srgb, #d1435b 12%, #fff);
+}/* =====================================================================
+   表面变量（亮色）
+   ---------------------------------------------------------------------
+   样式表里原来到处写死 #fff / #f2f4f8 这类浅色，暗色模式只能一个个
+   选择器去补 —— 补不完。现在统一走这几个变量：暗色只改变量值，
+   所有引用处一起生效。
+
+   ⚠ 金色渐变的色标（#fffdf5 / #fdf3dc / #fbe9c4 …）**不在**这套变量里 ——
+     它们是主题色，不是中性表面。
+   ===================================================================== *//* ==== q01.html
+       本篇样式表 = 通用（tutorial.css）+ 本篇专属，已合并并按「媒体查询在后」重排 ==== *//* ===================================================================
+   UME 项目组内部教程 · 共用样式表
+   约定：所有代码与输出都用 Consolas 等宽字体
+   =================================================================== *//* ---------------- 标题与正文 ---------------- *//* 行内高亮 *//* ---------------- 表格 ---------------- */tbody tr:hover{background:var(--sfc-hover)}/* 流程条 */body{margin:0;background:var(--bg);color:var(--fg);
+  font:16px/1.8 var(--sans);-webkit-font-smoothing:antialiased}#toc a{display:block;padding:5px 10px;margin:1px 0;border-radius:6px;font-size:13.5px;
+  color:var(--fg-2);text-decoration:none;line-height:1.5;
+  border-left:2px solid transparent;transition:background .13s,color .13s,border-color .13s}h2{font-size:22px;margin:58px 0 14px;padding-top:18px;border-top:1px solid var(--line);
+   display:flex;align-items:center;gap:11px}h2 .n{flex:0 0 auto;width:30px;height:30px;line-height:30px;text-align:center;
+  background:var(--fg);color:#fff;border-radius:8px;font-size:15px;
+  font-family:var(--mono);font-weight:600}code{font-family:var(--mono);font-size:.9em;background:#eef2f8;color:#0d3a7a;
+  padding:1.5px 5px;border-radius:4px;border:1px solid #dbe4f0}.k{font-family:var(--mono);font-size:.9em;background:#f2ecfd;color:#5b34b0;
+  padding:1.5px 5px;border-radius:4px;border:1px solid #ded0f7;
+  cursor:help;transition:background .12s,box-shadow .12s}/* 代码块 */.code-wrap{margin:16px 0;border:1px solid #2c3444;border-radius:10px;overflow:hidden;
+  background:var(--bg-code);position:relative;
+  transition:box-shadow .18s,border-color .18s,transform .18s}.code-wrap:hover{border-color:#3d4a60;box-shadow:0 6px 22px rgba(20,30,50,.18);transform:translateY(-1px)}.code-wrap .bar{display:flex;align-items:center;gap:8px;padding:7px 12px;
+  background:#171d27;border-bottom:1px solid #2c3444;
+  font-family:var(--mono);font-size:11.5px;color:#8296b0}.code-wrap .bar .cp{margin-left:auto;cursor:pointer;border:1px solid #333d4f;background:#222a37;
+  color:#9fb0c7;border-radius:5px;padding:1px 9px;font:11.5px var(--mono);
+  transition:background .13s,color .13s,border-color .13s}.code-wrap pre{margin:0;padding:14px 16px;overflow:auto;
+  font-family:var(--mono);font-size:13.5px;line-height:1.72;color:#d7e0ee}/* 输出块 */.out-wrap{margin:12px 0 20px;border:1px solid #d9e2ee;border-left:4px solid var(--green);
+  border-radius:0 9px 9px 0;background:var(--bg-out);overflow:hidden;
+  transition:box-shadow .18s,border-left-color .18s}.out-wrap pre{margin:0;padding:13px 16px;overflow:auto;
+  font-family:var(--mono);font-size:13.5px;line-height:1.7;color:#c9e6d5}.card{border:1px solid var(--line);border-radius:12px;padding:16px 20px;margin:18px 0;
+  background:var(--sfc);transition:box-shadow .18s,transform .18s,border-color .18s}.mnemonic{border-left:4px solid var(--amber);background:var(--amber-soft);
+  border-radius:0 9px 9px 0;padding:12px 18px;margin:16px 0;font-size:15px}.tag{display:inline-block;font-family:var(--mono);font-size:11.5px;padding:1.5px 8px;
+  border-radius:999px;background:#eef1f6;color:var(--fg-2);border:1px solid var(--line-2);
+  vertical-align:2px}footer{border-top:1px solid var(--line);margin-top:70px;padding-top:18px;font-size:13px;color:var(--fg-3)}/* 箭头高亮：本讲重点 *//* 指针关系图：变量盒 + 箭头 *//* 地址表 *//* 问答式疑难块 *//* ==== 第十讲 · std 与命名空间初步
+       本篇专属样式（通用部分见 tutorial.css）==== *//* 四种写法对照：小卡片 */.usings{display:grid;grid-template-columns:repeat(auto-fit,minmax(228px,1fr));
+  gap:12px;margin:16px 0}.usings .c{border:1px solid var(--line-2);border-radius:10px;padding:11px 14px;
+  background:var(--sfc);transition:box-shadow .15s,transform .15s}.usings .c:hover{box-shadow:0 5px 16px rgba(30,45,70,.12);transform:translateY(-2px)}.usings .c .n{font-family:var(--mono);font-size:12.5px;font-weight:700;
+  color:var(--blue);margin-bottom:4px;word-break:break-all}.usings .c .d{font-size:12.5px;color:var(--fg-3);line-height:1.6}/* ================= 重点小节：整块黄底 =================
+   与 home.html 的重点卡片同一套配色（淡金渐变底 + 金色左边框 + 金色 ★），
+   一眼看出「这一节是本项目的重点」。 */@media (max-width:980px){h2.key-h,h3.key-h,h4.key-h{margin-left:0;border-radius:0 8px 8px 0}}@media(max-width:980px){#toc{display:none}main{padding:24px}}/* ===== 移动端增强 (mobile) ===== *//* 桌面端不显示抽屉按钮（只在窄屏呼出）。这条本身不设 display，避免
+   与窄屏里的 #tocToggle 规则打架；#shell{display:flex}
+
+正好把它藏起来。 */@media (min-width:981px){#tocToggle{display:none}}/* ---------- 平板及以下：收紧留白 ---------- */@media (max-width:980px){#shell{display:block;max-width:none}main{padding:56px 18px 110px}h1{font-size:25px}h2{font-size:19px;margin:42px 0 12px;gap:9px}h2 .n{width:26px;height:26px;line-height:26px;font-size:13px;border-radius:7px}h3{font-size:16px;margin:26px 0 8px}h4{font-size:14.5px}/* 代码与输出：手机上要看得清 */.code-wrap pre{font-size:14px;line-height:1.68;padding:12px 13px;
+    -webkit-overflow-scrolling:touch}.out-wrap pre{font-size:14px;line-height:1.66;padding:12px 13px;
+    -webkit-overflow-scrolling:touch}.code-wrap .bar,.out-wrap .cap{font-size:11px;padding:6px 10px}.code-wrap .bar .cp{padding:3px 10px;font-size:11px}/* 表格单独横向滚动，不再撑破版心 */main>table, main .card>table{
+    display:block;width:100%;overflow-x:auto;-webkit-overflow-scrolling:touch;
+    white-space:nowrap;font-size:13.5px
+  }main>table th, main>table td{white-space:nowrap}/* 各类示意图允许横向滚动 */.bits,.bitrow,.bytes,.cells,.addr,.anat,.flow,.ptr-demo{
+    overflow-x:auto;-webkit-overflow-scrolling:touch
+  }.bits,.bytes,.cells{flex-wrap:nowrap}.anat .row{min-width:max-content}.ptr-demo .link{white-space:nowrap}/* 卡片与行内代码 */.card{padding:13px 15px;border-radius:11px}code{word-break:break-word}.mnemonic{padding:11px 14px;font-size:14.5px}/* 目录：变成可呼出的抽屉，不再直接藏掉 *//* 基础样式里这条断点写了 #toc{display:none}，这里必须显式恢复，
+     否则目录会变成 0×0 的隐形元素 —— 按钮点了也没反应。
+     用 !important 是因为 display:none 与我们的 display:block 选择器
+     优先级相同，靠后写不一定稳。 */#toc{
+    display:block !important;
+    position:fixed;top:0;left:0;bottom:0;z-index:60;
+    width:min(80vw,308px);height:100vh;max-height:100vh;
+    background:var(--sfc);border-right:1px solid var(--line);
+    box-shadow:0 0 44px rgba(15,25,45,.20);
+    padding:66px 12px 40px 16px;
+    transform:translateX(-102%);
+    transition:transform .25s ease;
+    overscroll-behavior:contain
+  }#toc.open{transform:translateX(0)}#toc a{padding:9px 11px;font-size:15px}#toc a.sub{padding-left:26px;font-size:13.5px}body.toc-open{overflow:hidden}/* 遮罩：用 body.toc-open 的伪元素生成，而不是挂在 #toc 上。
+     挂在 #toc 上时它会与抽屉同一个层叠上下文，层级很难既压住正文
+     又不盖住抽屉自己的文字。挂在 body 上则天然在抽屉（z-index:60）之下、
+     正文之上，层级干净。点击关闭由脚本的 document 监听处理。 */body.toc-open::after{
+    content:"";position:fixed;inset:0;z-index:55;
+    background:rgba(18,26,40,.42);
+    opacity:1;transition:opacity .25s
+  }#tocToggle{
+    position:fixed;top:11px;left:11px;z-index:70;
+    padding:7px 14px;border-radius:999px;cursor:pointer;
+    background:var(--sfc);color:var(--fg);border:1px solid var(--line-2);
+    font:600 13px/1 var(--sans);box-shadow:0 2px 10px rgba(20,30,50,.14);
+    -webkit-tap-highlight-color:transparent;
+    opacity:.72;transition:opacity .18s,background .18s,color .18s,transform .12s
+  }#tocToggle:hover,#tocToggle:focus-visible{opacity:1}#tocToggle:active{transform:scale(.96)}body.toc-open #tocToggle{background:var(--fg);color:#fff;border-color:var(--fg)}html{scroll-padding-top:64px}}/* ---------- 手机：进一步压缩 ---------- */@media (max-width:560px){main{padding:54px 13px 100px}h1{font-size:22px}h2{font-size:17.5px;margin:36px 0 10px}.sub-title{font-size:14px}.tag{font-size:11px;padding:1.5px 7px}body{font-size:15.5px;line-height:1.75}/* 流程条改成竖向排列，箭头朝下 */.flow{display:block}.flow .s+.s{margin:20px 0 0}.flow .s+.s::before{content:"↓";left:50%;top:-19px;transform:translateX(-50%)}.code-wrap,.out-wrap{border-radius:9px}.code-wrap pre,.out-wrap pre{font-size:13.5px;padding:11px 11px}.code-wrap .bar .name{max-width:56vw;overflow:hidden;text-overflow:ellipsis;
+    white-space:nowrap}.card{padding:12px 13px;margin:15px 0}.qa .q,.qa .a{padding:11px 13px}.qa .q{font-size:14px}blockquote{margin:12px 0;padding:10px 13px}.bits .b{width:22px;height:28px;line-height:28px;font-size:13px}.bits .b.w{width:27px}.bits-lg .b{width:17px;height:22px;line-height:22px;font-size:11px}.byte{min-width:64px;padding:7px 5px 5px}.cell{min-width:56px}.addr{font-size:12px}.addr>div{padding:6px 10px}.ptr-demo{padding:12px}.ptr-demo .box{min-width:100px;padding:8px 11px}.flow .s+.s{margin-left:20px}.flow .s+.s::before{left:-16px}#tocToggle{top:9px;left:9px;padding:6px 12px;font-size:12.5px}#toc{width:min(86vw,300px);padding-top:58px}}/* ---------- 打印时保持干净 ---------- */@media print{#tocToggle{display:none !important}body.toc-open::after{display:none !important}}/* ===== 移动端：长路径字符串断行 =====
+   长且无空格的串（路径、命令、变量名）在窄屏上必须允许内部断行，
+   否则会把表格和终端块撑得比视口还宽。 */@media (max-width:980px){main table th,
+  main table td,
+  main table td code,
+  main table th code,
+  main table td .c,
+  main td,
+  main th{
+    overflow-wrap:anywhere;
+    word-break:break-word;
+  }/* 表头文字允许换行 */main table th{white-space:normal}/* 终端块里的提示符与输出 */.term pre,
+  .term .pr,
+  .term .cmd,
+  .term .out,
+  .term .warn,
+  .term .err{
+    overflow-wrap:anywhere;
+    word-break:break-word;
+    white-space:pre-wrap;
+  }/* 行内 code 也别撑宽 */main p code,
+  main li code,
+  main td code,
+  .card code{
+    overflow-wrap:anywhere;
+    word-break:break-word;
+  }}@media print{#toc{display:none}main{padding:0}.code-wrap,.out-wrap{break-inside:avoid}body{font-size:12pt}}/* ---------- 表格行 hover 的暗色适配 ----------
+   本文件里有一条 tbody tr:hover{background:var(--sfc-hover)}（写死的浅色）。
+   暗色模式下它会把整行刷成浅蓝，而文字是浅色 —— 直接看不见。
+   这里在暗色下换成深底亮字。 */@media (prefers-color-scheme: dark){tbody tr:hover{background:#1e2836}tbody tr:hover td{color:#e6ecf4}}/* =====================================================================
+   第 12 轮修正：几个写死浅色的块 + .mnemonic / .key-h 的区分与辨识度
+   ===================================================================== *//* ---------- ① 写死浅色的块：暗色下必须换深底 ---------- */@media (prefers-color-scheme: dark){.stack .fr{
+    background:#161d26 !important;border-color:#374556 !important;color:#e6ecf4;
+  }.stack .fr:hover{border-color:var(--blue,#6aa6f5) !important;
+    box-shadow:0 5px 16px rgba(0,0,0,.42) !important}.capfig{
+    background:#161d26 !important;border-color:#374556 !important;color:#e6ecf4;
+  }.capfig .t,.capfig .lg{color:#939fb0}.capfig .cellb.free{background:#1e2836;color:#939fb0;border-color:#374556}.capfig .lg .sq.f{background:#1e2836;border-color:#374556}.capfig .cellb{color:#e6ecf4}/* .mnemonic 用的是 --amber-soft，暗色块里没覆盖过 —— 顺手补上安全值 */.mnemonic{background:#10262b;border-left-color:#3fc4d4}}/* ---------- ② .mnemonic 与 .key-h 拉开区分 ----------
+   原来两者都是「琥珀底 + 左侧竖条」，暗色下几乎一样。
+   现在分工明确：
+     .mnemonic  助记 / 口诀 / 小提示 —— **青蓝**（信息色）
+     .key-h     重点小节标题        —— **金色**（强调色）
+   色相拉开之后，扫一眼就知道是「提示」还是「重点」。 */@media (prefers-color-scheme: dark){.mnemonic{
+    border-left-color:#3fc4d4 !important;
+    background:linear-gradient(96deg,#10262b,#0d2024) !important;
+    color:#d6f0ee !important;
+  }.mnemonic::before{background:#3fc4d4;color:#062024}}/* ---------- ④ 暗色下 .key-h 的辨识度 ----------
+   原来的暗色 key-h 只是把亮色反相成深棕，跟普通卡片几乎分不出来。
+   这里提高对比：更亮的金色左条 + 带金调的渐变 + 金色外发光，
+   让「重点小节」在暗色下也是第一眼能看到的东西。 */@media (prefers-color-scheme: dark){h2.key-h,h3.key-h,h4.key-h{
+    background:linear-gradient(96deg,#3a2d10 0%,#4a3a15 52%,#2e2409 100%) !important;
+    border-color:#8a6d1e !important;
+    border-left:7px solid #f0cc72 !important;
+    color:#ffe9b0 !important;
+    box-shadow:0 0 0 1px rgba(240,204,114,.16),
+               0 3px 14px rgba(0,0,0,.42);
+  }h2.key-h .n,h3.key-h .n,h4.key-h .n{
+    background:#f0cc72 !important;color:#2b1d02 !important;
+  }.key-hint{
+    background:#4a3a15 !important;border-color:#8a6d1e !important;
+    color:#f4e3b4 !important;
+  }.key-mark{color:#ffd970 !important}}/* =====================================================================
+   第 13 轮：问答 / 流程图 / 编码图示 的暗色
+   ---------------------------------------------------------------------
+   这几个块原来都写死 background:var(--sfc)：
+     .qa .a     问答的「答」块
+     .flow .s   流程图节点
+     .codefig   t02 的编码图示
+     .encs .c   t02 的编码卡片（.c.u32 / .c.u16 / .c.u8 都是它）
+   暗色下就是一块白，里面还是浅色字 —— 看不见。
+
+   注意 body.fseries main>.qa 那条特异度更高（0,2,2），
+   所以把它一起写进来压掉。
+   ===================================================================== */@media (prefers-color-scheme: dark){.qa .a{background:#1b1e25;color:#e6ecf4}body.fseries main>.qa,
+  body[data-series] main>.qa{background-color:#1b1e25 !important}.qa .q{
+    background:#241d38;border-bottom-color:#3d3160;color:#e6dcf7;
+  }.flow .s{
+    background:#1b1e25;border-color:#374556;color:#e6ecf4;
+  }.flow .s+.s::before{color:#939fb0}.codefig{
+    background:#161d26;border-color:#374556;color:#e6ecf4;
+  }.codefig .t,.codefig .note{color:#939fb0}.encs .c{
+    background:#161d26;border-color:#374556;color:#e6ecf4;
+  }.encs .c .h{color:#e6ecf4}.encs .c.u8  .h{color:#4fc98d}.encs .c.u16 .h{color:#6aa6f5}.encs .c.u32 .h{color:#b28cff}.encs .c .note{color:#939fb0}.encs .c .note b{color:#c3cfdd}}/* =====================================================================
+   第 14 轮：剩余浅底的暗色覆盖
+   ---------------------------------------------------------------------
+   这些是 audit_dark2 穷举出来的（不再靠人工回忆）：
+     code / .hd / .k / .mnemonic / .cpp-note / .lv.* / .ch.end /
+     .encs .c / .ptr-demo / .box / 无名 div
+
+   为什么上一轮没盖住：这些颜色（#eef2f8 / #f2ecfd）在同一份文件里
+   也出现在别处的渐变色标中，被我的「渐变色标不动」规则连带排除了。
+   这里逐个选择器直接给暗色，不再依赖那套判断。
+   ===================================================================== *//* 补齐：上一轮加了 --sfc 变量，但个别地方仍写着旧色值 *//* =====================================================================
+   暗色表面变量（根因修复）
+   ---------------------------------------------------------------------
+   上面这些 --xxx-soft 与 --bg-soft / --surface 是「浅色表面」，
+   在 :root 里只有亮色值、从来没有暗色覆盖，而它们被当作背景用了
+   55~108 次 —— 于是任何用到它们的块在暗色下都是浅底。
+   这里一次性补齐：改的是变量，所有引用处一起生效，
+   不再需要逐个选择器打补丁。
+   ===================================================================== *//* =====================================================================
+   窄屏「目录」按钮：不能被顶部常驻条盖住
+   ---------------------------------------------------------------------
+   实测 375×667：常驻条 z-index:80 高 23px（0→23），
+   #tocToggle z-index:70 且 top:9px（9→36）——
+   按钮上半截整段压在常驻条下面，又因为层级更低，既看不见也点不动。
+
+   两处一起改：
+     ① z-index 70 → 90，高于常驻条的 80
+     ② 窄屏把 top 让到常驻条下方（23px + 5px 余量 = 28px），
+        从根上不重叠 —— 只提层级不够，交叠处仍会吃到点击
+   ===================================================================== */@media (max-width:980px){#tocToggle{top:28px}}/* =====================================================================
+   窄屏：代码块自动换行（不再需要左右拖动）
+   ---------------------------------------------------------------------
+   宽屏保留 `white-space:pre` 的原样 —— 空间够，换行反而打乱代码结构。
+   窄屏（≤720px）改成 pre-wrap + anywhere：
+     · pre-wrap     保留缩进与换行，但超长行折行
+     · anywhere     长标识符（aVeryLongFunctionName）也能断开
+   折行的那一行左侧加一条细引导线，提示「这是折过来的」。
+   ===================================================================== */@media (max-width:720px){.code-wrap pre,
+  .out-wrap pre,
+  .term pre,
+  .plain-pre,
+  pre.tree,
+  .pv-wrap pre{
+    white-space:pre-wrap !important;
+    overflow-wrap:anywhere !important;
+    word-break:break-word !important;
+  }/* 输入框 / 终端区同理 */.code-wrap pre code,.out-wrap pre code{white-space:pre-wrap !important}/* 行内 code 不要被长串撑破 */code,td.c,th.c{overflow-wrap:anywhere;word-break:break-word}}/* =====================================================================
+   R 系列专属：字体度量示意图
+   ---------------------------------------------------------------------
+   素材放在 assets/ 下的 .awebp 文件里，用 <img class="fig-img"> 直接引用。
+   .awebp 不是浏览器认识的扩展名，但内容就是标准 WebP —— 靠
+   Content-Type 嗅探能正常显示。**必须显式写 width/height**，
+   否则加载前会把版面撑开（累积布局偏移）。
+   ===================================================================== */.fig{margin:20px 0;text-align:center}.fig-img{max-width:100%;height:auto;border-radius:10px;
+  border:1px solid var(--line-2);background:var(--sfc)}.fig figcaption{margin-top:9px;font-size:13px;color:var(--fg-3);line-height:1.6}.fig figcaption b{color:var(--fg-2)}/* 八线对照表：把图上的每一条线单独拎出来讲 */.lines{margin:18px 0;border:1px solid var(--line-2);border-radius:11px;overflow:hidden}.lines .row{display:flex;align-items:baseline;gap:12px;padding:9px 14px;
+  border-bottom:1px solid var(--line-2)}.lines .row:last-child{border-bottom:0}.lines .row .sw{flex:0 0 auto;width:14px;height:14px;border-radius:3px;
+  vertical-align:-2px;border:1px solid rgba(0,0,0,.12)}.lines .row .k{flex:0 0 auto;width:172px;font-family:var(--mono);font-size:12.5px;
+  color:var(--fg-2);font-weight:700}.lines .row .v{font-size:13.5px;color:var(--fg-2);line-height:1.6}/* 度量数值的小卡片 */.metrics{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));
+  gap:10px;margin:16px 0}.metrics .m{border:1px solid var(--line-2);border-radius:10px;padding:10px 13px;
+  background:var(--sfc)}/* 数字用深红而不是主色：主色 #d1435b 压在浅底上只有 3.71:1，不到 4.5 */.metrics .m .n{font-family:var(--mono);font-size:20px;font-weight:700;color:var(--r-deep)}.metrics .m .l{font-size:12.5px;color:var(--fg-3);margin-top:3px}@media (prefers-color-scheme: dark){/* 暗色下深红压深底同样不够，换亮红 */.metrics .m .n{color:var(--r-bright)}}/* 字重阶梯 */.wgrid{display:grid;grid-template-columns:repeat(auto-fit,minmax(96px,1fr));
+  gap:10px;margin:16px 0}.wgrid .w{border:1px solid var(--line-2);border-radius:10px;padding:10px 8px;
+  text-align:center;background:var(--sfc)}.wgrid .w .a{font-size:30px;line-height:1.1;color:var(--fg)}.wgrid .w .c{font-family:var(--mono);font-size:12px;color:var(--fg-3);margin-top:5px}/* 排序动画/表格里的小格子 */.bars{display:flex;align-items:flex-end;gap:5px;height:132px;margin:16px 0;
+  padding:10px 12px;border:1px solid var(--line-2);border-radius:10px;background:var(--sfc)}.bars .b{flex:1;background:var(--r-main);border-radius:3px 3px 0 0;
+  display:flex;align-items:flex-start;justify-content:center;
+  color:#fff;font:700 11px/1.4 var(--mono);padding-top:3px;transition:height .25s}.bars .b.on{background:var(--r-deep)}.bars .b.done{background:var(--r-soft-strong)}/* 比较次数统计表 */.stat{margin:16px 0;border:1px solid var(--line-2);border-radius:11px;overflow:hidden}.stat table{margin:0;width:100%;border-collapse:collapse}.stat th,.stat td{padding:8px 12px;font-size:13.5px;border-bottom:1px solid var(--line-2)}.stat th{background:var(--r-chiplight);font-weight:700;color:var(--r-deep)}.stat tr:last-child td{border-bottom:0}.stat td.num{font-family:var(--mono);text-align:right}
+
+/* =====================================================================
+   R04 专有：颜色拾取器
+   ---------------------------------------------------------------------
+   本页比 R 系列其它篇多一个「颜色拾取器」演示（pk-* 一组 class）。
+   这些规则原来在 FE 系列的 fe_base.css 里 —— R04 从 FE 转过来后
+   文档页不加载 fe_base.css，所以把用到的那几条复制到这里。
+   ===================================================================== */
+.picker{border:1px solid var(--line-2);border-radius:16px;overflow:hidden; background:var(--surface);margin:18px 0; -webkit-backdrop-filter:blur(10px);backdrop-filter:blur(10px); box-shadow:0 4px 20px rgba(76,29,149,.10)}
+.picker .pk-ctl{padding:14px 16px;display:grid;gap:12px}
+.picker .pk-native{margin:0 16px 12px}
+.picker .pk-note{padding:0 16px 15px;font-size:12px;color:var(--fg-3);line-height:1.7}
+.picker .pk-out{flex:1 1 320px;padding:14px 16px;display:grid;gap:9px; align-content:center;background:var(--sfc-glass)}
+.picker .pk-row{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+.picker .pk-row .cp2{margin-left:auto;font-size:11.5px;color:var(--blue);cursor:pointer; border:1px solid rgba(124,58,237,.32);border-radius:7px;padding:1px 9px; background:var(--sfc-glass)}
+.picker .pk-row .cp2:hover{background:var(--blue);color:#fff;border-color:var(--blue)}
+.picker .pk-row b{min-width:78px;color:var(--fg-3);font-weight:600; font-family:var(--mono);font-size:12px}
+.picker .pk-row code{font-size:12.5px;background:var(--sfc-glass)}
+.picker .pk-row.pk-hex{align-items:baseline}
+.picker .pk-row.pk-hex code{font-size:27px;font-weight:700;letter-spacing:.02em; padding:4px 12px;border-radius:10px;line-height:1.25;color:#4c1d95; background:linear-gradient(135deg,#ede9fe,#fce7f3); border:1px solid rgba(124,58,237,.35); text-shadow:0 1px 0 rgba(255,255,255,.7)}
+.picker .pk-sl{display:grid;grid-template-columns:104px 1fr 70px;align-items:center;gap:12px; font-size:13px}
+.picker .pk-sl .val{font-family:var(--mono);font-size:12.5px;color:var(--fg-2); text-align:right}
+.picker .pk-sl input[type=range]{width:100%;height:22px;cursor:pointer; -webkit-appearance:none;appearance:none;background:transparent}
+.picker .pk-sl input[type=range]::-webkit-slider-runnable-track{height:11px; border-radius:6px;border:1px solid var(--line-2);background:var(--tk,#e3e8f0)}
+.picker .pk-sl input[type=range]::-webkit-slider-thumb{-webkit-appearance:none; width:19px;height:19px;margin-top:-5px;border-radius:50%;background:var(--sfc); border:2px solid #7c3aed;box-shadow:0 1px 4px rgba(76,29,149,.4)}
+.picker .pk-sl label{font-family:var(--mono);font-size:12.5px;color:var(--fg-2)}
+.picker .pk-sw{display:flex;flex-wrap:wrap;gap:7px;padding:0 16px 14px}
+.picker .pk-sw i{width:30px;height:30px;border-radius:9px;cursor:pointer; border:1px solid rgba(0,0,0,.14);transition:transform .12s}
+.picker .pk-sw i:hover{transform:scale(1.16)}
+.picker .pk-swatch{flex:1 1 200px;min-height:156px;display:flex;align-items:flex-end; padding:14px 16px;background:#7c3aed;transition:background .12s}
+.picker .pk-swatch span{font:700 15px/1.4 var(--mono);color:#fff; text-shadow:0 1px 4px rgba(0,0,0,.55)}
+.picker .pk-top{display:flex;flex-wrap:wrap;border-bottom:1px solid var(--line)}
+
+/* 拾取器里的数值要等宽对齐，读数才不会跳动 */
+.cp2{font-variant-numeric:tabular-nums}
+
+/* =====================================================================
+   R04 专属：元音舌位图（内联 SVG）
+   ---------------------------------------------------------------------
+   为什么内联而不用 <img>：
+     图里的线条与重点符号用 currentColor / var(--s-main)，内联才能跟着
+     主题与系列色变化；<img> 引 SVG 拿不到页面的 CSS 变量。
+   窄屏：容器横向滚动，图保底 400px，不压到看不清。
+   ================================================================== */
+.vw{margin:18px 0 22px;padding:12px 10px 8px;border:1px solid var(--line);
+  border-radius:12px;background:var(--bg-soft);overflow-x:auto}
+.vw svg{display:block;width:100%;max-width:540px;min-width:400px;height:auto;
+  margin:0 auto;color:var(--fg-2)}
+.vw .vwcap{margin:8px 0 2px;font-size:12.5px;line-height:1.7;
+  color:var(--fg-3);text-align:center}
+.vw .vwcap b{color:var(--fg-2)}
+
+@media (max-width:980px){
+  .vw{padding:10px 8px 6px;border-radius:10px}
+  .vw svg{min-width:380px}
+}
+
+/* =====================================================================
+   R04 专属：左右对照（英语靠清浊 / 普通话靠送气）
+   ---------------------------------------------------------------------
+   .two 这一组在 Q 系列各页里各自定义过，公共层没有，
+   所以这里补一份最小可用的：等宽两栏，窄屏塌成一栏。
+   ================================================================== */
+.two{margin:18px 0;display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.two .side{border:1px solid var(--line-2);border-radius:11px;overflow:hidden;
+  background:var(--sfc);min-width:0}
+.two .side .hd{padding:8px 13px;font-size:12.5px;font-weight:700;
+  letter-spacing:.02em;border-bottom:1px solid var(--line-2);
+  background:var(--bg-soft);color:var(--fg-2)}
+.two .side pre{margin:0;padding:11px 13px;overflow:auto;
+  font-family:"DejaVu Serif IPA",var(--mono),monospace;
+  font-size:13px;line-height:1.72}
+.two .side pre code{background:none;color:inherit}
+
+@media (max-width:720px){.two{grid-template-columns:1fr}}
+
+/* =====================================================================
+   R04 专属：音标统一用 DejaVu Serif 呈现
+   ---------------------------------------------------------------------
+   字体来源：DejaVu Serif 2.35（SIL / Bitstream Vera 许可，见同目录 LICENSE-DejaVu.txt）
+   文件：assets/fonts/DejaVuSerif.ttf（379,740 B）
+
+   为什么分两层
+     .ipa 这一层是精确包出来的音标槽位，整段都用 DejaVu Serif ——
+     包括 /e/ [p] 里那些 ASCII 字母，因为它们在音标语境里也是符号。
+
+     @font-face 这一层带 unicode-range，只接管 IPA 区块的码位。
+     挂在 main 上兜底：<pre> 里的 ASCII 图必须保持等宽（DejaVu Serif 是比例
+     字体，整体套用会把对齐冲掉），但里面的音标字符仍然要换成 DejaVu。
+     unicode-range 让浏览器只在这些码位上使用本字体，其余照旧。
+   ================================================================== */
+/* ① 全量：.ipa 槽位与 SVG 文本要的是这个家族名，
+      没有它，浏览器会去找**系统**里装的 "DejaVu Serif" —— 找不到就静默
+      回退到 Consolas，看起来像生效了，其实一个字都没换。 */
+@font-face{
+  font-family:"DejaVu Serif";
+  src:url("../fonts/DejaVuSerif.ttf") format("truetype");
+  font-weight:400;font-style:normal;font-display:swap;
+}
+
+/* ② 只接管音标码位：给 <pre> 等必须保持等宽的容器兜底，
+      中文与 ASCII 仍走原来的字体 */
+@font-face{
+  font-family:"DejaVu Serif IPA";
+  src:url("../fonts/DejaVuSerif.ttf") format("truetype");
+  font-weight:400;font-style:normal;font-display:swap;
+  unicode-range:U+0250-02AF, U+02B0-02FF, U+0300-036F,
+                U+1D00-1D7F, U+1D80-1DBF, U+A700-A71F, U+02E5-02E9;
+}
+
+main{font-family:"DejaVu Serif IPA","Microsoft YaHei","PingFang SC",
+  "Hiragino Sans GB",system-ui,sans-serif}
+
+/* code / pre 自己设了等宽字体，不继承 main，得单独把带 unicode-range 的
+   那一层挂上去：ASCII 仍走 Consolas，只有音标码位换成 DejaVu Serif，
+   这样 <pre> 里那些靠空格对齐的 ASCII 图不会被比例字体冲散。 */
+main code, main pre, main td.c, main th.c{
+  font-family:"DejaVu Serif IPA",var(--mono),monospace}
+
+.ipa{font-family:"DejaVu Serif","DejaVu Serif IPA",var(--mono),monospace;
+  font-size:1.04em}
+.ipa code,.ipa b{font-family:inherit}
+
+/* 舌位图里的 i e ɛ u o a 也走 DejaVu Serif */
+.vw text{font-family:"DejaVu Serif","DejaVu Serif IPA",serif}
+
+/* 兜底：页面上所有 <pre> 都挂上带 unicode-range 的音标字体。
+   .out-wrap pre / .code-wrap pre 各有自己的 font-family 规则，
+   优先级高于 main pre，所以这里逐个点名，保证 pre 里的音标字符
+   也换成 DejaVu Serif，而 ASCII 仍走等宽、对齐不变。 */
+.out-wrap pre,.code-wrap pre,.two .side pre,main pre,pre{
+  font-family:"DejaVu Serif IPA",var(--mono),monospace}
+
+/* ===== 项目组长留言（与 T01 同一套观感） ===== */
+.lead-msg{margin:24px 0 18px;padding:20px 22px 18px;
+  border-width:2px;border-left-width:9px;
+  box-shadow:0 5px 20px var(--t-shadow,rgba(154,107,10,.14))}
+.lead-msg .card-t{
+  display:inline-block;margin:0 0 14px;padding:4px 14px;border-radius:999px;
+  background:linear-gradient(135deg,var(--t-gold-2,#e0b23f),var(--t-gold-3,#a8760f));
+  color:#241a03;font-size:13px;font-weight:700;letter-spacing:.10em}
+.lead-msg .lead-msg-b{
+  margin:0;
+  font-family:SimSun,"Songti SC","Noto Serif CJK SC","Source Han Serif SC",serif;
+  font-weight:700;font-size:clamp(15.5px,1.9vw,18px);line-height:2.05;letter-spacing:.02em}
+.lead-msg .lead-msg-d{
+  margin:14px 0 0;text-align:right;
+  font-family:SimSun,"Songti SC","Noto Serif CJK SC",serif;
+  font-weight:700;font-size:13.5px;letter-spacing:.06em;color:var(--fg-3)}
+@media (max-width:640px){
+  .lead-msg{padding:16px 15px 14px;border-left-width:7px}
+  .lead-msg .lead-msg-b{line-height:1.95}
+}
+

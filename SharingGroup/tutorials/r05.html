@@ -1,0 +1,414 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>R05 · 词汇录入规范</title>
+<link rel="stylesheet" href="assets/css/genelayout.css">
+<link rel="stylesheet" href="assets/css/r05.css">
+<link rel="stylesheet" href="assets/css/series-theme.css">
+<link rel="stylesheet" href="assets/css/tg_L.css">
+<link rel="stylesheet" href="assets/css/tg_D.css">
+
+</head>
+<body class="rseries" data-series="R">
+<div id="shell">
+
+<nav id="toc">
+  <h5>目录</h5>
+  <a href="#s1">1 · 你不需要会这些</a>
+  <a href="#s2">2 · 你要做什么</a>
+  <a href="#s3">3 · 开工前先看这些</a>
+  <a href="#s4">4 · 每个词怎么录</a>
+  <a href="#s5">5 · 「不确定」是什么</a>
+  <a href="#s6">6 · 记录表：怎么填、怎么交</a>
+  <a href="#s7">7 · 收尾与自查</a>
+</nav>
+
+<main id="top">
+<h1>词汇录入规范</h1>
+<p class="sub-title">UME 项目组内部教程 · R05（Related） · 给负责词汇录入的组员</p>
+
+<p>这份规范只讲一件事：<b>怎么把教材上的词，一个一个字地对成回鹘蒙文，然后抄进表里</b>。
+不需要写代码，不需要会读会写蒙文，也不需要装蒙文输入法。</p>
+
+<h2 id="s1"><span class="n">1</span>你不需要会这些</h2>
+
+<ol>
+  <li>写代码</li>
+  <li>会读、会写蒙文，或用蒙文写句子</li>
+  <li>学会蒙文输入法、用键盘敲蒙文</li>
+  <li>设计字体、了解字体格式</li>
+</ol>
+
+<div class="card tip">
+  <div class="card-t">你需要的只有三样</div>
+  <p>会看汉语释义 · 会照着教材比形状 · 会复制粘贴。</p>
+</div>
+
+<h2 id="s2"><span class="n">2</span>你要做什么</h2>
+
+<p>从教材词表里挑 <b>500 个以上常用词</b>，逐个在 <b>popmon</b> 里比对出正确字形，
+把联合转写、<b>"蒙文词形"</b>、<b>"释义"</b> 抄进记录表。</p>
+
+<h3>选词倾向</h3>
+
+<p>别全挑名词 —— <b>名词约占一半</b>，动词、形容词、数词量词、虚词都要有。</p>
+
+<ul>
+  <li>名词优先日常高频：人体、亲属、饮食、动物、自然、器物、时间、方位</li>
+  <li>具体数量按教材词表实际情况分配，<b>不必凑整</b></li>
+</ul>
+
+<div class="card warn">
+  <div class="card-t">不收这些</div>
+  <ul>
+    <li>专业术语（高尔基体、量子隧穿）</li>
+    <li>专名、外来语</li>
+    <li><b>带后缀的变形</b> —— 只收词干（<code>ger-tü</code>、<code>morin-u</code> 这类要改成词干）</li>
+  </ul>
+  <p>这里<b>不需要你学习语法</b>。如果遇到这种<b>带横线或下划线</b>的，
+  你可以在「<b>状态</b>」列中<b>特殊标出</b>，交给组长处理。</p>
+</div>
+
+<h2 id="s3"><span class="n">3</span>开工前先看这些</h2>
+
+<p>下面六条看不懂就问 AI，不必背。</p>
+
+<h3>① 蒙文是连写的</h3>
+
+<p>一个字母有 <b>4 种形态</b>：独立 / 词首 / 词中 / 词尾。起步只要先认<b>独立形</b>和<b>词尾形</b>。</p>
+
+<h3>② 转写是把蒙文写成拉丁字母</h3>
+
+<p>本项目用两套转写：<b>联合转写</b>（工具默认）和<b>鲍培转写</b>。
+popmon <b>两套都接受</b>，切换方案即可 —— 同一段蒙文，两套方案会写成不同的字母串。</p>
+
+<h3>③ 判别教材用的是哪套</h3>
+
+<div class="card key">
+  <div class="card-t">看独有字母</div>
+  <p>出现 <code>q</code>、<code>γ</code> 的是 <b>鲍培</b>；出现 <code>x</code>、<code>ë</code> 的是 <b>联合</b>。</p>
+</div>
+
+<h3>④ 区分「书面转写」和「读音标注」</h3>
+
+<p>教材上的注音有两种：<b>转写</b>直接用拉丁字母写；<b>读音</b>一般用
+<code>[ ]</code> 或 <code>/ /</code> 括起来。<b>你要录的是转写，不是读音。</b></p>
+
+<div class="card warn">
+  <div class="card-t">注意：有些教材把「转写」也标成「读音」</div>
+  <p>严格来讲那是<b>「书面读音」</b>，也就是转写。所以<b>不要看栏目标题，要看里面的字母</b>：</p>
+  <ul>
+    <li><b>转写</b>：出现独有字母 <code>q</code> <code>γ</code>（鲍培）或 <code>ë</code>（联合），
+        以及 <code>ö</code> <code>ü</code> <code>č</code> <code>ǰ</code> <code>š</code>
+        <code>ž</code> <code>ḳ</code> <code>ẑ</code> <code>ĉ</code> 中的任何一个</li>
+    <li><b>读音</b>：出现长音记号 <code>ː</code>，或音标 <code>ə</code> <code>ʊ</code>
+        <code>æ</code> <code>ɔ</code> 中的任何一个</li>
+  </ul>
+</div>
+
+<div class="card note">
+  <div class="card-t">类比：汉字「嘘」</div>
+  <ul>
+    <li>转写：<code>xū</code></li>
+    <li>读音：<code>/ɕy˥˥/</code></li>
+  </ul>
+</div>
+
+<p>蒙文同理：写作 <code>qaγan</code>（转写），今天读作 <code>/xaːn/</code>（读音）——
+录的是前者。</p>
+
+<h3>⑤ 元音分阴阳</h3>
+
+<p>阳性 <code>a o u</code> / 阴性 <code>e ö ü</code> / 中性 <code>i</code>。</p>
+
+<h3>⑥ 元音和谐律</h3>
+
+<p>一个词内的元音通常同类。反例是合成词：
+「呼和浩特」= <code>köke</code> + <code>qota</code>（前半阴性、后半阳性）。
+这类词在 popmon 里会显示「不确定」，见第 5 节。</p>
+
+<h2 id="s4"><span class="n">4</span>每个词怎么录</h2>
+
+<p>下面按顺序走一遍。每一步都配了 popmon 的截图，照着做即可。</p>
+
+<h3>第 1 步 · 挑词、记页码</h3>
+
+<p>从教材词表挑一个词，记下<b>书目或作者+页码</b> —— 后面要填进表里。</p>
+
+<h3>第 2 步 · 打开 popmon</h3>
+
+<p>直接打开 <a href="../../popmon.html"><b>popmon.html</b></a>
+（也可以从首页第 4 张卡「转换 · popmon 转写 → 蒙文」进去）。</p>
+
+<h3>第 3 步 · 选对转写方案</h3>
+
+<p>按第 ③ 条判断教材用的是哪套，然后在输入框右边的「方案」下拉里选。
+默认是<b>联合转写</b>；教材标的是 <code>q</code>／<code>γ</code> 就切到<b>鲍培转写</b>。</p>
+
+<figure class="fig">
+  <img class="fig-img" src="assets/img/popmon_translit.png" width="2019" height="211"
+       alt="popmon 输入框右侧的「方案」下拉，展开后有联合转写（默认）与鲍培转写两项">
+  <figcaption><b>「方案」下拉就在输入框右边</b><br>
+  选错了会怎样：输入框变红、上方弹出提示，点提示里的按钮一键切换。</figcaption>
+</figure>
+
+<h3>第 4 步 · 输入转写</h3>
+
+<p>输入这个词的转写。有两处要<b>手动改</b>：</p>
+
+<ul>
+  <li>教材用 <code>h</code> 的，改成 <code>x</code></li>
+  <li>教材用 <code>ŋ</code> 的，改成 <code>ng</code></li>
+</ul>
+
+<p>那些不好用键盘打出来的字母（<code>ö</code> <code>ü</code> <code>ē</code> <code>č</code>
+<code>ǰ</code> <code>š</code> <code>γ</code> …），输入框下面专门备了两排按钮：
+上一排是鲍培的，下一排是联合转写的。<b>点一下，字母就插到光标位置</b>。</p>
+
+<figure class="fig">
+  <img class="fig-img" src="assets/img/popmon_special_letters.png" width="2173" height="505"
+       alt="popmon 的罕见字母按钮区：鲍培一行（ö ü ē / č ǰ š γ），联合转写一行（ö ü ë / č ǰ š ž ḳ ẑ ĉ）">
+  <figcaption><b>罕见字母区</b>：上排鲍培、下排联合转写，点一下就插到光标处。</figcaption>
+</figure>
+
+<aside class="card key lead-msg" role="note" aria-label="项目组长留言">
+  <div class="card-t">项目组长留言</div>
+  <p class="lead-msg-b">打不出那些罕见的字母，可以在这里选择输入。</p>
+  <p class="lead-msg-d">2026年10月29日</p>
+</aside>
+
+<h3>第 5 步 · 比对字形（最关键的一步）</h3>
+
+<p>左边那个窄高的框里是<b>渲染出来的词</b>，右边标着它的码位。
+下面的「第 N 个 … 字形变体选择」就是可选项：每个字母都有<b>「默认」</b>和若干<b>「第 N 变体」</b>。</p>
+
+<p>拿左边的字形去比教材上那个词：<b>点数、比走向、看收尾</b>。
+不一样就换一个变体，再比一次。</p>
+
+<figure class="fig">
+  <img class="fig-img" src="assets/img/popmon_default.png" width="1770" height="864"
+       alt="选择「默认」时左边的词形：字尾有两点、笔画走向与变体不同">
+  <figcaption><b>选「默认」时的样子</b> —— 注意字形上那些点和收尾。</figcaption>
+</figure>
+
+<figure class="fig">
+  <img class="fig-img" src="assets/img/popmon_var1.png" width="1851" height="917"
+       alt="选择「第1变体」后同一个词形发生变化：多了点、走向不同">
+  <figcaption><b>换成「第1变体」后</b> —— 同一个字母，字形变了。
+  和教材一致的那个，才是你要的。</figcaption>
+</figure>
+
+<aside class="card key lead-msg" role="note" aria-label="项目组长留言">
+  <div class="card-t">项目组长留言</div>
+  <p class="lead-msg-b">通过不断选择默认 / 变体，反复比对左边词的长相和书上词的长相，
+  使左边词的长相与书上的一致，这时，录入这个词。</p>
+  <p class="lead-msg-d">2026年10月29日</p>
+</aside>
+
+<aside class="card key lead-msg" role="note" aria-label="项目组长留言">
+  <div class="card-t">项目组长留言</div>
+  <p class="lead-msg-b">大多数词使用全默认情况就能保证与教材一致，但有少数词不是这样，
+  <b>一定特别注意这些词</b>！</p>
+  <p class="lead-msg-d">2026年10月29日</p>
+</aside>
+
+<h3>第 6 步 · 用「染字」和悬停核对</h3>
+
+<p>打开上方那个 <b>「染字」</b> 勾选框，词里每个字母会染成不同颜色 ——
+一眼就能看出「教材上的第 3 个字」对应屏幕上哪个字。
+把鼠标停在某个字上，它会<b>被方框圈住</b>，右边浮窗写明<b>这个字的转写值</b>。</p>
+
+<figure class="fig">
+  <img class="fig-img" src="assets/img/popmon_染字和悬停.png" width="1367" height="1207"
+       alt="染字效果：每个字母不同颜色；鼠标悬停时某个字被方框圈住，右侧浮窗显示「e U+1821 · 词中形」">
+  <figcaption><b>染字 + 悬停</b>：方框圈住的那个字，浮窗说是 <code>e</code>（U+1821，词中形）。</figcaption>
+</figure>
+
+<h3>第 7 步 · 复制并填表</h3>
+
+<p>点 <b>「复制这个词」</b> 拿蒙文词形、点 <b>「复制联合转写」</b> 拿拉丁串，
+粘进记录表；再填上 <b>"释义"</b> 和 <b>书目或作者+页码</b>。</p>
+
+<h3>第 8 步 · 遇到「不确定」</h3>
+
+<p>如果<b>鲍培那一行</b>显示「不确定」，<b>不要猜</b>。
+怎么处理见下一节。</p>
+
+<h2 id="s5"><span class="n">5</span>「不确定」是什么</h2>
+
+<p>popmon 的结果框里会同时给出两种转写。<b>只有「鲍培」那一行可能显示「不确定」</b>，
+「联合转写」那一行永远不会 ——
+因为【蒙文字母】→【联合转写】是<b>双射</b>（一个字母对一个符号，反过来也唯一）；
+而【蒙文字母】→【鲍培转写】<b>不是单射</b>（同一个 ᠬ 既可以写成 <code>q</code>，也可以写成 <code>k</code>）。</p>
+
+<figure class="fig">
+  <img class="fig-img" src="assets/img/popmon_不确定.png" width="1329" height="1051"
+       alt="popmon 里输入 xöxexota，联合转写一行回显 xöxexota，鲍培一行显示「不确定」">
+  <figcaption><b>输入 <code>xöxexota</code>（呼和浩特）时的样子</b><br>
+  联合转写一行照原样还回 <code>xöxexota</code>；
+  鲍培一行打上「不确定」—— 因为这是 <code>köke</code> + <code>qota</code> 的合成词，
+  构件边界在字形上看不见，没法判断每个 ᠬ 读 k 还是 q。</figcaption>
+</figure>
+
+<aside class="card key lead-msg" role="note" aria-label="项目组长留言">
+  <div class="card-t">项目组长留言</div>
+  <p class="lead-msg-b">如果鲍培转写那一栏出现像这样的「不确定」，在录入词汇时，
+  「状态」那一列单独标出。</p>
+  <p class="lead-msg-d">2026年10月29日</p>
+</aside>
+
+<div class="card note">
+  <div class="card-t">具体怎么做</div>
+  <ol>
+    <li><b>不要猜</b>。猜出来的写法会污染整个词表。</li>
+    <li>「状态」那一列填 <b>「待定」</b>，继续录下一个词。</li>
+    <li>全部录完后，把「待定」的那些统一交组长复核 —— 组长有词典和考订材料。</li>
+  </ol>
+</div>
+
+<p>另有一种「打错方案」的情况：如果你在联合转写模式下输入了鲍培才有的字母，
+输入框会变红、上方弹出提示，点按钮切换方案即可（第 4 节第 3 步）。</p>
+
+<h2 id="s6"><span class="n">6</span>记录表：怎么填、怎么交</h2>
+
+<h3>用哪个文件</h3>
+
+<p>用 Excel 或 WPS 打开：
+<a href="../../vocabulary/词汇录入表.xlsx"><b>vocabulary/词汇录入表.xlsx</b></a></p>
+
+<p>（在仓库根目录的 <code>vocabulary/</code> 下，点上面链接可下载。）</p>
+
+<div class="card warn">
+  <div class="card-t">请另存副本再填</div>
+  <p>不要直接在这个文件上改，也<b>不要把填好的表提交回仓库</b> ——
+  先「另存为」你自己的副本（如 <code>词汇录入表-张三.xlsx</code>）再填。</p>
+</div>
+
+<p>里面已经排好版式，照着往下填即可。长这样：</p>
+
+<figure class="fig">
+  <img class="fig-img" src="assets/img/词汇录入规范.png" width="1852" height="846"
+       alt="词汇录入表.xlsx 的样子：表头六列，下面三行例词 monggol / tabu / xurud">
+  <figcaption><b>记录表的样子</b><br>
+  A 序号 · B 联合转写 · C 蒙文词形 · D 释义 · E 书目或作者+页码 · F 状态。
+  前三行是例词，从第 5 行往下填。</figcaption>
+</figure>
+
+<aside class="card key lead-msg" role="note" aria-label="项目组长留言">
+  <div class="card-t">项目组长留言</div>
+  <p class="lead-msg-b">你无需严格按照图片中的规范一个字不差地录入词汇。
+  只需保证<b>蒙古文字形</b>、<b>联合转写</b>、<b>释义</b>不改动即可，<b>出处指明清楚</b>即可，
+  <b>正常的状态可以完全不标</b>。</p>
+  <p class="lead-msg-d">2026年10月29日</p>
+</aside>
+
+<h3>列的顺序</h3>
+
+<table>
+<thead><tr><th>列</th><th>填什么</th><th>从哪来</th></tr></thead>
+<tbody>
+<tr><td>序号</td><td>1、2、3……</td><td>自己往下编</td></tr>
+<tr><td>联合转写</td><td><code>monggol</code> 这样的拉丁串</td><td>popmon「复制联合转写」</td></tr>
+<tr><td>蒙文词形</td><td>ᠮᠣᠩᠭᠣᠯ</td><td>popmon「复制这个词」</td></tr>
+<tr><td>释义</td><td>蒙古</td><td>教材上的汉语释义</td></tr>
+<tr><td>书目或作者+页码</td><td>《蒙古语基础》p.12</td><td>你挑词的那一页</td></tr>
+<tr><td>状态</td><td>完成 / 待定</td><td>下拉选</td></tr>
+</tbody>
+</table>
+
+<h3>三个例词</h3>
+
+<p>模板的前三行就是例子，每个示范一件事：</p>
+
+<ul>
+  <li><code>monggol</code> 蒙古 —— <code>ng</code> 用单字母 ᠩ（U+1829），不是 n + g</li>
+  <li><code>tabu</code> 五 —— 短词、无变体，录完直接「复制这个词」</li>
+  <li><code>xurud</code> 奶豆腐 —— 教材若写 <code>qurud</code>（鲍培），联合转写要换成 <code>xurud</code></li>
+</ul>
+
+<h3>怎么交</h3>
+
+<p>填完后：<b>文件 → 另存为 → 文件类型选「CSV（逗号分隔）」→ 保存</b>，文件名保持
+<code>词汇录入表.csv</code>。WPS 同理：另存为 → CSV。</p>
+
+<p>Excel 会问「是否只保存当前工作表」，选「是」即可（我们只有一张表）。</p>
+
+<p>交上来的 csv 应该长这样：</p>
+
+<pre>序号,联合转写,蒙文词形,释义,书目或作者+页码,状态
+1,monggol,ᠮᠣᠩᠭᠣᠯ,蒙古,《蒙古语基础》p.12,完成</pre>
+
+<h2 id="s7"><span class="n">7</span>收尾与自查</h2>
+
+<ul>
+  <li>每录完 <b>50 个词</b>自查一次：转写与字形是否对得上、有无重复。</li>
+  <li>全部录完后，用 AI 检查是否混入了<b>变形</b>（如 <code>ger-tü</code>、<code>morin-u</code>）；
+      如果无法判断是否为词干，则在「<b>状态</b>」中标出来。</li>
+</ul>
+
+<div class="card tip">
+  <div class="card-t">一句话总结</div>
+  <p>选常用词 → 选对方案 → 输转写 → 点变体对字形 → 两个复制按钮 → 粘贴 → 标状态。</p>
+</div>
+
+<!-- NAV-AUTO -->
+<a class="home-fab" href="../../index.html" title="返回教程总目录">返回 home</a>
+
+</div>
+
+</div>
+<!-- /NAV-AUTO -->
+<footer>
+UME 项目组内部教程 · R05《词汇录入规范》<br>
+配套工具：<code>popmon.html</code>；记录表模板：<code>SharingGroup/messages/词汇录入表.xlsx</code>。
+</footer>
+</main>
+</div>
+
+<script>
+/* 目录滚动高亮 */
+(function(){
+  const links = [...document.querySelectorAll('#toc a')];
+  const targets = links.map(a => document.querySelector(a.getAttribute('href'))).filter(Boolean);
+  const setOn = id => links.forEach(a => a.classList.toggle('on', a.getAttribute('href') === '#'+id));
+  const io = new IntersectionObserver(es => {
+    const vis = es.filter(e => e.isIntersecting)
+                  .sort((a,b) => a.boundingClientRect.top - b.boundingClientRect.top);
+    if (vis[0]) setOn(vis[0].target.id);
+  }, { rootMargin:'-8% 0px -72% 0px', threshold:0 });
+  targets.forEach(t => io.observe(t));
+})();
+
+/* 移动端：生成「目录」按钮，点击呼出/收起侧滑目录 */
+(function(){
+  var toc = document.getElementById('toc');
+  if (!toc) return;
+  var btn = document.createElement('button');
+  btn.id = 'tocToggle';
+  btn.type = 'button';
+  btn.setAttribute('aria-controls','toc');
+  btn.textContent = '目录';
+  document.body.appendChild(btn);
+
+  function setOpen(on){
+    toc.classList.toggle('open', on);
+    document.body.classList.toggle('toc-open', on);
+    btn.setAttribute('aria-expanded', on ? 'true' : 'false');
+    btn.textContent = on ? '收起' : '目录';
+  }
+  btn.addEventListener('click', function(){
+    setOpen(!toc.classList.contains('open'));
+  });
+  toc.addEventListener('click', function(e){
+    if (e.target.closest('a')) setOpen(false);
+  });
+  function sync(){ if (window.innerWidth > 980) setOpen(false); }
+  window.addEventListener('resize', sync);
+  sync();
+})();
+</script>
+<script src="assets/js/series-common.js"></script>
+</body>
+</html>

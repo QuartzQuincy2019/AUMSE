@@ -64,6 +64,19 @@ input[type=text]{
   border:1px solid var(--line2);border-radius:9px;background:var(--sfc2);color:var(--fg);
 }
 input[type=text]:focus{outline:2px solid var(--gold2);outline-offset:1px}
+/* 方案错配：警戒色边框 + 警戒色内阴影 */
+input[type=text].bad{
+  border-color:#d94f3d;
+  box-shadow:inset 0 0 0 2px rgba(217,79,61,.30), inset 0 0 14px rgba(217,79,61,.18);
+  background:#fff5f3;
+}
+html.dark input[type=text].bad{
+  border-color:#e0604c;
+  box-shadow:inset 0 0 0 2px rgba(224,96,76,.35), inset 0 0 14px rgba(224,96,76,.22);
+  background:#2a1614;
+}
+input[type=text].bad:focus{outline-color:#d94f3d}
+html.dark input[type=text].bad:focus{outline-color:#e0604c}
 select,button{font:12.5px/1.4 inherit;padding:6px 10px;border-radius:8px;
   border:1px solid var(--line2);background:var(--sfc2);color:var(--fg);cursor:pointer}
 button.primary{background:var(--btn);border-color:var(--btn-line);color:var(--btn-fg);font-weight:600}
@@ -99,6 +112,25 @@ html.dark .fontwarn b{color:#f0c877}
   .stage .rows{grid-column:1;grid-row:2}
   .stage .result .pv{min-height:380px}
 }
+
+.xhint{
+  display:flex;flex-wrap:wrap;align-items:center;gap:10px;
+  margin:0 0 10px;padding:11px 16px;font-size:12.5px;line-height:1.8;
+  background:#fff6e0;border:1px solid #e8c98a;border-left:5px solid #c8901a;
+  border-radius:10px;color:#5a4515;min-width:0;
+}
+html.dark .xhint{background:#2b2210;border-color:#5c4a1e;border-left-color:#e0b45e;color:#e8d9b0}
+/* 作者样式里的 display:flex 会盖掉 [hidden] 的 display:none，必须显式关掉 */
+.xhint[hidden]{display:none}
+.xhint .xh-ch{font-family:var(--tr);font-size:17px;font-weight:700;color:#a5281a;padding:0 2px}
+html.dark .xhint .xh-ch{color:#ff9c8a}
+.xhint b{color:#8a5a00}
+html.dark .xhint b{color:#f0c877}
+.xhint button{
+  margin-left:auto;font-size:12px;padding:4px 12px;border-radius:999px;
+  background:var(--btn);border:1px solid var(--btn-line);color:var(--btn-fg);font-weight:600;
+}
+.xhint button:hover{background:var(--btn-line)}
 
 .notice{
   margin:0 0 14px;padding:12px 16px;font-size:12.5px;line-height:1.9;
@@ -206,7 +238,29 @@ html.dark .notice.critical code{background:#3a1a16;border-color:#8a3529;color:#f
   margin:0 auto;overflow:auto;
   background:var(--sfc2);border-radius:12px;padding:26px 8px 16px;
 }
+.pv{position:relative}
 .pvstack{position:relative;display:block;line-height:1}
+/* 悬停时把这个字圈起来的方框（绝对定位在 #pvStack 内） */
+.dyebox{
+  position:absolute;z-index:3;pointer-events:none;
+  border:2px solid #c8901a;border-radius:6px;
+  box-shadow:0 0 0 2px rgba(200,144,26,.18);
+  transition:none;
+}
+.dyebox[hidden]{display:none}
+html.dark .dyebox{border-color:#e0b45e;box-shadow:0 0 0 2px rgba(224,180,94,.22)}
+
+.dytip{
+  /* 挂在 body 上，固定定位，不受 .pv 的 overflow 影响 */
+  position:fixed;z-index:60;pointer-events:none;
+  display:flex;align-items:center;gap:7px;
+  padding:5px 10px;border-radius:8px;white-space:nowrap;
+  background:var(--fg);color:var(--bg);font-size:11.5px;line-height:1.5;
+  box-shadow:0 4px 14px rgba(0,0,0,.18);
+}
+.dytip[hidden]{display:none}
+.dytip b{font-family:var(--tr);font-size:19px;font-weight:700;line-height:1}
+.dytip span{font-family:var(--mono);font-size:11px;opacity:.82}
 .pvbase{display:block}
 .pvdye{position:absolute;left:0;top:0;pointer-events:none}
 .sw{display:inline-flex;align-items:center;gap:6px;font-size:12.5px;color:var(--fg3);
@@ -363,6 +417,8 @@ html.dark .result.is-custom{border-color:#c0392b}
   逐条比对后点「复制」拿走。转写是<b>一对多</b>的 —— 同一个音可能有单字母写法，也可能要拆成两个码位。
 </p>
 
+<div class="xhint" id="xhint" hidden></div>
+
 <div class="bar">
   <label><span id="inpLabel">联合转写</span>
     <input type="text" id="inp" value="monggol" spellcheck="false"
@@ -464,9 +520,12 @@ html.dark .result.is-custom{border-color:#c0392b}
 
     <li><b>q/k 与 γ/g 各是同一个码位</b>（<code>U+182C</code> / <code>U+182D</code>），
       字面上靠<b>字点</b>区别，那个差别由 <b>FVS</b> 控制，所以每个字母都列出「默认 / 第N变体」供比对。
-      鲍培的 q/k、γ/g 按<b>就近元音</b>判定：每个 ᠬ/ᠭ 看后面最近的元音，a/o/u 读 q/γ，e/ö/ü 读 k/g。
-      <b>词内阴阳元音混用</b>（可能是合成词，看不出构件边界，如 <code>köke|qota</code>）或
-      <b>ᠬ 后面是 i</b> 时判不了 —— 这时写「不确定」，不给猜测。</li>
+      鲍培的 q/k、γ/g 按<b>就近元音</b>判定：每个 ᠬ/ᠭ 看后面最近的元音，
+      a/o/u 读 q/γ，e/ö/ü 读 k/g；后面是 <code>i</code> 或没有元音时，退回前面最近的元音，
+      再没有就按阴性读 k/g。<br>
+      <b>联合转写这一列永远有结果</b> —— 它是一码位一符号的查表，输入什么就还回什么。
+      只有<b>鲍培</b>在「词内阴阳元音混用」（可能是合成词、看不出构件边界，如
+      <code>köke|qota</code>）时才写「<b>不确定</b>」，不给猜测。</li>
 
     <li><b>控制符记号</b>（两套方案通用，也是联合转写方案表规定的）：
       <code>'</code> FVS1 · <code>"</code> FVS2 · <code>`</code> FVS3 · <code>*</code> ZWJ ·
@@ -556,19 +615,19 @@ const T_POPPE = {
   /* 多写法：单字母 ／ 拆两笔 */
   'ng': { p:[0x1829], alts:[[0x1829],[0x1828,0x182D]],
           d:'ng', tips:{0:'单字母 ᠩ',1:'拆成 n + g'} },
-  'kh': { p:[0x183B], alts:[[0x183B]],
-          d:'kh（借词）' },
+  'kh': { p:[0x182C], alts:[[0x182C]],
+          d:'kh → ᠬ（西里尔 х 的常见写法）' },
+  'ḳ': { p:[0x183B], alts:[[0x183B]],
+          d:'ḳ（阿礼嘎礼 k）' },
   'lh': { p:[0x1840], alts:[[0x1840],[0x182F,0x183E]],
           d:'lh', tips:{0:'单个 ᠯᠾ',1:'拆成 l + h'} },
-  'zh': { p:[0x1841], alts:[[0x1841,0x1837],[0x1841]],
+  'zh': { p:[0x1841], alts:[[0x1841]],
           d:'zh（借词）',
           tips:{0:'Ƶ + 下加 r（手写稿的样子）',1:'预组合 Ƶ，<em>少了下面那笔 r</em>，存疑'} },
-  'ch': { p:[0x1842], alts:[[0x1842,0x1837],[0x1842]],
+  'ch': { p:[0x1842], alts:[[0x1842]],
           d:'ch（借词）',
           tips:{0:'Ç + 下加 r（手写稿的样子）',1:'预组合 Ç，<em>少了下面那笔 r</em>，存疑'} },
-  'sh': { p:[0x1831,0x1837], alts:[[0x1831,0x1837]],
-          d:'sh（借词）', tips:{0:'š + 下加 r'} },
-  'rh': { p:[0x183F,0x1837], alts:[[0x183F,0x1837],[0x183F]],
+  'rh': { p:[0x183F], alts:[[0x183F]],
           d:'rh（借词）',
           tips:{0:'Ʒ + 下加 r',1:'预组合 Ʒ，<em>少了下面那笔 r</em>，存疑'} }
 };
@@ -587,7 +646,8 @@ const T_CMN = {
   'ü': { p:[0x1826], alts:[[0x1826]], d:'ü' },
   'ë': { p:[0x1827], alts:[[0x1827]], d:'ë' },
   'n': { p:[0x1828], alts:[[0x1828]], d:'n' },
-  'ng': { p:[0x1829], alts:[[0x1829]], d:'ng' },
+  'ng': { p:[0x1829], alts:[[0x1829],[0x1828,0x182D]],
+          d:'ng', tips:{0:'单字母 ᠩ',1:'拆成 n + g'} },
   'b': { p:[0x182A], alts:[[0x182A]], d:'b' },
   'p': { p:[0x182B], alts:[[0x182B]], d:'p' },
   'x': { p:[0x182C], alts:[[0x182C]], d:'x' },
@@ -610,7 +670,8 @@ const T_CMN = {
   'z': { p:[0x183D], alts:[[0x183D]], d:'z' },
   'h': { p:[0x183E], alts:[[0x183E]], d:'h' },
   'ž': { p:[0x183F], alts:[[0x183F]], d:'ž' },
-  'lh': { p:[0x1840], alts:[[0x1840]], d:'lh' },
+  'lh': { p:[0x1840], alts:[[0x1840],[0x182F,0x183E]],
+          d:'lh', tips:{0:'单个 ᠯᠾ',1:'拆成 l + h'} },
   'ẑ': { p:[0x1841], alts:[[0x1841]], d:'ẑ' },
   'ĉ': { p:[0x1842], alts:[[0x1842]], d:'ĉ' },
   'ː': { p:[0x1843], alts:[[0x1843]], d:'ː' },
@@ -1096,22 +1157,16 @@ function whyUnsure(cps){
      ᠬᠥᠬᠡᠬᠣᠲᠠ = köke|qota 就是连写的。此时谁都可能读错。 */
   if (nb > 0 && nf > 0) return '词内阴阳元音混用（可能是合成词，看不出构件边界）';
 
-  /* ᠬ/ᠭ 后面是 i 或没有元音，前面也定不了 */
-  for (let k = 0; k < cps.length; k++){
-    const c = cps[k];
-    if (c !== 0x182C && c !== 0x182D) continue;
-    let cls = nextVowel(cps, k);
-    if (cls === 'back' || cls === 'front') continue;
-    const pv = prevVowel(cps, k);
-    if (pv === 'back' || pv === 'front') continue;
-    return 'ᠬ/ᠭ 后面是 i，前后都定不了清浊';
-  }
+  /* 其余情况都能定：先看后面最近的元音，没有就回退到前面，再没有就按阴性。
+     只有 i 的词（činggis、kikü 这类）按惯例读阴性 k/g，不再算「不确定」。 */
   return null;
 }
 
 /* 返回转写串；判定不了就返回 null —— 宁可不给，也不给一个可能错的。 */
 function toScheme(cps, sc){
-  if (whyUnsure(cps)) return null;
+  /* 联合转写是一码位一符号的查表，本来就唯一 —— 输入什么就还回什么，
+     不参与「鲍培读法不确定」这件事。 */
+  if (sc !== 'cmn' && whyUnsure(cps)) return null;
 
   const rev = REV[sc] || {};
   let out = '';
@@ -1182,11 +1237,23 @@ function allCps(){
 const DYE = ['#c0392b','#1a7f45','#1f6fb2','#a0522d','#8e44ad',
              '#b8860b','#0f8b8d','#c2185b','#2e7d32','#5d4037'];
 
+/* 控制符不占「一个字」的颜色：FVS / MVS / NNBSP / ZWJ */
+const DYE_CTRL = [0x180B, 0x180C, 0x180D, 0x180E, 0x180F, 0x202F, 0x200D];
+const isCtrlCp = cp => DYE_CTRL.indexOf(cp) >= 0;
+
+/* 每个字的波段，坐标一律相对 #pvStack：
+   { x0, y0, x1, y1, ch, cp, ti }  ti = 对应的 token 下标 */
+let dyeBands = [];
+let dyeTipEl = null;
+let dyeBoxEl = null;
+
 function paintDye(){
   const stack = $('pvStack');
   if (!stack) return;
   const base = stack.querySelector('.pvbase');
   stack.querySelectorAll('.pvdye').forEach(n => n.remove());
+  dyeBands = [];
+  hideDyeTip();
   if (!dyeOn || !base) return;
   const text = base.textContent || '';
   if (!text) return;
@@ -1194,32 +1261,143 @@ function paintDye(){
   const node = base.firstChild;
   if (!node) return;
   const rg = document.createRange();
-  const box = base.getBoundingClientRect();
+  const box = base.getBoundingClientRect();     /* base 与 stack 同原点 */
 
-  /* 每个字在竖排里占的纵向区间 */
-  const bands = [];
+  /* 只给「真的字母」建波段；控制符的进宽归到相邻字母里 */
+  const raw = [];
   for (let k = 0; k < text.length; k++){
+    const cp = text.codePointAt(k);
+    if (isCtrlCp(cp)) continue;
     rg.setStart(node, k);
     rg.setEnd(node, k + 1);
     const r = rg.getBoundingClientRect();
-    if (r.height > 0.5) bands.push({ top: r.top, bottom: r.bottom });
+    if (r.height > 0.5){
+      raw.push({ top: r.top - box.top, bottom: r.bottom - box.top,
+                 left: r.left - box.left, right: r.right - box.left, cp: cp });
+    }
   }
-  if (!bands.length) return;
+  if (!raw.length) return;
 
-  bands.forEach((b, i) => {
-    /* 用相邻字的中点当分界，避免切线落在笔画中间 */
-    const top = (i === 0) ? 0 : (b.top + bands[i-1].bottom) / 2 - box.top;
-    const bottom = (i === bands.length - 1) ? 0
-      : box.bottom - (b.bottom + bands[i+1].top) / 2;
+  /* 相邻字的中点当分界，避免切线落在笔画中间 */
+  const edges = raw.map((b, i) => {
+    const y0 = (i === 0) ? 0 : (b.top + raw[i-1].bottom) / 2;
+    const y1 = (i === raw.length - 1) ? box.height : (b.bottom + raw[i+1].top) / 2;
+    return { y0: Math.max(y0, 0), y1: Math.min(y1, box.height) };
+  });
+
+  raw.forEach((b, i) => {
     const el = document.createElement('span');
     el.className = 'pvbase pvdye';
     el.setAttribute('lang', 'mn-Mong');
     el.textContent = text;
     el.style.color = DYE[i % DYE.length];
-    el.style.clipPath = 'inset(' + Math.max(top, 0).toFixed(2) + 'px 0 '
-                      + Math.max(bottom, 0).toFixed(2) + 'px 0)';
+    el.style.clipPath = 'inset(' + edges[i].y0.toFixed(2) + 'px 0 '
+                      + (box.height - edges[i].y1).toFixed(2) + 'px 0)';
     stack.appendChild(el);
   });
+
+  /* token 与波段一一对应（同一 token 的第二个码位只在 'ng'/'lh' 拆写时出现） */
+  const letterTokens = [];
+  for (let i = 0; i < state.tokens.length; i++){
+    if (segCps(i).some(c => !isCtrlCp(c))) letterTokens.push(i);
+  }
+
+  dyeBands = raw.map((b, i) => ({
+    x0: b.left, x1: b.right,
+    y0: edges[i].y0, y1: edges[i].y1,
+    ch: String.fromCodePoint(b.cp),
+    cp: b.cp,
+    ti: (letterTokens[i] !== undefined) ? letterTokens[i] : -1
+  }));
+}
+
+/* 该字的转写值：优先取 token 的原文，取不到就用码位兜底 */
+function bandTrans(b){
+  if (b.ti >= 0 && state.tokens[b.ti]) return state.tokens[b.ti].raw;
+  return b.ch;
+}
+
+function ensureDyeEls(){
+  const stack = $('pvStack');
+  if (!stack) return false;
+  if (!dyeBoxEl){
+    dyeBoxEl = document.createElement('div');
+    dyeBoxEl.className = 'dyebox';
+    dyeBoxEl.hidden = true;
+    stack.appendChild(dyeBoxEl);
+  }
+  if (!dyeTipEl){
+    dyeTipEl = document.createElement('div');
+    dyeTipEl.className = 'dytip';
+    document.body.appendChild(dyeTipEl);
+  }
+  return true;
+}
+
+function paintDyeTip(e){
+  if (!dyeOn || !dyeBands.length || !ensureDyeEls()){ hideDyeTip(); return; }
+  const stack = $('pvStack');
+  const srect = stack.getBoundingClientRect();
+  const y = e.clientY - srect.top;
+  const hit = dyeBands.find(b => y >= b.y0 && y <= b.y1);
+  if (!hit){ hideDyeTip(); return; }
+
+  /* 方框：把这个字圈起来 */
+  dyeBoxEl.hidden = false;
+  dyeBoxEl.style.left = hit.x0.toFixed(1) + 'px';
+  dyeBoxEl.style.top = hit.y0.toFixed(1) + 'px';
+  dyeBoxEl.style.width = Math.max(hit.x1 - hit.x0, 8).toFixed(1) + 'px';
+  dyeBoxEl.style.height = (hit.y1 - hit.y0).toFixed(1) + 'px';
+
+  /* 浮窗：显示该字的转写值 */
+  const extra = [];
+  extra.push('U+' + hit.cp.toString(16).toUpperCase().padStart(4, '0'));
+  const pos = (hit.ti >= 0 && state.pos[hit.ti]) ? state.pos[hit.ti] : '';
+  if (pos) extra.push(POS_CN[pos]);
+  dyeTipEl.innerHTML = '<b>' + esc(bandTrans(hit)) + '</b>' +
+                       '<span>' + extra.join(' · ') + '</span>';
+  dyeTipEl.hidden = false;
+  dyeTipEl.style.left = Math.round(srect.right + 12) + 'px';
+  dyeTipEl.style.top = Math.round(e.clientY - 20) + 'px';
+}
+
+function hideDyeTip(){
+  if (dyeTipEl) dyeTipEl.hidden = true;
+  if (dyeBoxEl) dyeBoxEl.hidden = true;
+}
+
+/* ---------------- 方案错配提示 ----------------
+   两套转写各有「独有字符」，一出现就说明方案切错了：
+     鲍培：q、γ、ē        联合：x、ë、ḳ、ẑ、ĉ、ž
+   （k、g、š、č、ǰ 两套都有，不能当判据。） */
+const UNIQUE = {
+  poppe: ['q', 'γ', 'ē'],
+  cmn:   ['x', 'ë', 'ḳ', 'ẑ', 'ĉ', 'ž']
+};
+
+function paintHint(raw){
+  const box = $('xhint');
+  if (!box) return;
+  const other = (scheme === 'cmn') ? 'poppe' : 'cmn';
+  const found = [];
+  UNIQUE[other].forEach(ch => {
+    if (raw.indexOf(ch) >= 0 && found.indexOf(ch) < 0) found.push(ch);
+  });
+  const inp = $('inp');
+  if (!found.length){
+    box.hidden = true; box.innerHTML = '';
+    if (inp) inp.classList.remove('bad');
+    return;
+  }
+  if (inp) inp.classList.add('bad');
+
+  const shown = found.slice(0, 3).map(ch => '<span class="xh-ch">' + esc(ch) + '</span>').join('、');
+  const more = found.length > 3 ? ' 等' : '';
+  const target = SCHEMES[other].name;
+  box.hidden = false;
+  box.innerHTML =
+    '提示：' + shown + more + ' 是<b>' + target + '</b>的独有字符，请切换到' + target + '。' +
+    '<button type="button" data-goto="' + other + '">切换到' + target + '</button>';
 }
 
 function render(){
@@ -1241,6 +1419,7 @@ function render(){
     if (bad.length) ph += '<br><span class="bad">无法识别：' + bad.map(t => esc(t.raw)).join(' ') + '</span>';
   }
   $('parse').innerHTML = ph;
+  paintHint(raw);
 
   const rows = $('rows');
   rows.innerHTML = '';
@@ -1254,6 +1433,10 @@ function render(){
     document.querySelector('.result').classList.remove('is-std', 'is-custom');
     $('badge').hidden = true;
     $('badge').textContent = '';
+    /* 互转行和悬停提示同样要清 —— 否则清空输入后还挂着上一个字 */
+    const xs = $('xsch');
+    if (xs) xs.innerHTML = '';
+    hideDyeTip();
     rows.innerHTML = '<div class="row"><div class="lab">' +
       (bad.length ? '有无法识别的字符，先把它们去掉或改写成鲍培转写。'
                   : '输入转写后，这里会出现可选的变体。') + '</div></div>';
@@ -1277,9 +1460,13 @@ function render(){
       ? '<em class="unk" title="' + esc(whyUnsure(cps) || '') + '">不确定</em>'
       : '<span>' + esc(v) + '</span>';
     const line = (name, v) => '<div class="k"><b>' + name + '</b>' + cell(v) + '</div>';
+    /* 当前方案那一列直接回显输入 —— 录入者自己写下的转写，不必再猜一遍；
+       只有另一列才需要从码位反推，也才可能「不确定」。 */
+    const cmnV  = (scheme === 'cmn')   ? raw : toScheme(cps, 'cmn');
+    const popV  = (scheme === 'poppe') ? raw : toScheme(cps, 'poppe');
     xsch.innerHTML =
-      line('联合转写', toScheme(cps, 'cmn')) +
-      line('鲍培', toScheme(cps, 'poppe'));
+      line('联合转写', cmnV) +
+      line('鲍培', popV);
   }
 
   /* 绿 = 与标准写法一致；红 = 录入者改过；无色 = 这个词还没有标准写法 */
@@ -1447,6 +1634,17 @@ function applyTheme(v){
     state.picks = [];
     render();
   });
+  const pvBox = $('pv');
+  pvBox.addEventListener('mousemove', paintDyeTip);
+  pvBox.addEventListener('mouseleave', hideDyeTip);
+
+  $('xhint').addEventListener('click', e => {
+    const b = e.target.closest('button[data-goto]');
+    if (!b) return;
+    $('schemeSel').value = b.dataset.goto;
+    $('schemeSel').dispatchEvent(new Event('change'));
+  });
+
   $('dyeChk').addEventListener('change', e => {
     dyeOn = !!e.target.checked;
     try{ localStorage.setItem('popmon.dye', dyeOn ? '1' : '0'); }catch(err){}

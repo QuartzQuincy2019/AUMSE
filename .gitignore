@@ -108,3 +108,5 @@ $RECYCLE.BIN/
 /.shots/
 # 临时参考资料（字体清单、键位 XML、截图等），不进仓库
 /refs/
+# Office / WPS 打开文件时生成的锁文件（形如 ~$文件名.xlsx）
+~\$*
