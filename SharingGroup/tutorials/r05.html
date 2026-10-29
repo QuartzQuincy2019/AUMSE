@@ -156,11 +156,12 @@ popmon <b>两套都接受</b>，切换方案即可 —— 同一段蒙文，两�
 
 <h3>第 4 步 · 输入转写</h3>
 
-<p>输入这个词的转写。有两处要<b>手动改</b>：</p>
+<p>输入这个词的转写。有<b>三处</b>要手动改：</p>
 
 <ul>
   <li>教材用 <code>h</code> 的，改成 <code>x</code></li>
   <li>教材用 <code>ŋ</code> 的，改成 <code>ng</code></li>
+  <li>教材用 <code>j</code> 的，改成 <code>ǰ</code></li>
 </ul>
 
 <p>那些不好用键盘打出来的字母（<code>ö</code> <code>ü</code> <code>ē</code> <code>č</code>
@@ -184,7 +185,7 @@ popmon <b>两套都接受</b>，切换方案即可 —— 同一段蒙文，两�
 <p>左边那个窄高的框里是<b>渲染出来的词</b>，右边标着它的码位。
 下面的「第 N 个 … 字形变体选择」就是可选项：每个字母都有<b>「默认」</b>和若干<b>「第 N 变体」</b>。</p>
 
-<p>拿左边的字形去比教材上那个词：<b>点数、比走向、看收尾</b>。
+<p>拿左边的字形去比教材上那个词：<b>点数、“牙齿”数、“撇和捺”</b>。
 不一样就换一个变体，再比一次。</p>
 
 <figure class="fig">
@@ -230,6 +231,9 @@ popmon <b>两套都接受</b>，切换方案即可 —— 同一段蒙文，两�
 
 <p>点 <b>「复制这个词」</b> 拿蒙文词形、点 <b>「复制联合转写」</b> 拿拉丁串，
 粘进记录表；再填上 <b>"释义"</b> 和 <b>书目或作者+页码</b>。</p>
+
+<p>粘到 Excel 里<strong>显示可能不正常</strong>，但那只是显示问题 —— 见
+<a href="#s6">第 6 节</a>的说明。</p>
 
 <h3>第 8 步 · 遇到「不确定」</h3>
 
@@ -317,6 +321,31 @@ popmon <b>两套都接受</b>，切换方案即可 —— 同一段蒙文，两�
 <tr><td>状态</td><td>完成 / 待定</td><td>下拉选</td></tr>
 </tbody>
 </table>
+
+<div class="card warn">
+  <div class="card-t">粘到 Excel 里显示不正常？不用管</div>
+  <p>从 popmon 复制的蒙文，粘进 Excel 单元格后可能<b>长得不一样</b>。
+  以 <code>bey-e</code>（身体）为例，同一个词、同一串码位：</p>
+
+  <figure class="fig">
+    <img class="fig-img" src="assets/img/popmon_correct_form.png" width="741" height="234"
+         alt="popmon 里 bey-e 的字形，箭头指向日处标注「此处无横」">
+    <figcaption><b>正确形</b>（popmon 里）：箭头所指处<b>无横</b>。</figcaption>
+  </figure>
+
+  <figure class="fig">
+    <img class="fig-img" src="assets/img/popmon_incorrect_form.png" width="1328" height="253"
+         alt="Excel 单元格里同一个词，箭头指向同一处标注「此处有横」">
+    <figcaption><b>粘到 Excel 后</b>：同一处<b>多了一道横</b>。</figcaption>
+  </figure>
+
+  <p>差别来自<b>字体与排版</b>（Excel 用的是它自己的蒙文字体），
+  <b>单元格里的码位是对的</b> —— 不影响最终正确性，<b>录入者无需理睬</b>。</p>
+
+  <p>想确认真的粘对了：把单元格里的内容再复制回 popmon 的输入框，
+  看码位是否与原来一致（<code>bey-e</code> 应为
+  <code>U+182A U+1821 U+1836 U+202F U+1821</code>）。</p>
+</div>
 
 <h3>三个例词</h3>
 
