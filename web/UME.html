@@ -739,19 +739,18 @@ function buildSVGText(){
   parts.push('<g fill="'+fg+'" font-family="UMEMongolianExport, Noto Sans Mongolian, serif"'
     + ' font-size="'+fs.toFixed(2)+'" xml:lang="mn-Mong">');
 
+  /* 整行一个 <text>，再整体旋转 90°。
+     ── 为什么不能「一个字一个 <text>」：SVG 里每个 <text> 是独立的文本段，
+        排版引擎不会跨段连写，蒙文就会全部退成独立形（没有 init/medi/fina），
+        导出的图上字母一个个散着 —— 而且 SVG 的 <text> 在 Edge / Chrome 里
+        不认 writing-mode，写 writing-mode="vertical-lr" 也无效。
+     整行一段 + rotate(90) 才能拿到和预览一致的连写。 */
   for (const ln of plan){
-    const lineX = pad + ln.line * lineH;
-    let pen = 0;
-    for (const it of ln.items){
-      const ch = it.text;
-      if (ch === " " || !ch.trim()){ pen += it.adv; continue; }
-      const x = (pen) * k;                       // local 空间里的沿行位置
-      /* local(x, 0) → world(lineX + ASC, pad + x)，并旋转 90° */
-      const tf = 'translate(' + (lineX + ASC).toFixed(2) + ','
-               + (pad + x).toFixed(2) + ') rotate(90)';
-      parts.push('<text transform="'+tf+'" x="0" y="0">'+escXml(ch)+'</text>');
-      pen += it.adv;
-    }
+    const s = ln.items.map(it => it.text).join('').replace(/^\s+|\s+$/g, '');
+    if (!s) continue;
+    const tf = 'translate(' + (pad + ln.line * lineH + ASC).toFixed(2) + ','
+             + pad.toFixed(2) + ') rotate(90)';
+    parts.push('<text transform="'+tf+'">'+escXml(s)+'</text>');
   }
   parts.push('</g></svg>');
   return { svg: parts.join("\n"), stats:{ total:0, low:0, miss:0 },

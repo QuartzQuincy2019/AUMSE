@@ -110,3 +110,6 @@ $RECYCLE.BIN/
 /refs/
 # Office / WPS 打开文件时生成的锁文件（形如 ~$文件名.xlsx）
 ~\$*
+
+# Qt 构建目录
+/app/build/
