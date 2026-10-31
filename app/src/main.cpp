@@ -1,4 +1,5 @@
 #include "mainwindow.h"
+#include "umelog.h"
 #include "umesettings.h"
 #include "umeview.h"
 
@@ -15,6 +16,7 @@
 #include <QTextBlock>
 #include <QTextCharFormat>
 #include <QTextDocument>
+#include <QInputMethodEvent>
 #include <QTextFragment>
 
 namespace {
@@ -178,6 +180,53 @@ int selfTest(const QString &path, const QString &outDir, const QString &font,
         printf("  还原后：%s\n", qPrintable(view.columnsProbe(3)));
     }
 
+    printf("== 选区矩形 vs 列框 ==\n");
+    {
+        QTextCursor sel(&doc);
+        sel.setPosition(0);
+        sel.setPosition(3, QTextCursor::KeepAnchor);
+        view.setTextCursor(sel);
+        const QVector<QRectF> rs = view.selectionRectsProbe();
+        printf("  列：%s\n", qPrintable(view.columnsProbe(1)));
+        printf("  选区矩形数=%d\n", int(rs.size()));
+        for (const QRectF &r : rs)
+            printf("    rect x %.1f–%.1f  y %.1f–%.1f\n",
+                   r.left(), r.right(), r.top(), r.bottom());
+        printf("  光标 x %.1f–%.1f\n",
+               view.caretRectProbe().left(), view.caretRectProbe().right());
+    }
+
+    printf("== 行内逐位置 x ==\n");
+    {
+        const QTextBlock b = doc.begin();
+        QTextLayout *lay = b.layout();
+        const QTextLine line = lay->lineAt(0);
+        QStringList xs;
+        for (int p = line.textStart(); p <= line.textStart() + line.textLength(); ++p)
+            xs << QStringLiteral("%1:%2").arg(p).arg(line.cursorToX(p), 0, 'f', 1);
+        printf("  %s\n", qPrintable(xs.join(QLatin1Char(' '))));
+        printf("  line.width=%.1f naturalTextWidth=%.1f inlineTextLength=%d\n",
+               line.width(), line.naturalTextWidth(), line.textLength());
+    }
+
+    printf("== 模拟输入法：MENGGU -> 上屏蒙古 ==\n");
+    {
+        view.setTextCursor(QTextCursor(&doc));   // 光标回到开头
+        press(Qt::Key_End);                      // 到第一列末尾
+
+        QInputMethodEvent pre(QStringLiteral("MENGGU"), {});
+        QApplication::sendEvent(&view, &pre);
+        printf("  发 preedit 后：doc 长度=%d\n", doc.toPlainText().size());
+
+        QInputMethodEvent commit;
+        commit.setCommitString(QStringLiteral("\u8499\u53E4"));
+        QApplication::sendEvent(&view, &commit);
+        printf("  上屏后：doc 长度=%d，末尾=%s\n",
+               doc.toPlainText().size(),
+               qPrintable(doc.toPlainText().right(4)));
+        printf("  列几何：%s\n", qPrintable(view.columnsProbe(3)));
+    }
+
     printf("== 拖曳选中 ==\n");
     {
         /* 两点的文档位置先用命中测试量出来，再模拟按下 / 移动 / 抬起 */
@@ -253,6 +302,9 @@ int selfTest(const QString &path, const QString &outDir, const QString &font,
 int main(int argc, char *argv[])
 {
     QApplication app(argc, argv);
+    /* 开发期默认写日志；设 UME_LOG=0 可关掉 */
+    const QByteArray logEnv = qgetenv("UME_LOG");
+    umeLogInit(logEnv != "0");
     app.setApplicationName(QStringLiteral("UME"));
 
     QFontDatabase::addApplicationFont(QStringLiteral(UME_FONT_DIR)
@@ -276,8 +328,13 @@ int main(int argc, char *argv[])
         QStringLiteral("渲染倍率，默认 2"), QStringLiteral("x"), QStringLiteral("2"));
     const QCommandLineOption optFont(QStringLiteral("font"),
         QStringLiteral("字体族名，默认 Noto Sans Mongolian"), QStringLiteral("family"));
+    const QCommandLineOption optLog(QStringLiteral("log"),
+        QStringLiteral("写日志到指定文件（开发期排查用）"),
+        QStringLiteral("file"));
     const QCommandLineOption optCaret(QStringLiteral("caret"),
         QStringLiteral("渲染时画出光标（配合 --render）"));
+    const QCommandLineOption optSel(QStringLiteral("sel"),
+        QStringLiteral("渲染时选中 [起,止] 两个文档位置"), QStringLiteral("a,b"));
     const QCommandLineOption optFonts(QStringLiteral("fonts"),
         QStringLiteral("列出本机可用的字体族"));
     const QCommandLineOption optSize(QStringLiteral("size"),
@@ -304,12 +361,17 @@ int main(int argc, char *argv[])
     parser.addOption(optPaper);
     parser.addOption(optMargin);
     parser.addOption(optFonts);
+    parser.addOption(optLog);
     parser.addOption(optCaret);
+    parser.addOption(optSel);
     parser.addOption(optGuiCheck);
     parser.addOption(optPitch);
     parser.addPositionalArgument(QStringLiteral("file"),
         QStringLiteral("要打开的文件（图形界面模式）"));
     parser.process(app);
+
+    if (parser.isSet(optLog))
+        umeLogInit(true, parser.value(optLog));
 
     PageSetup page = PageSetup::preset(parser.value(optPaper));
     const QStringList ms = parser.value(optMargin).split(QLatin1Char(','));
@@ -381,6 +443,18 @@ int main(int argc, char *argv[])
         }
 
         const qreal scale = parser.value(optScale).toDouble();
+
+        if (parser.isSet(optSel)) {
+            const QStringList ab = parser.value(optSel).split(QLatin1Char(','));
+            if (ab.size() == 2) {
+                QTextCursor cur(&doc);
+                cur.setPosition(ab[0].toInt());
+                cur.setPosition(ab[1].toInt(), QTextCursor::KeepAnchor);
+                view.setTextCursor(cur);
+            }
+        }
+
+        printf("[glyph] %s\n", qPrintable(view.glyphProbe()));
         const bool withCaret = parser.isSet(optCaret);
 
         QImage img = parser.isSet(optPage)

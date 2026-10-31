@@ -113,3 +113,6 @@ $RECYCLE.BIN/
 
 # Qt 构建目录
 /app/build/
+
+# 开发期日志
+/app/ume.log

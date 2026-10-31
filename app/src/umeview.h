@@ -67,12 +67,17 @@ public:
         return cursorAtDocPos(docPosFromWidget(widgetPos));
     }
     QString metricsProbe() const;
+    QString glyphProbe() const;
     /* 前 n 列的「左边界 / 宽度」，用来验证重排只影响右侧 */
     QString columnsProbe(int n = 4) const;
 
     /* 竖排方向判定：true = 直立（汉字/假名/韩文），false = 随列旋转。
        括号、破折号、引号、拉丁字母、数字一律旋转 —— 竖排里它们本来就转着用。 */
     static bool isUprightScript(QChar ch);
+
+    /* 显式字体栈：主字体 + 中文回退 + 拉丁回退。
+       给全了 Qt 就不必去扫系统字体表（首次遇到汉字要几百毫秒）。 */
+    static QStringList fallbackFamilies(const QString &primary);
 
 signals:
     void formatStateChanged();
@@ -94,6 +99,8 @@ protected:
 private:
     /* 几何 */
     QRectF columnDocRect(const UmeLayout::Column &c) const;
+    /* 字形在列里的落点：墨迹居中于列框 */
+    qreal columnInkLeft(const UmeLayout::Column &c) const;
     QRectF caretDocRect() const;
     QVector<QRectF> selectionDocRects() const;
     QTextCursor cursorAtDocPos(const QPointF &docPos) const;
@@ -155,6 +162,7 @@ private:
     bool m_dragging = false;
     int m_dragAnchor = -1;      /* 拖曳起点（文档位置），别丢 */
 
+    int m_paintedRevision = -1;   // 上一次画过的文档版本
     QString m_preedit;              // 输入法未上屏的串
 
     QTextCharFormat m_baseFormat;   // 当前基础字体（插入新字时用）

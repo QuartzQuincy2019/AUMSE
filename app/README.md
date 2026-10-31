@@ -87,7 +87,43 @@ app\run.bat --render 样本.txt --out a.png --paper A4 --margin 56.7,56.7,56.7,5
 - [x] M2 编辑：插入 / 删除 / 回车 / 撤销重做 / 剪贴板 / IME 上屏
 - [x] 格式语义按 Word：**改字体/字号只作用于选区**；无选区时只改「接下来输入的字」
 - [x] 版面度量（列距、基线）绑定「载入时的基准字体」，改选区格式**不会**挪动整页列位置
-- [ ] M3 混合排版：汉字直立、拉丁与括号旋转
+- [x] M3 混合排版：汉字直立、蒙文/拉丁/括号随列旋转
+
+## 日志（开发期排查）
+
+```bat
+:: 临时打开（写到 exe 同目录的 ume.log）
+set UME_LOG=1
+app\run.bat
+
+:: 或者指定文件
+app\run.bat --log D:\tmp\ume.log
+```
+
+日志按毫秒打时间戳、带分类，每行即刷盘（崩了也留得下最后几行）。目前记录：
+
+| 分类 | 内容 |
+|---|---|
+| `layout` | 每次重排：块数 / 列数 / 页数 / 列距 / 度量基准 |
+| `edit` | 插入（位置、长度、文本）、删除、回车 |
+| `cursor` | 光标位置、anchor、是否有选区 |
+| `ime` | 输入法 preedit 串与上屏串 |
+| `format` | 改格式时的选区状态与格式值 |
+| `log` | 启动 |
+
+## 混排的方向规则
+
+| 文字 | 方向 | 实现 |
+|---|---|---|
+| 蒙文、拉丁字母、数字、括号破折号引号 | 随列旋转（rotate 90°） | `QRawFont::pathForGlyph` + 旋转画 |
+| 汉字、假名、韩文、注音 | **直立** | 同一路径，不旋转，居中在本槽位 |
+
+- `QTextLine::glyphRuns()` 必须显式要 `RetrieveGlyphIndexes | RetrieveGlyphPositions | RetrieveStringIndexes | RetrieveString`，否则拿不到 `sourceString()`，判断不了该不该直立。
+- **不要用 `QPainter::drawGlyphRun()` 画**：实测离屏渲染里一个墨点都不出（墨迹像素 0）。两条分支统一走「取字形轮廓 + fillPath」。
+- **坐标单位是「96dpi 像素」，画布是 pt**：`QTextLayout` 的 glyph 位置与 `QRawFont::pathForGlyph` 的轮廓都是 96dpi 像素，画进 pt 画布要乘 `72/96 = 0.75`，否则整页字会大 33%、位置也偏。
+- 直立字改用 `drawText`：「一字一格」不需要连字，走 Qt 的文本绘制比轮廓稳（轮廓牵扯上面的单位换算）。
+- `rotate(90)` 之后局部 −y 映射到屏幕 **+x**，墨迹在基线右侧；绘制、光标、选区三处统一用 `columnInkLeft()` 取落点，别各算各的 —— 之前就是三处各用一套坐标，出现「高亮在左、字在右」。
+- 颜色按格式区间反查：把 `QTextLayout::formats()` 的字符区间用 `cursorToX` 换成行内 x 区间，再按字形位置取色。
 
 ## 已知问题 / 排查
 

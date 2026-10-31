@@ -1,20 +1,26 @@
 #include "umeview.h"
 
 #include "umesettings.h"
+#include "umelog.h"
 
 #include <QApplication>
 #include <QClipboard>
+#include <QFontDatabase>
 #include <QFontMetricsF>
 #include <QInputMethodEvent>
 #include <QKeyEvent>
 #include <QMimeData>
 #include <QMouseEvent>
+#include <QGlyphRun>
 #include <QPainter>
+#include <QPainterPath>
+#include <QRawFont>
 #include <QScrollBar>
 #include <QTextBlock>
 #include <QTextBlockFormat>
 #include <QTextDocumentFragment>
 #include <QTextLayout>
+#include <QElapsedTimer>
 #include <QWheelEvent>
 
 #include <limits>
@@ -24,6 +30,9 @@ namespace {
 constexpr qreal kAutoEmFactor = 1.7;     // 列距下限：字号 × 1.7
 constexpr qreal kAutoInkFactor = 1.3;    // 列距下限：墨迹宽 × 1.3
 constexpr int kBlinkMs = 600;
+/* QTextLayout 的坐标是「96dpi 像素」（glyph 位置、字形轮廓都是），
+   而我们的画布单位是 pt —— 画字时统一乘 72/96。 */
+constexpr qreal kPxToPt = 72.0 / 96.0;
 
 } // namespace
 
@@ -112,7 +121,8 @@ void UmeView::relayout()
                                       : m_metricsFamily;
     const qreal metricsPt = m_metricsPt > 0.0 ? m_metricsPt : 14.0;
 
-    QFont metricsFont(metricsFamily);
+    QFont metricsFont;
+    metricsFont.setFamilies(fallbackFamilies(metricsFamily));
     metricsFont.setPointSizeF(metricsPt);
 
     const QFontMetricsF fm(metricsFont);
@@ -144,7 +154,27 @@ void UmeView::relayout()
     const qreal minWidth = m_settings->columnPitchIsAuto()
                                ? qMax(metricsPt * 1.2, m_inkW)
                                : m_settings->columnPitch();
+    QElapsedTimer timer;
+    timer.start();
+
+    int frags = 0;
+    for (QTextBlock b = m_doc->begin(); b.isValid(); b = b.next())
+        for (auto it = b.begin(); !it.atEnd(); ++it)
+            if (it.fragment().isValid())
+                ++frags;
+
     m_layout.relayout(m_doc, m_settings->page(), minWidth);
+
+    UME_LOG("layout", QStringLiteral("blocks=%1 frags=%2 cols=%3 pages=%4 pitch=%5 "
+                                     "metrics=%6/%7 took=%8ms")
+                           .arg(m_doc->blockCount())
+                           .arg(frags)
+                           .arg(m_layout.columns().size())
+                           .arg(m_layout.pageCount())
+                           .arg(m_colPitch, 0, 'f', 1)
+                           .arg(metricsFamily)
+                           .arg(metricsPt, 0, 'f', 1)
+                           .arg(timer.elapsed()));
     updateScrollBars();
 }
 
@@ -157,7 +187,8 @@ void UmeView::applyBaseFontToDocument()
                                         QStringLiteral("Noto Sans Mongolian"));
     const qreal pt = m_baseFormat.fontPointSize() > 0 ? m_baseFormat.fontPointSize() : 14.0;
 
-    QFont f(family);
+    QFont f;
+    f.setFamilies(fallbackFamilies(family));
     f.setPointSizeF(pt);
     if (m_doc->defaultFont() != f)
         m_doc->setDefaultFont(f);
@@ -181,6 +212,11 @@ void UmeView::applyBaseFontToDocument()
 
 void UmeView::mergeFormatIntoSelection(const QTextCharFormat &fmt)
 {
+    UME_LOG("format", QStringLiteral("sel=%1 fam=%2 pt=%3 col=%4")
+                          .arg(int(m_cursor.hasSelection()))
+                          .arg(fmt.fontFamilies().toStringList().value(0))
+                          .arg(fmt.fontPointSize(), 0, 'f', 1)
+                          .arg(fmt.foreground().color().name()));
     if (!m_doc)
         return;
 
@@ -207,7 +243,7 @@ void UmeView::mergeFormatIntoSelection(const QTextCharFormat &fmt)
 void UmeView::applyFormatFamily(const QString &family)
 {
     QTextCharFormat fmt;
-    fmt.setFontFamilies(QStringList{family});
+    fmt.setFontFamilies(fallbackFamilies(family));
     mergeFormatIntoSelection(fmt);
 }
 
@@ -228,7 +264,7 @@ void UmeView::applyFormatColor(const QColor &c)
 void UmeView::setBaseFormat(const QString &family, qreal pt, const QColor &color)
 {
     m_baseFormat = QTextCharFormat();
-    m_baseFormat.setFontFamilies(QStringList{family});
+    m_baseFormat.setFontFamilies(fallbackFamilies(family));
     m_baseFormat.setFontPointSize(pt);
     m_baseFormat.setForeground(color);
     m_appliedFamily.clear();
@@ -345,7 +381,8 @@ QTextCursor UmeView::cursorAtDocPos(const QPointF &docPos) const
 
     const QTextLine line = lay->lineAt(c.lineIndex);
     const QRectF r = columnDocRect(c);
-    const qreal u = qBound(0.0, docPos.y() - r.top(), line.width());
+    /* 反过来：屏幕 pt → 布局 px */
+    const qreal u = qBound(0.0, (docPos.y() - r.top()) / kPxToPt, line.width());
 
     int rel = line.xToCursor(u);
     rel = qBound(line.textStart(), rel, line.textStart() + line.textLength());
@@ -380,6 +417,14 @@ int UmeView::columnIndexForCursor() const
     return lastOfBlock;
 }
 
+qreal UmeView::columnInkLeft(const UmeLayout::Column &c) const
+{
+    const QRectF r = columnDocRect(c);
+    /* rotate(90) 之后局部 −y（字形上部）映射到屏幕 +x，
+       所以墨迹落在基线的 +x 侧；把墨迹居中到列框里即可。 */
+    return r.left() + (r.width() - c.inkW) / 2.0;
+}
+
 QRectF UmeView::caretDocRect() const
 {
     if (!m_doc)
@@ -400,12 +445,13 @@ QRectF UmeView::caretDocRect() const
     const int blockPos = qBound(line.textStart(),
                                 m_cursor.position() - c.block.position(),
                                 line.textStart() + line.textLength());
-    const qreal u = line.cursorToX(blockPos);
+    /* cursorToX 给的是 96dpi 像素，画布是 pt —— 必须换算，否则光标会往下多走 33% */
+    const qreal u = line.cursorToX(blockPos) * kPxToPt;
 
     /* 光标是一个「有点厚度」的矩形，不能是零高度：
        QRectF 零高度时 isValid() 为 false，paintCaret 会直接返回，
        光标就永远不显示（之前就是这个坑）。 */
-    const qreal inkL = r.left() + UmeLayout::kPad;
+    const qreal inkL = columnInkLeft(c);
     const qreal inkR = inkL + c.inkW;
     const qreal y = r.top() + u;
     return QRectF(QPointF(inkL, y - 1.0), QPointF(inkR, y + 1.0));
@@ -437,9 +483,11 @@ QVector<QRectF> UmeView::selectionDocRects() const
             continue;
 
         const QRectF r = columnDocRect(c);
-        const qreal y0 = r.top() + line.cursorToX(a);
-        const qreal y1 = r.top() + line.cursorToX(b);
-        const qreal x0 = r.left() + UmeLayout::kPad;
+        const qreal y0 = r.top() + line.cursorToX(a) * kPxToPt;
+        const qreal y1 = r.top() + line.cursorToX(b) * kPxToPt;
+        /* 高亮贴住墨迹：字形画在 [left+pad, left+pad+inkW] 这一段，
+           高亮跟它对齐才不会左右各空一条。 */
+        const qreal x0 = columnInkLeft(c);
         out.append(QRectF(QPointF(x0, y0), QPointF(x0 + c.inkW, y1)));
     }
     return out;
@@ -449,6 +497,9 @@ QVector<QRectF> UmeView::selectionDocRects() const
 
 void UmeView::setTextCursor(const QTextCursor &c)
 {
+    UME_LOG("cursor", QStringLiteral("pos=%1 anchor=%2 sel=%3")
+                          .arg(c.position()).arg(c.anchor())
+                          .arg(int(c.hasSelection())));
     m_cursor = c;
     restartBlink();
     ensureCursorVisible();
@@ -491,6 +542,9 @@ void UmeView::insertTextAtCursor(const QString &text)
 {
     if (!m_doc || text.isEmpty())
         return;
+    UME_LOG("edit", QStringLiteral("insert pos=%1 len=%2 text=%3")
+                        .arg(m_cursor.position()).arg(text.size())
+                        .arg(umeLogEsc(text)));
     m_cursor.insertText(text, m_baseFormat);
     afterEdit();
 }
@@ -499,6 +553,9 @@ void UmeView::deleteChar(bool forward)
 {
     if (!m_doc)
         return;
+    UME_LOG("edit", QStringLiteral("delete pos=%1 forward=%2 sel=%3")
+                        .arg(m_cursor.position()).arg(int(forward))
+                        .arg(int(m_cursor.hasSelection())));
     if (m_cursor.hasSelection()) {
         m_cursor.removeSelectedText();
     } else if (forward) {
@@ -513,6 +570,7 @@ void UmeView::insertParagraph()
 {
     if (!m_doc)
         return;
+    UME_LOG("edit", QStringLiteral("insertBlock pos=%1").arg(m_cursor.position()));
     m_cursor.insertBlock(QTextBlockFormat(), m_baseFormat);
     afterEdit();
 }
@@ -710,6 +768,9 @@ void UmeView::keyPressEvent(QKeyEvent *event)
 
 void UmeView::inputMethodEvent(QInputMethodEvent *event)
 {
+    UME_LOG("ime", QStringLiteral("preedit=%1 commit=%2")
+                       .arg(umeLogEsc(event->preeditString()))
+                       .arg(umeLogEsc(event->commitString())));
     if (!event->commitString().isEmpty())
         insertTextAtCursor(event->commitString());
 
@@ -746,6 +807,22 @@ void UmeView::paintEvent(QPaintEvent *event)
     Q_UNUSED(event);
     if (!m_settings)
         return;
+
+    if (m_doc && m_doc->revision() != m_paintedRevision) {
+        m_paintedRevision = m_doc->revision();
+        const int cols = m_layout.columns().size();
+        QString first = QStringLiteral("-");
+        if (cols > 0) {
+            const QRectF r = columnDocRect(m_layout.columns().first());
+            first = QStringLiteral("%1,%2 w%3").arg(r.left(), 0, 'f', 1)
+                        .arg(r.top(), 0, 'f', 1).arg(r.width(), 0, 'f', 1);
+        }
+        UME_LOG("paint", QStringLiteral("rev=%1 cols=%2 blocks=%3 firstCol=%4")
+                             .arg(m_doc->revision())
+                             .arg(cols)
+                             .arg(m_doc->blockCount())
+                             .arg(first));
+    }
 
     QPainter p(this);
     p.fillRect(rect(), QColor(0x6e, 0x6e, 0x72));
@@ -798,7 +875,6 @@ void UmeView::paintSelection(QPainter &p) const
 
 void UmeView::paintDocument(QPainter &p) const
 {
-    p.setPen(Qt::black);
     p.setRenderHint(QPainter::TextAntialiasing, true);
     p.setRenderHint(QPainter::Antialiasing, true);
 
@@ -806,16 +882,129 @@ void UmeView::paintDocument(QPainter &p) const
         QTextLayout *lay = c.block.layout();
         if (!lay || c.lineIndex >= lay->lineCount())
             continue;
-        const QTextLine line = lay->lineAt(c.lineIndex);
 
+        const QTextLine line = lay->lineAt(c.lineIndex);
         const QRectF r = columnDocRect(c);
-        p.save();
-        /* 实测：这支字体里蒙文墨迹落在局部 +y 侧（屏幕 −x），
-           所以基线要右移 inkAbove，墨迹左缘才压住列边。 */
-        p.translate(r.left() + UmeLayout::kPad + c.inkAbove, r.top());
-        p.rotate(90);
-        line.draw(&p, QPointF(0, 0));
-        p.restore();
+
+        /* rotate(90) 后：局部 x → 屏幕 +y（沿列向下），局部 y → 屏幕 −x。
+           基线放在「列左 + 留白 + 本列最大 ascent」处，墨迹不会越界。 */
+        const qreal baseX = columnInkLeft(c);
+        const qreal baseY = r.top();
+
+        /* 格式区间 → 行内 x 区间，这样能按「字形在行里的位置」取颜色。
+           （glyph run 不直接给字符下标，按 x 反查最省事。） */
+        struct FmtSpan { qreal x0; qreal x1; QTextCharFormat fmt; };
+        QVector<FmtSpan> spans;
+        for (const QTextLayout::FormatRange &fr : lay->formats()) {
+            const qreal x0 = line.cursorToX(fr.start);
+            const qreal x1 = line.cursorToX(fr.start + fr.length);
+            if (x1 > x0)
+                spans.append({x0, x1, fr.format});
+        }
+        auto fmtAt = [&spans, this](qreal x) {
+            for (const FmtSpan &s : spans) {
+                if (x >= s.x0 - 0.01 && x < s.x1)
+                    return s.fmt.font();
+            }
+            QFont f(QStringLiteral("Noto Sans Mongolian"));
+            f.setPointSizeF(m_metricsPt);
+            return f;
+        };
+        auto colorAt = [&spans](qreal x) {
+            for (const FmtSpan &s : spans) {
+                if (x >= s.x0 - 0.01 && x < s.x1)
+                    return s.fmt.foreground().color();
+            }
+            return QColor(0x11, 0x11, 0x11);
+        };
+
+        /* 默认的检索标志里没有 rawFont，拿到的 run 画不出东西 —— 必须显式要。 */
+        const QList<QGlyphRun> runs = line.glyphRuns(
+            -1, -1,
+            QTextLayout::RetrieveGlyphIndexes | QTextLayout::RetrieveGlyphPositions
+                | QTextLayout::RetrieveStringIndexes | QTextLayout::RetrieveString);
+        for (const QGlyphRun &gr : runs) {
+            const QRawFont rf = gr.rawFont();
+            const QList<quint32> glyphs = gr.glyphIndexes();
+            const QList<QPointF> pos = gr.positions();
+            const QString src = gr.sourceString();
+
+            /* 整段都是「直立类」才直立。判断依据不是 sourceString
+               （Qt 常常给空串），而是「这个 run 落在哪个字符上」——
+               用它在行内的 x 反查。 */
+            const QString blockText = c.block.text();
+            auto charAtLineX = [&](qreal x) {
+                const int p = line.xToCursor(x + 0.01);
+                return (p >= 0 && p < blockText.size()) ? blockText.at(p) : QChar();
+            };
+            bool upright = false;
+            if (!glyphs.isEmpty() && !pos.isEmpty()) {
+                upright = isUprightScript(charAtLineX(pos.first().x()));
+            }
+
+            for (int k = 0; k < glyphs.size(); ++k) {
+                const QPointF gp = k < pos.size() ? pos.at(k) : QPointF(0, 0);
+
+                /* 本槽位的长度：用下一个字形的推进量，最后一个用行宽补 */
+                qreal slot = 0.0;
+                if (k + 1 < pos.size()) {
+                    slot = pos.at(k + 1).x() - gp.x();
+                } else {
+                    /* 最后一个字形：剩余长度要用「实际文字宽度」算。
+                       line.width() 是换行宽度（整列高），拿它当槽位会把
+                       最后一个字推到整列底下 —— 就是「古」跑到很下面那个 bug。 */
+                    slot = line.naturalTextWidth() - gp.x();
+                }
+                if (slot <= 0.5)
+                    slot = rf.advancesForGlyphIndexes(QList<quint32>{glyphs.at(k)})
+                               .value(0).x();
+
+                const QColor ink = colorAt(gp.x());
+
+                if (upright) {
+                    /* 直立字：位置与格子都从「字符区间」推出 ——
+                       用 cursorToX(字符起点) 和 cursorToX(字符终点)，
+                       同一把尺子量出来，相邻两字必然首尾相接，不会重叠。 */
+                    const int idx = line.xToCursor(gp.x() + 0.01);
+                    const QChar ch = (idx >= 0 && idx < blockText.size())
+                                         ? blockText.at(idx)
+                                         : QChar();
+                    if (ch.isNull())
+                        continue;
+
+                    const qreal y0 = line.cursorToX(idx) * kPxToPt;
+                    const qreal y1 = line.cursorToX(idx + 1) * kPxToPt;
+                    const qreal cellH = qMax(y1 - y0, 4.0);
+
+                    /* 字号直接取「布局分配的格宽」：这样字形永远和步进一样大，
+                       不管这个字是主字体给的还是回退字体给的，都不会重叠。
+                       （格子来自 cursorToX 的字符区间，与光标/选区同一把尺子。） */
+                    QFont f = fmtAt(gp.x());
+                    f.setPixelSize(qMax(1, qRound(cellH)));
+
+                    p.save();
+                    p.setFont(f);
+                    p.setPen(ink);
+                    p.drawText(QRectF(r.left() + (r.width() - cellH) / 2.0,
+                                      baseY + y0, cellH, cellH),
+                               Qt::AlignCenter, QString(ch));
+                    p.restore();
+                } else {
+                    /* 旋转支：同样用轮廓画。QPainter::drawGlyphRun 在离屏渲染里
+                       不出墨（实测墨迹为 0），轮廓法两条路一致，颜色也好控。 */
+                    const QPainterPath path = rf.pathForGlyph(glyphs.at(k));
+                    if (path.isEmpty())
+                        continue;
+                    p.save();
+                    p.translate(baseX, baseY);
+                    p.rotate(90);
+                    p.scale(kPxToPt, kPxToPt);
+                    p.translate(gp.x(), 0);
+                    p.fillPath(path, ink);
+                    p.restore();
+                }
+            }
+        }
     }
 }
 
@@ -935,6 +1124,35 @@ QSize UmeView::sizeHint() const
 
 /* ---------------- 竖排方向 ---------------- */
 
+QStringList UmeView::fallbackFamilies(const QString &primary)
+{
+    /* 只把「本机真的装了」的字体加进栈里：硬写一个不存在的族名，
+       Qt 会退回豆腐块，还白搭一次字体查找。 */
+    static const QStringList installed = QFontDatabase::families();
+
+    QStringList fams{primary};
+    const QStringList cjk = {QStringLiteral("SimSun"),
+                             QStringLiteral("Microsoft YaHei"),
+                             QStringLiteral("Noto Sans CJK SC"),
+                             QStringLiteral("Source Han Sans SC")};
+    const QStringList latin = {QStringLiteral("Times New Roman"),
+                               QStringLiteral("Noto Serif")};
+
+    for (const QString &f : cjk) {
+        if (installed.contains(f)) {
+            fams << f;
+            break;
+        }
+    }
+    for (const QString &f : latin) {
+        if (installed.contains(f)) {
+            fams << f;
+            break;
+        }
+    }
+    return fams;
+}
+
 bool UmeView::isUprightScript(QChar ch)
 {
     switch (ch.script()) {
@@ -965,6 +1183,38 @@ QString UmeView::metricsProbe() const
         out += QStringLiteral("  firstColumn.left=%1").arg(r.left(), 0, 'f', 1);
     }
     return out;
+}
+
+QString UmeView::glyphProbe() const
+{
+    QStringList out;
+    if (!m_doc)
+        return QStringLiteral("no doc");
+    const QTextBlock b = m_doc->begin();
+    QTextLayout *lay = b.layout();
+    if (!lay || lay->lineCount() == 0)
+        return QStringLiteral("no line");
+    const QTextLine line = lay->lineAt(0);
+    const QList<QGlyphRun> runs = line.glyphRuns(
+        -1, -1,
+        QTextLayout::RetrieveGlyphIndexes | QTextLayout::RetrieveGlyphPositions
+            | QTextLayout::RetrieveStringIndexes | QTextLayout::RetrieveString);
+
+    out << QStringLiteral("runs=%1 lineWidth=%2").arg(runs.size()).arg(line.width());
+    for (const QGlyphRun &gr : runs) {
+        const QRawFont rf = gr.rawFont();
+        QStringList ps;
+        const QList<QPointF> pos = gr.positions();
+        for (int i = 0; i < pos.size() && i < 4; ++i)
+            ps << QStringLiteral("%1").arg(pos.at(i).x(), 0, 'f', 1);
+        out << QStringLiteral("[%1 glyphs=%2 rf=%3 pos=%4]")
+                   .arg(gr.sourceString().isEmpty() ? QStringLiteral("?")
+                                                    : gr.sourceString())
+                   .arg(gr.glyphIndexes().size())
+                   .arg(rf.familyName())
+                   .arg(ps.join(QLatin1Char(',')));
+    }
+    return out.join(QLatin1Char(' '));
 }
 
 QString UmeView::columnsProbe(int n) const

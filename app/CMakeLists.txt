@@ -27,11 +27,15 @@ add_executable(ume
     src/umeformat.h
     src/umeview.cpp
     src/umelayout.cpp
+    src/umelog.cpp
+    src/umelog.h
     src/umesettings.h
 )
 
 target_link_libraries(ume PRIVATE Qt6::Widgets)
 target_compile_definitions(ume PRIVATE UME_FONT_DIR="${UME_FONT_DIR}")
+# 开发期日志默认写到 app/ 目录
+target_compile_definitions(ume PRIVATE UME_LOG_DIR="${CMAKE_CURRENT_SOURCE_DIR}")
 
 if(WIN32)
     set_target_properties(ume PROPERTIES WIN32_EXECUTABLE FALSE)

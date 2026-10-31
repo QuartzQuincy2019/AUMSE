@@ -1,0 +1,2 @@
+app\build.bat
+app\run.bat .shots\sample.txt
