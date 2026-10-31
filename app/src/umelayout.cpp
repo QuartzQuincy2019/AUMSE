@@ -1,6 +1,9 @@
 #include "umelayout.h"
 
 #include <QFontMetricsF>
+
+/* 布局坐标（96dpi 像素）与画布单位（pt）的换算 */
+static constexpr qreal kPxToPt = 72.0 / 96.0;
 #include <QHash>
 #include <QTextFragment>
 #include <QTextLayout>
@@ -29,7 +32,10 @@ void UmeLayout::relayout(QTextDocument *doc, const PageSetup &page, qreal minWid
         return;
 
     const QRectF area = page.textArea();
-    const qreal textH = area.height();          // 一列能有多长 = 一条 line 的宽度
+    const qreal textH = area.height();          // 一列能有多长（pt）
+    /* QTextLayout 的宽度单位是 96dpi 像素，页面是 pt —— 不换算就会提前换行
+       （729pt 当成 729px 用，等于只用了 75% 的长度）。 */
+    const qreal lineWidthPx = textH / kPxToPt;
     const qreal right = area.right();
     const qreal minCol = qMax(4.0, minWidth);
 
@@ -49,7 +55,7 @@ void UmeLayout::relayout(QTextDocument *doc, const PageSetup &page, qreal minWid
             QTextLine line = lay->createLine();
             if (!line.isValid())
                 break;
-            line.setLineWidth(textH);
+            line.setLineWidth(lineWidthPx);
         }
         lay->endLayout();
 
@@ -59,8 +65,10 @@ void UmeLayout::relayout(QTextDocument *doc, const PageSetup &page, qreal minWid
 
             /* 这一列里的字：按片段各自的字体量墨迹，取最宽的那个 */
             qreal inkW = 0.0;      /* 列宽：名义行高，保证大字号也不越界 */
-            qreal tight = 0.0;     /* 墨迹：光标与选区高亮贴这个宽度 */
+            qreal tight = 0.0;     /* 墨迹宽度：光标与选区高亮贴这个宽度 */
             qreal above = 0.0;
+            qreal tTop = 0.0;      /* 墨迹上界（局部 y，负值） */
+            qreal tBottom = 0.0;   /* 墨迹下界 */
             for (auto it = b.begin(); !it.atEnd(); ++it) {
                 const QTextFragment frag = it.fragment();
                 if (!frag.isValid())
@@ -86,7 +94,12 @@ void UmeLayout::relayout(QTextDocument *doc, const PageSetup &page, qreal minWid
                 const qreal box = fm.ascent() + fm.descent();
                 inkW = qMax(inkW, box);
                 /* 墨迹只取前 16 个字符：整段量会触发逐字回退查询，慢得离谱 */
-                tight = qMax(tight, fm.tightBoundingRect(frag.text().left(16)).height());
+                const QRectF tb = fm.tightBoundingRect(frag.text().left(16));
+                if (tb.height() > 0.0) {
+                    tight = qMax(tight, tb.height());
+                    tTop = qMin(tTop, tb.top());
+                    tBottom = qMax(tBottom, tb.bottom());
+                }
                 above = qMax(above, fm.ascent());
             }
             if (inkW <= 0.0)
@@ -114,6 +127,8 @@ void UmeLayout::relayout(QTextDocument *doc, const PageSetup &page, qreal minWid
             c.block = b;
             c.lineIndex = i;
             c.inkW = tight;
+            c.inkTop = tTop;
+            c.inkBottom = tBottom;
             c.inkAbove = above;
             c.box = QRectF(x, area.top(), colW, textH);
             m_columns.append(c);

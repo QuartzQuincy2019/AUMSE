@@ -73,11 +73,27 @@ public:
 
     /* 竖排方向判定：true = 直立（汉字/假名/韩文），false = 随列旋转。
        括号、破折号、引号、拉丁字母、数字一律旋转 —— 竖排里它们本来就转着用。 */
+    /* 竖排里一个字的摆法 */
+    enum class GlyphPlace {
+        Rotated,     /* 随列旋转：蒙文、拉丁、数字、括号、书名号、破折号 */
+        Center,      /* 直立居中：汉字、假名、韩文、问号、叹号 */
+        TopRight     /* 直立贴右上角：句号、逗号、顿号、冒号、分号、引号 */
+    };
+    static GlyphPlace placeFor(QChar ch);
     static bool isUprightScript(QChar ch);
 
     /* 显式字体栈：主字体 + 中文回退 + 拉丁回退。
        给全了 Qt 就不必去扫系统字体表（首次遇到汉字要几百毫秒）。 */
     static QStringList fallbackFamilies(const QString &primary);
+
+    /* 本机可用的中文字体（汉字与中文标点都用它排） */
+    static QString cjkFamily();
+
+    /* 汉字 / 中文标点：要用中文字体排的那一类 */
+    static bool isCjkLike(QChar ch);
+
+    /* 按脚本切段插入，让汉字落到中文字体上 */
+    void insertTextByScript(const QString &text);
 
 signals:
     void formatStateChanged();

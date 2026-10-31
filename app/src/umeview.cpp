@@ -5,6 +5,7 @@
 
 #include <QApplication>
 #include <QClipboard>
+#include <QCoreApplication>
 #include <QFontDatabase>
 #include <QFontMetricsF>
 #include <QInputMethodEvent>
@@ -86,6 +87,26 @@ void UmeView::setDocument(QTextDocument *doc)
     resetBaseFont();        // 新内容先统一成当前字体
     relayout();
     update();
+}
+
+void UmeView::insertTextByScript(const QString &text)
+{
+    const QString cjk = cjkFamily();
+    int i = 0;
+    while (i < text.size()) {
+        const bool isCjk = cjk.isEmpty() ? false : isCjkLike(text.at(i));
+        int j = i + 1;
+        while (j < text.size()
+               && (cjk.isEmpty() ? false : isCjkLike(text.at(j))) == isCjk)
+            ++j;
+
+        QTextCharFormat fmt = m_baseFormat;
+        if (!cjk.isEmpty())
+            fmt.setFontFamilies(fallbackFamilies(isCjk ? cjk
+                                                       : m_metricsFamily));
+        m_cursor.insertText(text.mid(i, j - i), fmt);
+        i = j;
+    }
 }
 
 void UmeView::resetBaseFont()
@@ -207,6 +228,37 @@ void UmeView::applyBaseFontToDocument()
     for (QTextBlock b = m_doc->begin(); b.isValid(); b = b.next()) {
         QTextCursor bc(b);
         bc.setBlockCharFormat(m_baseFormat);
+    }
+
+    /* 汉字与中文标点要落到**中文字体**上：
+       否则 Qt 会用主字体（含蒙文的那支）给它们分步进，宽度只有一半，
+       汉字之间就会互相压叠，标点也缩成米粒。 */
+    const QString cjk = cjkFamily();
+    if (!cjk.isEmpty()) {
+        QTextCursor c(m_doc);
+        c.beginEditBlock();
+        for (QTextBlock b = m_doc->begin(); b.isValid(); b = b.next()) {
+            const QString text = b.text();
+            int i = 0;
+            while (i < text.size()) {
+                if (!isCjkLike(text.at(i))) {
+                    ++i;
+                    continue;
+                }
+                int j = i + 1;
+                while (j < text.size() && isCjkLike(text.at(j)))
+                    ++j;
+
+                QTextCharFormat fmt;
+                fmt.setFontFamilies(fallbackFamilies(cjk));
+                QTextCursor rc(b);
+                rc.setPosition(b.position() + i);
+                rc.setPosition(b.position() + j, QTextCursor::KeepAnchor);
+                rc.mergeCharFormat(fmt);
+                i = j;
+            }
+        }
+        c.endEditBlock();
     }
 }
 
@@ -420,9 +472,13 @@ int UmeView::columnIndexForCursor() const
 qreal UmeView::columnInkLeft(const UmeLayout::Column &c) const
 {
     const QRectF r = columnDocRect(c);
-    /* rotate(90) 之后局部 −y（字形上部）映射到屏幕 +x，
-       所以墨迹落在基线的 +x 侧；把墨迹居中到列框里即可。 */
-    return r.left() + (r.width() - c.inkW) / 2.0;
+    /* screen_x = −y：墨迹横向落在 [基线 − inkBottom, 基线 − inkTop]。
+       要让墨迹的中心正好压在列框中心：
+           基线 − (inkTop+inkBottom)/2 = 列框中心
+       —— 只按「宽度」居中会把蒙文整体推偏，汉字却是按列框居中的，
+       两条竖中线就会差一两 pt（实测 1.3pt，看着很别扭）。 */
+    const qreal center = r.left() + r.width() / 2.0;
+    return center + (c.inkTop + c.inkBottom) / 2.0;
 }
 
 QRectF UmeView::caretDocRect() const
@@ -545,7 +601,7 @@ void UmeView::insertTextAtCursor(const QString &text)
     UME_LOG("edit", QStringLiteral("insert pos=%1 len=%2 text=%3")
                         .arg(m_cursor.position()).arg(text.size())
                         .arg(umeLogEsc(text)));
-    m_cursor.insertText(text, m_baseFormat);
+    insertTextByScript(text);
     afterEdit();
 }
 
@@ -937,27 +993,32 @@ void UmeView::paintDocument(QPainter &p) const
                 const int p = line.xToCursor(x + 0.01);
                 return (p >= 0 && p < blockText.size()) ? blockText.at(p) : QChar();
             };
-            bool upright = false;
-            if (!glyphs.isEmpty() && !pos.isEmpty()) {
-                upright = isUprightScript(charAtLineX(pos.first().x()));
-            }
+            /* 直立与否必须逐字判：整段一判时，只要首字形落在空格/标点上，
+               整段汉字就都被当成蒙文旋转了（实测「成吉思汗」就是这么躺倒的）。 */
 
             for (int k = 0; k < glyphs.size(); ++k) {
                 const QPointF gp = k < pos.size() ? pos.at(k) : QPointF(0, 0);
-
-                /* 本槽位的长度：用下一个字形的推进量，最后一个用行宽补 */
+                /* 该字形所在的字符：取格子中点反查（中点必定落在字符内部，
+                   不像起点那样容易被舍到前一个字上）。 */
+                /* 先算槽位（px），再用槽位中点反查字符 —— 中点必在字符内部，
+                   单字形 run 也不会被判成前一个字。 */
                 qreal slot = 0.0;
                 if (k + 1 < pos.size()) {
                     slot = pos.at(k + 1).x() - gp.x();
                 } else {
-                    /* 最后一个字形：剩余长度要用「实际文字宽度」算。
-                       line.width() 是换行宽度（整列高），拿它当槽位会把
-                       最后一个字推到整列底下 —— 就是「古」跑到很下面那个 bug。 */
-                    slot = line.naturalTextWidth() - gp.x();
+                    const qreal adv = rf.advancesForGlyphIndexes(
+                                            QList<quint32>{glyphs.at(k)})
+                                          .value(0).x();
+                    const qreal remain = line.naturalTextWidth() - gp.x();
+                    slot = (adv > 0.5) ? qMin(adv, qMax(remain, adv)) : remain;
                 }
                 if (slot <= 0.5)
-                    slot = rf.advancesForGlyphIndexes(QList<quint32>{glyphs.at(k)})
-                               .value(0).x();
+                    slot = 19.0;   // 兜底：一个汉字宽（px）
+
+                const qreal midX = gp.x() + slot / 2.0;
+                const QChar thisChar = charAtLineX(midX);
+                const GlyphPlace place = placeFor(thisChar);
+                const bool upright = place != GlyphPlace::Rotated;
 
                 const QColor ink = colorAt(gp.x());
 
@@ -965,29 +1026,50 @@ void UmeView::paintDocument(QPainter &p) const
                     /* 直立字：位置与格子都从「字符区间」推出 ——
                        用 cursorToX(字符起点) 和 cursorToX(字符终点)，
                        同一把尺子量出来，相邻两字必然首尾相接，不会重叠。 */
-                    const int idx = line.xToCursor(gp.x() + 0.01);
-                    const QChar ch = (idx >= 0 && idx < blockText.size())
-                                         ? blockText.at(idx)
-                                         : QChar();
+                    const QChar ch = thisChar;
                     if (ch.isNull())
                         continue;
 
-                    const qreal y0 = line.cursorToX(idx) * kPxToPt;
-                    const qreal y1 = line.cursorToX(idx + 1) * kPxToPt;
-                    const qreal cellH = qMax(y1 - y0, 4.0);
+                    /* 格子直接由字形位置推导：gp.x() 与 slot 都是布局单位，
+                       与排版步进同源，不会出现「字距被多乘/少乘 0.75」。 */
+                    const qreal y0 = gp.x() * kPxToPt;
+                    const qreal cellH = qMax(slot * kPxToPt, 4.0);
 
-                    /* 字号直接取「布局分配的格宽」：这样字形永远和步进一样大，
-                       不管这个字是主字体给的还是回退字体给的，都不会重叠。
-                       （格子来自 cursorToX 的字符区间，与光标/选区同一把尺子。） */
-                    QFont f = fmtAt(gp.x());
+                    /* 用「基线点」画，不用矩形：drawText(QRectF, …) 会把超出矩形的
+                       笔画裁掉 —— 汉字下缘就是这么被吃掉的。 */
+                    QFont f = fmtAt(midX);
+                    /* 字号取格子大小：排版给的格子就是这一格的可用高度，
+                       按它定字号最稳（不再用矩形画，不会切笔画）。 */
                     f.setPixelSize(qMax(1, qRound(cellH)));
+
+                    const QFontMetricsF fmr(f);
+                    const QString s(ch);
+
+                    /* 按**墨迹**居中，而不是按字身（advance）居中：
+                       中文标点（。、，？）的墨迹偏在字身一角，按字身居中会跑偏。 */
+                    QRectF inkBox = fmr.tightBoundingRect(s);
+                    if (inkBox.isEmpty())
+                        inkBox = fmr.boundingRect(s);
+
+                    qreal x = 0.0;
+                    qreal baseline = 0.0;
+                    if (place == GlyphPlace::TopRight) {
+                        /* 竖排传统：句读贴格子**右上角** ——
+                           右侧贴列框右缘，上侧贴格子起点。 */
+                        const qreal pad = qMax(0.4, cellH * 0.04);
+                        x = r.right() - pad - inkBox.right();
+                        baseline = (baseY + y0 + pad) - inkBox.top();
+                    } else {
+                        const qreal cellCx = r.left() + r.width() / 2.0;
+                        const qreal cellCy = baseY + y0 + cellH / 2.0;
+                        x = cellCx - inkBox.center().x();
+                        baseline = cellCy - inkBox.center().y();
+                    }
 
                     p.save();
                     p.setFont(f);
                     p.setPen(ink);
-                    p.drawText(QRectF(r.left() + (r.width() - cellH) / 2.0,
-                                      baseY + y0, cellH, cellH),
-                               Qt::AlignCenter, QString(ch));
+                    p.drawText(QPointF(x, baseline), s);
                     p.restore();
                 } else {
                     /* 旋转支：同样用轮廓画。QPainter::drawGlyphRun 在离屏渲染里
@@ -1124,11 +1206,59 @@ QSize UmeView::sizeHint() const
 
 /* ---------------- 竖排方向 ---------------- */
 
+QString UmeView::cjkFamily()
+{
+    static QString cached;
+    if (!cached.isEmpty())
+        return cached;
+    if (!QCoreApplication::instance())
+        return QString();
+
+    const QStringList fams = QFontDatabase::families();
+    for (const char *f : {"SimSun", "Microsoft YaHei", "Noto Sans CJK SC",
+                          "Source Han Sans SC", "SimHei", "KaiTi"}) {
+        if (fams.contains(QLatin1String(f))) {
+            cached = QLatin1String(f);
+            return cached;
+        }
+    }
+    return QString();
+}
+
+bool UmeView::isCjkLike(QChar ch)
+{
+    /* 「用中文字体排」与「怎么摆」是两件事：
+       问号叹号要旋转排，但它们仍属于中文标点，必须用中文字体的步进，
+       否则只占半个字宽，会把前后汉字挤在一起。 */
+    const ushort u = ch.unicode();
+    if ((u >= 0x4E00 && u <= 0x9FFF) || (u >= 0x3400 && u <= 0x4DBF)
+        || (u >= 0xF900 && u <= 0xFAFF) || (u >= 0x3040 && u <= 0x30FF)
+        || (u >= 0xAC00 && u <= 0xD7AF) || (u >= 0x3100 && u <= 0x312F))
+        return true;
+
+    switch (u) {
+    case 0x3001: case 0x3002:                       // 、。
+    case 0xFF0C: case 0xFF0E:                       // ，．
+    case 0xFF1A: case 0xFF1B:                       // ：；
+    case 0xFF01: case 0xFF1F:                       // ！？
+    case 0x201C: case 0x201D: case 0x2018: case 0x2019:   // 引号
+        return true;
+    default:
+        return false;
+    }
+}
+
 QStringList UmeView::fallbackFamilies(const QString &primary)
 {
     /* 只把「本机真的装了」的字体加进栈里：硬写一个不存在的族名，
        Qt 会退回豆腐块，还白搭一次字体查找。 */
-    static const QStringList installed = QFontDatabase::families();
+    /* 不能写成 static const … = QFontDatabase::families()：
+       静态初始化可能发生在 QApplication 之前，那时字体库还是空的，
+       缓存下来的就是「一个都没有」—— 于是字体栈里没有中文回退，
+       排版按主字体步进（窄），汉字互相压叠。 */
+    static QStringList installed;
+    if (installed.isEmpty() && QCoreApplication::instance())
+        installed = QFontDatabase::families();
 
     QStringList fams{primary};
     const QStringList cjk = {QStringLiteral("SimSun"),
@@ -1150,22 +1280,57 @@ QStringList UmeView::fallbackFamilies(const QString &primary)
             break;
         }
     }
+
+    static bool logged = false;
+    if (!logged) {
+        logged = true;
+        UME_LOG("font", QStringLiteral("stack=%1 (installed=%2)")
+                              .arg(fams.join(QLatin1Char(',')))
+                              .arg(installed.size()));
+    }
     return fams;
+}
+
+UmeView::GlyphPlace UmeView::placeFor(QChar ch)
+{
+    const ushort u = ch.unicode();
+
+    /* 句读、冒号分号、引号：竖排传统是**贴格子右上角**，不旋转。 */
+    switch (u) {
+    case 0x3001:   // 、
+    case 0x3002:   // 。
+    case 0xFF0C:   // ，
+    case 0xFF0E:   // ．
+    case 0xFF1A:   // ：
+    case 0xFF1B:   // ；
+    case 0x201C:   // “
+    case 0x201D:   // ”
+    case 0x2018:   // ‘
+    case 0x2019:   // ’
+        return GlyphPlace::TopRight;
+    default:
+        break;
+    }
+
+    /* 汉字 / 假名 / 韩文 / 注音：直立居中 */
+    if ((u >= 0x4E00 && u <= 0x9FFF) || (u >= 0x3400 && u <= 0x4DBF)
+        || (u >= 0xF900 && u <= 0xFAFF) || (u >= 0x3040 && u <= 0x30FF)
+        || (u >= 0xAC00 && u <= 0xD7AF) || (u >= 0x3100 && u <= 0x312F))
+        return GlyphPlace::Center;
+
+    /* 问号叹号也属于「点号」：按 W3C clreq 与 GB/T 15834，
+       点号「直、横排方向一致」，也就是**不旋转**，直排时同样贴右上角。 */
+    if (u == 0xFF01 || u == 0xFF1F || u == 0x3007)   // ！？〇(占位)
+        return GlyphPlace::TopRight;
+
+    /* 其余（蒙文、拉丁、数字、括号、书名号、破折号、省略号）随列旋转 */
+    return GlyphPlace::Rotated;
 }
 
 bool UmeView::isUprightScript(QChar ch)
 {
-    switch (ch.script()) {
-    case QChar::Script_Han:
-    case QChar::Script_Hiragana:
-    case QChar::Script_Katakana:
-    case QChar::Script_Hangul:
-    case QChar::Script_Bopomofo:
-        return true;
-    default:
-        /* Common 类（括号、破折号、引号、空格）算旋转 —— 竖排里它们转着排 */
-        return false;
-    }
+    const GlyphPlace p = placeFor(ch);
+    return p == GlyphPlace::Center || p == GlyphPlace::TopRight;
 }
 
 /* ---------------- 探针 ---------------- */
