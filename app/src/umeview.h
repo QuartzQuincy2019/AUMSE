@@ -73,12 +73,43 @@ public:
     void changeTableRows(int delta);
     void changeTableColumns(int delta);
     QString wideObjectsProbe() const;
+    /* 第 index 个宽对象的包围盒（不需要选中也能取） */
+    QRectF wideItemBoxProbe(int index) const;
+    int maxSpanForPageProbe() const { return maxSpanForPage(); }
+    QSizeF contentSizeProbe() const { return m_layout.contentSize(); }
+    void applyCharStyleProbe(int what, bool on) { applyCharStyle(what, on); }
+    QRectF wideItemDocRectProbe(int i) const
+    {
+        const QVector<UmeLayout::WideItem> &it = m_layout.wideItems();
+        return (i >= 0 && i < it.size()) ? m_layout.docRect(it.at(i)) : QRectF();
+    }
+    int wideItemPageProbe(int i) const
+    {
+        const QVector<UmeLayout::WideItem> &it = m_layout.wideItems();
+        return (i >= 0 && i < it.size()) ? it.at(i).page : -1;
+    }
+    QRectF pageBoxProbe(int i) const { return m_layout.pageRectFor(i); }
+    int tableFragmentCountProbe() const;
+    QString tableFragmentsProbe() const;
+    /* 该页上「起点低于页首」的列数；正常应为 0（除非被对象压住） */
+    int colsOffTopProbe(int page) const;
+    /* 滚动探针：{maxX, maxY, valueX, valueY, viewW, viewH} */
+    QList<int> scrollRangeProbe() const;
+    int pageCountProbe() const { return m_layout.pageCount(); }
 
     /* 插入行外图片（列游标模式） */
     void insertImage(const QString &path);
     /* 选中的宽对象（-1 表示没有）；选图片后才会出现控制手柄 */
-    int selectedWideObject() const { return m_selectedWide; }
+    int selectedWideObject() const;
     void selectWideObject(int index);
+    /* 删除选中的宽对象（Delete / Backspace） */
+    void deleteSelectedWideObject();
+
+    /* 表格手柄：内部行/列分隔线上的小方块 */
+    QVector<QRectF> tableHandles(const UmeLayout::WideItem &item) const;
+    int hitTableHandle(const QPointF &docPos, int *axis, int *index) const;
+    /* 在宽对象所在块之后插入一个可输入的段落，光标移过去 */
+    void insertParagraphAfterWide();
     /* 探针：9 个控制手柄的矩形（文档坐标） */
     QVector<QRectF> wideHandlesProbe() const;
 
@@ -95,6 +126,10 @@ public:
     QRectF caretRectProbe() const { return caretDocRect(); }
     QColor caretColorProbe() const { return caretColor(); }
     int layoutTableBlocksProbe() const { return m_layout.tableBlocks(); }
+    bool hitsAnyColumnProbe(const QPointF &p) const { return hitsAnyColumn(p); }
+    QRectF columnBoxProbe(int i) const;
+    /* 探针：直接在当前光标处输入（自检用） */
+    void insertTextProbe(const QString &t) { insertTextAtCursor(t); }
     /* 探针：返回手柄 0..8 对应的光标名（自检用） */
     QString cursorProbe() const;
     QVector<QRectF> selectionRectsProbe() const { return selectionDocRects(); }
@@ -163,6 +198,8 @@ private:
     QVector<QRectF> selectionDocRects() const;
     QTextCursor cursorAtDocPos(const QPointF &docPos) const;
     int columnIndexForCursor() const;
+    /* 这个点是否落在某一列的文字区域里（用于判断「空白处」） */
+    bool hitsAnyColumn(const QPointF &docPos) const;
     QPointF docPosFromWidget(const QPointF &widgetPos) const;
 
     /* 绘制 */
@@ -178,7 +215,16 @@ private:
     };
     const QImage &imageFor(const QString &path) const;
     void paintWideItems(QPainter &p) const;
-    void paintTableCells(QPainter &p, const UmeLayout::WideItem &item) const;
+    /* 画一条竖排列：正文与单元格共用，保证字形规则一致 */
+    void drawVerticalLine(QPainter &p, const QTextLayout *lay,
+                          const QTextLine &line, const QTextBlock &block,
+                          const QRectF &columnRect, qreal baseX, qreal baseY,
+                          const QColor &fallbackInk) const;
+
+    void paintTableCells(QPainter &p, const UmeLayout::WideItem &item,
+                         const QRectF &box) const;
+    /* 把块的片段格式交给 layout —— 我们自己 beginLayout，不喂格式就只有默认样式 */
+    static void setLayoutFormats(QTextLayout *lay, const QTextBlock &block);
     const UmeLayout::WideItem *selectedWideItem() const;
     /* 未旋转时 9 个手柄的中心点（四角 + 四边中点 + 旋转手柄） */
     QVector<QPointF> wideHandlePoints(const UmeLayout::WideItem &item) const;
@@ -186,11 +232,23 @@ private:
     int hitWideHandle(const QPointF &docPos) const;
     /* 手柄 → 光标：方向随对象旋转一起转 */
     Qt::CursorShape cursorForWideHandle(int index) const;
+    /* 本页最多能放几列（对象宽度不得超过正文区宽） */
+    int maxSpanForPage() const;
     int hitWideItem(const QPointF &docPos) const;
     void applyWideDrag(const QPointF &docPos);
 
     mutable QHash<QString, QImage> m_images;   // 绘制期懒加载
-    int m_selectedWide = -1;
+    /* 选中的宽对象用**块位置**记，不用数组下标：
+       每次重排都会重建 wideItems，下标会漂（实测选第 2 页的图却改到第 1 页）。 */
+    int m_selectedWideBlock = -1;
+
+    /* 表格专用手柄：0 = 调列宽（拖竖线），1 = 调行高（拖横线） */
+    /* 选中的整行 / 整列（-1 = 没选）。格式会作用到该行/列全部单元格。 */
+    int m_tableRow = -1;
+    int m_tableCol = -1;
+
+    int m_tableHandleAxis = -1;
+    int m_tableHandleIndex = -1;
     WideDrag m_wideDrag = WideDrag::None;
     QPointF m_wideDragStart;
     UmeDoc::WideProps m_wideDragProps;
@@ -239,6 +297,8 @@ private:
 
     qreal m_scrollY = 0.0;
     QScrollBar *m_vbar = nullptr;
+    QScrollBar *m_hbar = nullptr;
+    qreal m_scrollX = 0.0;
 
     QTextCursor m_cursor;
     bool m_blinkOn = true;

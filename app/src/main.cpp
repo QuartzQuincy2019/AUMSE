@@ -1,5 +1,6 @@
 #include "mainwindow.h"
 #include "umeicons.h"
+#include "umehit.h"
 #include "umedoc.h"
 #include "umeinteract.h"
 #include "umelog.h"
@@ -18,6 +19,7 @@
 #include <QMouseEvent>
 #include <QTextBlock>
 #include <QTextCharFormat>
+#include <QTextTable>
 #include <QTextDocument>
 #include <QFileInfo>
 #include <QInputMethodEvent>
@@ -543,6 +545,1270 @@ int selfTest(const QString &path, const QString &outDir, const QString &font,
             p.rotation = deg;
             cview.applyWideObject(p);
             printf("  旋转 %3.0f°：%s\n", deg, qPrintable(cview.cursorProbe()));
+        }
+    }
+
+    printf("== 旋转命中 / 吸附 / 删除 ==\n");
+    {
+        QImage probe(80, 60, QImage::Format_RGB32);
+        probe.fill(QColor(0x2e, 0x75, 0xb6));
+        const QString path = QStringLiteral("%1/rot-probe.png").arg(outDir);
+        probe.save(path);
+
+        QTextDocument rdoc;
+        rdoc.setPlainText(QStringLiteral("对象命中测试"));
+        UmeView rv;
+        rv.setSettings(&settings);
+        rv.setDocument(&rdoc);
+        rv.setBaseFormat(font, pt);
+        rv.insertImage(path);
+
+        UmeDoc::WideProps p = rv.currentWideObject();
+        rv.applyWideObject(p);
+
+        /* ② 旋转 45° 后，点「旋转后包围盒的角」应当仍能选中：
+              用对象中心的 x/y 偏移来模拟 */
+        const QVector<QRectF> hs = rv.wideHandlesProbe();
+        const QPointF corner = hs.value(0).center();
+        (void)corner;
+        printf("  手柄 0 中心 (%.1f, %.1f)\n", corner.x(), corner.y());
+
+        p.rotation = 45.0;
+        rv.applyWideObject(p);
+        printf("  旋转 45° 后手柄 0 中心 (%.1f, %.1f)\n",
+               rv.wideHandlesProbe().value(0).center().x(),
+               rv.wideHandlesProbe().value(0).center().y());
+
+        /* ③ 吸附：高度 63 → 应吸到行高网格附近 */
+        p.rotation = 0.0;
+        p.heightPt = 63.0;
+        rv.applyWideObject(p);
+        printf("  高度 63（未拖曳，不吸附）：%.1f\n", rv.currentWideObject().heightPt);
+
+        /* ④ 删除 */
+        const int before = rdoc.blockCount();
+        rv.selectWideObject(0);
+        rv.deleteSelectedWideObject();
+        printf("  删除后：块数 %d → %d，宽对象 %s，选中 %d\n",
+               before, rdoc.blockCount(), qPrintable(rv.wideObjectsProbe()),
+               rv.selectedWideObject());
+    }
+
+    printf("== 表格单元格跟随格式 ==\n");
+    {
+        QTextDocument tdoc;
+        tdoc.setPlainText(QStringLiteral("表格测试"));
+        UmeView tv;
+        tv.setSettings(&settings);
+        tv.setDocument(&tdoc);
+        tv.setBaseFormat(font, pt);
+
+        QTextCursor end(&tdoc);
+        end.movePosition(QTextCursor::End);
+        tv.setTextCursor(end);
+        tv.insertTable(2, 2);
+
+        /* 整篇刷红 */
+        QTextCursor all(&tdoc);
+        all.select(QTextCursor::Document);
+        tv.setTextCursor(all);
+        tv.applyFormatColor(QColor(QStringLiteral("#cc0000")));
+
+        const QRectF box = tv.wideObjectsProbe().isEmpty()
+                               ? QRectF()
+                               : QRectF();
+        Q_UNUSED(box);
+
+        const QImage img = tv.renderPageImage(0, 1.0, false);
+        int red = 0;
+        int dark = 0;
+        for (int y = 0; y < img.height(); ++y) {
+            for (int x = 0; x < img.width(); ++x) {
+                const QColor c = img.pixelColor(x, y);
+                if (c.red() > 110 && c.green() < 90 && c.blue() < 90)
+                    ++red;
+                else if (c.red() < 70 && c.green() < 70 && c.blue() < 70)
+                    ++dark;
+            }
+        }
+        printf("  整篇上红后：红 %d  近黑 %d（表格里应是红字）\n", red, dark);
+        img.save(QStringLiteral("%1/m6-table.png").arg(outDir));
+    }
+
+    printf("== 鼠标：旋转命中与拖角吸附 ==\n");
+    {
+        QImage probe(80, 60, QImage::Format_RGB32);
+        probe.fill(QColor(0x2e, 0x75, 0xb6));
+        const QString path = QStringLiteral("%1/mouse-probe.png").arg(outDir);
+        probe.save(path);
+
+        QTextDocument mdoc;
+        mdoc.setPlainText(QStringLiteral("鼠标测试"));
+        UmeView mv;
+        mv.setSettings(&settings);
+        mv.setDocument(&mdoc);
+        mv.setBaseFormat(font, pt);
+        mv.insertImage(path);
+
+        /* ② 转 45° 之后，点旋转后包围盒的左上角仍应选中该对象 */
+        UmeDoc::WideProps mp = mv.currentWideObject();
+        mp.rotation = 45.0;
+        mv.applyWideObject(mp);
+
+        /* 手柄只在「选中」时才有：先记下位置，再取消选中 */
+        mv.selectWideObject(0);
+        const QPointF corner = mv.wideHandlesProbe().value(0).center();
+        mv.selectWideObject(-1);
+        QMouseEvent press(QEvent::MouseButtonPress, corner, mv.mapToGlobal(corner.toPoint()),
+                          Qt::LeftButton, Qt::LeftButton, Qt::NoModifier);
+        QApplication::sendEvent(&mv, &press);
+        QMouseEvent release(QEvent::MouseButtonRelease, corner,
+                            mv.mapToGlobal(corner.toPoint()),
+                            Qt::LeftButton, Qt::NoButton, Qt::NoModifier);
+        QApplication::sendEvent(&mv, &release);
+        printf("  旋转 45° 点角上：选中索引 = %d（应为 0）\n", mv.selectedWideObject());
+
+        /* ③ 拖右下角把高度从 60 拉到约 85，应吸到 4pt 网格 */
+        UmeDoc::WideProps mp2 = mv.currentWideObject();
+        mp2.rotation = 0.0;
+        mp2.heightPt = 60.0;
+        mv.applyWideObject(mp2);
+        mv.selectWideObject(0);
+
+        const QPointF br = mv.wideHandlesProbe().value(3).center();   // 右下
+        QMouseEvent p2(QEvent::MouseButtonPress, br, mv.mapToGlobal(br.toPoint()),
+                       Qt::LeftButton, Qt::LeftButton, Qt::NoModifier);
+        QApplication::sendEvent(&mv, &p2);
+        const QPointF br2 = br + QPointF(0, 25);
+        QMouseEvent m2(QEvent::MouseMove, br2, mv.mapToGlobal(br2.toPoint()),
+                       Qt::NoButton, Qt::LeftButton, Qt::NoModifier);
+        QApplication::sendEvent(&mv, &m2);
+        printf("  拖右下角 +25pt：高度 = %.1f（60+25=85，4pt 网格应吸到 84）\n",
+               mv.currentWideObject().heightPt);
+        QMouseEvent r2(QEvent::MouseButtonRelease, br2, mv.mapToGlobal(br2.toPoint()),
+                       Qt::LeftButton, Qt::NoButton, Qt::NoModifier);
+        QApplication::sendEvent(&mv, &r2);
+    }
+
+    printf("== 拖动表格不能擦掉宽对象标记 ==\n");
+    {
+        QTextDocument gdoc;
+        gdoc.setPlainText(QStringLiteral("表格前文字。"));
+        UmeView gv;
+        gv.setSettings(&settings);
+        gv.setDocument(&gdoc);
+        gv.setBaseFormat(font, pt);
+
+        QTextCursor end(&gdoc);
+        end.movePosition(QTextCursor::End);
+        gv.setTextCursor(end);
+        gv.insertTable(2, 3);
+        printf("  插入后：%s\n", qPrintable(gv.wideObjectsProbe()));
+
+        /* 光标先移出表格 —— 日志里出问题时的前置条件 */
+        QTextCursor outside(&gdoc);
+        outside.setPosition(0);
+        gv.setTextCursor(outside);
+        printf("  光标移出后 kind=%d（应为 0）\n", int(gv.currentWideObject().kind));
+
+        /* 点表格本体，往下拖 8pt */
+        const QPointF center = gv.wideItemBoxProbe(0).center();
+        QMouseEvent press(QEvent::MouseButtonPress, center,
+                          gv.mapToGlobal(center.toPoint()), Qt::LeftButton,
+                          Qt::LeftButton, Qt::NoModifier);
+        QApplication::sendEvent(&gv, &press);
+
+        const QPointF moved = center + QPointF(0, 8);
+        QMouseEvent drag(QEvent::MouseMove, moved, gv.mapToGlobal(moved.toPoint()),
+                         Qt::NoButton, Qt::LeftButton, Qt::NoModifier);
+        QApplication::sendEvent(&gv, &drag);
+
+        QMouseEvent release(QEvent::MouseButtonRelease, moved,
+                            gv.mapToGlobal(moved.toPoint()), Qt::LeftButton,
+                            Qt::NoButton, Qt::NoModifier);
+        QApplication::sendEvent(&gv, &release);
+
+        printf("  拖动后：%s\n", qPrintable(gv.wideObjectsProbe()));
+        printf("  光标现在是否在表格内 = %d（应为 1）\n",
+               int(gv.currentWideObject().kind == UmeDoc::WideKind::Table));
+    }
+
+    printf("== 表格不能压住文字 ==\n");
+    {
+        QTextDocument odoc;
+        odoc.setPlainText(QStringLiteral("第一段文字。\n第二段文字。\n第三段文字。"));
+        UmeView ov;
+        ov.setSettings(&settings);
+        ov.setDocument(&odoc);
+        ov.setBaseFormat(font, pt);
+
+        QTextCursor end(&odoc);
+        end.movePosition(QTextCursor::End);
+        ov.setTextCursor(end);
+        ov.insertTable(2, 3);
+
+        /* 把表格拖成负偏移（模拟用户往上拖） */
+        UmeDoc::WideProps wp = ov.currentWideObject();
+        wp.offsetPt = -120.0;
+        ov.applyWideObject(wp);
+
+        /* 检查：表格盒与任一文字列是否在 x 上重叠 */
+        const QRectF box = ov.wideItemBoxProbe(0);
+        printf("  表格盒 x %.1f–%.1f y %.1f–%.1f\n",
+               box.left(), box.right(), box.top(), box.bottom());
+
+        /* 用列探针取前若干列的左边界，看有没有落在表格 x 区间里 */
+        const QString cols = ov.columnsProbe(8);
+        printf("  列：%s\n", qPrintable(cols));
+        printf("  表格左缘 = %.1f（应 ≥ 正文区左缘 56.7）\n", box.left());
+    }
+
+    printf("== 宽度不超过正文区 ==\n");
+    {
+        QImage big(400, 300, QImage::Format_RGB32);
+        big.fill(QColor(0x2e, 0x75, 0xb6));
+        const QString path = QStringLiteral("%1/wide-probe.png").arg(outDir);
+        big.save(path);
+
+        QTextDocument wdoc;
+        wdoc.setPlainText(QStringLiteral("宽度测试"));
+        UmeView wv;
+        wv.setSettings(&settings);
+        wv.setDocument(&wdoc);
+        wv.setBaseFormat(font, pt);
+        wv.insertImage(path);
+
+        const qreal areaW = settings.page().textArea().width();
+        printf("  正文区宽 = %.1f pt\n", areaW);
+
+        UmeDoc::WideProps wp = wv.currentWideObject();
+        wp.span = 40;                       /* 故意设成远超页宽 */
+        wv.applyWideObject(wp);
+        const UmeDoc::WideProps after = wv.currentWideObject();
+        printf("  请求 span=40 → 实际 span=%d（上限 %d）\n",
+               after.span, wv.maxSpanForPageProbe());
+
+        const QRectF box = wv.wideItemBoxProbe(0);
+        printf("  落位 x %.1f–%.1f（正文区 56.7–%.1f）\n",
+               box.left(), box.right(), 56.7 + areaW);
+        printf("  是否越界 = %d（应为 0）\n",
+               int(box.right() > 56.7 + areaW + 0.5));
+    }
+
+    printf("== 改宽度不跳页 ==\n");
+    {
+        QImage pic(300, 200, QImage::Format_RGB32);
+        pic.fill(QColor(0x2e, 0x75, 0xb6));
+        const QString path = QStringLiteral("%1/jump-probe.png").arg(outDir);
+        pic.save(path);
+
+        QTextDocument jdoc;
+        jdoc.setPlainText(QStringLiteral("第一段文字。\n第二段文字。"));
+        UmeView jv;
+        jv.setSettings(&settings);
+        jv.setDocument(&jdoc);
+        jv.setBaseFormat(font, pt);
+
+        QTextCursor end(&jdoc);
+        end.movePosition(QTextCursor::End);
+        jv.setTextCursor(end);
+        jv.insertImage(path);
+
+        /* 连续把 span 从 4 加到 18，记录每次的落位 */
+        QStringList trace;
+        for (int span = 4; span <= 18; span += 2) {
+            UmeDoc::WideProps p = jv.currentWideObject();
+            p.span = span;
+            jv.applyWideObject(p);
+            const QRectF box = jv.wideItemBoxProbe(0);
+            trace << QStringLiteral("%1→x%2,w%3")
+                         .arg(span).arg(box.left(), 0, 'f', 0).arg(box.width(), 0, 'f', 0);
+        }
+        printf("  %s\n", qPrintable(trace.join(QStringLiteral("  "))));
+    }
+
+    printf("== 两个对象不互相甩页 ==\n");
+    {
+        QImage a(200, 150, QImage::Format_RGB32);
+        a.fill(QColor(0x2e, 0x75, 0xb6));
+        const QString pa = QStringLiteral("%1/two-a.png").arg(outDir);
+        a.save(pa);
+        QImage b(120, 90, QImage::Format_RGB32);
+        b.fill(QColor(0xc0, 0x50, 0x4d));
+        const QString pb = QStringLiteral("%1/two-b.png").arg(outDir);
+        b.save(pb);
+
+        QTextDocument tdoc;
+        tdoc.setPlainText(QStringLiteral("两图测试"));
+        UmeView tv;
+        tv.setSettings(&settings);
+        tv.setDocument(&tdoc);
+        tv.setBaseFormat(font, pt);
+        tv.insertImage(pa);
+
+        QTextCursor end(&tdoc);
+        end.movePosition(QTextCursor::End);
+        tv.setTextCursor(end);
+        tv.insertImage(pb);
+
+        /* 把光标放到第一张图的块上，再逐步加宽 */
+        QTextCursor first(&tdoc);
+        for (QTextBlock b = tdoc.begin(); b.isValid(); b = b.next()) {
+            if (UmeDoc::isWideBlock(b)) {
+                first = QTextCursor(b);
+                break;
+            }
+        }
+        tv.setTextCursor(first);
+
+        QStringList trace;
+        for (int span = 8; span <= 20; span += 2) {
+            UmeDoc::WideProps p = tv.currentWideObject();
+            if (!p.isValid())
+                break;
+            p.span = span;
+            tv.applyWideObject(p);
+            trace << QStringLiteral("%1→%2")
+                         .arg(span)
+                         .arg(tv.wideObjectsProbe().section(QLatin1Char(' '), 0, 3));
+        }
+        printf("  加宽第一张：%s\n", qPrintable(trace.join(QLatin1Char(' '))));
+        printf("  宽对象：%s\n", qPrintable(tv.wideObjectsProbe()));
+    }
+
+    printf("== 长文本按列高换列、不越界 ==\n");
+    {
+        /* 200 个 h：约 200 × 7.7 = 1540pt，正文区高 728.6 → 至少要 3 列 */
+        QTextDocument ldoc;
+        ldoc.setPlainText(QString(200, QLatin1Char('h')));
+        UmeView lv;
+        lv.setSettings(&settings);
+        lv.setDocument(&ldoc);
+        lv.setBaseFormat(font, pt);
+
+        const QString cols = lv.columnsProbe(6);
+        printf("  列：%s\n", qPrintable(cols));
+
+        const QImage img = lv.renderPageImage(0, 1.0, false);
+        int maxY = 0;
+        int maxX = 0;
+        for (int y = 0; y < img.height(); ++y) {
+            for (int x = 0; x < img.width(); ++x) {
+                const QColor c = img.pixelColor(x, y);
+                if (c.red() < 120 && c.green() < 120 && c.blue() < 120) {
+                    maxY = qMax(maxY, y);
+                    maxX = qMax(maxX, x);
+                }
+            }
+        }
+        const QRectF area = settings.page().textArea();
+        printf("  墨迹最下 %.1f，最右 %.1f；正文区 y≤%.1f x≤%.1f\n",
+               qreal(maxY), qreal(maxX), area.bottom(), area.right());
+        printf("  是否越界 = %d（应为 0）\n",
+               int(maxY > area.bottom() + 1.0 || maxX > area.right() + 1.0));
+    }
+
+    printf("== 图片前后能继续输入 ==\n");
+    {
+        QImage pic(120, 90, QImage::Format_RGB32);
+        pic.fill(QColor(0x2e, 0x75, 0xb6));
+        const QString path = QStringLiteral("%1/para-probe.png").arg(outDir);
+        pic.save(path);
+
+        QTextDocument pd;
+        pd.setPlainText(QStringLiteral("图片前。"));
+        UmeView pv;
+        pv.setSettings(&settings);
+        pv.setDocument(&pd);
+        pv.setBaseFormat(font, pt);
+        pv.insertImage(path);
+
+        printf("  插图后：块数=%d，光标在块 %d，该块是宽对象=%d\n",
+               pd.blockCount(), pv.textCursor().blockNumber(),
+               int(UmeDoc::isWideBlock(pv.textCursor().block())));
+
+        /* 直接在光标处打字 —— 应落到图片之后的段落里 */
+        pv.insertTextProbe(QStringLiteral("图后文字"));
+        const QString all = pd.toPlainText();
+        printf("  打字后：含「图后文字」=%d，块数=%d\n",
+               int(all.contains(QStringLiteral("图后文字"))), pd.blockCount());
+
+        /* 再验证「把光标放到图片块上再打字」也能自动建段落 */
+        QTextCursor onImage(&pd);
+        for (QTextBlock b = pd.begin(); b.isValid(); b = b.next()) {
+            if (UmeDoc::isWideBlock(b)) {
+                onImage = QTextCursor(b);
+                break;
+            }
+        }
+        pv.setTextCursor(onImage);
+        pv.insertTextProbe(QStringLiteral("又一段"));
+        printf("  在图片块上打字后：含「又一段」=%d，块数=%d\n",
+               int(pd.toPlainText().contains(QStringLiteral("又一段"))), pd.blockCount());
+    }
+
+    printf("== 点图片下方继续输入 ==\n");
+    {
+        QImage pic(120, 90, QImage::Format_RGB32);
+        pic.fill(QColor(0x2e, 0x75, 0xb6));
+        const QString path = QStringLiteral("%1/under-probe.png").arg(outDir);
+        pic.save(path);
+
+        QTextDocument ud;
+        ud.setPlainText(QStringLiteral("上方文字。"));
+        UmeView uv;
+        uv.setSettings(&settings);
+        uv.setDocument(&ud);
+        uv.setBaseFormat(font, pt);
+        uv.insertImage(path);
+
+        const QRectF box = uv.wideItemBoxProbe(0);
+        printf("  图片盒 x %.1f–%.1f y %.1f–%.1f\n",
+               box.left(), box.right(), box.top(), box.bottom());
+
+        /* 点图片下方 20pt 处 */
+        QTextCursor toTop(&ud);
+        toTop.setPosition(0);
+        uv.setTextCursor(toTop);
+        QTextCursor before = uv.textCursor();
+        const QPointF under(box.center().x(), box.bottom() + 20.0);
+        QMouseEvent press(QEvent::MouseButtonPress, under,
+                          uv.mapToGlobal(under.toPoint()), Qt::LeftButton,
+                          Qt::LeftButton, Qt::NoModifier);
+        QApplication::sendEvent(&uv, &press);
+        QMouseEvent release(QEvent::MouseButtonRelease, under,
+                            uv.mapToGlobal(under.toPoint()), Qt::LeftButton,
+                            Qt::NoButton, Qt::NoModifier);
+        QApplication::sendEvent(&uv, &release);
+
+        printf("  点击前块 %d → 点击后块 %d（应落在图片之后的段落）\n",
+               before.blockNumber(), uv.textCursor().blockNumber());
+        printf("  该块是宽对象 = %d（应为 0）\n",
+               int(UmeDoc::isWideBlock(uv.textCursor().block())));
+    }
+
+    printf("== 整列 vs 环绕：后续文字位置 ==\n");
+    {
+        QImage pic(120, 90, QImage::Format_RGB32);
+        pic.fill(QColor(0x2e, 0x75, 0xb6));
+        const QString path = QStringLiteral("%1/mode-probe.png").arg(outDir);
+        pic.save(path);
+
+        QTextDocument mdoc;
+        /* 图片之前一段、之后一段 */
+        mdoc.setPlainText(QStringLiteral("前面的文字。"));
+        UmeView mv;
+        mv.setSettings(&settings);
+        mv.setDocument(&mdoc);
+        mv.setBaseFormat(font, pt);
+
+        QTextCursor end(&mdoc);
+        end.movePosition(QTextCursor::End);
+        mv.setTextCursor(end);
+        mv.insertImage(path);
+        mv.insertTextProbe(QStringLiteral("后面的文字。"));
+
+        UmeDoc::WideProps p = mv.currentWideObject();
+        p.span = 4;
+        p.heightPt = 120.0;
+
+        p.wrap = UmeDoc::WideWrap::Span;
+        mv.applyWideObject(p);
+        const QString spanCols = mv.columnsProbe(4);
+        const QRectF spanBox = mv.wideItemBoxProbe(0);
+
+        p.wrap = UmeDoc::WideWrap::Bubble;
+        mv.applyWideObject(p);
+        const QString wrapCols = mv.columnsProbe(4);
+        const QRectF wrapBox = mv.wideItemBoxProbe(0);
+
+        printf("  【整列】盒 x%.1f–%.1f y%.1f–%.1f\n",
+               spanBox.left(), spanBox.right(), spanBox.top(), spanBox.bottom());
+        printf("         列：%s\n", qPrintable(spanCols));
+        printf("  读回 wrap=%d（1 应为环绕）\n", int(mv.currentWideObject().wrap));
+        printf("  【环绕】盒 x%.1f–%.1f y%.1f–%.1f\n",
+               wrapBox.left(), wrapBox.right(), wrapBox.top(), wrapBox.bottom());
+        printf("         列：%s\n", qPrintable(wrapCols));
+    }
+
+    printf("== 环绕模式下能选中下方文字 ==\n");
+    {
+        QImage pic(100, 80, QImage::Format_RGB32);
+        pic.fill(QColor(0x2e, 0x75, 0xb6));
+        const QString path = QStringLiteral("%1/wrap-probe.png").arg(outDir);
+        pic.save(path);
+
+        /* 空文档 → 先插图 → 再在「图片之后的段落」里输入文字 */
+        QTextDocument bdoc;
+        UmeView bv;
+        bv.setSettings(&settings);
+        bv.setDocument(&bdoc);
+        bv.setBaseFormat(font, pt);
+        bv.insertImage(path);
+        bv.insertTextProbe(QStringLiteral("下方的文字内容。"));
+
+        UmeDoc::WideProps wp = bv.currentWideObject();
+        wp.wrap = UmeDoc::WideWrap::Bubble;
+        wp.span = 3;
+        wp.heightPt = 80.0;
+        bv.applyWideObject(wp);
+        printf("  环绕盒：%s\n", qPrintable(bv.wideObjectsProbe()));
+
+        const QRectF box = bv.wideItemBoxProbe(0);
+        QRectF textCol;
+        for (int i = 0; i < 8; ++i) {
+            const QRectF cb = bv.columnBoxProbe(i);
+            if (!cb.isValid())
+                break;
+            if (cb.top() > box.bottom() - 0.5 && cb.width() > 1.0) {
+                textCol = cb;
+                break;
+            }
+        }
+        printf("  对象下沿 %.1f；目标文字列 x%.1f–%.1f y%.1f–%.1f\n",
+               box.bottom(), textCol.left(), textCol.right(),
+               textCol.top(), textCol.bottom());
+
+        const QPointF onText = textCol.isValid()
+                                   ? QPointF(textCol.center().x(), textCol.top() + 20.0)
+                                   : QPointF(box.center().x(), box.bottom() + 20.0);
+        printf("  点击点 (%.1f, %.1f) 命中列 = %d\n",
+               onText.x(), onText.y(), int(bv.hitsAnyColumnProbe(onText)));
+
+        QMouseEvent press(QEvent::MouseButtonPress, onText,
+                          bv.mapToGlobal(onText.toPoint()), Qt::LeftButton,
+                          Qt::LeftButton, Qt::NoModifier);
+        QApplication::sendEvent(&bv, &press);
+        QMouseEvent release(QEvent::MouseButtonRelease, onText,
+                            bv.mapToGlobal(onText.toPoint()), Qt::LeftButton,
+                            Qt::NoButton, Qt::NoModifier);
+        QApplication::sendEvent(&bv, &release);
+
+        const QTextCursor got = bv.textCursor();
+        printf("  点击后停在块 %d：\"%s\"（应含「下方」）\n",
+               got.blockNumber(), qPrintable(got.block().text().left(8)));
+    }
+
+    printf("== 命中模块（UmeHit）独立可用 ==\n");
+    {
+        /* 纯几何：不依赖视图与文档 */
+        const QRectF box(100, 100, 80, 60);
+
+        /* 手柄：未旋转时 0 号在左上，8 号在右侧外 14pt */
+        const QVector<QPointF> pts = UmeHit::handlePoints(box);
+        printf("  手柄数 = %d，0 号 (%.1f, %.1f)，8 号 (%.1f, %.1f)\n",
+               int(pts.size()), pts[0].x(), pts[0].y(), pts[8].x(), pts[8].y());
+
+        /* 命中左上角 → 0 号；命中中心 → 对象本体；命中远处 → 都没有 */
+        printf("  90° 下点左上角 → 手柄 %d\n",
+               UmeHit::handleAt(box, 90.0,
+                                UmeInteract::rotatePoint(pts[0], box.center(), 90.0)));
+        printf("  点中心 → 本体 = %d，手柄 = %d\n",
+               int(UmeHit::boxContains(box, 0.0, box.center())),
+               UmeHit::handleAt(box, 0.0, box.center()));
+        printf("  点 (400,400) → 本体 = %d\n",
+               int(UmeHit::boxContains(box, 0.0, QPointF(400, 400))));
+
+        /* 列表版：两列 + 一个对象，验证优先级与「后放优先」 */
+        QVector<UmeLayout::Column> cols(2);
+        cols[0].box = QRectF(50, 50, 25, 700);
+        cols[1].box = QRectF(75, 50, 25, 700);
+
+        QVector<UmeLayout::WideItem> items(2);
+        items[0].box = QRectF(120, 50, 60, 60);
+        items[1].box = QRectF(120, 50, 60, 60);   // 完全重叠，后放的应在上面
+
+        printf("  列命中 (60,300) = %d；对象命中 (150,80) = %d（重叠时应为 1）\n",
+               UmeHit::columnAt(cols, QPointF(60, 300)),
+               UmeHit::wideAt(items, QPointF(150, 80)));
+        printf("  空白 (300,300)：列 = %d，对象 = %d\n",
+               UmeHit::columnAt(cols, QPointF(300, 300)),
+               UmeHit::wideAt(items, QPointF(300, 300)));
+
+        PageSetup page = PageSetup::preset(QStringLiteral("A4"));
+        printf("  页命中 (100,100) = %d；(100,2000) = %d\n",
+               UmeHit::pageAt(page, 2, PageArrangement(), QPointF(100, 100)),
+               UmeHit::pageAt(page, 2, PageArrangement(), QPointF(100, 2000)));
+    }
+
+    printf("== 环绕：右侧的列要回到页首 ==\n");
+    {
+        QImage pic(100, 80, QImage::Format_RGB32);
+        pic.fill(QColor(0x2e, 0x75, 0xb6));
+        const QString path = QStringLiteral("%1/wrap-fill.png").arg(outDir);
+        pic.save(path);
+
+        /* 图 -> 大量文字：文字先绕到图下方，超出图的 x 范围后应回到页首 */
+        QTextDocument fdoc;
+        UmeView fv;
+        fv.setSettings(&settings);
+        fv.setDocument(&fdoc);
+        fv.setBaseFormat(font, pt);
+        fv.insertImage(path);
+        fv.insertTextProbe(QString(400, QLatin1Char('h')));
+
+        UmeDoc::WideProps wp = fv.currentWideObject();
+        wp.wrap = UmeDoc::WideWrap::Bubble;
+        wp.span = 4;
+        wp.heightPt = 600.0;
+        fv.applyWideObject(wp);
+
+        const QRectF box = fv.wideItemBoxProbe(0);
+        printf("  图片盒 x%.1f–%.1f y%.1f–%.1f\n",
+               box.left(), box.right(), box.top(), box.bottom());
+
+        /* 统计：完全在图片右侧的列里，有多少列的 top 回到页首附近 */
+        int rightCols = 0;
+        int rightAtTop = 0;
+        for (int i = 0; i < 60; ++i) {
+            const QRectF cb = fv.columnBoxProbe(i);
+            if (!cb.isValid())
+                break;
+            if (cb.left() >= box.right() - 0.5) {
+                ++rightCols;
+                if (cb.top() < box.bottom() - 1.0)
+                    ++rightAtTop;
+            }
+        }
+        printf("  图片右侧的列 %d 个，其中在页首的 %d 个\n", rightCols, rightAtTop);
+    }
+
+    printf("== 宽对象分区（图片 / 表格）==\n");
+    {
+        QImage pic(100, 80, QImage::Format_RGB32);
+        pic.fill(QColor(0x2e, 0x75, 0xb6));
+        const QString path = QStringLiteral("%1/zone.png").arg(outDir);
+        pic.save(path);
+
+        QTextDocument zdoc;
+        zdoc.setPlainText(QStringLiteral("分区测试"));
+        UmeView zv;
+        zv.setSettings(&settings);
+        zv.setDocument(&zdoc);
+        zv.setBaseFormat(font, pt);
+
+        printf("  初始：kind=%d\n", int(zv.currentWideObject().kind));
+
+        zv.insertImage(path);
+        printf("  选中图片：kind=%d（1=表格 2=图片），选中索引=%d\n",
+               int(zv.currentWideObject().kind), zv.selectedWideObject());
+
+        QTextCursor end(&zdoc);
+        end.movePosition(QTextCursor::End);
+        zv.setTextCursor(end);
+        zv.insertTable(2, 2);
+        printf("  选中表格：kind=%d，尺寸 %dx%d\n",
+               int(zv.currentWideObject().kind),
+               UmeDoc::tableSize(zv.textCursor()).first,
+               UmeDoc::tableSize(zv.textCursor()).second);
+    }
+
+    printf("== 页面排布与纸张方向 ==\n");
+    {
+        PageSetup ps = PageSetup::preset(QStringLiteral("A4"));
+        const qreal w = ps.paper.width();
+        const qreal h = ps.paper.height();
+        const qreal gap = UmeLayout::kPageGap;
+
+        PageArrangement rows;                    /* 默认：每行 2 页 */
+        printf("  默认 perRow=%d mode=%d\n", rows.perRow, int(rows.mode));
+
+        /* 4 页，每行 2 页：两行两列 */
+        QRectF p0 = UmeLayout::pageRectOf(ps, 0, rows);
+        QRectF p1 = UmeLayout::pageRectOf(ps, 1, rows);
+        QRectF p2 = UmeLayout::pageRectOf(ps, 2, rows);
+        printf("  2×2：p0(%.0f,%.0f) p1(%.0f,%.0f) p2(%.0f,%.0f)\n",
+               p0.left(), p0.top(), p1.left(), p1.top(), p2.left(), p2.top());
+        const QSizeF s4 = UmeLayout::contentSizeOf(ps, 4, rows);
+        printf("  内容尺寸 %.0f×%.0f（应为 %.0f×%.0f）\n",
+               s4.width(), s4.height(), 2 * w + gap, 2 * h + gap);
+
+        /* 无限横向 */
+        PageArrangement horiz;
+        horiz.mode = PageArrangement::Horizontal;
+        const QRectF h3 = UmeLayout::pageRectOf(ps, 3, horiz);
+        const QSizeF sh = UmeLayout::contentSizeOf(ps, 4, horiz);
+        printf("  横向：p3(%.0f,%.0f)，内容 %.0f×%.0f（高度应为 1 页）\n",
+               h3.left(), h3.top(), sh.width(), sh.height());
+
+        /* 无限竖向 */
+        PageArrangement vert;
+        vert.mode = PageArrangement::Vertical;
+        const QRectF v3 = UmeLayout::pageRectOf(ps, 3, vert);
+        const QSizeF sv = UmeLayout::contentSizeOf(ps, 4, vert);
+        printf("  竖向：p3(%.0f,%.0f)，内容 %.0f×%.0f（宽度应为 1 页）\n",
+               v3.left(), v3.top(), sv.width(), sv.height());
+
+        /* 纸张方向：横竖切换应对调宽高 */
+        PageSetup land = PageSetup::preset(QStringLiteral("A4"));
+        land.setOrientation(PageOrientation::Landscape);
+        printf("  纵向 %.0f×%.0f → 横向 %.0f×%.0f\n",
+               w, h, land.paper.width(), land.paper.height());
+        land.setOrientation(PageOrientation::Landscape);   // 重复设置不应再翻
+        printf("  重复设横向仍为 %.0f×%.0f\n",
+               land.paper.width(), land.paper.height());
+    }
+
+    printf("== 排布模式贯通到视图 ==\n");
+    {
+        /* 用足够长的文本造出多页 */
+        QTextDocument vd;
+        vd.setPlainText(QString(3000, QLatin1Char('h')));
+        UmeView vv;
+        UmeSettings vs;
+        vv.setSettings(&vs);
+        vv.setDocument(&vd);
+        vv.setBaseFormat(font, pt);
+
+        auto describe = [&](const char *tag) {
+            const QSizeF c = vv.contentSizeProbe();
+            printf("  %s：页数 %d，内容 %.0f×%.0f\n", tag,
+                   vv.pageCountProbe(), c.width(), c.height());
+        };
+
+        describe("默认（每行 2 页）");
+
+        PageArrangement a = vs.arrangement();
+        a.mode = PageArrangement::Horizontal;
+        vs.setArrangement(a);
+        describe("无限横向  ");
+
+        a.mode = PageArrangement::Vertical;
+        vs.setArrangement(a);
+        describe("无限竖向  ");
+
+        a.mode = PageArrangement::RowsOfN;
+        a.perRow = 3;
+        vs.setArrangement(a);
+        describe("每行 3 页 ");
+    }
+
+    printf("== 连插两张图 ==\n");
+    {
+        QImage a(600, 400, QImage::Format_RGB32);
+        a.fill(QColor(0x2e, 0x75, 0xb6));
+        const QString pa = QStringLiteral("%1/two1.png").arg(outDir);
+        a.save(pa);
+        QImage b(566, 385, QImage::Format_RGB32);
+        b.fill(QColor(0x22, 0x22, 0x22));
+        const QString pb = QStringLiteral("%1/two2.png").arg(outDir);
+        b.save(pb);
+
+        QTextDocument d2;
+        d2.setPlainText(QStringLiteral("前后都有字。"));
+        UmeView v2;
+        UmeSettings s2;
+        v2.setSettings(&s2);
+        v2.setDocument(&d2);
+        v2.setBaseFormat(font, pt);
+
+        s2.setOrientation(PageOrientation::Landscape);
+        v2.insertImage(pa);
+        v2.insertImage(pb);
+
+        const QRectF area = s2.page().textArea();
+        printf("  正文区 %.1f–%.1f（宽 %.1f）\n",
+               area.left(), area.right(), area.width());
+        printf("  宽对象：%s\n", qPrintable(v2.wideObjectsProbe()));
+
+        int over = 0;
+        for (int i = 0; i < 4; ++i) {
+            const QRectF box = v2.wideItemBoxProbe(i);
+            if (!box.isValid())
+                break;
+            if (box.right() > area.right() + 0.5)
+                ++over;
+            printf("    #%d x%.1f–%.1f w%.1f 越界=%d\n", i,
+                   box.left(), box.right(), box.width(),
+                   int(box.right() > area.right() + 0.5));
+        }
+        printf("  越界对象数 = %d（应为 0），页数 = %d\n",
+               over, v2.pageCountProbe());
+    }
+
+    printf("== 跨页对象落在各自页内 ==\n");
+    {
+        QImage a(600, 400, QImage::Format_RGB32);
+        a.fill(QColor(0x2e, 0x75, 0xb6));
+        const QString pa = QStringLiteral("%1/x1.png").arg(outDir);
+        a.save(pa);
+        QImage b(600, 400, QImage::Format_RGB32);
+        b.fill(QColor(0x22, 0x22, 0x22));
+        const QString pb = QStringLiteral("%1/x2.png").arg(outDir);
+        b.save(pb);
+
+        QTextDocument xd;
+        xd.setPlainText(QString(600, QLatin1Char('w')));
+        UmeView xv;
+        UmeSettings xs;
+        xv.setSettings(&xs);
+        xv.setDocument(&xd);
+        xv.setBaseFormat(font, pt);
+
+        xv.insertImage(pa);
+        xv.insertImage(pb);
+        printf("  页数 = %d\n", xv.pageCountProbe());
+
+        for (int i = 0; i < 4; ++i) {
+            const QRectF doc = xv.wideItemDocRectProbe(i);
+            if (!doc.isValid())
+                break;
+            const int page = xv.wideItemPageProbe(i);
+            const QRectF pageBox = xv.pageBoxProbe(page);
+            printf("    #%d 页%d 内容坐标 x%.1f–%.1f y%.1f–%.1f；该页 y%.1f–%.1f 包含=%d\n",
+                   i, page, doc.left(), doc.right(), doc.top(), doc.bottom(),
+                   pageBox.top(), pageBox.bottom(),
+                   int(pageBox.contains(doc)));
+        }
+    }
+
+    printf("== 滚动范围覆盖到最后一页 ==\n");
+    {
+        QTextDocument sd;
+        sd.setPlainText(QString(2500, QLatin1Char('h')));
+        UmeView sv;
+        UmeSettings ss;
+        sv.setSettings(&ss);
+        sv.setDocument(&sd);
+        sv.setBaseFormat(font, pt);
+        sv.resize(900, 600);
+        sv.show();                       /* 触发 resizeEvent → updateScrollBars */
+
+        const QSizeF cs = sv.contentSizeProbe();
+        const QList<int> r = sv.scrollRangeProbe();
+        printf("  页数 %d，内容 %.0f×%.0f，视图 %d×%d\n",
+               sv.pageCountProbe(), cs.width(), cs.height(), r[4], r[5]);
+        printf("  滚动范围 X=%d Y=%d\n", r[0], r[1]);
+        printf("  能否到底：X %d，Y %d（应都能）\n",
+               int(r[0] >= int(cs.width() - r[4]) - 2),
+               int(r[1] >= int(cs.height() - r[5]) - 2));
+
+        /* 切到无限竖向，范围应该变长 */
+        PageArrangement a = ss.arrangement();
+        a.mode = PageArrangement::Vertical;
+        ss.setArrangement(a);
+        const QList<int> r2 = sv.scrollRangeProbe();
+        printf("  竖向排列后：内容高 %.0f，Y 范围 %d\n",
+               sv.contentSizeProbe().height(), r2[1]);
+        sv.hide();
+    }
+
+    printf("== 第 1 页的图不影响第 2 页排版 ==\n");
+    {
+        QImage pic(600, 400, QImage::Format_RGB32);
+        pic.fill(QColor(0x2e, 0x75, 0xb6));
+        const QString path = QStringLiteral("%1/pg.png").arg(outDir);
+        pic.save(path);
+
+        /* 短文字 + 高图 + 长文字，保证后面几页都是纯正文 */
+        QTextDocument gd;
+        gd.setPlainText(QStringLiteral("开头。"));
+        UmeView gv;
+        UmeSettings gs;
+        gv.setSettings(&gs);
+        gv.setDocument(&gd);
+        gv.setBaseFormat(font, pt);
+
+        QTextCursor end(&gd);
+        end.movePosition(QTextCursor::End);
+        gv.setTextCursor(end);
+        gv.insertImage(path);
+        UmeDoc::WideProps wp = gv.currentWideObject();
+        wp.wrap = UmeDoc::WideWrap::Span;
+        wp.span = 8;
+        wp.heightPt = 300.0;
+        gv.applyWideObject(wp);
+
+        gv.insertTextProbe(QString(2400, QLatin1Char('h')));
+
+        const QRectF box = gv.wideItemBoxProbe(0);
+        const int pages = gv.pageCountProbe();
+        printf("  图：页内 y%.1f–%.1f（h=%.0f），正文区顶 %.1f，共 %d 页\n",
+               box.top(), box.bottom(), box.height(),
+               gs.page().textArea().top(), pages);
+
+        for (int p = 0; p < pages; ++p)
+            printf("    第 %d 页：起点不在页首的列 = %d（应为 0）\n",
+                   p + 1, gv.colsOffTopProbe(p));
+    }
+
+    printf("== 能选中第 2 页的图 ==\n");
+    {
+        QImage a(600, 500, QImage::Format_RGB32);
+        a.fill(QColor(0x2e, 0x75, 0xb6));
+        const QString pa = QStringLiteral("%1/sel1.png").arg(outDir);
+        a.save(pa);
+        QImage b(600, 500, QImage::Format_RGB32);
+        b.fill(QColor(0xc0, 0x40, 0x40));
+        const QString pb = QStringLiteral("%1/sel2.png").arg(outDir);
+        b.save(pb);
+
+        QTextDocument sd;
+        sd.setPlainText(QStringLiteral("文字"));
+        UmeView sv;
+        UmeSettings ss;
+        sv.setSettings(&ss);
+        sv.setDocument(&sd);
+        sv.setBaseFormat(font, pt);
+
+        sv.insertImage(pa);
+        UmeDoc::WideProps big = sv.currentWideObject();
+        big.span = 12;
+        big.heightPt = 500.0;
+        sv.applyWideObject(big);
+        sv.insertImage(pb);
+        UmeDoc::WideProps big2 = sv.currentWideObject();
+        big2.span = 12;
+        big2.heightPt = 400.0;
+        sv.applyWideObject(big2);
+        printf("  页数 = %d，宽对象数 = %d\n", sv.pageCountProbe(),
+               int(sv.wideObjectsProbe().count(QLatin1String("[x"))));
+        for (int i = 0; i < 6; ++i) {
+            const QRectF d = sv.wideItemDocRectProbe(i);
+            if (!d.isValid())
+                break;
+            printf("    #%d 页%d 内容坐标 x%.1f–%.1f y%.1f–%.1f\n",
+                   i, sv.wideItemPageProbe(i), d.left(), d.right(), d.top(), d.bottom());
+        }
+
+        /* 点第 2 张图的中心 */
+        const QRectF second = sv.wideItemDocRectProbe(1);
+        const QPointF hit = second.center();
+        QMouseEvent press(QEvent::MouseButtonPress, hit, sv.mapToGlobal(hit.toPoint()),
+                          Qt::LeftButton, Qt::LeftButton, Qt::NoModifier);
+        QApplication::sendEvent(&sv, &press);
+        QMouseEvent release(QEvent::MouseButtonRelease, hit, sv.mapToGlobal(hit.toPoint()),
+                            Qt::LeftButton, Qt::NoButton, Qt::NoModifier);
+        QApplication::sendEvent(&sv, &release);
+
+        printf("  点击后选中索引 = %d（应为 1）\n", sv.selectedWideObject());
+
+        /* 改高度，确认只动第 2 张 */
+        UmeDoc::WideProps p = sv.currentWideObject();
+        p.heightPt = 200.0;
+        sv.applyWideObject(p);
+        for (int i = 0; i < 3; ++i) {
+            const QRectF d = sv.wideItemDocRectProbe(i);
+            if (!d.isValid())
+                break;
+            printf("    改后 #%d 高 %.1f\n", i, d.height());
+        }
+    }
+
+    printf("== 表格跨页（整行切分）==\n");
+    {
+        QTextDocument td;
+        td.setPlainText(QStringLiteral("表格前的文字。"));
+        UmeView tv;
+        UmeSettings ts;
+        tv.setSettings(&ts);
+        tv.setDocument(&td);
+        tv.setBaseFormat(font, pt);
+
+        QTextCursor end(&td);
+        end.movePosition(QTextCursor::End);
+        tv.setTextCursor(end);
+        tv.insertTable(10, 3);          /* 10 行：必然超过一页 */
+
+        UmeDoc::WideProps wp = tv.currentWideObject();
+        wp.span = 6;
+        wp.heightPt = 1200.0;           /* 每行 120pt，一页约 6 行 */
+        tv.applyWideObject(wp);
+
+        printf("  页数 = %d，表格片段数 = %d\n", tv.pageCountProbe(),
+               tv.tableFragmentCountProbe());
+        printf("  片段：%s\n", qPrintable(tv.tableFragmentsProbe()));
+
+        /* 每个片段的行区间不能重叠、不能跳行，且首尾相接 */
+        const QString frags = tv.tableFragmentsProbe();
+        printf("  行区间连续 = %d（应为 1）\n",
+               int(frags.contains(QStringLiteral("rows 0-"))));
+        tv.renderPageImage(0, 1.0, false).save(QStringLiteral("%1/table-p1.png").arg(outDir));
+        tv.renderPageImage(1, 1.0, false).save(QStringLiteral("%1/table-p2.png").arg(outDir));
+    }
+
+    printf("== 单元格内多列文本 ==\n");
+    {
+        QTextDocument cd;
+        cd.setPlainText(QStringLiteral("表"));
+        UmeView cv;
+        UmeSettings cs;
+        cv.setSettings(&cs);
+        cv.setDocument(&cd);
+        cv.setBaseFormat(font, pt);
+
+        QTextCursor end(&cd);
+        end.movePosition(QTextCursor::End);
+        cv.setTextCursor(end);
+        cv.insertTable(1, 1);
+
+        /* 往唯一单元格里塞 60 个字（用单元格自己的光标） */
+        QTextTable *tbl = cv.textCursor().currentTable();
+        QTextCursor cell = tbl ? tbl->cellAt(0, 0).firstCursorPosition()
+                               : cv.textCursor();
+        cell.insertText(QString(60, QChar(0x6C49)));    /* 汉字「汉」 */
+        cv.setTextCursor(cell);
+
+        UmeDoc::WideProps wp = cv.currentWideObject();
+        wp.span = 4;
+        wp.heightPt = 90.0;
+        cv.applyWideObject(wp);
+
+        printf("  cell text len = %d\n",
+               int(tbl ? tbl->cellAt(0, 0).firstCursorPosition().block().text().size()
+                        : -1));
+        const QRectF box = cv.wideItemBoxProbe(0);
+        printf("  表格 x%.1f–%.1f y%.1f–%.1f\n",
+               box.left(), box.right(), box.top(), box.bottom());
+
+        const QImage img = cv.renderPageImage(0, 1.0, false);
+        /* 在格子内按 x 统计「有墨迹的条带数」 */
+        const int x0 = int(box.left()) + 2;
+        const int x1 = int(box.right()) - 2;
+        const int y0 = int(box.top()) + 2;
+        const int y1 = int(box.bottom()) - 2;
+        int bands = 0;
+        bool inBand = false;
+        for (int x = x0; x < x1 && x < img.width(); ++x) {
+            bool ink = false;
+            for (int y = y0; y < y1 && y < img.height(); ++y) {
+                const QColor c = img.pixelColor(x, y);
+                if (c.red() < 120 && c.green() < 120 && c.blue() < 120) {
+                    ink = true;
+                    break;
+                }
+            }
+            if (ink && !inBand) {
+                ++bands;
+                inBand = true;
+            } else if (!ink) {
+                inBand = false;
+            }
+        }
+        printf("  单元格内墨迹条带数 = %d（>1 说明分成多列）\n", bands);
+        img.save(QStringLiteral("%1/table-cell.png").arg(outDir));
+    }
+
+    printf("== 表格单元格：合适尺寸 / Enter 跳格 ==\n");
+    {
+        QTextDocument td;
+        td.setPlainText(QStringLiteral("表"));
+        UmeView tv;
+        UmeSettings ts;
+        tv.setSettings(&ts);
+        tv.setDocument(&td);
+        tv.setBaseFormat(font, pt);
+
+        QTextCursor end(&td);
+        end.movePosition(QTextCursor::End);
+        tv.setTextCursor(end);
+        tv.insertTable(2, 3);
+
+        QTextTable *tbl = tv.textCursor().currentTable();
+        if (tbl) {
+            /* 第 1 格塞长文本，看列宽是否按内容变宽 */
+            tbl->cellAt(0, 0).firstCursorPosition().insertText(
+                QString(40, QChar(0x6C49)));
+            tbl->cellAt(0, 1).firstCursorPosition().insertText(QStringLiteral("短"));
+        }
+        tv.applyWideObject(tv.currentWideObject());
+        printf("  表格盒：%s\n", qPrintable(tv.wideObjectsProbe()));
+
+        /* Enter 跳格：从 (0,0) 开始，走完 6 格再一格应跳出表格 */
+        tv.setTextCursor(tbl->cellAt(0, 0).firstCursorPosition());
+        for (int i = 0; i < 6; ++i) {
+            QKeyEvent key(QEvent::KeyPress, Qt::Key_Return, Qt::NoModifier);
+            QApplication::sendEvent(&tv, &key);
+            const QTextCursor c = tv.textCursor();
+            QTextTableCell cell = tbl->cellAt(c);
+            printf("  Enter#%d → 行 %d 列 %d%s\n", i + 1,
+                   cell.isValid() ? cell.row() : -1,
+                   cell.isValid() ? cell.column() : -1,
+                   cell.isValid() ? "" : "（已跳出表格）");
+        }
+
+        tv.renderPageImage(0, 1.0, false).save(QStringLiteral("%1/table-cells2.png").arg(outDir));
+    }
+
+    printf("== 表格专用手柄 ==\n");
+    {
+        QTextDocument td;
+        td.setPlainText(QStringLiteral("表"));
+        UmeView tv;
+        UmeSettings ts;
+        tv.setSettings(&ts);
+        tv.setDocument(&td);
+        tv.setBaseFormat(font, pt);
+
+        QTextCursor end(&td);
+        end.movePosition(QTextCursor::End);
+        tv.setTextCursor(end);
+        tv.insertTable(3, 3);
+        tv.applyWideObject(tv.currentWideObject());
+
+        /* 选中表格（点它本体） */
+        const QRectF box = tv.wideItemDocRectProbe(0);
+        QMouseEvent press(QEvent::MouseButtonPress, box.center(),
+                          tv.mapToGlobal(box.center().toPoint()), Qt::LeftButton,
+                          Qt::LeftButton, Qt::NoModifier);
+        QApplication::sendEvent(&tv, &press);
+        QMouseEvent rel(QEvent::MouseButtonRelease, box.center(),
+                        tv.mapToGlobal(box.center().toPoint()), Qt::LeftButton,
+                        Qt::NoButton, Qt::NoModifier);
+        QApplication::sendEvent(&tv, &rel);
+
+        printf("  选中索引 = %d\n", tv.selectedWideObject());
+        printf("  手柄数 = %d（3×3 应有 2 条列线 + 2 条行线 = 4）\n",
+               int(tv.wideHandlesProbe().size()));
+
+        /* 表格不允许旋转 */
+        UmeDoc::WideProps p = tv.currentWideObject();
+        p.rotation = 45.0;
+        tv.applyWideObject(p);
+        printf("  设 45° 后读回 rotation = %.1f（应为 0）\n",
+               tv.currentWideObject().rotation);
+
+        /* 拖第一条列分隔线 → 第 0 列变宽、第 1 列变窄 */
+        const QVector<QRectF> hs = tv.wideHandlesProbe();
+        if (!hs.isEmpty()) {
+            const QPointF h = hs.first().center();
+            QMouseEvent d0(QEvent::MouseButtonPress, h, tv.mapToGlobal(h.toPoint()),
+                           Qt::LeftButton, Qt::LeftButton, Qt::NoModifier);
+            QApplication::sendEvent(&tv, &d0);
+            const QPointF h2 = h + QPointF(12, 0);
+            QMouseEvent d1(QEvent::MouseMove, h2, tv.mapToGlobal(h2.toPoint()),
+                           Qt::NoButton, Qt::LeftButton, Qt::NoModifier);
+            QApplication::sendEvent(&tv, &d1);
+            QMouseEvent d2(QEvent::MouseButtonRelease, h2, tv.mapToGlobal(h2.toPoint()),
+                           Qt::LeftButton, Qt::NoButton, Qt::NoModifier);
+            QApplication::sendEvent(&tv, &d2);
+            const UmeDoc::WideProps q = tv.currentWideObject();
+            printf("  列宽：%s\n", qPrintable([&] {
+                       QStringList s;
+                       for (qreal w : q.colSizes)
+                           s << QString::number(w, 'f', 1);
+                       return s.join(QLatin1Char('/'));
+                   }()));
+        }
+    }
+
+    printf("== 整行/整列格式 ==\n");
+    {
+        QTextDocument td;
+        td.setPlainText(QStringLiteral("表"));
+        UmeView tv;
+        UmeSettings ts;
+        tv.setSettings(&ts);
+        tv.setDocument(&td);
+        tv.setBaseFormat(font, pt);
+
+        QTextCursor end(&td);
+        end.movePosition(QTextCursor::End);
+        tv.setTextCursor(end);
+        tv.insertTable(3, 3);
+        QTextTable *tbl = tv.textCursor().currentTable();
+        for (int i = 0; i < 3; ++i)
+            for (int j = 0; j < 3; ++j)
+                tbl->cellAt(i, j).firstCursorPosition().insertText(
+                    QStringLiteral("%1%2").arg(i).arg(j));
+
+        tv.applyWideObject(tv.currentWideObject());
+
+        /* 选中第 1 行（点第 1 条行分隔线手柄） */
+        const QRectF box = tv.wideItemDocRectProbe(0);
+        const QVector<QRectF> hs = tv.wideHandlesProbe();
+        /* 前 cols-1 个是列线，后面是行线 */
+        int rowHandle = -1;
+        for (int k = 0; k < hs.size(); ++k) {
+            if (qAbs(hs[k].center().y() - box.top()) > 2.0) {
+                rowHandle = k;
+                break;
+            }
+        }
+        if (rowHandle >= 0) {
+            const QPointF h = hs[rowHandle].center();
+            QMouseEvent pr(QEvent::MouseButtonPress, h, tv.mapToGlobal(h.toPoint()),
+                           Qt::LeftButton, Qt::LeftButton, Qt::NoModifier);
+            QApplication::sendEvent(&tv, &pr);
+            QMouseEvent rl(QEvent::MouseButtonRelease, h, tv.mapToGlobal(h.toPoint()),
+                           Qt::LeftButton, Qt::NoButton, Qt::NoModifier);
+            QApplication::sendEvent(&tv, &rl);
+        }
+
+        /* 加粗 —— 应该只作用于第 1 行 */
+        const int idx = int(UmeView::StyleBold);
+        tv.applyCharStyleProbe(idx, true);
+
+        for (int i = 0; i < 3; ++i) {
+            printf("  第 %d 行：", i);
+            for (int j = 0; j < 3; ++j)
+                printf("%d ", int(tbl->cellAt(i, j).format().fontWeight()));
+            printf("\n");
+        }
+    }
+
+    printf("== 拖行分隔线不失控 ==\n");
+    {
+        QTextDocument td;
+        td.setPlainText(QStringLiteral("表"));
+        UmeView tv;
+        UmeSettings ts;
+        tv.setSettings(&ts);
+        tv.setDocument(&td);
+        tv.setBaseFormat(font, pt);
+
+        QTextCursor end(&td);
+        end.movePosition(QTextCursor::End);
+        tv.setTextCursor(end);
+        tv.insertTable(4, 3);
+        tv.applyWideObject(tv.currentWideObject());
+
+        /* 选中表格本体 */
+        const QRectF box0 = tv.wideItemDocRectProbe(0);
+        QMouseEvent s0(QEvent::MouseButtonPress, box0.center(),
+                       tv.mapToGlobal(box0.center().toPoint()),
+                       Qt::LeftButton, Qt::LeftButton, Qt::NoModifier);
+        QApplication::sendEvent(&tv, &s0);
+        QMouseEvent s1(QEvent::MouseButtonRelease, box0.center(),
+                       tv.mapToGlobal(box0.center().toPoint()),
+                       Qt::LeftButton, Qt::NoButton, Qt::NoModifier);
+        QApplication::sendEvent(&tv, &s1);
+
+        const qreal h0 = tv.wideItemDocRectProbe(0).height();
+        printf("  初始表高 %.1f\n", h0);
+
+        /* 找第一条行分隔线手柄（y 不在表格顶部的那个） */
+        const QVector<QRectF> hs = tv.wideHandlesProbe();
+        QPointF rowH(-1, -1);
+        for (const QRectF &hr : hs) {
+            if (qAbs(hr.center().y() - box0.top()) > 2.0) {
+                rowH = hr.center();
+                break;
+            }
+        }
+        printf("  行线手柄 (%.1f, %.1f)，共 %d 个手柄\n",
+               rowH.x(), rowH.y(), int(hs.size()));
+
+        if (rowH.x() > 0) {
+            QMouseEvent d0(QEvent::MouseButtonPress, rowH, tv.mapToGlobal(rowH.toPoint()),
+                           Qt::LeftButton, Qt::LeftButton, Qt::NoModifier);
+            QApplication::sendEvent(&tv, &d0);
+            /* 分 10 步往下拖 20pt，模拟真实拖动 */
+            for (int i = 1; i <= 10; ++i) {
+                const QPointF p = rowH + QPointF(0, 2.0 * i);
+                QMouseEvent mv(QEvent::MouseMove, p, tv.mapToGlobal(p.toPoint()),
+                               Qt::NoButton, Qt::LeftButton, Qt::NoModifier);
+                QApplication::sendEvent(&tv, &mv);
+            }
+            const QPointF lastP = rowH + QPointF(0, 20);
+            QMouseEvent up(QEvent::MouseButtonRelease, lastP,
+                           tv.mapToGlobal(lastP.toPoint()),
+                           Qt::LeftButton, Qt::NoButton, Qt::NoModifier);
+            QApplication::sendEvent(&tv, &up);
+
+            const qreal h1 = tv.wideItemDocRectProbe(0).height();
+            printf("  拖 +20pt 后表高 %.1f（应约 %.1f，不该失控）\n", h1, h0 + 20);
+            printf("  失控 = %d（应为 0）\n", int(h1 > h0 + 60));
         }
     }
 

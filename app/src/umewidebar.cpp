@@ -6,6 +6,7 @@
 #include <QCheckBox>
 #include <QDoubleSpinBox>
 #include <QFormLayout>
+#include <QGroupBox>
 #include <QHBoxLayout>
 #include <QLabel>
 #include <QPushButton>
@@ -77,7 +78,10 @@ void UmeWideBar::buildUi()
     posRow->addWidget(m_resetOffsetBtn);
     form->addRow(QStringLiteral("位置"), posRow);
 
-    /* 图片格式控制：镜像（带图标） */
+    /* 图片格式区：只有图片才显示 */
+    m_imageGroup = new QGroupBox(QStringLiteral("图片格式"), this);
+    auto *imageForm = new QFormLayout(m_imageGroup);
+
     auto *mirrorRow = new QHBoxLayout;
     auto *mirrorLabel = new QLabel(QStringLiteral("图片"), this);
     mirrorLabel->setObjectName(QStringLiteral("mirrorLabel"));
@@ -97,7 +101,12 @@ void UmeWideBar::buildUi()
     mirrorRow->addWidget(m_mirrorHBtn);
     mirrorRow->addWidget(m_mirrorVBtn);
     mirrorRow->addStretch(1);
-    form->addRow(QStringLiteral("镜像"), mirrorRow);
+    imageForm->addRow(QStringLiteral("镜像"), mirrorRow);
+    outer->addWidget(m_imageGroup);
+
+    /* 表格格式区：只有表格才显示 */
+    m_tableGroup = new QGroupBox(QStringLiteral("表格格式"), this);
+    auto *tableForm = new QFormLayout(m_tableGroup);
 
     auto *tableRow = new QHBoxLayout;
     m_rowAdd = new QPushButton(QStringLiteral("+ 行"), this);
@@ -108,7 +117,8 @@ void UmeWideBar::buildUi()
     tableRow->addWidget(m_rowDel);
     tableRow->addWidget(m_colAdd);
     tableRow->addWidget(m_colDel);
-    form->addRow(QStringLiteral("表格"), tableRow);
+    tableForm->addRow(QStringLiteral("行/列"), tableRow);
+    outer->addWidget(m_tableGroup);
 
     outer->addLayout(form);
     outer->addStretch(1);
@@ -177,7 +187,11 @@ void UmeWideBar::syncFromView()
 
     setEnabled(wide);
     if (!wide) {
-        m_summary->setText(QStringLiteral("光标不在表格或图片里"));
+        m_summary->setText(QStringLiteral("未选中宽对象：点一下图片或表格"));
+        if (m_imageGroup)
+            m_imageGroup->setVisible(false);
+        if (m_tableGroup)
+            m_tableGroup->setVisible(false);
         m_syncing = false;
         return;
     }
@@ -201,8 +215,12 @@ void UmeWideBar::syncFromView()
     m_mirrorHBtn->setChecked(p.flipH);
     m_mirrorVBtn->setChecked(p.flipV);
 
-    /* 表格的增删行列只对表格有意义 */
+    /* 按对象类型切换两个分区 */
     const bool isTable = (p.kind == UmeDoc::WideKind::Table);
+    const bool isImage = (p.kind == UmeDoc::WideKind::Image);
+    m_imageGroup->setVisible(isImage);
+    m_tableGroup->setVisible(isTable);
+
     m_rowAdd->setEnabled(isTable);
     m_rowDel->setEnabled(isTable);
     m_colAdd->setEnabled(isTable);

@@ -30,6 +30,7 @@ private:
     QComboBox *m_fontBox = nullptr;
     QDoubleSpinBox *m_sizeBox = nullptr;
     QDoubleSpinBox *m_pitchBox = nullptr;
+    QComboBox *m_orientBox = nullptr;
     QCheckBox *m_guideBox = nullptr;
     QCheckBox *m_rtlBox = nullptr;
     QLabel *m_summary = nullptr;

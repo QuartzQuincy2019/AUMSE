@@ -3,6 +3,7 @@
 #include "umesettings.h"
 #include "umedoc.h"
 #include "umeicons.h"
+#include "umehit.h"
 #include "umeinteract.h"
 #include "umelog.h"
 
@@ -55,6 +56,14 @@ UmeView::UmeView(QWidget *parent)
     m_vbar->setSingleStep(20);
     connect(m_vbar, &QScrollBar::valueChanged, this, [this](int v) {
         m_scrollY = v;
+        update();
+    });
+
+    /* 横向滚动条：多页并排时内容会宽于窗口，没有它右侧永远够不到 */
+    m_hbar = new QScrollBar(Qt::Horizontal, this);
+    m_hbar->setSingleStep(20);
+    connect(m_hbar, &QScrollBar::valueChanged, this, [this](int v) {
+        m_scrollX = v;
         update();
     });
 
@@ -121,6 +130,9 @@ UmeDoc::WideProps UmeView::currentWideObject() const
     if (!m_doc)
         return {};
 
+    /* 优先级：光标所在的宽对象 > 已选中的宽对象。
+       光标在表格里时必须是「这张表」，不能还停在之前选中的图片上；
+       而插图后光标会落在图片之后的段落里，此时才回退到选中项。 */
     if (const QTextTable *table = m_cursor.currentTable()) {
         const QTextBlock first = table->firstCursorPosition().block();
         UmeDoc::WideProps p = UmeDoc::wideProps(first);
@@ -131,7 +143,14 @@ UmeDoc::WideProps UmeView::currentWideObject() const
         }
         return p;
     }
-    return UmeDoc::wideProps(m_cursor.block());
+    const UmeDoc::WideProps onCursor = UmeDoc::wideProps(m_cursor.block());
+    if (onCursor.isValid())
+        return onCursor;
+
+    if (const UmeLayout::WideItem *item = selectedWideItem())
+        return UmeDoc::wideProps(item->block);
+
+    return onCursor;
 }
 
 void UmeView::applyWideObject(UmeDoc::WideProps props)
@@ -141,11 +160,22 @@ void UmeView::applyWideObject(UmeDoc::WideProps props)
 
     QTextBlock target;
     if (const QTextTable *table = m_cursor.currentTable())
-        target = table->firstCursorPosition().block();
+        target = table->firstCursorPosition().block();       /* 光标所在对象优先 */
+    else if (UmeDoc::isWideBlock(m_cursor.block()))
+        target = m_cursor.block();
+    else if (const UmeLayout::WideItem *item = selectedWideItem())
+        target = item->block;                                /* 否则用选中项 */
     else
         target = m_cursor.block();
     if (!target.isValid())
         return;
+
+    /* 防误擦：kind 为空说明调用方的属性没取到（比如光标不在对象里）。
+       直接写下去会把「宽对象」标记抹掉，整张表会散成普通段落。 */
+    if (props.kind == UmeDoc::WideKind::None) {
+        UME_LOG("wide", QStringLiteral("apply ignored: kind=None (refused)"));
+        return;
+    }
 
     /* 钳制：夸张的值会破坏整篇布局（跨列超过页宽、高度超过正文区、
        旋转任意角度导致命中测试失效） */
@@ -153,14 +183,21 @@ void UmeView::applyWideObject(UmeDoc::WideProps props)
         const QRectF area = m_settings ? m_settings->page().textArea() : QRectF();
         const qreal strip = qMax(8.0, m_minWidthForDrag);
         UmeDoc::WideProps bounded = props;
-        const int maxSpan = area.isValid()
-                                ? qMax(1, int(area.width() / strip))
-                                : 12;
+        const int maxSpan = area.isValid() ? qMax(1, int(area.width() / strip))
+                                           : maxSpanForPage();
         bounded.span = qBound(1, props.span, qMin(maxSpan, 48));
         const qreal maxH = area.isValid() ? area.height() : 800.0;
-        bounded.heightPt = qBound(8.0, props.heightPt, maxH);
+        /* 表格可以跨页：高度上限给到 40 页，否则永远切不出第二段。
+           图片仍然限一页内（跨页的图没有意义）。 */
+        const qreal heightCap = (props.kind == UmeDoc::WideKind::Table)
+                                    ? maxH * 40.0
+                                    : maxH;
+        bounded.heightPt = qBound(8.0, props.heightPt, heightCap);
         bounded.offsetPt = qBound(-maxH, props.offsetPt, maxH);
-        bounded.rotation = std::fmod(props.rotation, 360.0);
+        /* 表格不旋转 */
+        bounded.rotation = (props.kind == UmeDoc::WideKind::Table)
+                               ? 0.0
+                               : std::fmod(props.rotation, 360.0);
         if (bounded != props) {
             UME_LOG("wide", QStringLiteral("clamped span %1→%2 h %3→%4")
                                  .arg(props.span).arg(bounded.span)
@@ -170,7 +207,8 @@ void UmeView::applyWideObject(UmeDoc::WideProps props)
         }
     }
 
-    UME_LOG("wide", QStringLiteral("apply kind=%1 wrap=%2 span=%3 h=%4 off=%5 rot=%6")
+    if (UME_LOG_EVERY("wide", 120))
+        UME_LOG("wide", QStringLiteral("apply kind=%1 wrap=%2 span=%3 h=%4 off=%5 rot=%6")
                         .arg(int(props.kind)).arg(int(props.wrap))
                         .arg(props.span).arg(props.heightPt, 0, 'f', 1)
                         .arg(props.offsetPt, 0, 'f', 1).arg(props.rotation, 0, 'f', 1));
@@ -200,7 +238,7 @@ void UmeView::resizeWideObject(qreal newHeightPt, bool keepAspect)
         const qreal ratio = p.naturalW / p.naturalH;
         const qreal w = h * ratio;
         const qreal strip = (m_colPitch > 0.0) ? m_colPitch : 20.0;
-        p.span = qBound(1, qRound(w / strip), 12);
+        p.span = qBound(1, qRound(w / strip), maxSpanForPage());
     }
     p.heightPt = h;
     applyWideObject(p);
@@ -249,18 +287,32 @@ const QImage &UmeView::imageFor(const QString &path) const
     return it.value();
 }
 
-const UmeLayout::WideItem *UmeView::selectedWideItem() const
+int UmeView::selectedWideObject() const
 {
     const QVector<UmeLayout::WideItem> &items = m_layout.wideItems();
-    if (m_selectedWide < 0 || m_selectedWide >= items.size())
+    for (int i = 0; i < items.size(); ++i) {
+        if (items.at(i).block.position() == m_selectedWideBlock)
+            return i;
+    }
+    return -1;
+}
+
+const UmeLayout::WideItem *UmeView::selectedWideItem() const
+{
+    if (m_selectedWideBlock < 0)
         return nullptr;
-    return &items.at(m_selectedWide);
+    for (const UmeLayout::WideItem &it : m_layout.wideItems()) {
+        if (it.block.position() == m_selectedWideBlock)
+            return &it;
+    }
+    return nullptr;
 }
 
 void UmeView::paintWideItems(QPainter &p) const
 {
     for (const UmeLayout::WideItem &item : m_layout.wideItems()) {
-        const QRectF r = item.box;
+        /* 盒子是页内坐标，画之前加上该页原点 —— 否则第二页的对象会画到第一页上 */
+        const QRectF r = m_layout.docRect(item);
 
         if (item.props.kind == UmeDoc::WideKind::Table) {
             /* 表格：外框 + 网格 + 单元格文字（竖排） */
@@ -272,10 +324,16 @@ void UmeView::paintWideItems(QPainter &p) const
             QTextCursor bc(item.block);
             QTextTable *table = bc.currentTable();
             if (table) {
-                const int rows = qMax(1, table->rows());
+                const int total = qMax(1, table->rows());
                 const int cols = qMax(1, table->columns());
-                for (int i = 1; i < rows; ++i) {
-                    const qreal y = r.top() + r.height() * i / rows;
+                /* 跨页片段只画本片段的行：按全表行数等分会把格子压扁 */
+                const int firstRow = qBound(0, item.rowFirst, total - 1);
+                const int lastRow = (item.rowLast < 0) ? total - 1
+                                                       : qBound(0, item.rowLast, total - 1);
+                const int shown = qMax(1, lastRow - firstRow + 1);
+
+                for (int i = 1; i < shown; ++i) {
+                    const qreal y = r.top() + r.height() * i / shown;
                     p.drawLine(QPointF(r.left(), y), QPointF(r.right(), y));
                 }
                 for (int j = 1; j < cols; ++j) {
@@ -285,7 +343,7 @@ void UmeView::paintWideItems(QPainter &p) const
             }
             p.restore();
 
-            paintTableCells(p, item);
+            paintTableCells(p, item, r);
             continue;
         }
 
@@ -320,26 +378,238 @@ void UmeView::paintWideItems(QPainter &p) const
     p.restore();
 }
 
-void UmeView::paintTableCells(QPainter &p, const UmeLayout::WideItem &item) const
+void UmeView::setLayoutFormats(QTextLayout *lay, const QTextBlock &block)
+{
+    if (!lay || !block.isValid())
+        return;
+
+    QList<QTextLayout::FormatRange> ranges;
+    for (auto it = block.begin(); !it.atEnd(); ++it) {
+        const QTextFragment frag = it.fragment();
+        if (!frag.isValid())
+            continue;
+        QTextLayout::FormatRange r;
+        r.start = frag.position() - block.position();
+        r.length = frag.length();
+        r.format = frag.charFormat();
+        ranges.append(r);
+    }
+    lay->setFormats(ranges);
+}
+
+void UmeView::drawVerticalLine(QPainter &p, const QTextLayout *lay, const QTextLine &line,
+                               const QTextBlock &block, const QRectF &r,
+                               qreal baseX, qreal baseY, const QColor &fallbackInk) const
+{
+    if (!lay || !line.isValid() || !block.isValid())
+        return;
+
+    struct FmtSpan { qreal x0; qreal x1; QTextCharFormat fmt; };
+    QVector<FmtSpan> spans;
+    for (const QTextLayout::FormatRange &fr : lay->formats()) {
+        const qreal x0 = line.cursorToX(fr.start);
+        const qreal x1 = line.cursorToX(fr.start + fr.length);
+        if (x1 > x0)
+            spans.append({x0, x1, fr.format});
+    }
+    auto formatAt = [&spans](qreal x) -> QTextCharFormat {
+        for (const FmtSpan &s : spans) {
+            if (x >= s.x0 - 0.01 && x < s.x1)
+                return s.fmt;
+        }
+        return QTextCharFormat();
+    };
+    auto colorAt = [&formatAt, fallbackInk](qreal x) {
+        const QColor col = formatAt(x).foreground().color();
+        return col.isValid() ? col : fallbackInk;
+    };
+    auto fmtAt = [&spans, this](qreal x) {
+        for (const FmtSpan &s : spans) {
+            if (x >= s.x0 - 0.01 && x < s.x1)
+                return s.fmt.font();
+        }
+        QFont f(QStringLiteral("Noto Sans Mongolian"));
+        f.setPointSizeF(m_metricsPt);
+        return f;
+    };
+
+        /* 默认的检索标志里没有 rawFont，拿到的 run 画不出东西 —— 必须显式要。 */
+        const QList<QGlyphRun> runs = line.glyphRuns(
+            -1, -1,
+            QTextLayout::RetrieveGlyphIndexes | QTextLayout::RetrieveGlyphPositions
+                | QTextLayout::RetrieveStringIndexes | QTextLayout::RetrieveString);
+        for (const QGlyphRun &gr : runs) {
+            const QRawFont rf = gr.rawFont();
+            const QList<quint32> glyphs = gr.glyphIndexes();
+            const QList<QPointF> pos = gr.positions();
+            const QString src = gr.sourceString();
+
+            /* 整段都是「直立类」才直立。判断依据不是 sourceString
+               （Qt 常常给空串），而是「这个 run 落在哪个字符上」——
+               用它在行内的 x 反查。 */
+            const QString blockText = block.text();
+            auto charAtLineX = [&](qreal x) {
+                const int p = line.xToCursor(x + 0.01);
+                return (p >= 0 && p < blockText.size()) ? blockText.at(p) : QChar();
+            };
+            /* 直立与否必须逐字判：整段一判时，只要首字形落在空格/标点上，
+               整段汉字就都被当成蒙文旋转了（实测「成吉思汗」就是这么躺倒的）。 */
+
+            for (int k = 0; k < glyphs.size(); ++k) {
+                const QPointF gp = k < pos.size() ? pos.at(k) : QPointF(0, 0);
+                /* 该字形所在的字符：取格子中点反查（中点必定落在字符内部，
+                   不像起点那样容易被舍到前一个字上）。 */
+                /* 先算槽位（px），再用槽位中点反查字符 —— 中点必在字符内部，
+                   单字形 run 也不会被判成前一个字。 */
+                qreal slot = 0.0;
+                if (k + 1 < pos.size()) {
+                    slot = pos.at(k + 1).x() - gp.x();
+                } else {
+                    const qreal adv = rf.advancesForGlyphIndexes(
+                                            QList<quint32>{glyphs.at(k)})
+                                          .value(0).x();
+                    const qreal remain = line.naturalTextWidth() - gp.x();
+                    slot = (adv > 0.5) ? qMin(adv, qMax(remain, adv)) : remain;
+                }
+                if (slot <= 0.5)
+                    slot = 19.0;   // 兜底：一个汉字宽（px）
+
+                /* 取 0.35 而不是 0.5：正好落在字形「中点」时，
+                   若该字形很窄，中点会压到下一个字符的起点上，
+                   于是把下一字的汉字错判成这一格的内容（会画出一个小的重影）。 */
+                const qreal midX = gp.x() + slot * 0.35;
+                const QChar thisChar = charAtLineX(midX);
+                const GlyphPlace place = placeFor(thisChar);
+                const bool upright = place != GlyphPlace::Rotated;
+
+                const QColor ink = colorAt(gp.x());
+
+                /* 链接下划线：竖排里画成与列平行的细线，贴在墨迹左侧 */
+                const QTextCharFormat gfmt = formatAt(gp.x());
+                if (gfmt.fontUnderline() || gfmt.isAnchor()) {
+                    const qreal ux = r.left() + UmeLayout::kPad - 1.2;
+                    p.save();
+                    p.setPen(QPen(ink, 0.8));
+                    p.drawLine(QPointF(ux, baseY + gp.x() * kPxToPt),
+                               QPointF(ux, baseY + (gp.x() + slot) * kPxToPt));
+                    p.restore();
+                }
+
+                if (upright) {
+                    /* 直立字：位置与格子都从「字符区间」推出 ——
+                       用 cursorToX(字符起点) 和 cursorToX(字符终点)，
+                       同一把尺子量出来，相邻两字必然首尾相接，不会重叠。 */
+                    const QChar ch = thisChar;
+                    if (ch.isNull())
+                        continue;
+
+                    /* 格子直接由字形位置推导：gp.x() 与 slot 都是布局单位，
+                       与排版步进同源，不会出现「字距被多乘/少乘 0.75」。 */
+                    const qreal y0 = gp.x() * kPxToPt;
+                    const qreal cellH = qMax(slot * kPxToPt, 4.0);
+
+                    /* 用「基线点」画，不用矩形：drawText(QRectF, …) 会把超出矩形的
+                       笔画裁掉 —— 汉字下缘就是这么被吃掉的。 */
+                    QFont f = fmtAt(midX);
+                    /* 字号取格子大小：排版给的格子就是这一格的可用高度，
+                       按它定字号最稳（不再用矩形画，不会切笔画）。 */
+                    /* 字号按格子定，但钳在「半个字到两个字」之间：
+                       格子算错时不至于画出米粒大小或顶天立地的怪字。 */
+                    const qreal basePt = m_metricsPt > 0 ? m_metricsPt : 14.0;
+                    const qreal px = qBound(basePt * 0.5, cellH, basePt * 2.0);
+                    f.setPixelSize(qMax(1, qRound(px)));
+
+                    const QFontMetricsF fmr(f);
+                    const QString s(ch);
+
+                    /* 按**墨迹**居中，而不是按字身（advance）居中：
+                       中文标点（。、，？）的墨迹偏在字身一角，按字身居中会跑偏。 */
+                    QRectF inkBox = fmr.tightBoundingRect(s);
+                    if (inkBox.isEmpty())
+                        inkBox = fmr.boundingRect(s);
+
+                    qreal x = 0.0;
+                    qreal baseline = 0.0;
+                    if (place == GlyphPlace::TopRight) {
+                        /* 竖排传统：句读贴格子**右上角** ——
+                           右侧贴列框右缘，上侧贴格子起点。 */
+                        const qreal pad = qMax(0.4, cellH * 0.04);
+                        x = r.right() - pad - inkBox.right();
+                        baseline = (baseY + y0 + pad) - inkBox.top();
+                    } else {
+                        const qreal cellCx = r.left() + r.width() / 2.0;
+                        const qreal cellCy = baseY + y0 + cellH / 2.0;
+                        x = cellCx - inkBox.center().x();
+                        baseline = cellCy - inkBox.center().y();
+                    }
+
+                    p.save();
+                    p.setFont(f);
+                    p.setPen(ink);
+                    p.drawText(QPointF(x, baseline), s);
+                    p.restore();
+                } else {
+                    /* 旋转支：同样用轮廓画。QPainter::drawGlyphRun 在离屏渲染里
+                       不出墨（实测墨迹为 0），轮廓法两条路一致，颜色也好控。 */
+                    const QPainterPath path = rf.pathForGlyph(glyphs.at(k));
+                    if (path.isEmpty())
+                        continue;
+                    p.save();
+                    p.translate(baseX, baseY);
+                    p.rotate(90);
+                    p.scale(kPxToPt, kPxToPt);
+                    p.translate(gp.x(), 0);
+                    p.fillPath(path, ink);
+                    p.restore();
+                }
+            }
+        }
+}
+
+void UmeView::paintTableCells(QPainter &p, const UmeLayout::WideItem &item,
+                                const QRectF &box) const
 {
     QTextCursor bc(item.block);
     QTextTable *table = bc.currentTable();
     if (!table)
         return;
 
-    const QRectF r = item.box;
-    const int rows = qMax(1, table->rows());
+    const int totalRows = qMax(1, table->rows());
     const int cols = qMax(1, table->columns());
-    const qreal cw = r.width() / cols;
-    const qreal ch = r.height() / rows;
+    const int firstRow = qBound(0, item.rowFirst, totalRows - 1);
+    const int lastRow = (item.rowLast < 0) ? totalRows - 1
+                                           : qBound(0, item.rowLast, totalRows - 1);
+    const int shown = lastRow - firstRow + 1;
+    if (shown <= 0)
+        return;
 
-    for (int i = 0; i < rows; ++i) {
+    /* 列宽 / 行高由排版算好（按内容），这里只消费 */
+    QVector<qreal> colW = item.colWidths;
+    if (colW.size() != cols) {
+        colW.clear();
+        for (int j = 0; j < cols; ++j)
+            colW.append(box.width() / cols);
+    }
+    QVector<qreal> rowH = item.rowHeights;
+    if (rowH.size() != shown) {
+        rowH.clear();
+        for (int i = 0; i < shown; ++i)
+            rowH.append(box.height() / shown);
+    }
+
+    qreal y = box.top();
+    for (int row = firstRow; row <= lastRow; ++row) {
+        const qreal h = rowH.at(qMin(row - firstRow, rowH.size() - 1));
+        qreal x = box.left();
+
         for (int j = 0; j < cols; ++j) {
-            const QTextTableCell cell = table->cellAt(i, j);
+            const qreal cw = colW.at(qMin(j, colW.size() - 1));
+            const QRectF cellRect(x, y, cw, h);
+            x += cw;
+
+            const QTextTableCell cell = table->cellAt(row, j);
             if (!cell.isValid())
                 continue;
-            const QRectF cellRect(r.left() + cw * j, r.top() + ch * i, cw, ch);
-
             const QTextBlock b = cell.firstCursorPosition().block();
             if (!b.isValid() || b.text().isEmpty())
                 continue;
@@ -348,27 +618,48 @@ void UmeView::paintTableCells(QPainter &p, const UmeLayout::WideItem &item) cons
             if (!lay)
                 continue;
 
-            /* 单元格内同样是竖排：整段 line 旋转 90° 画进格子 */
+            setLayoutFormats(lay, b);
+            {
+                QTextOption opt = lay->textOption();
+                opt.setWrapMode(QTextOption::WrapAnywhere);
+                lay->setTextOption(opt);
+            }
             lay->beginLayout();
             for (;;) {
                 QTextLine line = lay->createLine();
                 if (!line.isValid())
                     break;
-                line.setLineWidth((ch - 4.0) / (72.0 / 96.0));
+                line.setLineWidth(qMax(4.0, h - 4.0) / kPxToPt);
             }
             lay->endLayout();
 
+            /* 单元格字号兜底颜色 */
+            QColor cellInk = b.charFormat().foreground().color();
+            if (!cellInk.isValid())
+                cellInk = m_baseFormat.foreground().color();
+            if (!cellInk.isValid())
+                cellInk = QColor(0x11, 0x11, 0x11);
+
+            qreal stepPx = 20.0;
+            if (lay->lineCount() > 0)
+                stepPx = qMax(8.0, lay->lineAt(0).height());
+            const qreal colStep = stepPx * kPxToPt;
+
             p.save();
             p.setClipRect(cellRect);
-            p.translate(cellRect.right() - 2.0, cellRect.top() + 2.0);
-            p.rotate(90);
-            p.setPen(QColor(0x11, 0x11, 0x11));
             for (int k = 0; k < lay->lineCount(); ++k) {
-                const QTextLine line = lay->lineAt(k);
-                line.draw(&p, QPointF(0, (cw - 4.0) * k));
+                const qreal baseX = cellRect.right() - 2.0 - colStep * k;
+                if (baseX - colStep < cellRect.left() - 0.5)
+                    break;                          /* 格子放不下更多列 */
+                const QRectF colRect(baseX - colStep, cellRect.top(), colStep,
+                                     cellRect.height());
+                /* 与正文完全同一套字形规则（直立 / 旋转 / 句读贴右上） */
+                drawVerticalLine(p, lay, lay->lineAt(k), b, colRect, baseX,
+                                 cellRect.top() + 2.0, cellInk);
             }
             p.restore();
         }
+        y += h;
     }
 }
 
@@ -376,32 +667,75 @@ void UmeView::paintTableCells(QPainter &p, const UmeLayout::WideItem &item) cons
 
 QVector<QPointF> UmeView::wideHandlePoints(const UmeLayout::WideItem &item) const
 {
-    const QRectF r = item.box;
-    QVector<QPointF> pts;
+    return UmeHit::handlePoints(m_layout.docRect(item));
+}
 
-    /* 8 个缩放手柄：四角 + 四边中点 */
-    pts << r.topLeft() << r.topRight() << r.bottomLeft() << r.bottomRight()
-        << QPointF(r.center().x(), r.top()) << QPointF(r.center().x(), r.bottom())
-        << QPointF(r.left(), r.center().y()) << QPointF(r.right(), r.center().y());
+QVector<QRectF> UmeView::tableHandles(const UmeLayout::WideItem &item) const
+{
+    QVector<QRectF> out;
+    const QRectF box = m_layout.docRect(item);
+    const int cols = qMax(1, item.colWidths.size());
+    const int rows = qMax(1, item.rowHeights.size());
+    if (cols <= 1 && rows <= 1)
+        return out;
 
-    /* 第 9 个：旋转手柄，在对象「上游侧」外 14pt（未旋转时的位置） */
-    pts << QPointF(r.right() + 14.0, r.center().y());
-    return pts;
+    const qreal s = 8.0;
+    /* 列分隔线：贴在表格上边缘 */
+    qreal x = box.left();
+    for (int j = 0; j + 1 < cols; ++j) {
+        x += item.colWidths.value(j, box.width() / cols);
+        out.append(QRectF(x - s / 2, box.top() - s / 2, s, s));
+    }
+    /* 行分隔线：贴在表格右边缘 */
+    qreal y = box.top();
+    for (int i = 0; i + 1 < rows; ++i) {
+        y += item.rowHeights.value(i, box.height() / rows);
+        out.append(QRectF(box.right() - s / 2, y - s / 2, s, s));
+    }
+    return out;
+}
+
+int UmeView::hitTableHandle(const QPointF &docPos, int *axis, int *index) const
+{
+    const UmeLayout::WideItem *item = selectedWideItem();
+    if (!item || item->props.kind != UmeDoc::WideKind::Table)
+        return -1;
+
+    const QRectF box = m_layout.docRect(*item);
+    const int cols = qMax(1, item->colWidths.size());
+    const int rows = qMax(1, item->rowHeights.size());
+    const qreal slop = UmeHit::kHandleSlop;
+
+    qreal x = box.left();
+    for (int j = 0; j + 1 < cols; ++j) {
+        x += item->colWidths.value(j, box.width() / cols);
+        if (qAbs(docPos.x() - x) <= slop && docPos.y() >= box.top() - slop
+            && docPos.y() <= box.top() + slop + 4.0) {
+            if (axis) *axis = 0;
+            if (index) *index = j;
+            return j;
+        }
+    }
+    qreal y = box.top();
+    for (int i = 0; i + 1 < rows; ++i) {
+        y += item->rowHeights.value(i, box.height() / rows);
+        if (qAbs(docPos.y() - y) <= slop && docPos.x() >= box.right() - slop - 4.0
+            && docPos.x() <= box.right() + slop) {
+            if (axis) *axis = 1;
+            if (index) *index = i;
+            return 1000 + i;
+        }
+    }
+    return -1;
 }
 
 QVector<QRectF> UmeView::wideHandles(const UmeLayout::WideItem &item) const
 {
-    /* 手柄跟着对象一起转：把「未旋转的点」绕中心转过去 */
-    const qreal s = 6.0;
-    const QVector<QPointF> base = wideHandlePoints(item);
-    const QPointF c = item.box.center();
+    /* 表格不支持整体缩放/旋转，只给行/列分隔线手柄 */
+    if (item.props.kind == UmeDoc::WideKind::Table)
+        return tableHandles(item);
 
-    QVector<QRectF> out;
-    for (const QPointF &p : base) {
-        const QPointF q = UmeInteract::rotatePoint(p, c, item.props.rotation);
-        out.append(QRectF(q.x() - s / 2.0, q.y() - s / 2.0, s, s));
-    }
-    return out;
+    return UmeHit::handleRects(m_layout.docRect(item), item.props.rotation);
 }
 
 int UmeView::hitWideHandle(const QPointF &docPos) const
@@ -409,38 +743,29 @@ int UmeView::hitWideHandle(const QPointF &docPos) const
     const UmeLayout::WideItem *item = selectedWideItem();
     if (!item)
         return -1;
-
-    /* 反向旋转到「对象本地坐标」再判断：
-       否则对象转 30° 之后，手柄视觉位置变了但判断还在原处，几乎点不中。 */
-    const QPointF c = item->box.center();
-    const QPointF local =
-        UmeInteract::rotatePoint(docPos, c, -item->props.rotation);
-
-    const qreal s = 6.0;
-    const qreal slop = UmeInteract::kHandleHitSlop;
-    const QVector<QPointF> base = wideHandlePoints(*item);
-    for (int i = 0; i < base.size(); ++i) {
-        const QRectF r(base.at(i).x() - s / 2.0, base.at(i).y() - s / 2.0, s, s);
-        if (r.adjusted(-slop, -slop, slop, slop).contains(local))
-            return i;
-    }
-    return -1;
+    return UmeHit::handleAt(m_layout.docRect(*item), item->props.rotation, docPos);
 }
 
 int UmeView::hitWideItem(const QPointF &docPos) const
 {
-    const QVector<UmeLayout::WideItem> &items = m_layout.wideItems();
-    for (int i = items.size() - 1; i >= 0; --i) {
-        if (items.at(i).box.contains(docPos))
-            return i;
-    }
-    return -1;
+    /* 命中要用内容坐标；拷贝一份小数组换算，避免把坐标语义扩散到命中模块 */
+    QVector<UmeLayout::WideItem> items = m_layout.wideItems();
+    for (UmeLayout::WideItem &it : items)
+        it.box = m_layout.docRect(it);
+    return UmeHit::wideAt(items, docPos);
 }
 
 QVector<QRectF> UmeView::wideHandlesProbe() const
 {
     const UmeLayout::WideItem *item = selectedWideItem();
     return item ? wideHandles(*item) : QVector<QRectF>();
+}
+
+int UmeView::maxSpanForPage() const
+{
+    const qreal strip = qMax(8.0, m_minWidthForDrag);
+    const qreal areaW = m_settings ? m_settings->page().textArea().width() : 600.0;
+    return qBound(1, int(areaW / strip), 48);
 }
 
 Qt::CursorShape UmeView::cursorForWideHandle(int index) const
@@ -503,11 +828,64 @@ QString UmeView::cursorProbe() const
     return out.join(QLatin1Char(' '));
 }
 
+void UmeView::insertParagraphAfterWide()
+{
+    QTextBlock block;
+    if (const UmeLayout::WideItem *item = selectedWideItem())
+        block = item->block;
+    else
+        block = m_cursor.block();
+    if (!block.isValid() || !m_doc)
+        return;
+
+    QTextCursor after(block);
+    after.setPosition(block.position() + block.length() - 1);
+    after.insertBlock(QTextBlockFormat(), m_baseFormat);
+    m_cursor = after;
+    emit formatStateChanged();
+    afterEdit();
+    UME_LOG("wide", QStringLiteral("paragraph after block %1").arg(block.blockNumber()));
+}
+
+void UmeView::deleteSelectedWideObject()
+{
+    const UmeLayout::WideItem *item = selectedWideItem();
+    if (!item)
+        return;
+
+
+    const QTextBlock block = item->block;
+    QTextCursor c(block);
+    if (QTextTable *table = c.currentTable()) {
+        /* 表格：整张删掉 */
+        QTextCursor del(table);
+        del.setPosition(table->firstPosition());
+        del.setPosition(table->lastPosition(), QTextCursor::KeepAnchor);
+        del.removeSelectedText();
+        UME_LOG("wide", QStringLiteral("delete table"));
+    } else {
+        /* 图片块：连块一起去掉（原来是空段落，只删字会留空行） */
+        QTextCursor del(block);
+        del.select(QTextCursor::BlockUnderCursor);
+        del.removeSelectedText();
+        if (del.block().text().isEmpty() && del.position() > 0)
+            del.deletePreviousChar();
+        UME_LOG("wide", QStringLiteral("delete image block"));
+    }
+
+    m_selectedWideBlock = -1;
+    afterEdit();
+}
+
 void UmeView::selectWideObject(int index)
 {
-    const int n = m_layout.wideItems().size();
-    m_selectedWide = (index >= 0 && index < n) ? index : -1;
-    UME_LOG("wide", QStringLiteral("select index=%1 (of %2)").arg(m_selectedWide).arg(n));
+    const QVector<UmeLayout::WideItem> &items = m_layout.wideItems();
+    if (index >= 0 && index < items.size())
+        m_selectedWideBlock = items.at(index).block.position();
+    else
+        m_selectedWideBlock = -1;
+    UME_LOG("wide", QStringLiteral("select index=%1 block=%2 (of %3)")
+                        .arg(index).arg(m_selectedWideBlock).arg(items.size()));
     update();
 }
 
@@ -517,22 +895,67 @@ void UmeView::applyWideDrag(const QPointF &docPos)
     if (!item)
         return;
 
+    /* ---- 表格：拖分隔线调这一行的高度 / 这一列的宽度 ---- */
+    if (m_tableHandleAxis >= 0) {
+        const QPointF delta = docPos - m_wideDragStart;
+        UmeDoc::WideProps p = m_wideDragProps;
+        if (m_tableHandleAxis == 0) {
+            const int j = m_tableHandleIndex;
+            if (j >= 0 && j < p.colSizes.size()) {
+                p.colSizes[j] = qMax(12.0, p.colSizes.at(j) + delta.x());
+                if (j + 1 < p.colSizes.size())
+                    p.colSizes[j + 1] = qMax(12.0, p.colSizes.at(j + 1) - delta.x());
+            }
+        } else {
+            const int i = m_tableHandleIndex;
+            if (i >= 0 && i < p.rowSizes.size()) {
+                p.rowSizes[i] = qMax(12.0, p.rowSizes.at(i) + delta.y());
+                if (i + 1 < p.rowSizes.size())
+                    p.rowSizes[i + 1] = qMax(12.0, p.rowSizes.at(i + 1) - delta.y());
+            }
+        }
+        /* 同步总高/总宽，面板显示才和实际一致 */
+        if (m_tableHandleAxis == 1 && !p.rowSizes.isEmpty()) {
+            qreal sum = 0.0;
+            for (qreal v : p.rowSizes)
+                sum += v;
+            p.heightPt = sum;
+        }
+        applyWideObject(p);
+        return;
+    }
     const QRectF r = item->box;
     UmeDoc::WideProps p = m_wideDragProps;
     const QPointF delta = docPos - m_wideDragStart;
 
+    /* 吸附分两档：
+       · 位置用「行高网格」（竖排里最自然，一行一行地挪）
+       · 尺寸用 4pt 细网格（尺寸跳动要小，否则手感很糟） */
+    const qreal posGrid = qMax(8.0, m_metricsPt * 1.4);
+    const qreal sizeGrid = 4.0;
+    auto snapTo = [](qreal v, qreal base, qreal grid, qreal tol) {
+        const qreal rel = v - base;
+        const qreal snapped = qRound(rel / grid) * grid;
+        return (qAbs(rel - snapped) <= tol) ? base + snapped : v;
+    };
+
     switch (m_wideDrag) {
-    case WideDrag::Move:
+    case WideDrag::Move: {
         /* 竖排里主要沿列方向移动；限制在正文区内 */
-        p.offsetPt = qBound(-4000.0, p.offsetPt + delta.y(), 4000.0);
+        qreal off = p.offsetPt + delta.y();
+        const qreal areaTop = m_settings ? m_settings->page().textArea().top() : 0.0;
+        const qreal targetTop = snapTo(r.top() + delta.y(), areaTop, posGrid, 4.0);
+        off = p.offsetPt + (targetTop - r.top());
+        p.offsetPt = qBound(-4000.0, off, 4000.0);
         break;
+    }
 
     case WideDrag::ResizeLeft:
     case WideDrag::ResizeRight: {
         /* 左右两侧改的是「跨列数」 */
         const qreal strip = qMax(8.0, m_minWidthForDrag);
         const qreal dw = (m_wideDrag == WideDrag::ResizeRight) ? delta.x() : -delta.x();
-        p.span = qBound(1, p.span + qRound(dw / strip), 12);
+        p.span = qBound(1, p.span + qRound(dw / strip), maxSpanForPage());
         break;
     }
 
@@ -557,6 +980,15 @@ void UmeView::applyWideDrag(const QPointF &docPos)
                               || m_wideDrag == WideDrag::ResizeTR);
         const qreal dy = fromTop ? -delta.y() : delta.y();
         qreal newH = qBound(8.0, m_wideDragProps.heightPt + dy, 4000.0);
+
+        /* 高度吸附到行高网格 */
+        const qreal snapped = snapTo(newH, 0.0, sizeGrid, 2.0);
+        if (!qFuzzyCompare(snapped, newH)) {
+            UME_LOG("wide", QStringLiteral("snap height %1 → %2")
+                                 .arg(newH, 0, 'f', 1)
+                                 .arg(snapped, 0, 'f', 1));
+            newH = snapped;
+        }
         p.heightPt = newH;
         if (p.keepAspect && m_wideDragProps.naturalH > 0.0
             && (m_wideDrag == WideDrag::ResizeTL || m_wideDrag == WideDrag::ResizeTR
@@ -564,13 +996,21 @@ void UmeView::applyWideDrag(const QPointF &docPos)
             const qreal ratio = m_wideDragProps.naturalW / m_wideDragProps.naturalH;
             const qreal w = newH * ratio;
             const qreal strip = qMax(8.0, m_minWidthForDrag);
-            p.span = qBound(1, qRound(w / strip), 12);
+            p.span = qBound(1, qRound(w / strip), maxSpanForPage());
         }
         break;
     }
     }
 
     applyWideObject(p);
+}
+
+QRectF UmeView::wideItemBoxProbe(int index) const
+{
+    const QVector<UmeLayout::WideItem> &items = m_layout.wideItems();
+    if (index < 0 || index >= items.size())
+        return QRectF();
+    return items.at(index).box;
 }
 
 QString UmeView::wideObjectsProbe() const
@@ -641,6 +1081,23 @@ void UmeView::insertImage(const QString &path)
     m_cursor = c;
     afterEdit();
 
+    /* 图片块是空段落，光标若留在它上面，打字会写进图片里（看不见）。
+       紧跟着补一个空段落，光标放进去 —— 用户可以直接在图片后继续输入。 */
+    {
+        QTextBlock imgBlock = block;
+        if (imgBlock.isValid()) {
+            QTextCursor after(imgBlock);
+            QTextBlock last = imgBlock;
+            QTextCursor probe(imgBlock);
+            while (probe.currentTable())
+                break;
+            /* 图片块本身可能被后续块挤开，直接用块尾插新段 */
+            after.setPosition(last.position() + last.length() - 1);
+            after.insertBlock(QTextBlockFormat(), m_baseFormat);
+            m_cursor = after;
+        }
+    }
+
     UME_LOG("image", QStringLiteral("insert %1 w=%2 h=%3 span=%4 block=%5")
                          .arg(path).arg(w, 0, 'f', 1).arg(h, 0, 'f', 1)
                          .arg(p.span).arg(block.blockNumber()));
@@ -670,6 +1127,12 @@ QString UmeView::toHtml() const
 
 void UmeView::insertTextByScript(const QString &text)
 {
+    /* 光标停在宽对象（图片）块上时，先补一个段落再输入，
+       否则文字会被写进对象块、当作对象跳过而看不见。 */
+    if (UmeDoc::isWideBlock(m_cursor.block())) {
+        insertParagraphAfterWide();
+    }
+
     const QString cjk = cjkFamily();
     int i = 0;
     while (i < text.size()) {
@@ -764,11 +1227,13 @@ void UmeView::relayout()
                 ++frags;
 
     m_minWidthForDrag = minWidth;
+    m_layout.setArrangement(m_settings->arrangement());
     m_layout.relayout(m_doc, m_settings->page(), minWidth,
                       m_settings->rightToLeft() ? UmeLayout::Flow::Rtl
                                                 : UmeLayout::Flow::Ltr);
 
-    UME_LOG("layout", QStringLiteral("blocks=%1 frags=%2 cols=%3 pages=%4 pitch=%5 "
+    if (UME_LOG_EVERY("layout", 150))
+        UME_LOG("layout", QStringLiteral("blocks=%1 frags=%2 cols=%3 pages=%4 pitch=%5 "
                                      "metrics=%6/%7 took=%8ms")
                            .arg(m_doc->blockCount())
                            .arg(frags)
@@ -853,6 +1318,32 @@ void UmeView::mergeFormatIntoSelection(const QTextCharFormat &fmt)
                           .arg(fmt.foreground().color().name()));
     if (!m_doc)
         return;
+
+    /* 选中了整行/整列：把格式套到那一行/列的所有单元格 */
+    if ((m_tableRow >= 0 || m_tableCol >= 0) && m_cursor.currentTable()) {
+        QTextTable *t = m_cursor.currentTable();
+        int firstCol = 0, lastCol = t->columns() - 1;
+        int firstRow = 0, lastRow = t->rows() - 1;
+        if (m_tableCol >= 0) {
+            firstCol = lastCol = qBound(0, m_tableCol, t->columns() - 1);
+        } else {
+            firstRow = lastRow = qBound(0, m_tableRow, t->rows() - 1);
+        }
+        for (int i = firstRow; i <= lastRow; ++i) {
+            for (int j = firstCol; j <= lastCol; ++j) {
+                QTextCursor cell = t->cellAt(i, j).firstCursorPosition();
+                cell.movePosition(QTextCursor::EndOfBlock, QTextCursor::KeepAnchor);
+                if (cell.hasSelection())
+                    cell.mergeCharFormat(fmt);
+                else
+                    cell.setBlockCharFormat(fmt);
+            }
+        }
+        afterEdit();
+        UME_LOG("table", QStringLiteral("format row=%1 col=%2")
+                             .arg(m_tableRow).arg(m_tableCol));
+        return;
+    }
 
     if (m_cursor.hasSelection()) {
         QTextCursor c = m_cursor;
@@ -1026,8 +1517,7 @@ UmeFormatState UmeView::currentFormat() const
 
 QRectF UmeView::columnDocRect(const UmeLayout::Column &c) const
 {
-    const QRectF pageRect = UmeLayout::pageRect(m_settings->page(), c.page);
-    return c.box.translated(0.0, pageRect.top());
+    return m_layout.docRect(c);
 }
 
 QPointF UmeView::docPosFromWidget(const QPointF &widgetPos) const
@@ -1078,6 +1568,19 @@ QTextCursor UmeView::cursorAtDocPos(const QPointF &docPos) const
     QTextCursor cur(m_doc);
     cur.setPosition(c.block.position() + rel);
     return cur;
+}
+
+QRectF UmeView::columnBoxProbe(int i) const
+{
+    const QVector<UmeLayout::Column> &cols = m_layout.columns();
+    if (i < 0 || i >= cols.size())
+        return QRectF();
+    return cols.at(i).box;
+}
+
+bool UmeView::hitsAnyColumn(const QPointF &docPos) const
+{
+    return UmeHit::columnAt(m_layout.columns(), docPos) >= 0;
 }
 
 int UmeView::columnIndexForCursor() const
@@ -1332,6 +1835,67 @@ void UmeView::moveToColumnEdge(bool toEnd, bool extend)
 
 void UmeView::keyPressEvent(QKeyEvent *event)
 {
+
+    /* 单元格里按 Enter：跳到右边一个单元格；没有就下一行第一个；
+       已经是最后一个就跳出表格。 */
+    if ((event->key() == Qt::Key_Return || event->key() == Qt::Key_Enter)
+        && !m_doc) {
+        // 无文档，交给默认处理
+    } else if (event->key() == Qt::Key_Return || event->key() == Qt::Key_Enter) {
+        if (QTextTable *table = m_cursor.currentTable()) {
+            if (selectedWideObject() < 0) {          /* 选中对象时 Enter 另有含义 */
+                const QTextTableCell cell = table->cellAt(m_cursor);
+                const int r = cell.row();
+                const int c = cell.column();
+                QTextCursor next;
+                if (c + 1 < table->columns()) {
+                    next = table->cellAt(r, c + 1).firstCursorPosition();
+                } else if (r + 1 < table->rows()) {
+                    next = table->cellAt(r + 1, 0).firstCursorPosition();
+                } else {
+                    /* 最后一个单元格：跳到表格之后的段落 */
+                    next = QTextCursor(m_doc);
+                    next.setPosition(table->lastCursorPosition().position());
+                    next.movePosition(QTextCursor::NextBlock);
+                    if (next.currentTable()) {
+                        /* 表格后面还没有段落：先建一个 */
+                        QTextCursor mk(m_doc);
+                        mk.setPosition(table->lastCursorPosition().position());
+                        mk.movePosition(QTextCursor::EndOfBlock);
+                        mk.insertBlock(QTextBlockFormat(), m_baseFormat);
+                        next = mk;
+                    }
+                }
+                setTextCursor(next);
+                UME_LOG("table", QStringLiteral("enter → cell row=%1 col=%2")
+                                     .arg(r).arg(c));
+                event->accept();
+                return;
+            }
+        }
+    }
+
+    /* 选中了宽对象：Delete / Backspace 删掉它，Esc 取消选中。
+       这两个键不能落到「删一个字符」的逻辑里。 */
+    if (m_selectedWideBlock >= 0) {
+        if (event->key() == Qt::Key_Delete || event->key() == Qt::Key_Backspace) {
+            deleteSelectedWideObject();
+            event->accept();
+            return;
+        }
+        if (event->key() == Qt::Key_Escape) {
+            selectWideObject(-1);
+            event->accept();
+            return;
+        }
+        if (event->key() == Qt::Key_Return || event->key() == Qt::Key_Enter) {
+            insertParagraphAfterWide();
+            selectWideObject(-1);
+            event->accept();
+            return;
+        }
+    }
+
     if (!m_doc) {
         QWidget::keyPressEvent(event);
         return;
@@ -1501,7 +2065,8 @@ void UmeView::paintEvent(QPaintEvent *event)
     if (!m_settings)
         return;
 
-    if (m_doc && m_doc->revision() != m_paintedRevision) {
+    /* 节流：绘制日志 300ms 内只放行一次，否则拖拽时刷屏 */
+    if (m_doc && m_doc->revision() != m_paintedRevision && UME_LOG_EVERY("paint", 300)) {
         m_paintedRevision = m_doc->revision();
         const int cols = m_layout.columns().size();
         QString first = QStringLiteral("-");
@@ -1522,11 +2087,11 @@ void UmeView::paintEvent(QPaintEvent *event)
 
     p.save();
     p.scale(m_zoom, m_zoom);
-    p.translate(0.0, -m_scrollY / m_zoom);
+    p.translate(-m_scrollX / m_zoom, -m_scrollY / m_zoom);
 
     const PageSetup &page = m_settings->page();
     for (int i = 0; i < m_layout.pageCount(); ++i) {
-        const QRectF r = UmeLayout::pageRect(page, i);
+        const QRectF r = m_layout.pageRectFor(i);
         p.setPen(Qt::NoPen);
         p.setBrush(QColor(0, 0, 0, 40));
         p.drawRect(r.translated(0, 2));
@@ -1554,7 +2119,7 @@ void UmeView::paintGuides(QPainter &p) const
 
     const PageSetup &page = m_settings->page();
     for (int i = 0; i < m_layout.pageCount(); ++i) {
-        const QRectF r = UmeLayout::pageRect(page, i);
+        const QRectF r = m_layout.pageRectFor(i);
         p.drawRect(page.textArea().translated(r.topLeft()));
     }
 }
@@ -1584,6 +2149,11 @@ void UmeView::paintDocument(QPainter &p) const
            基线放在「列左 + 留白 + 本列最大 ascent」处，墨迹不会越界。 */
         const qreal baseX = columnInkLeft(c);
         const qreal baseY = r.top();
+
+        /* 兜底：把绘制限制在列框内。
+           布局若因任何原因给出的行比列还长，也不会画到页边距外面去。 */
+        p.save();
+        p.setClipRect(r.adjusted(-1.0, -1.0, 1.0, 1.0));
 
         /* 格式区间 → 行内 x 区间，这样能按「字形在行里的位置」取颜色。
            （glyph run 不直接给字符下标，按 x 反查最省事。） */
@@ -1625,137 +2195,9 @@ void UmeView::paintDocument(QPainter &p) const
             return col.isValid() ? col : columnInk;
         };
 
-        /* 默认的检索标志里没有 rawFont，拿到的 run 画不出东西 —— 必须显式要。 */
-        const QList<QGlyphRun> runs = line.glyphRuns(
-            -1, -1,
-            QTextLayout::RetrieveGlyphIndexes | QTextLayout::RetrieveGlyphPositions
-                | QTextLayout::RetrieveStringIndexes | QTextLayout::RetrieveString);
-        for (const QGlyphRun &gr : runs) {
-            const QRawFont rf = gr.rawFont();
-            const QList<quint32> glyphs = gr.glyphIndexes();
-            const QList<QPointF> pos = gr.positions();
-            const QString src = gr.sourceString();
+        drawVerticalLine(p, lay, line, c.block, r, baseX, baseY, columnInk);
 
-            /* 整段都是「直立类」才直立。判断依据不是 sourceString
-               （Qt 常常给空串），而是「这个 run 落在哪个字符上」——
-               用它在行内的 x 反查。 */
-            const QString blockText = c.block.text();
-            auto charAtLineX = [&](qreal x) {
-                const int p = line.xToCursor(x + 0.01);
-                return (p >= 0 && p < blockText.size()) ? blockText.at(p) : QChar();
-            };
-            /* 直立与否必须逐字判：整段一判时，只要首字形落在空格/标点上，
-               整段汉字就都被当成蒙文旋转了（实测「成吉思汗」就是这么躺倒的）。 */
-
-            for (int k = 0; k < glyphs.size(); ++k) {
-                const QPointF gp = k < pos.size() ? pos.at(k) : QPointF(0, 0);
-                /* 该字形所在的字符：取格子中点反查（中点必定落在字符内部，
-                   不像起点那样容易被舍到前一个字上）。 */
-                /* 先算槽位（px），再用槽位中点反查字符 —— 中点必在字符内部，
-                   单字形 run 也不会被判成前一个字。 */
-                qreal slot = 0.0;
-                if (k + 1 < pos.size()) {
-                    slot = pos.at(k + 1).x() - gp.x();
-                } else {
-                    const qreal adv = rf.advancesForGlyphIndexes(
-                                            QList<quint32>{glyphs.at(k)})
-                                          .value(0).x();
-                    const qreal remain = line.naturalTextWidth() - gp.x();
-                    slot = (adv > 0.5) ? qMin(adv, qMax(remain, adv)) : remain;
-                }
-                if (slot <= 0.5)
-                    slot = 19.0;   // 兜底：一个汉字宽（px）
-
-                /* 取 0.35 而不是 0.5：正好落在字形「中点」时，
-                   若该字形很窄，中点会压到下一个字符的起点上，
-                   于是把下一字的汉字错判成这一格的内容（会画出一个小的重影）。 */
-                const qreal midX = gp.x() + slot * 0.35;
-                const QChar thisChar = charAtLineX(midX);
-                const GlyphPlace place = placeFor(thisChar);
-                const bool upright = place != GlyphPlace::Rotated;
-
-                const QColor ink = colorAt(gp.x());
-
-                /* 链接下划线：竖排里画成与列平行的细线，贴在墨迹左侧 */
-                const QTextCharFormat gfmt = formatAt(gp.x());
-                if (gfmt.fontUnderline() || gfmt.isAnchor()) {
-                    const qreal ux = r.left() + UmeLayout::kPad - 1.2;
-                    p.save();
-                    p.setPen(QPen(ink, 0.8));
-                    p.drawLine(QPointF(ux, baseY + gp.x() * kPxToPt),
-                               QPointF(ux, baseY + (gp.x() + slot) * kPxToPt));
-                    p.restore();
-                }
-
-                if (upright) {
-                    /* 直立字：位置与格子都从「字符区间」推出 ——
-                       用 cursorToX(字符起点) 和 cursorToX(字符终点)，
-                       同一把尺子量出来，相邻两字必然首尾相接，不会重叠。 */
-                    const QChar ch = thisChar;
-                    if (ch.isNull())
-                        continue;
-
-                    /* 格子直接由字形位置推导：gp.x() 与 slot 都是布局单位，
-                       与排版步进同源，不会出现「字距被多乘/少乘 0.75」。 */
-                    const qreal y0 = gp.x() * kPxToPt;
-                    const qreal cellH = qMax(slot * kPxToPt, 4.0);
-
-                    /* 用「基线点」画，不用矩形：drawText(QRectF, …) 会把超出矩形的
-                       笔画裁掉 —— 汉字下缘就是这么被吃掉的。 */
-                    QFont f = fmtAt(midX);
-                    /* 字号取格子大小：排版给的格子就是这一格的可用高度，
-                       按它定字号最稳（不再用矩形画，不会切笔画）。 */
-                    /* 字号按格子定，但钳在「半个字到两个字」之间：
-                       格子算错时不至于画出米粒大小或顶天立地的怪字。 */
-                    const qreal basePt = m_metricsPt > 0 ? m_metricsPt : 14.0;
-                    const qreal px = qBound(basePt * 0.5, cellH, basePt * 2.0);
-                    f.setPixelSize(qMax(1, qRound(px)));
-
-                    const QFontMetricsF fmr(f);
-                    const QString s(ch);
-
-                    /* 按**墨迹**居中，而不是按字身（advance）居中：
-                       中文标点（。、，？）的墨迹偏在字身一角，按字身居中会跑偏。 */
-                    QRectF inkBox = fmr.tightBoundingRect(s);
-                    if (inkBox.isEmpty())
-                        inkBox = fmr.boundingRect(s);
-
-                    qreal x = 0.0;
-                    qreal baseline = 0.0;
-                    if (place == GlyphPlace::TopRight) {
-                        /* 竖排传统：句读贴格子**右上角** ——
-                           右侧贴列框右缘，上侧贴格子起点。 */
-                        const qreal pad = qMax(0.4, cellH * 0.04);
-                        x = r.right() - pad - inkBox.right();
-                        baseline = (baseY + y0 + pad) - inkBox.top();
-                    } else {
-                        const qreal cellCx = r.left() + r.width() / 2.0;
-                        const qreal cellCy = baseY + y0 + cellH / 2.0;
-                        x = cellCx - inkBox.center().x();
-                        baseline = cellCy - inkBox.center().y();
-                    }
-
-                    p.save();
-                    p.setFont(f);
-                    p.setPen(ink);
-                    p.drawText(QPointF(x, baseline), s);
-                    p.restore();
-                } else {
-                    /* 旋转支：同样用轮廓画。QPainter::drawGlyphRun 在离屏渲染里
-                       不出墨（实测墨迹为 0），轮廓法两条路一致，颜色也好控。 */
-                    const QPainterPath path = rf.pathForGlyph(glyphs.at(k));
-                    if (path.isEmpty())
-                        continue;
-                    p.save();
-                    p.translate(baseX, baseY);
-                    p.rotate(90);
-                    p.scale(kPxToPt, kPxToPt);
-                    p.translate(gp.x(), 0);
-                    p.fillPath(path, ink);
-                    p.restore();
-                }
-            }
-        }
+        p.restore();
     }
 }
 
@@ -1816,6 +2258,31 @@ void UmeView::mousePressEvent(QMouseEvent *event)
     const QPointF docPos = docPosFromWidget(event->position());
 
     /* 宽对象优先：先看手柄，再看对象本体 */
+    /* 表格：行/列分隔线手柄（不允许整体缩放与旋转） */
+    {
+        int taxis = -1;
+        int tindex = -1;
+        if (hitTableHandle(docPos, &taxis, &tindex) >= 0) {
+            m_tableHandleAxis = taxis;
+            m_tableHandleIndex = tindex;
+            m_wideDrag = WideDrag::Move;
+            m_wideDragStart = docPos;
+            m_wideDragProps = currentWideObject();
+            /* 关键：把当前行列尺寸**快照**下来。
+               拖动过程中不能再从 item 取当前值，否则每帧会把上次的增长再加一遍。 */
+            if (const UmeLayout::WideItem *it = selectedWideItem()) {
+                if (m_wideDragProps.colSizes.size() != it->colWidths.size())
+                    m_wideDragProps.colSizes = it->colWidths;
+                if (m_wideDragProps.rowSizes.size() != it->rowHeights.size())
+                    m_wideDragProps.rowSizes = it->rowHeights;
+            }
+            UME_LOG("table", QStringLiteral("handle drag axis=%1 index=%2")
+                                 .arg(taxis).arg(tindex));
+            event->accept();
+            return;
+        }
+    }
+
     const int handle = hitWideHandle(docPos);
     if (handle >= 0) {
         static const WideDrag kResize[9] = {
@@ -1836,17 +2303,53 @@ void UmeView::mousePressEvent(QMouseEvent *event)
         selectWideObject(itemIndex);
         m_wideDrag = WideDrag::Move;
         m_wideDragStart = docPos;
-        m_wideDragProps = currentWideObject();
 
-        /* 把光标也移进对象所在块，面板才能读到属性 */
+        /* 先把光标移进对象所在块，再取属性 —— 顺序反了会取到空属性，
+           拖一下就把「这是一张表」的标记写没了（实测整张表散成普通段落）。 */
         const QTextBlock block = m_layout.wideItems().at(itemIndex).block;
         QTextCursor inside(block);
         setTextCursor(inside);
+        m_wideDragProps = currentWideObject();
         event->accept();
         return;
     }
 
     selectWideObject(-1);
+
+    /* 点在「某个宽对象下方、且 x 与之重叠」的**空白处**：
+       光标落到该对象之后的段落 —— 这就是「图片下方继续输入」。
+
+       注意必须先判断「点没点到文字」：环绕模式下对象下方的同一列就是正文，
+       若一律跳转到对象之后的段落，那段文字就永远选不中了（实测如此）。 */
+    if (!hitsAnyColumn(docPos)) {
+        const QVector<UmeLayout::WideItem> &items = m_layout.wideItems();
+        for (int i = items.size() - 1; i >= 0; --i) {
+            const UmeLayout::WideItem &it = items.at(i);
+            /* 用内容坐标：对象盒子是页内坐标，不换算会命中到别的页的对象 */
+            const QRectF doc = m_layout.docRect(it);
+            const bool xInside = docPos.x() >= doc.left() - 1.0
+                                 && docPos.x() <= doc.right() + 1.0;
+            if (!xInside || docPos.y() <= doc.bottom())
+                continue;
+
+            const int before = m_doc ? m_doc->blockCount() : 0;
+            selectedWideObject();       // 只是读一下，不改状态
+            QTextCursor after(it.block);
+            after.setPosition(it.block.position() + it.block.length() - 1);
+            after.movePosition(QTextCursor::NextBlock);
+            if (after.block() == it.block) {
+                /* 后面没有段落了：就地补一个 */
+                after = QTextCursor(it.block);
+                after.setPosition(it.block.position() + it.block.length() - 1);
+                after.insertBlock(QTextBlockFormat(), m_baseFormat);
+            }
+            setTextCursor(after);
+            UME_LOG("wide", QStringLiteral("click under object → block %1（原 %2 块）")
+                                .arg(after.blockNumber()).arg(before));
+            event->accept();
+            return;
+        }
+    }
 
     QTextCursor cur = cursorAtDocPos(docPos);
     if (event->modifiers() & Qt::ShiftModifier)
@@ -1919,6 +2422,22 @@ void UmeView::mouseReleaseEvent(QMouseEvent *event)
     if (m_wideDrag != WideDrag::None) {
         UME_LOG("wide", QStringLiteral("drag end"));
         m_wideDrag = WideDrag::None;
+
+    /* 点了一下分隔线手柄但没拖动 → 选中它左边那一列 / 上边那一行 */
+    if (m_tableHandleAxis >= 0 && m_tableHandleIndex >= 0) {
+        if (m_tableHandleAxis == 0) {
+            m_tableCol = m_tableHandleIndex;
+            m_tableRow = -1;
+        } else {
+            m_tableRow = m_tableHandleIndex;
+            m_tableCol = -1;
+        }
+        UME_LOG("table", QStringLiteral("select row=%1 col=%2")
+                             .arg(m_tableRow).arg(m_tableCol));
+        update();
+    }
+    m_tableHandleAxis = -1;
+    m_tableHandleIndex = -1;
         event->accept();
         return;
     }
@@ -1943,6 +2462,20 @@ void UmeView::wheelEvent(QWheelEvent *event)
         event->accept();
         return;
     }
+    /* 横向：触控板横滑，或 Shift + 滚轮 */
+    const int dx = event->angleDelta().x();
+    const int dy = event->angleDelta().y();
+    if (m_hbar && (dx != 0 || (event->modifiers() & Qt::ShiftModifier))) {
+        const int delta = dx != 0 ? dx : dy;
+        const int maxX = int(m_layout.contentSize().width() * m_zoom) - width();
+        m_scrollX = qBound(0.0, m_scrollX - delta, qreal(qMax(0, maxX)));
+        m_hbar->setValue(int(m_scrollX));
+        if (dx == 0) {
+            event->accept();
+            return;
+        }
+    }
+
     m_scrollY = qBound(0.0, m_scrollY - event->angleDelta().y(), qreal(m_vbar->maximum()));
     m_vbar->setValue(int(m_scrollY));
     event->accept();
@@ -1954,24 +2487,52 @@ void UmeView::resizeEvent(QResizeEvent *event)
     updateScrollBars();
 }
 
+QList<int> UmeView::scrollRangeProbe() const
+{
+    QList<int> out;
+    out << (m_hbar ? m_hbar->maximum() : -1)
+        << (m_vbar ? m_vbar->maximum() : -1)
+        << int(m_scrollX) << int(m_scrollY)
+        << width() << height();
+    return out;
+}
+
 void UmeView::updateScrollBars()
 {
     if (!m_vbar)
         return;
-    const qreal contentH = m_layout.contentHeight() * m_zoom;
-    const int maxScroll = qMax(0, int(contentH - height()));
-    m_vbar->setRange(0, maxScroll);
-    m_vbar->setPageStep(qMax(1, height()));
+    const QSizeF content = m_layout.contentSize();
+    const qreal contentH = content.height() * m_zoom;
+    const qreal contentW = content.width() * m_zoom;
+
     const int w = m_vbar->sizeHint().width();
-    m_vbar->setGeometry(width() - w, 0, w, height());
-    if (m_scrollY > maxScroll)
-        m_scrollY = maxScroll;
+    const int hh = m_hbar ? m_hbar->sizeHint().height() : 0;
+
+    const int maxY = qMax(0, int(contentH - height() + hh));
+    m_vbar->setRange(0, maxY);
+    m_vbar->setPageStep(qMax(1, height() - hh));
+    m_vbar->setGeometry(width() - w, 0, w, height() - hh);
+
+    if (m_hbar) {
+        const int maxX = qMax(0, int(contentW - width() + w));
+        m_hbar->setRange(0, maxX);
+        m_hbar->setPageStep(qMax(1, width() - w));
+        m_hbar->setGeometry(0, height() - hh, width() - w, hh);
+        if (m_scrollX > maxX)
+            m_scrollX = maxX;
+        m_hbar->setValue(int(m_scrollX));
+    }
+
+    if (m_scrollY > maxY)
+        m_scrollY = maxY;
     m_vbar->setValue(int(m_scrollY));
 }
 
 QSize UmeView::sizeHint() const
 {
-    const qreal w = m_settings ? m_settings->page().paper.width() : 595.0;
+    const QSizeF content = m_layout.contentSize();
+    const qreal w = content.width() > 0 ? content.width()
+                                        : (m_settings ? m_settings->page().paper.width() : 595.0);
     return QSize(int(w * m_zoom) + 40, 900);
 }
 
@@ -2153,16 +2714,54 @@ QString UmeView::glyphProbe() const
     return out.join(QLatin1Char(' '));
 }
 
+int UmeView::colsOffTopProbe(int page) const
+{
+    const qreal top = m_settings ? m_settings->page().textArea().top() : 0.0;
+    int n = 0;
+    for (const UmeLayout::Column &c : m_layout.columns()) {
+        if (c.page != page)
+            continue;
+        if (c.box.top() > top + 0.5)
+            ++n;
+    }
+    return n;
+}
+
+int UmeView::tableFragmentCountProbe() const
+{
+    int n = 0;
+    for (const UmeLayout::WideItem &it : m_layout.wideItems())
+        if (it.props.kind == UmeDoc::WideKind::Table)
+            ++n;
+    return n;
+}
+
+QString UmeView::tableFragmentsProbe() const
+{
+    QStringList out;
+    for (const UmeLayout::WideItem &it : m_layout.wideItems()) {
+        if (it.props.kind != UmeDoc::WideKind::Table)
+            continue;
+        out << QStringLiteral("p%1 rows %2-%3 y%4 h%5")
+                   .arg(it.page).arg(it.rowFirst).arg(it.rowLast)
+                   .arg(it.box.top(), 0, 'f', 1)
+                   .arg(it.box.height(), 0, 'f', 1);
+    }
+    return out.join(QStringLiteral("  "));
+}
+
 QString UmeView::columnsProbe(int n) const
 {
     QStringList out;
     const QVector<UmeLayout::Column> &cols = m_layout.columns();
     for (int i = 0; i < cols.size() && i < n; ++i) {
-        const QRectF r = columnDocRect(cols[i]);
-        out << QStringLiteral("%1:[left %2, w %3]")
+        /* 页内坐标 + 页码：跨页排版时要能看出第 2 页是否从页首开始 */
+        out << QStringLiteral("%1:[p%2 y%3 left %4 w %5]")
                    .arg(i)
-                   .arg(r.left(), 0, 'f', 1)
-                   .arg(r.width(), 0, 'f', 1);
+                   .arg(cols[i].page)
+                   .arg(cols[i].box.top(), 0, 'f', 1)
+                   .arg(cols[i].box.left(), 0, 'f', 1)
+                   .arg(cols[i].box.width(), 0, 'f', 1);
     }
     return out.join(QStringLiteral("  "));
 }
@@ -2175,7 +2774,7 @@ QImage UmeView::renderPageImage(int page, qreal scale, bool withCaret) const
         return QImage();
 
     const PageSetup &ps = m_settings->page();
-    const QRectF pr = UmeLayout::pageRect(ps, page);
+    const QRectF pr = m_layout.pageRectFor(page);
     QImage img(QSize(int(pr.width() * scale), int(pr.height() * scale)),
                QImage::Format_ARGB32_Premultiplied);
     img.fill(Qt::white);
@@ -2219,9 +2818,10 @@ QImage UmeView::renderAllPages(qreal scale) const
 
     const PageSetup &ps = m_settings->page();
     const int n = m_layout.pageCount();
-    const qreal totalH = m_layout.contentHeight();
+    const QSizeF totalSize = m_layout.contentSize();
 
-    QImage img(QSize(int(ps.paper.width() * scale), int(totalH * scale)),
+    QImage img(QSize(qMax(1, int(totalSize.width() * scale)),
+                     qMax(1, int(totalSize.height() * scale))),
                QImage::Format_ARGB32_Premultiplied);
     img.fill(QColor(0x6e, 0x6e, 0x72));
 
@@ -2230,7 +2830,7 @@ QImage UmeView::renderAllPages(qreal scale) const
     p.setRenderHint(QPainter::TextAntialiasing, true);
 
     for (int i = 0; i < n; ++i)
-        p.fillRect(UmeLayout::pageRect(ps, i), Qt::white);
+        p.fillRect(m_layout.pageRectFor(i), Qt::white);
 
     paintSelection(p);
     paintWideItems(p);

@@ -3,6 +3,7 @@
 #include <QObject>
 #include <QString>
 
+#include "umelayout.h"
 #include "umepage.h"
 
 /* 排版设置：页面、字体、字号、列距、辅助线。
@@ -24,6 +25,25 @@ public:
             && qFuzzyCompare(p.mBottom, m_page.mBottom))
             return;
         m_page = p;
+        emit layoutChanged();
+    }
+
+    /* 画布上多页怎么摆（视图 → 页面视图） */
+    PageArrangement arrangement() const { return m_arr; }
+    void setArrangement(const PageArrangement &a)
+    {
+        if (a == m_arr)
+            return;
+        m_arr = a;
+        emit layoutChanged();
+    }
+
+    /* 纸张方向（视图 → 纸张方向），默认纵向 */
+    void setOrientation(PageOrientation o)
+    {
+        if (o == m_page.pageOrientation())
+            return;
+        m_page.setOrientation(o);
         emit layoutChanged();
     }
 
@@ -63,6 +83,7 @@ signals:
 
 private:
     PageSetup m_page;
+    PageArrangement m_arr;
     qreal m_pitch = 0.0;
     bool m_guides = true;
     bool m_rtl = false;

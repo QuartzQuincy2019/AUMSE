@@ -9,7 +9,9 @@
 #include <QFormLayout>
 #include <QSpinBox>
 #include <QToolBar>
+#include <QActionGroup>
 #include "umeformatbar.h"
+#include "umelogwindow.h"
 #include "umewidebar.h"
 #include "umeview.h"
 
@@ -67,14 +69,24 @@ void MainWindow::buildUi()
     dock->setAllowedAreas(Qt::LeftDockWidgetArea | Qt::RightDockWidgetArea);
     addDockWidget(Qt::RightDockWidgetArea, dock);
 
-    /* 「宽对象格式」：独立一层，与文字格式、版面设置互不共享状态。
+    /* 选中宽对象 → 右侧自动跳到这一页。
+       「宽对象格式」：独立一层，与文字格式、版面设置互不共享状态。
        与布局控制并成标签页，避免右侧被占太宽。 */
     auto *wideDock = new QDockWidget(QStringLiteral("宽对象格式"), this);
+    m_wideDock = wideDock;
     wideDock->setObjectName(QStringLiteral("umeWideDock"));
     wideDock->setWidget(new UmeWideBar(m_view, wideDock));
     addDockWidget(Qt::RightDockWidgetArea, wideDock);
     tabifyDockWidget(dock, wideDock);
     dock->raise();
+
+    /* 调试日志窗口：默认隐藏，从「编辑 → 调试日志」打开 */
+    m_logWindow = new UmeLogWindow(this);
+    addDockWidget(Qt::BottomDockWidgetArea, m_logWindow);
+    m_logWindow->hide();
+
+    connect(m_view, &UmeView::formatStateChanged, this, &MainWindow::syncWideDock,
+            Qt::UniqueConnection);
 
     m_status = new QLabel(this);
     statusBar()->addWidget(m_status, 1);
@@ -148,7 +160,60 @@ void MainWindow::buildMenus()
     });
     insert->addAction(QStringLiteral("表格…"), this, [this]() { insertTableDialog(); });
 
+    QMenu *viewMenu = menuBar()->addMenu(QStringLiteral("视图"));
+
+    QMenu *pageView = viewMenu->addMenu(QStringLiteral("页面视图"));
+    auto *arrGroup = new QActionGroup(this);
+
+    auto *rowsAct = pageView->addAction(QStringLiteral("N 页横向排列"));
+    rowsAct->setCheckable(true);
+    rowsAct->setChecked(true);
+    arrGroup->addAction(rowsAct);
+    connect(rowsAct, &QAction::triggered, this, [this]() {
+        PageArrangement a = m_settings->arrangement();
+        a.mode = PageArrangement::RowsOfN;
+        m_settings->setArrangement(a);
+    });
+
+    pageView->addAction(QStringLiteral("每行页数…"), this, [this]() {
+        bool ok = false;
+        const int n = QInputDialog::getInt(this, QStringLiteral("每行页数"),
+                                           QStringLiteral("一行显示几页"),
+                                           m_settings->arrangement().perRow, 1, 8, 1, &ok);
+        if (!ok)
+            return;
+        PageArrangement a = m_settings->arrangement();
+        a.mode = PageArrangement::RowsOfN;
+        a.perRow = n;
+        m_settings->setArrangement(a);
+    });
+    pageView->addSeparator();
+
+    auto *hAct = pageView->addAction(QStringLiteral("无限横向排列"));
+    hAct->setCheckable(true);
+    arrGroup->addAction(hAct);
+    connect(hAct, &QAction::triggered, this, [this]() {
+        PageArrangement a = m_settings->arrangement();
+        a.mode = PageArrangement::Horizontal;
+        m_settings->setArrangement(a);
+    });
+
+    auto *vAct = pageView->addAction(QStringLiteral("无限竖向排列"));
+    vAct->setCheckable(true);
+    arrGroup->addAction(vAct);
+    connect(vAct, &QAction::triggered, this, [this]() {
+        PageArrangement a = m_settings->arrangement();
+        a.mode = PageArrangement::Vertical;
+        m_settings->setArrangement(a);
+    });
+
     QMenu *edit = menuBar()->addMenu(QStringLiteral("编辑"));
+    edit->addAction(QStringLiteral("调试日志"), this, [this]() {
+        m_logWindow->setVisible(!m_logWindow->isVisible());
+        if (m_logWindow->isVisible())
+            m_logWindow->raise();
+    });
+    edit->addSeparator();
     edit->addAction(QStringLiteral("撤销"), QKeySequence::Undo, this, [this]() {
         m_doc->undo();
         m_view->relayout();
@@ -248,6 +313,25 @@ void MainWindow::insertLinkDialog()
         return;
     m_view->insertLink(QUrl(url.trimmed()));
     statusBar()->showMessage(QStringLiteral("已插入链接 %1").arg(url.trimmed()), 3000);
+}
+
+void MainWindow::syncWideDock()
+{
+    if (!m_wideDock || !m_view)
+        return;
+
+    /* 选中了宽对象（或光标落在它里面）就把右侧切到这一页 */
+    const bool onWide = m_view->selectedWideObject() >= 0
+                        || m_view->currentWideObject().isValid();
+    static bool last = false;
+    if (onWide == last)
+        return;
+    last = onWide;
+
+    if (onWide) {
+        m_wideDock->show();
+        m_wideDock->raise();
+    }
 }
 
 void MainWindow::chooseOpen()

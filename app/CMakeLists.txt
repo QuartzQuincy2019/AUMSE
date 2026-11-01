@@ -28,11 +28,13 @@ add_executable(ume
     src/umeformat.h
     src/umeview.cpp
     src/umelayout.cpp
+    src/umehit.cpp
     src/umeicons.cpp
     src/umeicons.h
     src/umedoc.cpp
     src/umedoc.h
     src/umelog.cpp
+    src/umelogwindow.cpp
     src/umelog.h
     src/umesettings.h
 )

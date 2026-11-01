@@ -1,6 +1,7 @@
 #pragma once
 
 #include <QString>
+#include <QVector>
 #include <QUrl>
 #include <QTextBlock>
 
@@ -35,6 +36,10 @@ struct WideProps
     bool flipV = false;        /* 垂直镜像 */
     QString imagePath;         /* 图片对象：源文件路径 */
 
+    /* 表格：用户拖过的行高 / 列宽（pt）。空表示均分。 */
+    QVector<qreal> colSizes;
+    QVector<qreal> rowSizes;
+
     bool isValid() const { return kind != WideKind::None; }
     bool operator==(const WideProps &o) const
     {
@@ -63,6 +68,8 @@ enum PropId {
     PropImagePath,
     PropFlipH,
     PropFlipV,
+    PropColSizes,
+    PropRowSizes,
 };
 
 /* 读 / 写块上的宽对象属性 */

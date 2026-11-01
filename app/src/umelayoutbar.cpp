@@ -62,6 +62,15 @@ void UmeLayoutBar::buildUi()
         QStringLiteral("列宽按每列内容自动计算；这里填的是「最小列宽」，0 = 自动"));
     form->addRow(QStringLiteral("最小列宽"), m_pitchBox);
 
+    /* 纸张方向：与「纸张与页边距…」同属版面设置，所以放在这里而不是「视图」菜单 */
+    m_orientBox = new QComboBox(this);
+    m_orientBox->addItem(QStringLiteral("纵向"));
+    m_orientBox->addItem(QStringLiteral("横向"));
+    m_orientBox->setCurrentIndex(
+        m_settings->page().pageOrientation() == PageOrientation::Landscape ? 1 : 0);
+    m_orientBox->setToolTip(QStringLiteral("切换时纸张宽高对调，并互换左右/上下页边距"));
+    form->addRow(QStringLiteral("纸张方向"), m_orientBox);
+
     m_rtlBox = new QCheckBox(QStringLiteral("从右向左排版"), this);
     m_rtlBox->setToolTip(QStringLiteral("传统竖排：列自右向左推进"));
     m_rtlBox->setChecked(m_settings->rightToLeft());
@@ -86,6 +95,10 @@ void UmeLayoutBar::buildUi()
 
     connect(m_pitchBox, &QDoubleSpinBox::valueChanged, m_settings,
             &UmeSettings::setColumnPitch);
+    connect(m_orientBox, &QComboBox::currentIndexChanged, this, [this](int i) {
+        m_settings->setOrientation(i == 1 ? PageOrientation::Landscape
+                                          : PageOrientation::Portrait);
+    });
     connect(m_guideBox, &QCheckBox::toggled, m_settings, &UmeSettings::setMarginGuides);
     connect(m_rtlBox, &QCheckBox::toggled, m_settings, &UmeSettings::setRightToLeft);
     connect(pageBtn, &QPushButton::clicked, this, &UmeLayoutBar::choosePage);
@@ -128,6 +141,14 @@ void UmeLayoutBar::choosePage()
 
 void UmeLayoutBar::refreshSummary()
 {
+    /* 设置变了就回填控件（同值不会触发信号，不会打环） */
+    if (m_orientBox) {
+        const int want = m_settings->page().pageOrientation()
+                             == PageOrientation::Landscape ? 1 : 0;
+        if (m_orientBox->currentIndex() != want)
+            m_orientBox->setCurrentIndex(want);
+    }
+
     const PageSetup &p = m_settings->page();
     m_summary->setText(
         QStringLiteral("纸张 %1 × %2 pt\n边距 左%3 右%4 上%5 下%6 pt\n最小列宽 %7")

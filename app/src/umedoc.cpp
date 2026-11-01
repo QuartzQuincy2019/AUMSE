@@ -66,6 +66,14 @@ WideProps wideProps(const QTextBlock &block)
     p.naturalH = fmt.doubleProperty(PropNaturalH);
     p.rotation = fmt.doubleProperty(PropRotation);
     p.imagePath = fmt.stringProperty(PropImagePath);
+    auto splitSizes = [](const QString &s) {
+        QVector<qreal> out;
+        for (const QString &t : s.split(QLatin1Char(','), Qt::SkipEmptyParts))
+            out.append(t.toDouble());
+        return out;
+    };
+    p.colSizes = splitSizes(fmt.stringProperty(PropColSizes));
+    p.rowSizes = splitSizes(fmt.stringProperty(PropRowSizes));
     p.flipH = fmt.boolProperty(PropFlipH);
     p.flipV = fmt.boolProperty(PropFlipV);
     return p;
@@ -73,6 +81,12 @@ WideProps wideProps(const QTextBlock &block)
 
 void setWideProps(const QTextBlock &block, const WideProps &props)
 {
+    auto joinSizes = [](const QVector<qreal> &v) {
+        QStringList out;
+        for (qreal x : v)
+            out << QString::number(x, 'f', 2);
+        return out.join(QLatin1Char(','));
+    };
     if (!block.isValid())
         return;
 
@@ -91,6 +105,8 @@ void setWideProps(const QTextBlock &block, const WideProps &props)
         tf.setProperty(PropImagePath, props.imagePath);
         tf.setProperty(PropFlipH, props.flipH);
         tf.setProperty(PropFlipV, props.flipV);
+        tf.setProperty(PropColSizes, joinSizes(props.colSizes));
+        tf.setProperty(PropRowSizes, joinSizes(props.rowSizes));
         table->setFormat(tf);
         return;
     }
@@ -109,6 +125,8 @@ void setWideProps(const QTextBlock &block, const WideProps &props)
     bf.setProperty(PropImagePath, props.imagePath);
     bf.setProperty(PropFlipH, props.flipH);
     bf.setProperty(PropFlipV, props.flipV);
+    bf.setProperty(PropColSizes, joinSizes(props.colSizes));
+    bf.setProperty(PropRowSizes, joinSizes(props.rowSizes));
     c.setBlockFormat(bf);
 }
 

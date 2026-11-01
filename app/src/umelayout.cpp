@@ -1,4 +1,5 @@
 #include "umelayout.h"
+#include "umelog.h"
 
 #include <QFontMetricsF>
 #include <QHash>
@@ -25,6 +26,21 @@ static QHash<QString, MetricsEntry> &metricsCache()
     return cache;
 }
 
+namespace {
+
+/* 单元格量宽用：基础字体（族名 + 字号） */
+QFont baseFontForMetrics(QTextDocument *doc, const QTextBlock &b)
+{
+    QFont f = b.charFormat().font();
+    if (f.family().isEmpty())
+        f = doc ? doc->defaultFont() : QFont(QStringLiteral("Noto Sans Mongolian"));
+    if (f.pointSizeF() <= 0.0)
+        f.setPointSizeF(14.0);
+    return f;
+}
+
+} // namespace
+
 void UmeLayout::relayout(QTextDocument *doc, const PageSetup &page, qreal minWidth,
                          Flow flow)
 {
@@ -45,17 +61,16 @@ void UmeLayout::relayout(QTextDocument *doc, const PageSetup &page, qreal minWid
 
     /* 宽对象把「与它在 x 上重叠」的列往下推：这就是「文本围绕」。
        不再用固定宽度的条带 —— 列宽是按内容变的，条带模型对不齐。 */
+    /* 盒子是**页内**坐标，所以必须先按页过滤：
+       否则第 1 页的图会把第 2 页的列也往下推（实测第 2 页正文整体下沉）。 */
     auto freeTopFor = [this, &area](qreal x0, qreal x1, int page) {
         qreal top = area.top();
         for (const WideItem &it : m_wideItems) {
-            if (it.box.top() < area.top() - 0.01)
+            if (it.page != page)
                 continue;                      // 不在这一页
-            if (it.box.top() >= area.top() + area.height() + 0.01)
-                continue;
             if (it.box.right() > x0 + 0.01 && it.box.left() < x1 - 0.01)
                 top = qMax(top, it.box.bottom());
         }
-        Q_UNUSED(page);
         return top;
     };
 
@@ -83,49 +98,216 @@ void UmeLayout::relayout(QTextDocument *doc, const PageSetup &page, qreal minWid
             ++tableBlocks;
 
         /* ---- 宽对象：表格与图片都走这里 ---- */
-        const bool isTableAnchor =
-            table && table->firstCursorPosition().block() == b
-            && UmeDoc::isWideBlock(b);
+        /* 表格：只要这一块是表格的首块就当宽对象排 —— 不依赖属性是否还在。
+           属性丢了就用默认值补上（自愈）：否则整张表会散成一堆普通段落。 */
+        const bool isTableAnchor = table && table->firstCursorPosition().block() == b;
         const bool isImageBlock = !table && UmeDoc::isWideBlock(b);
 
         if (isTableAnchor || isImageBlock) {
-            const UmeDoc::WideProps props = UmeDoc::wideProps(b);
-            const qreal w = qBound(stripW, props.span * stripW,
-                                   area.right() - area.left());
-            const qreal h = qBound(8.0, props.heightPt, textH);
-
-            const qreal boxX = (flow == Flow::Ltr) ? x : x - w;
-            const qreal freeTop = freeTopFor(boxX, boxX + w, pageNo);
-            qreal top = freeTop + props.offsetPt;
-            top = qBound(area.top(), top, area.top() + qMax(0.0, textH - h));
-
-            /* 放不下就换列，再不行换页 */
-            const bool widthOver =
-                (flow == Flow::Ltr) ? (x + w > area.right() + 0.01)
-                                    : (x - w < area.left() - 0.01);
-            const bool heightOver = (top + h > area.top() + textH + 0.01);
-            if (widthOver || (heightOver && freeTop > area.top() + 0.5)) {
-                resetFlow(true);
-                x = (flow == Flow::Ltr) ? area.left() : area.right();
-                top = area.top() + qMax(0.0, props.offsetPt);
-                top = qBound(area.top(), top, area.top() + qMax(0.0, textH - h));
+            UmeDoc::WideProps props = UmeDoc::wideProps(b);
+            if (isTableAnchor && !props.isValid()) {
+                props.kind = UmeDoc::WideKind::Table;
+                props.wrap = UmeDoc::WideWrap::Span;
+                props.span = qBound(1, table->columns(), 12);
+                props.heightPt = qMax(40.0, table->rows() * 28.0);
+                props.naturalW = props.span * 20.0;
+                props.naturalH = props.heightPt;
             }
 
-            WideItem item;
-            item.block = b;
-            item.index = objIndex++;
-            item.box = QRectF((flow == Flow::Ltr) ? x : x - w, top, w, h);
-            item.props = props;
-            m_wideItems.append(item);
+            const qreal areaW = area.right() - area.left();
+            qreal w = qBound(stripW, props.span * stripW, areaW);
 
-            if (props.wrap == UmeDoc::WideWrap::Span)
-                x += (flow == Flow::Ltr) ? w : -w;
-            ++colInPage;
+            if (flow == Flow::Ltr) {
+                qreal safeX = x;
+                for (const Column &c : m_columns) {
+                    if (c.page != pageNo)
+                        continue;
+                    safeX = qMax(safeX, c.box.right());
+                }
+                for (const WideItem &other : m_wideItems) {
+                    if (other.page != pageNo)
+                        continue;
+                    if (other.box.bottom() <= area.top() + 0.01
+                        || other.box.top() >= area.top() + textH + 0.01)
+                        continue;
+                    safeX = qMax(safeX, other.box.right());
+                }
+                x = qMax(x, safeX);
+            }
+
+            const qreal minKeep = qMax(stripW, 20.0);
+            {
+                const qreal remain = (flow == Flow::Ltr) ? area.right() - x
+                                                         : x - area.left();
+                if (w > remain + 0.01 && remain >= minKeep)
+                    w = remain;
+            }
+
+            if ((flow == Flow::Ltr) ? (x + w > area.right() + 0.01)
+                                    : (x - w < area.left() - 0.01)) {
+                resetFlow(true);
+                x = (flow == Flow::Ltr) ? area.left() : area.right();
+            }
 
             if (isTableAnchor) {
-                QTextBlock after = table->lastCursorPosition().block();
-                if (after.isValid())
+                const int rows = qMax(1, table->rows());
+                const int cols = qMax(1, table->columns());
+
+                /* 「合适」尺寸：按单元格内容估。
+                   竖排里「沿列的长度」= 这段文字在水平方向的宽度。 */
+                QFontMetricsF fm(baseFontForMetrics(doc, b));
+                const qreal lineW = qMax(12.0, fm.height() * 1.15);
+
+                QVector<qreal> needLen(rows * cols, 0.0);
+                qreal maxLen = 0.0;
+                for (int i = 0; i < rows; ++i) {
+                    for (int j = 0; j < cols; ++j) {
+                        const QTextTableCell cell = table->cellAt(i, j);
+                        if (!cell.isValid())
+                            continue;
+                        const QString txt = cell.firstCursorPosition().block().text();
+                        const qreal len = txt.isEmpty() ? 0.0 : fm.horizontalAdvance(txt);
+                        needLen[i * cols + j] = len;
+                        maxLen = qMax(maxLen, len);
+                    }
+                }
+
+                /* 行高：一行至少两个字高；用户拖过高度就按用户的 */
+                qreal wantH = props.heightPt;
+                if (wantH <= 0.0)
+                    wantH = qMax(rows * lineW * 2.0, maxLen * 0.6);
+                wantH = qBound(rows * lineW * 2.0, wantH, textH * 40.0);
+                QVector<qreal> rowHs(rows, 0.0);
+                if (props.rowSizes.size() == rows) {
+                    for (int i = 0; i < rows; ++i)
+                        rowHs[i] = qMax(10.0, props.rowSizes.at(i));
+                } else {
+                    for (int i = 0; i < rows; ++i)
+                        rowHs[i] = qMin(qMax(lineW * 2.0, wantH / rows), textH);
+                }
+
+                /* 列宽：按各列内容占比分配，空列至少一个字宽 */
+                QVector<qreal> colNeed(cols, 0.0);
+                for (int j = 0; j < cols; ++j)
+                    for (int i = 0; i < rows; ++i)
+                        colNeed[j] = qMax(colNeed[j], needLen[i * cols + j]);
+
+                qreal needSum = 0.0;
+                for (int j = 0; j < cols; ++j)
+                    needSum += qMax(lineW, colNeed[j]);
+
+                QVector<qreal> colW(cols, 0.0);
+                for (int j = 0; j < cols; ++j) {
+                    const qreal share = needSum > 0.0 ? qMax(lineW, colNeed[j]) / needSum
+                                                      : 1.0 / cols;
+                    colW[j] = qMax(lineW, w * share);
+                }
+                /* 用户拖过分隔线就用他的列宽（按表宽归一化） */
+                if (props.colSizes.size() == cols) {
+                    qreal s = 0.0;
+                    for (qreal v : props.colSizes)
+                        s += qMax(6.0, v);
+                    if (s > 0.0)
+                        for (int j = 0; j < cols; ++j)
+                            colW[j] = qMax(6.0, props.colSizes.at(j)) * w / s;
+                }
+
+                qreal sumW = 0.0;
+                for (int j = 0; j < cols; ++j)
+                    sumW += colW[j];
+                if (sumW > 0.0)
+                    for (int j = 0; j < cols; ++j)
+                        colW[j] = colW[j] * w / sumW;
+
+                int r = 0;
+                while (r < rows) {
+                    const qreal bx0 = (flow == Flow::Ltr) ? x : x - w;
+                    const qreal freeTop = freeTopFor(bx0, bx0 + w, pageNo);
+                    qreal top = freeTop + (r == 0 ? props.offsetPt : 0.0);
+                    top = qBound(area.top(), top,
+                                 area.top() + qMax(0.0, textH - rowHs.at(r)));
+
+                    const qreal avail = area.top() + textH - top;
+                    /* 逐行累计，放不下就切（单元格不拆） */
+                    qreal hh = 0.0;
+                    int last = r;
+                    for (int i = r; i < rows; ++i) {
+                        const qreal add = rowHs.at(i);
+                        if (i > r && hh + add > avail + 0.01)
+                            break;
+                        hh += add;
+                        last = i;
+                    }
+
+                    WideItem item;
+                    item.block = b;
+                    item.index = objIndex++;
+                    item.page = pageNo;
+                    item.box = QRectF(bx0, top, w, hh);
+                    item.props = props;
+                    item.rowFirst = r;
+                    item.rowLast = last;
+                    item.colWidths = colW;
+                    item.rowHeights.clear();
+                    for (int i = r; i <= last; ++i)
+                        item.rowHeights.append(rowHs.at(i));
+                    m_wideItems.append(item);
+
+                    UME_LOG("table", QStringLiteral("page %1 rows %2-%3/%4 x=%5 y=%6 w=%7 h=%8")
+                                         .arg(pageNo).arg(r).arg(last).arg(rows - 1)
+                                         .arg(item.box.left(), 0, 'f', 1)
+                                         .arg(item.box.top(), 0, 'f', 1)
+                                         .arg(w, 0, 'f', 1)
+                                         .arg(hh, 0, 'f', 1));
+
+                    r = last + 1;
+                    if (r < rows) {
+                        resetFlow(true);
+                        x = (flow == Flow::Ltr) ? area.left() : area.right();
+                    }
+                }
+
+                ++colInPage;
+                if (props.wrap == UmeDoc::WideWrap::Span)
+                    x += (flow == Flow::Ltr) ? w : -w;
+                if (QTextBlock after = table->lastCursorPosition().block(); after.isValid())
                     b = after;
+                continue;
+            }
+
+            {
+                const qreal h = qBound(8.0, props.heightPt, textH);
+                const qreal bx0 = (flow == Flow::Ltr) ? x : x - w;
+                const qreal freeTop = freeTopFor(bx0, bx0 + w, pageNo);
+                qreal top = freeTop + props.offsetPt;
+                top = qBound(area.top(), top, area.top() + qMax(0.0, textH - h));
+
+                if (top + h > area.top() + textH + 0.01 && freeTop > area.top() + 0.5) {
+                    resetFlow(true);
+                    x = (flow == Flow::Ltr) ? area.left() : area.right();
+                    top = area.top() + qMax(0.0, props.offsetPt);
+                    top = qBound(area.top(), top, area.top() + qMax(0.0, textH - h));
+                }
+
+                WideItem item;
+                item.block = b;
+                item.index = objIndex++;
+                item.page = pageNo;
+                item.box = QRectF((flow == Flow::Ltr) ? x : x - w, top, w, h);
+                item.props = props;
+                m_wideItems.append(item);
+
+                if (UME_LOG_EVERY("wide", 200))
+                    UME_LOG("wide", QStringLiteral("place#%1 page=%2 x=%3 y=%4 w=%5 h=%6 kind=%7")
+                                        .arg(item.index).arg(pageNo)
+                                        .arg(item.box.left(), 0, 'f', 1)
+                                        .arg(item.box.top(), 0, 'f', 1)
+                                        .arg(w, 0, 'f', 1).arg(h, 0, 'f', 1)
+                                        .arg(int(props.kind)));
+
+                if (props.wrap == UmeDoc::WideWrap::Span)
+                    x += (flow == Flow::Ltr) ? w : -w;
+                ++colInPage;
             }
             continue;
         }
@@ -156,6 +338,15 @@ void UmeLayout::relayout(QTextDocument *doc, const PageSetup &page, qreal minWid
         const qreal colLeftEstimate = (flow == Flow::Ltr) ? x : x - stripW;
         const qreal top = freeTopFor(colLeftEstimate, colLeftEstimate + stripW, pageNo);
         const qreal availH = qMax(12.0, area.top() + textH - top);
+
+        /* 手工布局的 textOption 默认是 WordWrap —— 长单词（比如一长串 h）
+           不会断开，整段挤在一条 line 里，最后被列裁剪吃掉。
+           竖排里本来就没有「西文单词」的概念，一律允许任意处换行。 */
+        {
+            QTextOption opt = lay->textOption();
+            opt.setWrapMode(QTextOption::WrapAnywhere);
+            lay->setTextOption(opt);
+        }
 
         /* 自己跑一遍 layout：line 宽度 = 本列可用高度（px） */
         lay->beginLayout();
@@ -219,11 +410,18 @@ void UmeLayout::relayout(QTextDocument *doc, const PageSetup &page, qreal minWid
 
             /* 列宽贴合墨迹：字形是居中画在列里的（columInkLeft），
                所以不需要按名义行高留富余；大字号靠 tight 自己撑开。 */
-            const qreal colW = qMax(minCol, tight + kPad * 2.0);
+            /* 文本列同样不越出正文区（超大字号时列会变很宽） */
+            const qreal colW = qMin(qMax(minCol, tight + kPad * 2.0),
+                                    area.right() - area.left());
 
             /* 每条 line 都从「自己那条带的游标」开始：
                块首可能被上面的宽对象压住，后面的列则是满高。 */
-            const qreal lineTop = top;
+            /* 每条 line 各自算空闲顶部：
+               与上面的宽对象 x 重叠 → 从对象下沿开始；不重叠 → 回到页首。
+               以前整块共用块首的 top，绕行之后的列全被钉在对象下沿。 */
+            const qreal lineTop = freeTopFor(
+                (flow == Flow::Ltr) ? x : x - colW,
+                (flow == Flow::Ltr) ? x + colW : x, pageNo);
 
             /* 放不下就换页：只看下游还有没有位置，上游的列一律不动 */
             const bool overflow = (flow == Flow::Ltr) ? (x + colW > area.right() + 0.01)
@@ -255,13 +453,91 @@ void UmeLayout::relayout(QTextDocument *doc, const PageSetup &page, qreal minWid
     m_tableBlocks = tableBlocks;
 }
 
-qreal UmeLayout::contentHeight() const
+QRectF UmeLayout::pageRectOf(const PageSetup &page, int i,
+                             const PageArrangement &a)
 {
-    return m_pageCount * m_page.paper.height() + (m_pageCount - 1) * kPageGap;
+    const qreal pw = page.paper.width();
+    const qreal ph = page.paper.height();
+
+    int col = 0;
+    int row = 0;
+    switch (a.mode) {
+    case PageArrangement::Horizontal:
+        col = i;
+        row = 0;
+        break;
+    case PageArrangement::Vertical:
+        col = 0;
+        row = i;
+        break;
+    case PageArrangement::RowsOfN:
+    default: {
+        const int per = qMax(1, a.perRow);
+        col = i % per;
+        row = i / per;
+        break;
+    }
+    }
+
+    return QRectF(col * (pw + kPageGap), row * (ph + kPageGap), pw, ph);
 }
 
-QRectF UmeLayout::pageRect(const PageSetup &page, int i)
+QSizeF UmeLayout::contentSizeOf(const PageSetup &page, int pageCount,
+                               const PageArrangement &a)
 {
-    return QRectF(0.0, i * (page.paper.height() + kPageGap),
-                  page.paper.width(), page.paper.height());
+    const int n = qMax(1, pageCount);
+    const qreal pw = page.paper.width();
+    const qreal ph = page.paper.height();
+
+    int cols = 1;
+    int rows = 1;
+    switch (a.mode) {
+    case PageArrangement::Horizontal:
+        cols = n;
+        rows = 1;
+        break;
+    case PageArrangement::Vertical:
+        cols = 1;
+        rows = n;
+        break;
+    case PageArrangement::RowsOfN:
+    default: {
+        const int per = qMax(1, a.perRow);
+        cols = qMin(per, n);
+        rows = (n + per - 1) / per;
+        break;
+    }
+    }
+
+    const qreal w = cols * pw + qMax(0, cols - 1) * kPageGap;
+    const qreal h = rows * ph + qMax(0, rows - 1) * kPageGap;
+    return QSizeF(w, h);
+}
+
+QPointF UmeLayout::pageOrigin(int page) const
+{
+    const QRectF r = pageRectFor(page);
+    return QPointF(r.left(), r.top());
+}
+
+QRectF UmeLayout::docRect(const WideItem &item) const
+{
+    const QPointF o = pageOrigin(item.page);
+    return item.box.translated(o.x(), o.y());
+}
+
+QRectF UmeLayout::docRect(const Column &c) const
+{
+    const QPointF o = pageOrigin(c.page);
+    return c.box.translated(o.x(), o.y());
+}
+
+QRectF UmeLayout::pageRectFor(int i) const
+{
+    return pageRectOf(m_page, i, m_arrangement);
+}
+
+QSizeF UmeLayout::contentSize() const
+{
+    return contentSizeOf(m_page, m_pageCount, m_arrangement);
 }

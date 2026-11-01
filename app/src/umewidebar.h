@@ -11,6 +11,7 @@ class QDoubleSpinBox;
 class QCheckBox;
 class QPushButton;
 class QToolButton;
+class QGroupBox;
 class UmeView;
 
 /* 「宽对象格式控制」——独立于文字格式与版面设置的一层。
@@ -44,6 +45,10 @@ private:
     QPushButton *m_rowDel = nullptr;
     QPushButton *m_colAdd = nullptr;
     QPushButton *m_colDel = nullptr;
+
+    /* 按对象类型分区：图片格式 / 表格格式 */
+    class QGroupBox *m_imageGroup = nullptr;
+    class QGroupBox *m_tableGroup = nullptr;
 
     /* 图片镜像 */
     QToolButton *m_mirrorHBtn = nullptr;

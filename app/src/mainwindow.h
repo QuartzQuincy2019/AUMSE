@@ -3,6 +3,7 @@
 #include <QMainWindow>
 
 class QLabel;
+class QDockWidget;
 class QTextDocument;
 class UmeLayoutBar;
 class UmeSettings;
@@ -40,6 +41,10 @@ private:
     UmeSettings *m_settings = nullptr;
     UmeView *m_view = nullptr;
     UmeLayoutBar *m_layoutBar = nullptr;
+    class UmeLogWindow *m_logWindow = nullptr;
+    class QDockWidget *m_wideDock = nullptr;
+    /* 选中宽对象时把右侧切到「宽对象格式」 */
+    void syncWideDock();
     QTextDocument *m_doc = nullptr;
     QLabel *m_status = nullptr;
     QLabel *m_posLabel = nullptr;
