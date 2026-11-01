@@ -62,6 +62,11 @@ void UmeLayoutBar::buildUi()
         QStringLiteral("列宽按每列内容自动计算；这里填的是「最小列宽」，0 = 自动"));
     form->addRow(QStringLiteral("最小列宽"), m_pitchBox);
 
+    m_rtlBox = new QCheckBox(QStringLiteral("从右向左排版"), this);
+    m_rtlBox->setToolTip(QStringLiteral("传统竖排：列自右向左推进"));
+    m_rtlBox->setChecked(m_settings->rightToLeft());
+    form->addRow(QString(), m_rtlBox);
+
     m_guideBox = new QCheckBox(QStringLiteral("显示页边距辅助线"), this);
     m_guideBox->setChecked(m_settings->marginGuides());
     form->addRow(QString(), m_guideBox);
@@ -82,6 +87,7 @@ void UmeLayoutBar::buildUi()
     connect(m_pitchBox, &QDoubleSpinBox::valueChanged, m_settings,
             &UmeSettings::setColumnPitch);
     connect(m_guideBox, &QCheckBox::toggled, m_settings, &UmeSettings::setMarginGuides);
+    connect(m_rtlBox, &QCheckBox::toggled, m_settings, &UmeSettings::setRightToLeft);
     connect(pageBtn, &QPushButton::clicked, this, &UmeLayoutBar::choosePage);
 }
 

@@ -38,6 +38,16 @@ public:
     }
     bool columnPitchIsAuto() const { return m_pitch <= 0.0; }
 
+    /* 列的推进方向：false = 自左向右（默认），true = 传统竖排的自右向左 */
+    bool rightToLeft() const { return m_rtl; }
+    void setRightToLeft(bool on)
+    {
+        if (on == m_rtl)
+            return;
+        m_rtl = on;
+        emit layoutChanged();
+    }
+
     bool marginGuides() const { return m_guides; }
     void setMarginGuides(bool on)
     {
@@ -55,4 +65,5 @@ private:
     PageSetup m_page;
     qreal m_pitch = 0.0;
     bool m_guides = true;
+    bool m_rtl = false;
 };

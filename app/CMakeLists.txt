@@ -23,10 +23,15 @@ add_executable(ume
     src/main.cpp
     src/mainwindow.cpp
     src/umelayoutbar.cpp
+    src/umewidebar.cpp
     src/umeformatbar.cpp
     src/umeformat.h
     src/umeview.cpp
     src/umelayout.cpp
+    src/umeicons.cpp
+    src/umeicons.h
+    src/umedoc.cpp
+    src/umedoc.h
     src/umelog.cpp
     src/umelog.h
     src/umesettings.h

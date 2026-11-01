@@ -31,5 +31,6 @@ private:
     QDoubleSpinBox *m_sizeBox = nullptr;
     QDoubleSpinBox *m_pitchBox = nullptr;
     QCheckBox *m_guideBox = nullptr;
+    QCheckBox *m_rtlBox = nullptr;
     QLabel *m_summary = nullptr;
 };

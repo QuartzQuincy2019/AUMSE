@@ -33,6 +33,10 @@ private:
     void buildUi();
     void buildMenus();
 
+    /* 插入弹窗：行列用微调框，不是文本框 */
+    void insertTableDialog();
+    void insertLinkDialog();
+
     UmeSettings *m_settings = nullptr;
     UmeView *m_view = nullptr;
     UmeLayoutBar *m_layoutBar = nullptr;

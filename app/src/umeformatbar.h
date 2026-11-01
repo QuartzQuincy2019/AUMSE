@@ -5,6 +5,7 @@
 #include "umeformat.h"
 
 class QComboBox;
+class QMenu;
 class QDoubleSpinBox;
 class QToolButton;
 class UmeView;
@@ -21,11 +22,20 @@ public:
 
 private:
     void buildUi();
+    QMenu *buildColorMenu();
     void syncFromView();
 
     UmeView *m_view = nullptr;
     QComboBox *m_fontBox = nullptr;
     QDoubleSpinBox *m_sizeBox = nullptr;
     QToolButton *m_colorBtn = nullptr;
+
+    /* 字符样式按钮：B I U S x² x₂ */
+    QToolButton *m_boldBtn = nullptr;
+    QToolButton *m_italicBtn = nullptr;
+    QToolButton *m_underlineBtn = nullptr;
+    QToolButton *m_strikeBtn = nullptr;
+    QToolButton *m_superBtn = nullptr;
+    QToolButton *m_subBtn = nullptr;
     bool m_syncing = false;   // 防止「同步控件」反过来触发应用
 };

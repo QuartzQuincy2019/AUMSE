@@ -50,6 +50,38 @@ public:
     void applyFormatPointSize(qreal pt);
     void applyFormatColor(const QColor &c);
 
+    /* 字符样式：粗体 / 斜体 / 下划线 / 删除线 / 上下标 */
+    void applyCharStyle(int what, bool on);
+    enum CharStyle { StyleBold, StyleItalic, StyleUnderline,
+                     StyleStrikeOut, StyleSuper, StyleSub };
+
+    /* ---- 为「链接 / 表格 / HTML」预留的接口 ---- */
+    /* 插入链接：有选区就套在选区上，否则插入链接文字 */
+    void insertLink(const QUrl &url, const QString &text = QString());
+    /* 光标处的链接（没有则为空） */
+    QUrl linkAtCursor() const;
+    /* 插入 rows × cols 表格 */
+    void insertTable(int rows, int cols);
+    /* 导出 HTML（竖排 CSS 已注入） */
+    QString toHtml() const;
+
+    /* ---- 宽对象（表格 / 图片）：与文字格式完全解耦的一层 ---- */
+    UmeDoc::WideProps currentWideObject() const;
+    void applyWideObject(UmeDoc::WideProps props);
+    void nudgeWideObject(qreal dy);
+    void resizeWideObject(qreal newHeightPt, bool keepAspect);
+    void changeTableRows(int delta);
+    void changeTableColumns(int delta);
+    QString wideObjectsProbe() const;
+
+    /* 插入行外图片（列游标模式） */
+    void insertImage(const QString &path);
+    /* 选中的宽对象（-1 表示没有）；选图片后才会出现控制手柄 */
+    int selectedWideObject() const { return m_selectedWide; }
+    void selectWideObject(int index);
+    /* 探针：9 个控制手柄的矩形（文档坐标） */
+    QVector<QRectF> wideHandlesProbe() const;
+
     /* 载入文档时设定基础格式（字体/字号/颜色） */
     void setBaseFormat(const QString &family, qreal pt, const QColor &color = Qt::black);
 
@@ -61,6 +93,10 @@ public:
 
     /* 自检探针 */
     QRectF caretRectProbe() const { return caretDocRect(); }
+    QColor caretColorProbe() const { return caretColor(); }
+    int layoutTableBlocksProbe() const { return m_layout.tableBlocks(); }
+    /* 探针：返回手柄 0..8 对应的光标名（自检用） */
+    QString cursorProbe() const;
     QVector<QRectF> selectionRectsProbe() const { return selectionDocRects(); }
     QTextCursor cursorAtWidgetPosProbe(const QPointF &widgetPos) const
     {
@@ -95,6 +131,9 @@ public:
     /* 按脚本切段插入，让汉字落到中文字体上 */
     void insertTextByScript(const QString &text);
 
+    /* 光标落在已着色的文字上时，把该颜色收作插入色 */
+    void adoptColorAtCursor();
+
 signals:
     void formatStateChanged();
     void cursorPositionChanged(int blockNumber, int columnInPage);
@@ -118,6 +157,9 @@ private:
     /* 字形在列里的落点：墨迹居中于列框 */
     qreal columnInkLeft(const UmeLayout::Column &c) const;
     QRectF caretDocRect() const;
+
+    /* 光标颜色 = 接下来要输入的文字颜色（浅色自动压暗） */
+    QColor caretColor() const;
     QVector<QRectF> selectionDocRects() const;
     QTextCursor cursorAtDocPos(const QPointF &docPos) const;
     int columnIndexForCursor() const;
@@ -128,6 +170,30 @@ private:
     void paintGuides(QPainter &p) const;
     void paintSelection(QPainter &p) const;
     void paintCaret(QPainter &p) const;
+
+    /* ---- 宽对象：绘制与交互 ---- */
+    enum class WideDrag {
+        None, Move, ResizeTL, ResizeTR, ResizeBL, ResizeBR,
+        ResizeTop, ResizeBottom, ResizeLeft, ResizeRight, Rotate
+    };
+    const QImage &imageFor(const QString &path) const;
+    void paintWideItems(QPainter &p) const;
+    void paintTableCells(QPainter &p, const UmeLayout::WideItem &item) const;
+    const UmeLayout::WideItem *selectedWideItem() const;
+    /* 未旋转时 9 个手柄的中心点（四角 + 四边中点 + 旋转手柄） */
+    QVector<QPointF> wideHandlePoints(const UmeLayout::WideItem &item) const;
+    QVector<QRectF> wideHandles(const UmeLayout::WideItem &item) const;
+    int hitWideHandle(const QPointF &docPos) const;
+    /* 手柄 → 光标：方向随对象旋转一起转 */
+    Qt::CursorShape cursorForWideHandle(int index) const;
+    int hitWideItem(const QPointF &docPos) const;
+    void applyWideDrag(const QPointF &docPos);
+
+    mutable QHash<QString, QImage> m_images;   // 绘制期懒加载
+    int m_selectedWide = -1;
+    WideDrag m_wideDrag = WideDrag::None;
+    QPointF m_wideDragStart;
+    UmeDoc::WideProps m_wideDragProps;
     void paintPreedit(QPainter &p) const;
 
     /* 移动 */
@@ -161,6 +227,8 @@ private:
 
     UmeLayout m_layout;
     qreal m_colPitch = 20.0;
+    /* 拖曳缩放时用的「一列宽」，relayout 时记下 */
+    qreal m_minWidthForDrag = 20.0;
     qreal m_autoPitch = 20.0;
     qreal m_ascent = 14.0;
     qreal m_descent = 4.0;

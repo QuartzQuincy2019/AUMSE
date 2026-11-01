@@ -1,4 +1,7 @@
 #include "mainwindow.h"
+#include "umeicons.h"
+#include "umedoc.h"
+#include "umeinteract.h"
 #include "umelog.h"
 #include "umesettings.h"
 #include "umeview.h"
@@ -16,6 +19,7 @@
 #include <QTextBlock>
 #include <QTextCharFormat>
 #include <QTextDocument>
+#include <QFileInfo>
 #include <QInputMethodEvent>
 #include <QTextFragment>
 
@@ -227,6 +231,321 @@ int selfTest(const QString &path, const QString &outDir, const QString &font,
         printf("  列几何：%s\n", qPrintable(view.columnsProbe(3)));
     }
 
+    printf("== 只给选区上色 ==\n");
+    {
+        QTextCursor sel(&doc);
+        sel.setPosition(0);
+        sel.setPosition(5, QTextCursor::KeepAnchor);
+        view.setTextCursor(sel);
+        view.applyFormatColor(QColor(QStringLiteral("#cc0000")));
+
+        const UmeFormatState mixed = view.currentFormat();
+        printf("  选 5 字上红：colorMixed=%d  color=%s\n",
+               int(mixed.colorMixed),
+               qPrintable(mixed.color.isValid() ? mixed.color.name()
+                                                : QStringLiteral("-")));
+
+        sel.setPosition(0);
+        sel.setPosition(3, QTextCursor::KeepAnchor);
+        view.setTextCursor(sel);
+        const UmeFormatState s3 = view.currentFormat();
+        printf("  只看前 3 字（全红）：colorMixed=%d  color=%s\n",
+               int(s3.colorMixed), qPrintable(s3.color.name()));
+
+        /* 跨「红→黑」边界：应当报混合 */
+        sel.setPosition(0);
+        sel.setPosition(9, QTextCursor::KeepAnchor);
+        view.setTextCursor(sel);
+        const UmeFormatState mixedRange = view.currentFormat();
+        printf("  跨红黑边界：colorMixed=%d\n", int(mixedRange.colorMixed));
+
+        /* 像素级验证：渲染一页，红与黑都要有 */
+        {
+            sel.setPosition(0);
+            sel.setPosition(5, QTextCursor::KeepAnchor);
+            view.setTextCursor(sel);
+            view.applyFormatColor(QColor(QStringLiteral("#cc0000")));
+
+            const QImage img = view.renderPageImage(0, 1.0, false);
+            int red = 0;
+            int dark = 0;
+            for (int y = 0; y < img.height(); ++y) {
+                for (int x = 0; x < img.width(); ++x) {
+                    const QColor c = img.pixelColor(x, y);
+                    if (c.red() > 120 && c.green() < 90 && c.blue() < 90)
+                        ++red;
+                    else if (c.red() < 80 && c.green() < 80 && c.blue() < 80)
+                        ++dark;
+                }
+            }
+            printf("  渲染像素：红 %d  黑 %d\n", red, dark);
+            img.save(QStringLiteral("%1/m4-color.png").arg(outDir));
+        }
+
+        /* 光标颜色：把光标放进红色文字里，画的应是红色 */
+        {
+            QTextCursor cur(&doc);
+            cur.setPosition(3);
+            view.setTextCursor(cur);
+            view.setFocus();
+
+            const QRectF cr = view.caretRectProbe();
+            const QImage img = view.renderPageImage(0, 1.0, true);
+            int red = 0;
+            int dark = 0;
+            for (int y = int(cr.top()) - 1; y <= int(cr.bottom()) + 1; ++y) {
+                for (int x = int(cr.left()) - 1; x <= int(cr.right()) + 1; ++x) {
+                    if (x < 0 || y < 0 || x >= img.width() || y >= img.height())
+                        continue;
+                    const QColor c = img.pixelColor(x, y);
+                    if (c.red() > 120 && c.green() < 90 && c.blue() < 90)
+                        ++red;
+                    else if (c.red() < 80 && c.green() < 80 && c.blue() < 80)
+                        ++dark;
+                }
+            }
+            printf("  光标颜色探针（红色文字处） = %s\n",
+                   qPrintable(view.caretColorProbe().name()));
+
+            /* 浅色要自动压暗，否则黄光标在白纸上等于隐形 */
+            view.applyFormatColor(QColor(QStringLiteral("#ffff00")));
+            printf("  换成亮黄后 = %s（应比 #ffff00 暗）\n",
+                   qPrintable(view.caretColorProbe().name()));
+            view.applyFormatColor(QColor(QStringLiteral("#cc0000")));
+            printf("  光标处像素：红 %d  黑 %d（光标矩形 x %.1f–%.1f）\n",
+                   red, dark, cr.left(), cr.right());
+        }
+
+        /* 整篇再统一回黑，避免影响后面的渲染 */
+        QTextCursor all(&doc);
+        all.select(QTextCursor::Document);
+        view.setTextCursor(all);
+        view.applyFormatColor(Qt::black);
+    }
+
+    printf("== 链接 / 表格 / HTML ==\n");
+    {
+        /* 链接：套在选区上 */
+        QTextCursor sel(&doc);
+        sel.setPosition(0);
+        sel.setPosition(5, QTextCursor::KeepAnchor);
+        view.setTextCursor(sel);
+        view.insertLink(QUrl(QStringLiteral("https://example.com/")));
+
+        sel.setPosition(3);
+        view.setTextCursor(sel);
+        printf("  光标处链接 = %s\n", qPrintable(view.linkAtCursor().toString()));
+
+        const QStringList links = UmeDoc::allLinks(&doc);
+        printf("  文档内链接数 = %d，首个 = %s\n",
+               int(links.size()), qPrintable(links.value(0)));
+
+        /* 表格：插到文档末尾 */
+        QTextCursor end(&doc);
+        end.movePosition(QTextCursor::End);
+        view.setTextCursor(end);
+        view.insertTable(2, 3);
+        printf("  光标在表格内 = %d，规格 = %dx%d\n",
+               int(UmeDoc::inTable(view.textCursor())),
+               UmeDoc::tableSize(view.textCursor()).first,
+               UmeDoc::tableSize(view.textCursor()).second);
+        printf("  表格段落数 = %d，列数 = %d\n",
+               view.layoutTableBlocksProbe(), view.columnsProbe(9).count(QLatin1Char('[')));
+
+        /* HTML 导出 */
+        const QString html = view.toHtml();
+        printf("  HTML 长度 = %d，含 <a href = %d，含 writing-mode = %d\n",
+               int(html.size()),
+               int(html.contains(QStringLiteral("<a href"))),
+               int(html.contains(QStringLiteral("writing-mode"))));
+        printf("  HTML 含 <table = %d\n", int(html.contains(QStringLiteral("<table"))));
+    }
+
+    printf("== 宽对象：独占整列 / 文本围绕 ==\n");
+    {
+        /* 干净的文档：三段文字 + 一张表 */
+        QTextDocument wdoc;
+        wdoc.setPlainText(QStringLiteral("第一段文字。\n第二段文字。\n第三段文字。"));
+
+        UmeView wview;
+        wview.setSettings(&settings);
+        wview.setDocument(&wdoc);
+        wview.setBaseFormat(font, pt);
+
+        QTextCursor end(&wdoc);
+        end.movePosition(QTextCursor::End);
+        wview.setTextCursor(end);
+        wview.insertTable(2, 3);
+
+        UmeDoc::WideProps p = wview.currentWideObject();
+        printf("  插入后：kind=%d span=%d 高=%.1f\n",
+               int(p.kind), p.span, p.heightPt);
+        printf("  独占整列：%s\n", qPrintable(wview.wideObjectsProbe()));
+        printf("  列数 = %d\n", int(wview.columnsProbe(12).count(QLatin1Char('['))));
+
+        /* 改 3 列、高 120，切换文本围绕 */
+        p.span = 3;
+        p.heightPt = 120.0;
+        p.wrap = UmeDoc::WideWrap::Span;
+        wview.applyWideObject(p);
+        const QString spanProbe = wview.wideObjectsProbe();
+
+        p.wrap = UmeDoc::WideWrap::Bubble;
+        wview.applyWideObject(p);
+        const QString wrapProbe = wview.wideObjectsProbe();
+
+        printf("  span 落位：%s\n", qPrintable(spanProbe));
+        printf("  wrap 落位：%s\n", qPrintable(wrapProbe));
+
+        /* 缩放与行列 */
+        wview.resizeWideObject(200.0, false);
+        printf("  改高 200 后：%s\n", qPrintable(wview.wideObjectsProbe()));
+
+        wview.changeTableRows(1);
+        wview.changeTableColumns(-1);
+        const QPair<int, int> size = UmeDoc::tableSize(wview.textCursor());
+        printf("  +1 行 −1 列后：%dx%d\n", size.first, size.second);
+
+        wview.nudgeWideObject(10.0);
+        printf("  下移 10pt：%s\n", qPrintable(wview.wideObjectsProbe()));
+    }
+
+    printf("== 从右到左 / 图片与手柄 ==\n");
+    {
+        QTextDocument rdoc;
+        rdoc.setPlainText(QStringLiteral("第一段。\n第二段。\n第三段。"));
+        UmeView rview;
+        rview.setSettings(&settings);
+        rview.setDocument(&rdoc);
+        rview.setBaseFormat(font, pt);
+
+        const QString ltr = rview.columnsProbe(3);
+        settings.setRightToLeft(true);
+        const QString rtl = rview.columnsProbe(3);
+        settings.setRightToLeft(false);
+        printf("  从左到右：%s\n", qPrintable(ltr));
+        printf("  从右到左：%s\n", qPrintable(rtl));
+    }
+
+    printf("== 插图与手柄 ==\n");
+    {
+        /* 造一张 120x80 的图 */
+        const QString png = QStringLiteral("%1/mkimage.png").arg(outDir);
+        QImage img(120, 80, QImage::Format_RGB32);
+        img.fill(QColor(0x2e, 0x75, 0xb6));
+        img.save(png);
+
+        QTextDocument idoc;
+        idoc.setPlainText(QStringLiteral("图片前后都有文字。"));
+        UmeView iview;
+        iview.setSettings(&settings);
+        iview.setDocument(&idoc);
+        iview.setBaseFormat(font, pt);
+
+        iview.insertImage(png);
+        printf("  宽对象：%s\n", qPrintable(iview.wideObjectsProbe()));
+        printf("  选中索引 = %d，手柄数 = %d\n",
+               iview.selectedWideObject(), int(iview.wideHandlesProbe().size()));
+
+        const UmeDoc::WideProps ip = iview.currentWideObject();
+        printf("  属性：kind=%d span=%d 高=%.1f 旋转=%.1f 路径=%s\n",
+               int(ip.kind), ip.span, ip.heightPt, ip.rotation,
+               qPrintable(QFileInfo(ip.imagePath).fileName()));
+
+        iview.renderPageImage(0, 1.5, false)
+            .save(QStringLiteral("%1/m5-image.png").arg(outDir));
+        iview.resizeWideObject(200.0, true);
+        printf("  改高 200（等比）：%s\n", qPrintable(iview.wideObjectsProbe()));
+    }
+
+    printf("== 吸附与命中（纯数学）==\n");
+    {
+        const qreal degs[] = {0.0, 3.0, 20.0, 43.5, 46.0, 88.0, 133.0, 178.0, 270.0};
+        QStringList snapped;
+        for (qreal d : degs)
+            snapped << QStringLiteral("%1→%2").arg(d).arg(UmeInteract::snapDegrees(d), 0, 'f', 0);
+        printf("  吸附：%s\n", qPrintable(snapped.join(QStringLiteral("  "))));
+
+        /* 中心角度差：起点在正右、当前在正下 → +90° */
+        const QPointF c(100, 100);
+        printf("  90° 拖曳：%+.1f\n",
+               UmeInteract::dragAngleDelta(c, QPointF(150, 100), QPointF(100, 150)));
+
+        /* 旋转后手柄位置：转 90° 后，「右侧」手柄应跑到下方 */
+        const QPointF p = UmeInteract::rotatePoint(QPointF(150, 100), c, 90.0);
+        printf("  点(150,100) 绕中心转 90° → (%.1f, %.1f)\n", p.x(), p.y());
+    }
+
+    printf("== 字符样式与镜像 ==\n");
+    {
+        QTextCursor sel(&doc);
+        sel.setPosition(0);
+        sel.setPosition(6, QTextCursor::KeepAnchor);
+        view.setTextCursor(sel);
+
+        view.applyCharStyle(UmeView::StyleBold, true);
+        view.applyCharStyle(UmeView::StyleItalic, true);
+        const UmeFormatState s = view.currentFormat();
+        printf("  加粗+倾斜：bold=%d italic=%d mixed(b/i)=%d/%d\n",
+               int(s.bold), int(s.italic), int(s.boldMixed), int(s.italicMixed));
+
+        view.applyCharStyle(UmeView::StyleBold, false);
+        const UmeFormatState s2 = view.currentFormat();
+        printf("  取消加粗：bold=%d italic=%d\n", int(s2.bold), int(s2.italic));
+
+        /* 混合：只给前 3 字加下划线，再看 0..6 */
+        QTextCursor part(&doc);
+        part.setPosition(0);
+        part.setPosition(3, QTextCursor::KeepAnchor);
+        view.setTextCursor(part);
+        view.applyCharStyle(UmeView::StyleUnderline, true);
+
+        QTextCursor whole(&doc);
+        whole.setPosition(0);
+        whole.setPosition(6, QTextCursor::KeepAnchor);
+        view.setTextCursor(whole);
+        printf("  跨下划线边界：underlineMixed=%d\n",
+               int(view.currentFormat().underlineMixed));
+    }
+
+    printf("== 光标图形 ==\n");
+    {
+        const QPixmap ib = UmeIcons::textIBeam().pixmap();
+        const QPixmap rb = UmeIcons::rotateCursor().pixmap();
+        printf("  I 形光标 %dx%d，旋转光标 %dx%d\n",
+               ib.width(), ib.height(), rb.width(), rb.height());
+        ib.scaled(ib.width() * 6, ib.height() * 6, Qt::KeepAspectRatio,
+                  Qt::SmoothTransformation)
+            .save(QStringLiteral("%1/cursor-ibeam.png").arg(outDir));
+        rb.scaled(rb.width() * 6, rb.height() * 6, Qt::KeepAspectRatio,
+                  Qt::SmoothTransformation)
+            .save(QStringLiteral("%1/cursor-rotate.png").arg(outDir));
+    }
+
+    printf("== 手柄光标 ==\n");
+    {
+        /* 复用上面插图那次的视图：选中图片后旋转 0 / 45 / 90 看映射 */
+        QImage probeImg(60, 40, QImage::Format_RGB32);
+        probeImg.fill(QColor(0x2e, 0x75, 0xb6));
+        const QString probePath = QStringLiteral("%1/cursor-probe.png").arg(outDir);
+        probeImg.save(probePath);
+
+        QTextDocument cdoc;
+        cdoc.setPlainText(QStringLiteral("图片"));
+        UmeView cview;
+        cview.setSettings(&settings);
+        cview.setDocument(&cdoc);
+        cview.setBaseFormat(font, pt);
+        cview.insertImage(probePath);
+
+        UmeDoc::WideProps p = cview.currentWideObject();
+        for (qreal deg : {0.0, 45.0, 90.0}) {
+            p.rotation = deg;
+            cview.applyWideObject(p);
+            printf("  旋转 %3.0f°：%s\n", deg, qPrintable(cview.cursorProbe()));
+        }
+    }
+
     printf("== 拖曳选中 ==\n");
     {
         /* 两点的文档位置先用命中测试量出来，再模拟按下 / 移动 / 抬起 */
@@ -333,6 +652,10 @@ int main(int argc, char *argv[])
         QStringLiteral("file"));
     const QCommandLineOption optCaret(QStringLiteral("caret"),
         QStringLiteral("渲染时画出光标（配合 --render）"));
+    const QCommandLineOption optHtml(QStringLiteral("html"),
+        QStringLiteral("导出 HTML 到指定文件"), QStringLiteral("file"));
+    const QCommandLineOption optColor(QStringLiteral("color"),
+        QStringLiteral("文字颜色，如 #cc0000"), QStringLiteral("rgb"));
     const QCommandLineOption optSel(QStringLiteral("sel"),
         QStringLiteral("渲染时选中 [起,止] 两个文档位置"), QStringLiteral("a,b"));
     const QCommandLineOption optFonts(QStringLiteral("fonts"),
@@ -363,6 +686,8 @@ int main(int argc, char *argv[])
     parser.addOption(optFonts);
     parser.addOption(optLog);
     parser.addOption(optCaret);
+    parser.addOption(optHtml);
+    parser.addOption(optColor);
     parser.addOption(optSel);
     parser.addOption(optGuiCheck);
     parser.addOption(optPitch);
@@ -431,7 +756,9 @@ int main(int argc, char *argv[])
         UmeView view;
         view.setSettings(&settings);
         view.setDocument(&doc);
-        view.setBaseFormat(font, pt);
+        view.setBaseFormat(font, pt,
+                           parser.isSet(optColor) ? QColor(parser.value(optColor))
+                                                  : QColor(Qt::black));
 
         {
             const QTextBlock b0 = doc.begin();
@@ -443,6 +770,17 @@ int main(int argc, char *argv[])
         }
 
         const qreal scale = parser.value(optScale).toDouble();
+
+        if (parser.isSet(optHtml)) {
+            QFile out(parser.value(optHtml));
+            if (out.open(QIODevice::WriteOnly | QIODevice::Text)) {
+                out.write(view.toHtml().toUtf8());
+                out.close();
+                printf("html -> %s\n", qPrintable(parser.value(optHtml)));
+            } else {
+                printf("无法写入 %s\n", qPrintable(parser.value(optHtml)));
+            }
+        }
 
         if (parser.isSet(optSel)) {
             const QStringList ab = parser.value(optSel).split(QLatin1Char(','));

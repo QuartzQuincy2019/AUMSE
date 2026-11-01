@@ -1,6 +1,9 @@
 #include "umeview.h"
 
 #include "umesettings.h"
+#include "umedoc.h"
+#include "umeicons.h"
+#include "umeinteract.h"
 #include "umelog.h"
 
 #include <QApplication>
@@ -21,6 +24,8 @@
 #include <QTextBlockFormat>
 #include <QTextDocumentFragment>
 #include <QTextLayout>
+#include <QTextTable>
+#include <QDesktopServices>
 #include <QElapsedTimer>
 #include <QWheelEvent>
 
@@ -40,6 +45,8 @@ constexpr qreal kPxToPt = 72.0 / 96.0;
 UmeView::UmeView(QWidget *parent)
     : QWidget(parent)
 {
+    setCursor(UmeIcons::textIBeam());
+
     setFocusPolicy(Qt::StrongFocus);
     setAttribute(Qt::WA_InputMethodEnabled, true);   // 输入法要能往这里送
     setMouseTracking(true);
@@ -87,6 +94,578 @@ void UmeView::setDocument(QTextDocument *doc)
     resetBaseFont();        // 新内容先统一成当前字体
     relayout();
     update();
+}
+
+void UmeView::adoptColorAtCursor()
+{
+    if (!m_doc || m_cursor.hasSelection())
+        return;
+
+    /* 只收颜色，不动字体字号：字体要按脚本自动分配（见 insertTextByScript），
+       跟着光标处的字走会把「汉字用中文字体」这条规则打乱。 */
+    const QTextCharFormat at = m_cursor.charFormat();
+    QColor col = at.foreground().color();
+    if (!col.isValid())
+        return;
+    if (m_baseFormat.foreground().color() == col)
+        return;
+
+    m_baseFormat.setForeground(col);
+    emit formatStateChanged();
+}
+
+/* ---------------- 宽对象（表格 / 图片） ---------------- */
+
+UmeDoc::WideProps UmeView::currentWideObject() const
+{
+    if (!m_doc)
+        return {};
+
+    if (const QTextTable *table = m_cursor.currentTable()) {
+        const QTextBlock first = table->firstCursorPosition().block();
+        UmeDoc::WideProps p = UmeDoc::wideProps(first);
+        if (!p.isValid()) {
+            p.kind = UmeDoc::WideKind::Table;
+            p.span = qBound(1, table->columns(), 12);
+            p.heightPt = qMax(40.0, table->rows() * 28.0);
+        }
+        return p;
+    }
+    return UmeDoc::wideProps(m_cursor.block());
+}
+
+void UmeView::applyWideObject(UmeDoc::WideProps props)
+{
+    if (!m_doc)
+        return;
+
+    QTextBlock target;
+    if (const QTextTable *table = m_cursor.currentTable())
+        target = table->firstCursorPosition().block();
+    else
+        target = m_cursor.block();
+    if (!target.isValid())
+        return;
+
+    /* 钳制：夸张的值会破坏整篇布局（跨列超过页宽、高度超过正文区、
+       旋转任意角度导致命中测试失效） */
+    {
+        const QRectF area = m_settings ? m_settings->page().textArea() : QRectF();
+        const qreal strip = qMax(8.0, m_minWidthForDrag);
+        UmeDoc::WideProps bounded = props;
+        const int maxSpan = area.isValid()
+                                ? qMax(1, int(area.width() / strip))
+                                : 12;
+        bounded.span = qBound(1, props.span, qMin(maxSpan, 48));
+        const qreal maxH = area.isValid() ? area.height() : 800.0;
+        bounded.heightPt = qBound(8.0, props.heightPt, maxH);
+        bounded.offsetPt = qBound(-maxH, props.offsetPt, maxH);
+        bounded.rotation = std::fmod(props.rotation, 360.0);
+        if (bounded != props) {
+            UME_LOG("wide", QStringLiteral("clamped span %1→%2 h %3→%4")
+                                 .arg(props.span).arg(bounded.span)
+                                 .arg(props.heightPt, 0, 'f', 1)
+                                 .arg(bounded.heightPt, 0, 'f', 1));
+            props = bounded;
+        }
+    }
+
+    UME_LOG("wide", QStringLiteral("apply kind=%1 wrap=%2 span=%3 h=%4 off=%5 rot=%6")
+                        .arg(int(props.kind)).arg(int(props.wrap))
+                        .arg(props.span).arg(props.heightPt, 0, 'f', 1)
+                        .arg(props.offsetPt, 0, 'f', 1).arg(props.rotation, 0, 'f', 1));
+    UmeDoc::setWideProps(target, props);
+    relayout();
+    update();
+    emit formatStateChanged();
+}
+
+void UmeView::nudgeWideObject(qreal dy)
+{
+    UmeDoc::WideProps p = currentWideObject();
+    if (!p.isValid())
+        return;
+    p.offsetPt = qBound(-4000.0, p.offsetPt + dy, 4000.0);
+    applyWideObject(p);
+}
+
+void UmeView::resizeWideObject(qreal newHeightPt, bool keepAspect)
+{
+    UmeDoc::WideProps p = currentWideObject();
+    if (!p.isValid())
+        return;
+
+    const qreal h = qBound(8.0, newHeightPt, 4000.0);
+    if (keepAspect && p.naturalH > 0.0) {
+        const qreal ratio = p.naturalW / p.naturalH;
+        const qreal w = h * ratio;
+        const qreal strip = (m_colPitch > 0.0) ? m_colPitch : 20.0;
+        p.span = qBound(1, qRound(w / strip), 12);
+    }
+    p.heightPt = h;
+    applyWideObject(p);
+}
+
+void UmeView::changeTableRows(int delta)
+{
+    UME_LOG("wide", QStringLiteral("table rows %1").arg(delta));
+    QTextCursor c = m_cursor;
+    if (UmeDoc::changeTableRows(c, delta)) {
+        m_cursor = c;
+        afterEdit();
+    }
+}
+
+void UmeView::changeTableColumns(int delta)
+{
+    UME_LOG("wide", QStringLiteral("table cols %1").arg(delta));
+    QTextCursor c = m_cursor;
+    if (!UmeDoc::changeTableColumns(c, delta))
+        return;
+
+    /* 跨列数跟着表格列数走 */
+    const QPair<int, int> size = UmeDoc::tableSize(c);
+    UmeDoc::WideProps p = currentWideObject();
+    if (p.isValid()) {
+        p.span = qBound(1, size.second, 12);
+        applyWideObject(p);
+    }
+    m_cursor = c;
+    afterEdit();
+}
+
+/* ---------------- 宽对象：绘制 ---------------- */
+
+const QImage &UmeView::imageFor(const QString &path) const
+{
+    auto it = m_images.find(path);
+    if (it != m_images.end())
+        return it.value();
+
+    QImage img(path);
+    if (img.isNull())
+        UME_LOG("image", QStringLiteral("load failed: %1").arg(path));
+    it = m_images.insert(path, img);
+    return it.value();
+}
+
+const UmeLayout::WideItem *UmeView::selectedWideItem() const
+{
+    const QVector<UmeLayout::WideItem> &items = m_layout.wideItems();
+    if (m_selectedWide < 0 || m_selectedWide >= items.size())
+        return nullptr;
+    return &items.at(m_selectedWide);
+}
+
+void UmeView::paintWideItems(QPainter &p) const
+{
+    for (const UmeLayout::WideItem &item : m_layout.wideItems()) {
+        const QRectF r = item.box;
+
+        if (item.props.kind == UmeDoc::WideKind::Table) {
+            /* 表格：外框 + 网格 + 单元格文字（竖排） */
+            p.save();
+            p.setPen(QPen(QColor(0x88, 0x88, 0x88), 0.8));
+            p.setBrush(Qt::NoBrush);
+            p.drawRect(r);
+
+            QTextCursor bc(item.block);
+            QTextTable *table = bc.currentTable();
+            if (table) {
+                const int rows = qMax(1, table->rows());
+                const int cols = qMax(1, table->columns());
+                for (int i = 1; i < rows; ++i) {
+                    const qreal y = r.top() + r.height() * i / rows;
+                    p.drawLine(QPointF(r.left(), y), QPointF(r.right(), y));
+                }
+                for (int j = 1; j < cols; ++j) {
+                    const qreal x = r.left() + r.width() * j / cols;
+                    p.drawLine(QPointF(x, r.top()), QPointF(x, r.bottom()));
+                }
+            }
+            p.restore();
+
+            paintTableCells(p, item);
+            continue;
+        }
+
+        if (item.props.kind == UmeDoc::WideKind::Image && !item.props.imagePath.isEmpty()) {
+            const QImage &img = imageFor(item.props.imagePath);
+            if (img.isNull())
+                continue;
+            p.save();
+            p.setRenderHint(QPainter::SmoothPixmapTransform, true);
+            p.translate(r.center());
+            if (!qFuzzyIsNull(item.props.rotation))
+                p.rotate(item.props.rotation);
+            if (item.props.flipH || item.props.flipV)
+                p.scale(item.props.flipH ? -1.0 : 1.0, item.props.flipV ? -1.0 : 1.0);
+            const QRectF target(-r.width() / 2.0, -r.height() / 2.0, r.width(), r.height());
+            p.drawImage(target, img);
+            p.restore();
+        }
+    }
+
+    /* 控制手柄：只有选中图片/表格时才画 */
+    const UmeLayout::WideItem *sel = selectedWideItem();
+    if (!sel)
+        return;
+
+    const QVector<QRectF> hs = wideHandles(*sel);
+    p.save();
+    p.setBrush(QColor(255, 255, 255));
+    p.setPen(QPen(QColor(0x0b, 0x67, 0xc2), 1.0));
+    for (const QRectF &h : hs)
+        p.drawRect(h);
+    p.restore();
+}
+
+void UmeView::paintTableCells(QPainter &p, const UmeLayout::WideItem &item) const
+{
+    QTextCursor bc(item.block);
+    QTextTable *table = bc.currentTable();
+    if (!table)
+        return;
+
+    const QRectF r = item.box;
+    const int rows = qMax(1, table->rows());
+    const int cols = qMax(1, table->columns());
+    const qreal cw = r.width() / cols;
+    const qreal ch = r.height() / rows;
+
+    for (int i = 0; i < rows; ++i) {
+        for (int j = 0; j < cols; ++j) {
+            const QTextTableCell cell = table->cellAt(i, j);
+            if (!cell.isValid())
+                continue;
+            const QRectF cellRect(r.left() + cw * j, r.top() + ch * i, cw, ch);
+
+            const QTextBlock b = cell.firstCursorPosition().block();
+            if (!b.isValid() || b.text().isEmpty())
+                continue;
+
+            QTextLayout *lay = b.layout();
+            if (!lay)
+                continue;
+
+            /* 单元格内同样是竖排：整段 line 旋转 90° 画进格子 */
+            lay->beginLayout();
+            for (;;) {
+                QTextLine line = lay->createLine();
+                if (!line.isValid())
+                    break;
+                line.setLineWidth((ch - 4.0) / (72.0 / 96.0));
+            }
+            lay->endLayout();
+
+            p.save();
+            p.setClipRect(cellRect);
+            p.translate(cellRect.right() - 2.0, cellRect.top() + 2.0);
+            p.rotate(90);
+            p.setPen(QColor(0x11, 0x11, 0x11));
+            for (int k = 0; k < lay->lineCount(); ++k) {
+                const QTextLine line = lay->lineAt(k);
+                line.draw(&p, QPointF(0, (cw - 4.0) * k));
+            }
+            p.restore();
+        }
+    }
+}
+
+/* ---------------- 宽对象：手柄与拖曳 ---------------- */
+
+QVector<QPointF> UmeView::wideHandlePoints(const UmeLayout::WideItem &item) const
+{
+    const QRectF r = item.box;
+    QVector<QPointF> pts;
+
+    /* 8 个缩放手柄：四角 + 四边中点 */
+    pts << r.topLeft() << r.topRight() << r.bottomLeft() << r.bottomRight()
+        << QPointF(r.center().x(), r.top()) << QPointF(r.center().x(), r.bottom())
+        << QPointF(r.left(), r.center().y()) << QPointF(r.right(), r.center().y());
+
+    /* 第 9 个：旋转手柄，在对象「上游侧」外 14pt（未旋转时的位置） */
+    pts << QPointF(r.right() + 14.0, r.center().y());
+    return pts;
+}
+
+QVector<QRectF> UmeView::wideHandles(const UmeLayout::WideItem &item) const
+{
+    /* 手柄跟着对象一起转：把「未旋转的点」绕中心转过去 */
+    const qreal s = 6.0;
+    const QVector<QPointF> base = wideHandlePoints(item);
+    const QPointF c = item.box.center();
+
+    QVector<QRectF> out;
+    for (const QPointF &p : base) {
+        const QPointF q = UmeInteract::rotatePoint(p, c, item.props.rotation);
+        out.append(QRectF(q.x() - s / 2.0, q.y() - s / 2.0, s, s));
+    }
+    return out;
+}
+
+int UmeView::hitWideHandle(const QPointF &docPos) const
+{
+    const UmeLayout::WideItem *item = selectedWideItem();
+    if (!item)
+        return -1;
+
+    /* 反向旋转到「对象本地坐标」再判断：
+       否则对象转 30° 之后，手柄视觉位置变了但判断还在原处，几乎点不中。 */
+    const QPointF c = item->box.center();
+    const QPointF local =
+        UmeInteract::rotatePoint(docPos, c, -item->props.rotation);
+
+    const qreal s = 6.0;
+    const qreal slop = UmeInteract::kHandleHitSlop;
+    const QVector<QPointF> base = wideHandlePoints(*item);
+    for (int i = 0; i < base.size(); ++i) {
+        const QRectF r(base.at(i).x() - s / 2.0, base.at(i).y() - s / 2.0, s, s);
+        if (r.adjusted(-slop, -slop, slop, slop).contains(local))
+            return i;
+    }
+    return -1;
+}
+
+int UmeView::hitWideItem(const QPointF &docPos) const
+{
+    const QVector<UmeLayout::WideItem> &items = m_layout.wideItems();
+    for (int i = items.size() - 1; i >= 0; --i) {
+        if (items.at(i).box.contains(docPos))
+            return i;
+    }
+    return -1;
+}
+
+QVector<QRectF> UmeView::wideHandlesProbe() const
+{
+    const UmeLayout::WideItem *item = selectedWideItem();
+    return item ? wideHandles(*item) : QVector<QRectF>();
+}
+
+Qt::CursorShape UmeView::cursorForWideHandle(int index) const
+{
+    const UmeLayout::WideItem *item = selectedWideItem();
+    if (!item)
+        return Qt::ArrowCursor;
+
+    /* 第 8 个是旋转手柄 */
+    if (index == 8)
+        return Qt::ArrowCursor;      // 由调用处换成自制旋转光标
+
+    /* 手柄在「本地」朝外的方向角（屏幕坐标，y 向下） */
+    static const qreal kLocalAngle[8] = {
+        225.0,  // 0 左上
+        315.0,  // 1 右上
+        135.0,  // 2 左下
+        45.0,   // 3 右下
+        270.0,  // 4 上
+        90.0,   // 5 下
+        180.0,  // 6 左
+        0.0,    // 7 右
+    };
+
+    /* 加上对象自身的旋转，再归到最近的 45°，决定是竖/横/斜光标 */
+    qreal deg = UmeInteract::normalizeDegrees(kLocalAngle[qBound(0, index, 7)]
+                                              + item->props.rotation);
+    const int sector = qRound(deg / 45.0) % 8;
+
+    switch (sector) {
+    case 0:
+    case 4:
+        return Qt::SizeHorCursor;
+    case 2:
+    case 6:
+        return Qt::SizeVerCursor;
+    case 1:
+    case 5:
+        return Qt::SizeFDiagCursor;
+    default:
+        return Qt::SizeBDiagCursor;
+    }
+}
+
+QString UmeView::cursorProbe() const
+{
+    QStringList out;
+    for (int i = 0; i < 9; ++i) {
+        const Qt::CursorShape s = cursorForWideHandle(i);
+        const char *name = "?";
+        switch (s) {
+        case Qt::SizeHorCursor: name = "H"; break;
+        case Qt::SizeVerCursor: name = "V"; break;
+        case Qt::SizeFDiagCursor: name = "F"; break;
+        case Qt::SizeBDiagCursor: name = "B"; break;
+        default: name = "R"; break;       // 旋转
+        }
+        out << QStringLiteral("%1:%2").arg(i).arg(QLatin1String(name));
+    }
+    return out.join(QLatin1Char(' '));
+}
+
+void UmeView::selectWideObject(int index)
+{
+    const int n = m_layout.wideItems().size();
+    m_selectedWide = (index >= 0 && index < n) ? index : -1;
+    UME_LOG("wide", QStringLiteral("select index=%1 (of %2)").arg(m_selectedWide).arg(n));
+    update();
+}
+
+void UmeView::applyWideDrag(const QPointF &docPos)
+{
+    const UmeLayout::WideItem *item = selectedWideItem();
+    if (!item)
+        return;
+
+    const QRectF r = item->box;
+    UmeDoc::WideProps p = m_wideDragProps;
+    const QPointF delta = docPos - m_wideDragStart;
+
+    switch (m_wideDrag) {
+    case WideDrag::Move:
+        /* 竖排里主要沿列方向移动；限制在正文区内 */
+        p.offsetPt = qBound(-4000.0, p.offsetPt + delta.y(), 4000.0);
+        break;
+
+    case WideDrag::ResizeLeft:
+    case WideDrag::ResizeRight: {
+        /* 左右两侧改的是「跨列数」 */
+        const qreal strip = qMax(8.0, m_minWidthForDrag);
+        const qreal dw = (m_wideDrag == WideDrag::ResizeRight) ? delta.x() : -delta.x();
+        p.span = qBound(1, p.span + qRound(dw / strip), 12);
+        break;
+    }
+
+    case WideDrag::Rotate: {
+        /* 以**对象中心**为轴：θ = ∠(当前点 − 中心) − ∠(起点 − 中心)。
+           这就是「L1 → L2 的夹角」那种算法，跟拖到哪儿无关，只看方向。 */
+        const qreal delta = UmeInteract::dragAngleDelta(r.center(), m_wideDragStart,
+                                                        docPos);
+        const qreal raw = m_wideDragProps.rotation + delta;
+        p.rotation = UmeInteract::snapDegrees(raw);
+
+        if (!qFuzzyCompare(p.rotation, raw)) {
+            UME_LOG("wide", QStringLiteral("snap %.1f° → %.1f°").arg(raw).arg(p.rotation));
+        }
+        break;
+    }
+
+    default: {
+        /* 上下边与四角改高度；四角在保持比例时联动跨列 */
+        const bool fromTop = (m_wideDrag == WideDrag::ResizeTop
+                              || m_wideDrag == WideDrag::ResizeTL
+                              || m_wideDrag == WideDrag::ResizeTR);
+        const qreal dy = fromTop ? -delta.y() : delta.y();
+        qreal newH = qBound(8.0, m_wideDragProps.heightPt + dy, 4000.0);
+        p.heightPt = newH;
+        if (p.keepAspect && m_wideDragProps.naturalH > 0.0
+            && (m_wideDrag == WideDrag::ResizeTL || m_wideDrag == WideDrag::ResizeTR
+                || m_wideDrag == WideDrag::ResizeBL || m_wideDrag == WideDrag::ResizeBR)) {
+            const qreal ratio = m_wideDragProps.naturalW / m_wideDragProps.naturalH;
+            const qreal w = newH * ratio;
+            const qreal strip = qMax(8.0, m_minWidthForDrag);
+            p.span = qBound(1, qRound(w / strip), 12);
+        }
+        break;
+    }
+    }
+
+    applyWideObject(p);
+}
+
+QString UmeView::wideObjectsProbe() const
+{
+    QStringList out;
+    const QVector<UmeLayout::WideItem> &items = m_layout.wideItems();
+    for (const UmeLayout::WideItem &it : items) {
+        out << QStringLiteral("%1:[x %2 y %3 w %4 h %5 span %6 %7]")
+                   .arg(it.index)
+                   .arg(it.box.left(), 0, 'f', 1)
+                   .arg(it.box.top(), 0, 'f', 1)
+                   .arg(it.box.width(), 0, 'f', 1)
+                   .arg(it.box.height(), 0, 'f', 1)
+                   .arg(it.props.span)
+                   .arg(it.props.wrap == UmeDoc::WideWrap::Span
+                            ? QStringLiteral("span")
+                            : QStringLiteral("wrap"));
+    }
+    return out.isEmpty() ? QStringLiteral("-") : out.join(QStringLiteral("  "));
+}
+
+/* ---------------- 链接 / 表格 / 导出（预留能力） ---------------- */
+
+void UmeView::insertLink(const QUrl &url, const QString &text)
+{
+    if (!m_doc || url.isEmpty())
+        return;
+    UME_LOG("link", QStringLiteral("insert url=%1 text=%2 sel=%3")
+                         .arg(url.toString(), umeLogEsc(text))
+                         .arg(int(m_cursor.hasSelection())));
+    UmeDoc::applyLink(m_cursor, url, text);
+    afterEdit();
+}
+
+QUrl UmeView::linkAtCursor() const
+{
+    return UmeDoc::linkAt(m_cursor);
+}
+
+void UmeView::insertImage(const QString &path)
+{
+    if (!m_doc || path.isEmpty())
+        return;
+
+    const QImage img = imageFor(path);
+    if (img.isNull())
+        return;
+
+    /* 像素 → pt（96dpi），并限制最大尺寸，避免一插入就撑爆版面 */
+    const qreal maxH = m_settings ? m_settings->page().textArea().height() : 700.0;
+    qreal h = img.height() * 72.0 / 96.0;
+    qreal w = img.width() * 72.0 / 96.0;
+    if (h > maxH * 0.8) {
+        const qreal k = maxH * 0.8 / h;
+        h *= k;
+        w *= k;
+    }
+
+    UmeDoc::WideProps p;
+    p.kind = UmeDoc::WideKind::Image;
+    p.wrap = UmeDoc::WideWrap::Span;        /* 默认：行外、列游标 */
+    p.heightPt = h;
+    p.span = qBound(1, qRound(w / qMax(8.0, m_minWidthForDrag)), 12);
+    p.keepAspect = true;
+
+    QTextCursor c = m_cursor;
+    const QTextBlock block = UmeDoc::insertImageBlock(c, path, QSizeF(w, h), p);
+    m_cursor = c;
+    afterEdit();
+
+    UME_LOG("image", QStringLiteral("insert %1 w=%2 h=%3 span=%4 block=%5")
+                         .arg(path).arg(w, 0, 'f', 1).arg(h, 0, 'f', 1)
+                         .arg(p.span).arg(block.blockNumber()));
+
+    /* 插入后自动选中，手柄立刻可见 */
+    for (int i = 0; i < m_layout.wideItems().size(); ++i) {
+        if (m_layout.wideItems().at(i).block == block) {
+            selectWideObject(i);
+            break;
+        }
+    }
+}
+
+void UmeView::insertTable(int rows, int cols)
+{
+    if (!m_doc)
+        return;
+    UME_LOG("table", QStringLiteral("insert %1x%2").arg(rows).arg(cols));
+    UmeDoc::insertTable(m_cursor, rows, cols);
+    afterEdit();
+}
+
+QString UmeView::toHtml() const
+{
+    return UmeDoc::toHtml(m_doc);
 }
 
 void UmeView::insertTextByScript(const QString &text)
@@ -184,7 +763,10 @@ void UmeView::relayout()
             if (it.fragment().isValid())
                 ++frags;
 
-    m_layout.relayout(m_doc, m_settings->page(), minWidth);
+    m_minWidthForDrag = minWidth;
+    m_layout.relayout(m_doc, m_settings->page(), minWidth,
+                      m_settings->rightToLeft() ? UmeLayout::Flow::Rtl
+                                                : UmeLayout::Flow::Ltr);
 
     UME_LOG("layout", QStringLiteral("blocks=%1 frags=%2 cols=%3 pages=%4 pitch=%5 "
                                      "metrics=%6/%7 took=%8ms")
@@ -306,6 +888,36 @@ void UmeView::applyFormatPointSize(qreal pt)
     mergeFormatIntoSelection(fmt);
 }
 
+void UmeView::applyCharStyle(int what, bool on)
+{
+    QTextCharFormat fmt;
+    switch (what) {
+    case StyleBold:
+        fmt.setFontWeight(on ? QFont::Bold : QFont::Normal);
+        break;
+    case StyleItalic:
+        fmt.setFontItalic(on);
+        break;
+    case StyleUnderline:
+        fmt.setFontUnderline(on);
+        break;
+    case StyleStrikeOut:
+        fmt.setFontStrikeOut(on);
+        break;
+    case StyleSuper:
+        fmt.setVerticalAlignment(on ? QTextCharFormat::AlignSuperScript
+                                    : QTextCharFormat::AlignNormal);
+        break;
+    case StyleSub:
+        fmt.setVerticalAlignment(on ? QTextCharFormat::AlignSubScript
+                                    : QTextCharFormat::AlignNormal);
+        break;
+    default:
+        return;
+    }
+    mergeFormatIntoSelection(fmt);
+}
+
 void UmeView::applyFormatColor(const QColor &c)
 {
     QTextCharFormat fmt;
@@ -333,10 +945,34 @@ UmeFormatState UmeView::currentFormat() const
     if (!m_doc)
         return s;
 
-    auto consider = [&s](const QTextCharFormat &f) {
+    bool sawAny = false;
+    auto consider = [&s, &sawAny](const QTextCharFormat &f) {
+        const bool firstSeen = !sawAny;
+        sawAny = true;
         const QString fam = f.fontFamilies().toStringList().value(0);
         const qreal pt = f.fontPointSize();
         const QColor col = f.foreground().color();
+
+        const bool bold = f.fontWeight() >= QFont::Bold;
+        const bool italic = f.fontItalic();
+        const bool underline = f.fontUnderline();
+        const bool strike = f.fontStrikeOut();
+        const int script = int(f.verticalAlignment()) == int(QTextCharFormat::AlignSuperScript) ? 1
+                           : int(f.verticalAlignment()) == int(QTextCharFormat::AlignSubScript) ? -1
+                                                                                              : 0;
+        if (firstSeen) {
+            s.bold = bold;
+            s.italic = italic;
+            s.underline = underline;
+            s.strikeOut = strike;
+            s.script = script;
+        } else {
+            if (s.bold != bold) s.boldMixed = true;
+            if (s.italic != italic) s.italicMixed = true;
+            if (s.underline != underline) s.underlineMixed = true;
+            if (s.strikeOut != strike) s.strikeMixed = true;
+            if (s.script != script) s.scriptMixed = true;
+        }
 
         if (s.family.isEmpty() && !s.familyMixed) {
             s.family = fam;
@@ -557,6 +1193,7 @@ void UmeView::setTextCursor(const QTextCursor &c)
                           .arg(c.position()).arg(c.anchor())
                           .arg(int(c.hasSelection())));
     m_cursor = c;
+    adoptColorAtCursor();
     restartBlink();
     ensureCursorVisible();
 
@@ -901,6 +1538,7 @@ void UmeView::paintEvent(QPaintEvent *event)
         paintGuides(p);
 
     paintSelection(p);
+    paintWideItems(p);
     paintDocument(p);
     paintCaret(p);
     p.restore();
@@ -966,12 +1604,25 @@ void UmeView::paintDocument(QPainter &p) const
             f.setPointSizeF(m_metricsPt);
             return f;
         };
-        auto colorAt = [&spans](qreal x) {
+        /* 格式区间只记录「与块格式不同」的部分：整段同色时 spans 是空的。
+           所以兜底必须回落到块格式 → 基础格式，不能写死一个黑色。 */
+        QColor columnInk = c.block.charFormat().foreground().color();
+        if (!columnInk.isValid())
+            columnInk = m_baseFormat.foreground().color();
+        if (!columnInk.isValid())
+            columnInk = QColor(0x11, 0x11, 0x11);
+
+        /* 取该位置的字形格式：颜色、下划线（链接）、斜体等都要用 */
+        auto formatAt = [&spans](qreal x) -> QTextCharFormat {
             for (const FmtSpan &s : spans) {
                 if (x >= s.x0 - 0.01 && x < s.x1)
-                    return s.fmt.foreground().color();
+                    return s.fmt;
             }
-            return QColor(0x11, 0x11, 0x11);
+            return QTextCharFormat();
+        };
+        auto colorAt = [&formatAt, columnInk](qreal x) {
+            const QColor col = formatAt(x).foreground().color();
+            return col.isValid() ? col : columnInk;
         };
 
         /* 默认的检索标志里没有 rawFont，拿到的 run 画不出东西 —— 必须显式要。 */
@@ -1015,12 +1666,26 @@ void UmeView::paintDocument(QPainter &p) const
                 if (slot <= 0.5)
                     slot = 19.0;   // 兜底：一个汉字宽（px）
 
-                const qreal midX = gp.x() + slot / 2.0;
+                /* 取 0.35 而不是 0.5：正好落在字形「中点」时，
+                   若该字形很窄，中点会压到下一个字符的起点上，
+                   于是把下一字的汉字错判成这一格的内容（会画出一个小的重影）。 */
+                const qreal midX = gp.x() + slot * 0.35;
                 const QChar thisChar = charAtLineX(midX);
                 const GlyphPlace place = placeFor(thisChar);
                 const bool upright = place != GlyphPlace::Rotated;
 
                 const QColor ink = colorAt(gp.x());
+
+                /* 链接下划线：竖排里画成与列平行的细线，贴在墨迹左侧 */
+                const QTextCharFormat gfmt = formatAt(gp.x());
+                if (gfmt.fontUnderline() || gfmt.isAnchor()) {
+                    const qreal ux = r.left() + UmeLayout::kPad - 1.2;
+                    p.save();
+                    p.setPen(QPen(ink, 0.8));
+                    p.drawLine(QPointF(ux, baseY + gp.x() * kPxToPt),
+                               QPointF(ux, baseY + (gp.x() + slot) * kPxToPt));
+                    p.restore();
+                }
 
                 if (upright) {
                     /* 直立字：位置与格子都从「字符区间」推出 ——
@@ -1040,7 +1705,11 @@ void UmeView::paintDocument(QPainter &p) const
                     QFont f = fmtAt(midX);
                     /* 字号取格子大小：排版给的格子就是这一格的可用高度，
                        按它定字号最稳（不再用矩形画，不会切笔画）。 */
-                    f.setPixelSize(qMax(1, qRound(cellH)));
+                    /* 字号按格子定，但钳在「半个字到两个字」之间：
+                       格子算错时不至于画出米粒大小或顶天立地的怪字。 */
+                    const qreal basePt = m_metricsPt > 0 ? m_metricsPt : 14.0;
+                    const qreal px = qBound(basePt * 0.5, cellH, basePt * 2.0);
+                    f.setPixelSize(qMax(1, qRound(px)));
 
                     const QFontMetricsF fmr(f);
                     const QString s(ch);
@@ -1090,6 +1759,20 @@ void UmeView::paintDocument(QPainter &p) const
     }
 }
 
+QColor UmeView::caretColor() const
+{
+    /* 光标颜色 = 接下来要输入的文字颜色。
+       浅色（比如黄色、白色）在白纸上会看不见，这时压暗到可见为止。 */
+    QColor caretInk = m_baseFormat.foreground().color();
+    if (!caretInk.isValid())
+        caretInk = QColor(0x11, 0x11, 0x11);
+    const qreal luma = 0.299 * caretInk.redF() + 0.587 * caretInk.greenF()
+                       + 0.114 * caretInk.blueF();
+    if (luma > 0.72)
+        caretInk = caretInk.darker(220);
+    return caretInk;
+}
+
 void UmeView::paintCaret(QPainter &p) const
 {
     if (!hasFocus() || !m_blinkOn)
@@ -1098,7 +1781,7 @@ void UmeView::paintCaret(QPainter &p) const
     if (r.isNull())
         return;
 
-    p.setPen(QPen(QColor(0x11, 0x11, 0x11), 2.0));
+    p.setPen(QPen(caretColor(), 2.0));
     const qreal y = r.center().y();
     p.drawLine(QPointF(r.left(), y), QPointF(r.right(), y));
 }
@@ -1118,7 +1801,54 @@ void UmeView::mousePressEvent(QMouseEvent *event)
     }
     setFocus();
 
-    QTextCursor cur = cursorAtDocPos(docPosFromWidget(event->position()));
+    /* Ctrl + 点击链接：交给系统打开 */
+    if (event->modifiers() & Qt::ControlModifier) {
+        const QTextCursor hit = cursorAtDocPos(docPosFromWidget(event->position()));
+        const QUrl url = UmeDoc::linkAt(hit);
+        if (!url.isEmpty()) {
+            UME_LOG("link", QStringLiteral("open %1").arg(url.toString()));
+            QDesktopServices::openUrl(url);
+            event->accept();
+            return;
+        }
+    }
+
+    const QPointF docPos = docPosFromWidget(event->position());
+
+    /* 宽对象优先：先看手柄，再看对象本体 */
+    const int handle = hitWideHandle(docPos);
+    if (handle >= 0) {
+        static const WideDrag kResize[9] = {
+            WideDrag::ResizeTL, WideDrag::ResizeTR, WideDrag::ResizeBL,
+            WideDrag::ResizeBR, WideDrag::ResizeTop, WideDrag::ResizeBottom,
+            WideDrag::ResizeLeft, WideDrag::ResizeRight, WideDrag::Rotate,
+        };
+        m_wideDrag = kResize[qBound(0, handle, 8)];
+        m_wideDragStart = docPos;
+        m_wideDragProps = currentWideObject();
+        UME_LOG("wide", QStringLiteral("drag begin handle=%1").arg(handle));
+        event->accept();
+        return;
+    }
+
+    const int itemIndex = hitWideItem(docPos);
+    if (itemIndex >= 0) {
+        selectWideObject(itemIndex);
+        m_wideDrag = WideDrag::Move;
+        m_wideDragStart = docPos;
+        m_wideDragProps = currentWideObject();
+
+        /* 把光标也移进对象所在块，面板才能读到属性 */
+        const QTextBlock block = m_layout.wideItems().at(itemIndex).block;
+        QTextCursor inside(block);
+        setTextCursor(inside);
+        event->accept();
+        return;
+    }
+
+    selectWideObject(-1);
+
+    QTextCursor cur = cursorAtDocPos(docPos);
     if (event->modifiers() & Qt::ShiftModifier)
         cur.setPosition(cur.position(), QTextCursor::KeepAnchor);
     setTextCursor(cur);
@@ -1132,6 +1862,41 @@ void UmeView::mousePressEvent(QMouseEvent *event)
 
 void UmeView::mouseMoveEvent(QMouseEvent *event)
 {
+    /* 正在拖宽对象：只更新对象，不动文字选区 */
+    if (m_wideDrag != WideDrag::None) {
+        applyWideDrag(docPosFromWidget(event->position()));
+        event->accept();
+        return;
+    }
+
+    const QPointF hoverPos = docPosFromWidget(event->position());
+
+    /* ① 悬停在控制手柄上：换成缩放 / 旋转光标 */
+    const int hoverHandle = hitWideHandle(hoverPos);
+    if (hoverHandle >= 0) {
+        if (hoverHandle == 8)
+            setCursor(UmeIcons::rotateCursor());
+        else
+            setCursor(cursorForWideHandle(hoverHandle));
+        event->accept();
+        return;
+    }
+
+    /* ② 悬停在宽对象本体上：移动光标 */
+    if (hitWideItem(hoverPos) >= 0) {
+        setCursor(Qt::SizeAllCursor);
+        event->accept();
+        return;
+    }
+
+    /* ③ 悬停在链接上给手型提示 */
+    {
+        const QTextCursor hit = cursorAtDocPos(hoverPos);
+        /* 竖排正文用**横向** I 形光标；Qt 的 IBeam 是竖的，方向不对 */
+        setCursor(UmeDoc::linkAt(hit).isEmpty() ? UmeIcons::textIBeam()
+                                                : QCursor(Qt::PointingHandCursor));
+    }
+
     if (!m_dragging || !m_doc) {
         QWidget::mouseMoveEvent(event);
         return;
@@ -1151,6 +1916,12 @@ void UmeView::mouseMoveEvent(QMouseEvent *event)
 
 void UmeView::mouseReleaseEvent(QMouseEvent *event)
 {
+    if (m_wideDrag != WideDrag::None) {
+        UME_LOG("wide", QStringLiteral("drag end"));
+        m_wideDrag = WideDrag::None;
+        event->accept();
+        return;
+    }
     m_dragging = false;
     m_dragAnchor = -1;
     QWidget::mouseReleaseEvent(event);
@@ -1425,6 +2196,7 @@ QImage UmeView::renderPageImage(int page, qreal scale, bool withCaret) const
     }
 
     paintSelection(p);
+    paintWideItems(p);
     paintDocument(p);
 
     if (withCaret) {
@@ -1461,6 +2233,7 @@ QImage UmeView::renderAllPages(qreal scale) const
         p.fillRect(UmeLayout::pageRect(ps, i), Qt::white);
 
     paintSelection(p);
+    paintWideItems(p);
     paintDocument(p);
 
     const QRectF cr = caretDocRect();
